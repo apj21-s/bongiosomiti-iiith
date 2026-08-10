@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BONGIO.SOMITI</title>
+  <meta name="description" content="BONGIO.SOMITI cultural event website" />
+  <link rel="stylesheet" href="styles.css" />
+  <script defer src="site.js"></script>
+</head>
+
+<body>
+  <main id="top" class="home-page">
+    <header class="home-strip">
+      <div class="home-strip__inner">
+        <div class="home-strip__brand">BONGIO.SOMITI</div>
+        <nav class="home-strip__nav" aria-label="Primary">
+          <a class="home-strip__link" href="#home" aria-current="page">HOME</a>
+          <a class="home-strip__link" href="#events">EVENTS</a>
+          <a class="home-strip__link" href="#story">STORY</a>
+        </nav>
+        <a class="home-strip__action" href="login/index.html">REGISTER / LOGIN</a>
+      </div>
+    </header>
+
+    <section class="home-banner" aria-hidden="true">
+      <div class="home-banner__scene">
+        <div class="home-banner__layer home-banner__layer--left">
+          <img class="home-banner__image home-banner__image--left" src="assets/autumn-landscape.svg" alt="" />
+        </div>
+        <div class="home-banner__layer home-banner__layer--center">
+          <img class="home-banner__image home-banner__image--center" src="assets/kolkata-street.svg" alt="" />
+        </div>
+        <div class="home-banner__layer home-banner__layer--right">
+          <img class="home-banner__image home-banner__image--right" src="assets/community-puja.svg" alt="" />
+        </div>
+      </div>
+      <div class="home-banner__blend"></div>
+    </section>
+
+    <section id="home" class="home-hero" aria-labelledby="home-hero-title">
+      <div class="home-hero__scene" aria-hidden="true">
+        <div class="home-hero__layer home-hero__layer--landscape">
+          <img class="home-hero__image home-hero__image--landscape" src="assets/autumn-landscape.svg" alt="" />
+        </div>
+      </div>
+
+      <div class="home-hero__content">
+        <h1 id="home-hero-title" class="home-hero__title">BONGIO.SOMITI</h1>
+        <div class="home-hero__card">
+          <p>আড্ডা হোক,
+            বাংলা হোক</p>
+          <a class="home-hero__cta" href="#events">[EXPLORE EVENTS]</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="events" class="events-page" aria-labelledby="events-title">
+      <div class="events-scene">
+        <div class="events-scene__panel">
+          <div class="events-scene__hero">
+            <img class="events-scene__hero-image" src="assets/community-puja.svg" alt="" />
+          </div>
+
+          <div class="events-scene__copy">
+            <p class="events-scene__eyebrow" id="events-title">Courtyard &amp; Community</p>
+            <p class="events-scene__lede">Community events, one world.</p>
+          </div>
+
+          <div class="events-scene__cards">
+            <a class="events-scene__card" href="events/mahalaya/index.html">
+              <div class="events-scene__card-media">
+                <img class="events-scene__card-image" src="assets/mahalaya-bhoj.svg" alt=""
+                  style="object-position:center 34%" />
+              </div>
+              <div class="events-scene__card-body">
+                <div class="events-scene__card-meta">
+                  <span>12 Oct 2026</span>
+                  <span>Neighbourhood bhoj</span>
+                </div>
+                <h3>Mahalaya Bhoj</h3>
+                <p>Courtyard feast with shared tables and ritual warmth.</p>
+                <span class="events-scene__card-link">REGISTER NOW</span>
+              </div>
+            </a>
+
+            <a class="events-scene__card" href="events/saraswati/index.html">
+              <div class="events-scene__card-media">
+                <img class="events-scene__card-image" src="assets/saraswati-puja.svg" alt=""
+                  style="object-position:center 22%" />
+              </div>
+              <div class="events-scene__card-body">
+                <div class="events-scene__card-meta">
+                  <span>21 Jan 2027</span>
+                  <span>Campus celebration</span>
+                </div>
+                <h3>Saraswati Puja</h3>
+                <p>Campus puja with flowers, prayer, and student gathering.</p>
+                <span class="events-scene__card-link">REGISTER NOW</span>
+              </div>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="story" class="story-page" aria-labelledby="story-title">
+      <article class="story-card">
+        <div class="story-card__intro">
+          <p class="section-label">আমাদের গল্প</p>
+          <h2 id="story-title">A curated memory archive</h2>
+          <p>Real event photographs, kept small and editorial so the images stay in focus.</p>
+        </div>
+
+        <div class="story-card__header">
+          <img class="story-card__headerImage" src="assets/amader%20golpo.svg" alt="" />
+          <div class="story-card__headerOverlay" aria-hidden="true"></div>
+          <div class="story-card__headerCopy">
+            <p class="section-label">আমাদের গল্প</p>
+            <h2>Our story</h2>
+            <p>Real moments from Bengali community events, gathered in one editable archive.</p>
+          </div>
+        </div>
+
+        <div class="story-card__body">
+          <div class="story-gallery" aria-label="আমাদের গল্প photo gallery">
+            <button type="button" class="story-gallery__item story-gallery__item--wide">
+              <div class="story-gallery__frame">
+                <img class="story-gallery__image" src="amader%20golpo.ong.png" alt="আমাদের গল্প"
+                  style="object-position:left center" />
+              </div>
+              <div class="story-gallery__copy">
+                <span>আমাদের গল্প</span>
+                <strong>১৪ অক্টোবর ২০২৬</strong>
+                <p>মহালয়া সন্ধ্যা</p>
+              </div>
+            </button>
+            <button type="button" class="story-gallery__item story-gallery__item--tall">
+              <div class="story-gallery__frame">
+                <img class="story-gallery__image" src="amader%20golpo.ong.png" alt="আমাদের গল্প"
+                  style="object-position:52% center" />
+              </div>
+              <div class="story-gallery__copy">
+                <span>আমাদের গল্প</span>
+                <strong>১৮ অক্টোবর ২০২৬</strong>
+                <p>সবার সঙ্গে ভোজ</p>
+              </div>
+            </button>
+            <button type="button" class="story-gallery__item story-gallery__item--small">
+              <div class="story-gallery__frame">
+                <img class="story-gallery__image" src="amader%20golpo.ong.png" alt="আমাদের গল্প"
+                  style="object-position:right center" />
+              </div>
+              <div class="story-gallery__copy">
+                <span>আমাদের গল্প</span>
+                <strong>২১ জানুয়ারি ২০২৭</strong>
+                <p>সারস্বতী প্রাঙ্গণ</p>
+              </div>
+            </button>
+            <button type="button" class="story-gallery__item story-gallery__item--wide story-gallery__item--low">
+              <div class="story-gallery__frame">
+                <img class="story-gallery__image" src="amader%20golpo.ong.png" alt="আমাদের গল্প"
+                  style="object-position:center center" />
+              </div>
+              <div class="story-gallery__copy">
+                <span>আমাদের গল্প</span>
+                <strong>০৬ ফেব্রুয়ারি ২০২৭</strong>
+                <p>ক্যাম্পাস আড্ডা</p>
+              </div>
+            </button>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <footer class="home-footer" aria-labelledby="footer-title">
+      <div class="home-footer__watermark" aria-hidden="true">
+        <div class="home-footer__watermarkLayer home-footer__watermarkLayer--left">
+          <img class="home-footer__watermarkImage home-footer__watermarkImage--left" src="assets/autumn-landscape.svg"
+            alt="" />
+        </div>
+        <div class="home-footer__watermarkLayer home-footer__watermarkLayer--center">
+          <img class="home-footer__watermarkImage home-footer__watermarkImage--center" src="assets/kolkata-street.svg"
+            alt="" />
+        </div>
+        <div class="home-footer__watermarkLayer home-footer__watermarkLayer--right">
+          <img class="home-footer__watermarkImage home-footer__watermarkImage--right" src="assets/community-puja.svg"
+            alt="" />
+        </div>
+      </div>
+
+      <div class="home-footer__inner">
+        <div class="home-footer__grid">
+          <section class="home-footer__brandBlock">
+            <div class="home-footer__brandRow">
+              <span class="home-footer__mark" aria-hidden="true"><i></i><i></i><i></i></span>
+              <div>
+                <p id="footer-title">BONGIO.SOMITI</p>
+                <span>Connecting Heritage &amp; Technology</span>
+              </div>
+            </div>
+            <p class="home-footer__copy">A slim cultural event footer for campus gatherings, shared meals, puja seasons,
+              and community memories.</p>
+            <p class="home-footer__micro">In collaboration with IIIT Hyderabad</p>
+          </section>
+
+          <section class="home-footer__column">
+            <p class="home-footer__sectionLabel">Explore</p>
+            <div class="home-footer__linkList" aria-label="Explore links">
+              <a href="#home">Home</a>
+              <a href="#events">Events</a>
+              <a href="#story">Story</a>
+              <a href="#story">Our Story</a>
+            </div>
+          </section>
+
+          <section class="home-footer__column">
+            <p class="home-footer__sectionLabel">Events</p>
+            <div class="home-footer__linkList" aria-label="Event links">
+              <a href="events/mahalaya/index.html">Mahalaya</a>
+              <a href="events/saraswati/index.html">Saraswati</a>
+              <a href="#events">Community</a>
+            </div>
+          </section>
+
+          <section class="home-footer__column">
+            <p class="home-footer__sectionLabel">Connect</p>
+            <div class="home-footer__linkList" aria-label="Connect links">
+              <a href="mailto:hello@BONGIO.SOMITI.local">hello@BONGIO.SOMITI.local</a>
+              <a href="https://www.instagram.com/" target="_blank" rel="noreferrer">Instagram</a>
+              <a href="https://www.facebook.com/" target="_blank" rel="noreferrer">Facebook</a>
+              <a href="https://x.com/" target="_blank" rel="noreferrer">X / Twitter</a>
+            </div>
+          </section>
+        </div>
+
+        <div class="home-footer__bottom">
+          <p class="home-footer__legal">&copy; 2026 BONGIO.SOMITI</p>
+          <p class="home-footer__community">Warm meals, campus pujas, and shared Bengali community memory.</p>
+          <div class="home-footer__legalLinks" aria-label="Legal links">
+            <a href="#top">Back to top</a>
+            <span aria-hidden="true">&bull;</span>
+            <a href="mailto:hello@BONGIO.SOMITI.local">Contact</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <div class="story-lightbox" hidden aria-label="Photo viewer" role="dialog" aria-modal="true">
+      <div class="story-lightbox__panel">
+        <button type="button" class="story-lightbox__close" aria-label="Close photo viewer">&times;</button>
+        <div class="story-lightbox__media">
+          <img class="story-lightbox__image" src="" alt="" />
+        </div>
+        <div class="story-lightbox__copy">
+          <p class="story-lightbox__title"></p>
+          <span class="story-lightbox__date"></span>
+          <strong class="story-lightbox__caption"></strong>
+        </div>
+      </div>
+    </div>
+  </main>
+</body>
+
+</html>
