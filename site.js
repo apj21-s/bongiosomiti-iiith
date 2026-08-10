@@ -523,7 +523,7 @@
           status.innerHTML = `<strong>Registration successful!</strong><br>Generated Pass Token: <code>${ticket.token}</code><br>Redirecting to your digital pass preview...`;
         }
 
-        const target = form.dataset.passTarget || "pass/?token=";
+        const target = form.dataset.passTarget || "pass/index.html?token=";
         window.setTimeout(() => {
           window.location.href = `${target}${encodeURIComponent(ticket.token)}`;
         }, 700);
@@ -598,7 +598,7 @@
     // Scanner shortcut
     const scanBtn = $(".pass-world__openScanner", root);
     scanBtn?.addEventListener("click", () => {
-      window.location.href = `admin/scanner/?token=${encodeURIComponent(ticket.token)}`;
+      window.location.href = `admin/scanner/index.html?token=${encodeURIComponent(ticket.token)}`;
     });
 
     // Pass Lookup Box (if present)
@@ -610,7 +610,7 @@
         const query = (input?.value || "").trim();
         const found = UtsavDB.findTicketByAttendee(query);
         if (found) {
-          window.location.href = `pass/?token=${encodeURIComponent(found.token)}`;
+          window.location.href = `pass/index.html?token=${encodeURIComponent(found.token)}`;
         } else {
           showToast("No pass found matching that token or ID.", "error");
         }
@@ -885,7 +885,7 @@
           <tr>
             <td><strong>${escapeHtml(t.participantName)}</strong><br><small>${escapeHtml(t.collegeId || "")}</small></td>
             <td>${escapeHtml(t.eventName)}</td>
-            <td><a class="token-link" href="pass/?token=${encodeURIComponent(t.token)}" title="View Pass"><code>${escapeHtml(t.token)}</code></a></td>
+            <td><a class="token-link" href="pass/index.html?token=${encodeURIComponent(t.token)}" title="View Pass"><code>${escapeHtml(t.token)}</code></a></td>
             <td><span class="badge badge--${t.status.toLowerCase()}">${escapeHtml(t.status)}</span></td>
             <td>${formatDate(t.createdAt)}</td>
           </tr>`
@@ -962,7 +962,7 @@
             <td><span class="badge badge--${evt.status.toLowerCase()}">${escapeHtml(evt.status)}</span></td>
             <td>
               <div class="action-btn-group">
-                <a class="btn btn-sm btn-secondary" href="events/${encodeURIComponent(evt.slug)}/" title="View public page">View Page</a>
+                <a class="btn btn-sm btn-secondary" href="events/${encodeURIComponent(evt.slug)}/index.html" title="View public page">View Page</a>
                 <button class="btn btn-sm btn-danger delete-event-btn" data-slug="${escapeHtml(evt.slug)}">Delete</button>
               </div>
             </td>
@@ -1016,7 +1016,7 @@
       showToast(`Event "${newEvent.name}" created successfully!`, "success");
 
       setTimeout(() => {
-        window.location.href = "admin/events/";
+        window.location.href = "admin/events/index.html";
       }, 700);
     });
   }
@@ -1084,13 +1084,13 @@
             <small class="text-muted">${escapeHtml(t.phone || "")}</small>
           </td>
           <td>${escapeHtml(t.eventName)}</td>
-          <td><a class="token-link" href="pass/?token=${encodeURIComponent(t.token)}" target="_blank" title="Open Digital Pass"><code>${escapeHtml(t.token)}</code></a></td>
+          <td><a class="token-link" href="pass/index.html?token=${encodeURIComponent(t.token)}" target="_blank" title="Open Digital Pass"><code>${escapeHtml(t.token)}</code></a></td>
           <td><strong>${formatCurrency(t.amount)}</strong><br><small class="text-muted">${escapeHtml(t.utr || "Verified")}</small></td>
           <td><span class="badge badge--${t.status.toLowerCase()}">${escapeHtml(t.status)}</span></td>
           <td><small>${formatDate(t.createdAt)}</small></td>
           <td>
             <div class="action-btn-group">
-              <a class="btn btn-sm btn-secondary" href="pass/?token=${encodeURIComponent(t.token)}" target="_blank">Pass</a>
+              <a class="btn btn-sm btn-secondary" href="pass/index.html?token=${encodeURIComponent(t.token)}" target="_blank">Pass</a>
               <button class="btn btn-sm btn-danger delete-ticket-btn" data-token="${escapeHtml(t.token)}">✕</button>
             </div>
           </td>
@@ -1247,7 +1247,7 @@
           <td><small>${formatDate(c.timestamp)}</small></td>
           <td><strong>${escapeHtml(c.participantName)}</strong></td>
           <td>${escapeHtml(c.eventName)}</td>
-          <td><a class="token-link" href="pass/?token=${encodeURIComponent(c.token)}" target="_blank"><code>${escapeHtml(c.token)}</code></a></td>
+          <td><a class="token-link" href="pass/index.html?token=${encodeURIComponent(c.token)}" target="_blank"><code>${escapeHtml(c.token)}</code></a></td>
           <td><span class="pill">${escapeHtml(c.gate || "Gate 1")}</span></td>
           <td>
             <button class="btn btn-sm btn-secondary undo-checkin-btn" data-id="${escapeHtml(c.id)}">Undo Entry</button>
@@ -1291,7 +1291,7 @@
         status.innerHTML = `<strong>Signed in successfully!</strong> Redirecting to dashboard...`;
       }
       setTimeout(() => {
-        window.location.href = "admin/";
+        window.location.href = "admin/index.html";
       }, 600);
     }
 
@@ -1331,7 +1331,7 @@
           status.innerHTML = `<strong>Pass Found!</strong> Redirecting to pass preview...`;
         }
         setTimeout(() => {
-          window.location.href = `pass/?token=${encodeURIComponent(ticket.token)}`;
+          window.location.href = `pass/index.html?token=${encodeURIComponent(ticket.token)}`;
         }, 600);
       } else {
         showToast("No pass found matching that College ID or Token.", "error");
@@ -1354,7 +1354,7 @@
     container.innerHTML = events
       .map(
         (evt) => `
-        <a class="events-scene__card" href="events/${encodeURIComponent(evt.slug)}/">
+        <a class="events-scene__card" href="events/${encodeURIComponent(evt.slug)}/index.html">
           <div class="events-scene__card-media">
             <img class="events-scene__card-image" src="${escapeHtml(evt.image || 'assets/community-puja.svg')}" alt="${escapeHtml(evt.name)}" style="object-position:center 30%" />
           </div>

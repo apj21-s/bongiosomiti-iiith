@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UTSAVPASS - Attendee Registrations</title>
+    <base href="../../" />
+    <link rel="stylesheet" href="styles.css" />
+    <script defer src="vendor/qrcode.js"></script>
+    <script defer src="site.js"></script>
+  </head>
+  <body>
+    <header class="home-strip">
+      <div class="home-strip__inner">
+        <a class="home-strip__brand" href="index.html">UTSAVPASS &bull; ADMIN</a>
+        <nav class="home-strip__nav" aria-label="Admin Navigation">
+          <a class="home-strip__link" href="index.html">WEBSITE</a>
+          <a class="home-strip__link" href="admin/index.html">DASHBOARD</a>
+          <a class="home-strip__link" href="admin/events/index.html">EVENTS</a>
+          <a class="home-strip__link" href="admin/registrations/index.html" aria-current="page">REGISTRATIONS</a>
+          <a class="home-strip__link" href="admin/payments/index.html">PAYMENTS</a>
+          <a class="home-strip__link" href="admin/scanner/index.html">SCANNER</a>
+          <a class="home-strip__link" href="admin/check-ins/index.html">CHECK-INS</a>
+        </nav>
+        <a class="home-strip__action" href="admin/login/index.html">SIGN OUT</a>
+      </div>
+    </header>
+
+    <main class="panel container" data-admin-registrations style="max-width: 1300px; margin: 2rem auto; padding: 0;">
+      <div class="panel-head" style="padding: 24px 28px;">
+        <div>
+          <p class="section-label">Attendee Directory</p>
+          <h1 style="font-size: 2rem; margin: 4px 0 6px;">Event Registrations</h1>
+          <p>Search, filter, and verify passes issued to students and community guests.</p>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button id="admin-reg-export" class="btn btn-secondary" type="button">📥 Export to CSV</button>
+          <a class="btn btn-primary" href="admin/index.html">Dashboard &rarr;</a>
+        </div>
+      </div>
+
+      <div class="grid" style="padding: 24px 28px;">
+        <!-- Filter & Search Bar -->
+        <div class="filter-bar" style="grid-column: 1 / -1; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; background: rgba(255,255,255,0.6); padding: 14px 18px; border-radius: 16px; border: 1px solid var(--border);">
+          <div style="flex: 2; min-width: 240px;">
+            <input id="admin-reg-search" placeholder="🔍 Search by name, College ID, phone, email, or token..." style="width:100%;padding:10px 14px;border-radius:12px;border:1px solid var(--border);background:#fff;" />
+          </div>
+          <div style="flex: 1; min-width: 160px;">
+            <select id="admin-reg-filter-event" style="width:100%;padding:10px 14px;border-radius:12px;border:1px solid var(--border);background:#fff;">
+              <option value="">All Events</option>
+            </select>
+          </div>
+          <div style="flex: 1; min-width: 140px;">
+            <select id="admin-reg-filter-status" style="width:100%;padding:10px 14px;border-radius:12px;border:1px solid var(--border);background:#fff;">
+              <option value="">All Statuses</option>
+              <option value="UNUSED">UNUSED</option>
+              <option value="USED">USED (Checked In)</option>
+              <option value="PENDING_PAYMENT">PENDING_PAYMENT</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Registrations Table -->
+        <div class="table-responsive" style="grid-column: 1 / -1; background: rgba(255,255,255,0.7); border-radius: 20px; border: 1px solid var(--border); padding: 14px; margin-top: 0.5rem;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Attendee &amp; College ID</th>
+                <th>Contact Info</th>
+                <th>Event</th>
+                <th>Pass Token</th>
+                <th>Amount &amp; UTR</th>
+                <th>Status</th>
+                <th>Registration Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="admin-registrations-tbody">
+              <tr><td colspan="8" class="text-muted">Loading registrations...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>
+
+
+
+

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UTSAVPASS - Create New Cultural Event</title>
+    <base href="../../../" />
+    <link rel="stylesheet" href="styles.css" />
+    <script defer src="vendor/qrcode.js"></script>
+    <script defer src="site.js"></script>
+  </head>
+  <body>
+    <header class="home-strip">
+      <div class="home-strip__inner">
+        <a class="home-strip__brand" href="index.html">UTSAVPASS &bull; ADMIN</a>
+        <nav class="home-strip__nav" aria-label="Admin Navigation">
+          <a class="home-strip__link" href="index.html">WEBSITE</a>
+          <a class="home-strip__link" href="admin/index.html">DASHBOARD</a>
+          <a class="home-strip__link" href="admin/events/index.html" aria-current="page">EVENTS</a>
+          <a class="home-strip__link" href="admin/registrations/index.html">REGISTRATIONS</a>
+          <a class="home-strip__link" href="admin/payments/index.html">PAYMENTS</a>
+          <a class="home-strip__link" href="admin/scanner/index.html">SCANNER</a>
+          <a class="home-strip__link" href="admin/check-ins/index.html">CHECK-INS</a>
+        </nav>
+        <a class="home-strip__action" href="admin/login/index.html">SIGN OUT</a>
+      </div>
+    </header>
+
+    <main class="panel container" style="max-width: 860px; margin: 2rem auto; padding: 0;">
+      <div class="panel-head" style="padding: 24px 28px;">
+        <div>
+          <p class="section-label">Organiser Event Creator</p>
+          <h1 style="font-size: 2rem; margin: 4px 0 6px;">Create New Cultural Event</h1>
+          <p>Publish a new event to the UTSAVPASS public catalog with custom pricing, venue, and pass capacity.</p>
+        </div>
+        <a class="btn btn-secondary" href="admin/events/index.html">&larr; Back to Events</a>
+      </div>
+
+      <div class="grid" style="padding: 24px 28px;">
+        <form id="admin-new-event-form" class="section" style="padding:0;">
+          <div class="field-grid">
+            <div class="field">
+              <label for="event_name">Event Name *</label>
+              <input id="event_name" name="name" placeholder="e.g. Bijoya Sammelani 2026" required />
+            </div>
+            <div class="field">
+              <label for="event_slug">URL Slug *</label>
+              <input id="event_slug" name="slug" placeholder="e.g. bijoya-sammelani" required />
+            </div>
+            <div class="field">
+              <label for="event_category">Category / Tag</label>
+              <input id="event_category" name="category" placeholder="e.g. Autumn Gathering / Music Evening" />
+            </div>
+            <div class="field">
+              <label for="event_date">Event Date *</label>
+              <input id="event_date" name="date" type="date" required />
+            </div>
+            <div class="field">
+              <label for="event_venue">Venue *</label>
+              <input id="event_venue" name="venue" placeholder="e.g. Main Auditorium / Courtyard" required />
+            </div>
+            <div class="field">
+              <label for="event_capacity">Max Ticket Capacity *</label>
+              <input id="event_capacity" name="capacity" type="number" min="1" max="5000" placeholder="150" required />
+            </div>
+            <div class="field">
+              <label for="event_price">Pass Price (INR) *</label>
+              <input id="event_price" name="price" type="number" min="0" placeholder="0 for free, or enter amount in ₹" required />
+            </div>
+            <div class="field" style="grid-column: 1 / -1;">
+              <label for="event_description">Description / Narrative</label>
+              <textarea id="event_description" name="description" rows="3" placeholder="Describe the cultural event, food, traditions, and schedule..." style="width:100%;padding:12px;border-radius:14px;border:1px solid var(--border);"></textarea>
+            </div>
+          </div>
+          <div class="row-actions" style="margin-top:1.5rem;display:flex;gap:12px;">
+            <button class="btn btn-primary" type="submit" style="flex:1;">Publish Event to Catalog</button>
+            <a class="btn btn-secondary" href="admin/events/index.html">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </main>
+  </body>
+</html>
+
+
+
+

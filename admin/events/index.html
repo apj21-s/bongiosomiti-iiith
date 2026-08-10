@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UTSAVPASS - Manage Cultural Events</title>
+    <base href="../../" />
+    <link rel="stylesheet" href="styles.css" />
+    <script defer src="vendor/qrcode.js"></script>
+    <script defer src="site.js"></script>
+  </head>
+  <body>
+    <header class="home-strip">
+      <div class="home-strip__inner">
+        <a class="home-strip__brand" href="index.html">UTSAVPASS &bull; ADMIN</a>
+        <nav class="home-strip__nav" aria-label="Admin Navigation">
+          <a class="home-strip__link" href="index.html">WEBSITE</a>
+          <a class="home-strip__link" href="admin/index.html">DASHBOARD</a>
+          <a class="home-strip__link" href="admin/events/index.html" aria-current="page">EVENTS</a>
+          <a class="home-strip__link" href="admin/registrations/index.html">REGISTRATIONS</a>
+          <a class="home-strip__link" href="admin/payments/index.html">PAYMENTS</a>
+          <a class="home-strip__link" href="admin/scanner/index.html">SCANNER</a>
+          <a class="home-strip__link" href="admin/check-ins/index.html">CHECK-INS</a>
+        </nav>
+        <a class="home-strip__action" href="admin/login/index.html">SIGN OUT</a>
+      </div>
+    </header>
+
+    <main class="panel container" data-admin-events style="max-width: 1300px; margin: 2rem auto; padding: 0;">
+      <div class="panel-head" style="padding: 24px 28px;">
+        <div>
+          <p class="section-label">Events Directory</p>
+          <h1 style="font-size: 2rem; margin: 4px 0 6px;">Manage Cultural Events</h1>
+          <p>Configure event listings, monitor booking capacity, manage ticket pricing, and open public pages.</p>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <a class="btn btn-primary" href="admin/events/new/index.html">+ Create New Event</a>
+          <a class="btn btn-secondary" href="admin/index.html">Dashboard &rarr;</a>
+        </div>
+      </div>
+
+      <div class="grid" style="padding: 24px 28px;">
+        <div class="table-responsive" style="grid-column: 1 / -1; background: rgba(255,255,255,0.7); border-radius: 20px; border: 1px solid var(--border); padding: 14px;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Event Name &amp; Category</th>
+                <th>Scheduled Date</th>
+                <th>Venue</th>
+                <th>Pass Price</th>
+                <th>Registration Capacity</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="admin-events-tbody">
+              <tr><td colspan="7" class="text-muted">Loading event catalog...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>
+
+
+
+

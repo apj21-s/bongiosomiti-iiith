@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UTSAVPASS - Organiser Admin Dashboard</title>
+    <base href="../" />
+    <link rel="stylesheet" href="styles.css" />
+    <script defer src="vendor/qrcode.js"></script>
+    <script defer src="site.js"></script>
+  </head>
+  <body>
+    <header class="home-strip">
+      <div class="home-strip__inner">
+        <a class="home-strip__brand" href="index.html">UTSAVPASS &bull; ADMIN</a>
+        <nav class="home-strip__nav" aria-label="Admin Navigation">
+          <a class="home-strip__link" href="index.html">WEBSITE</a>
+          <a class="home-strip__link" href="admin/index.html" aria-current="page">DASHBOARD</a>
+          <a class="home-strip__link" href="admin/events/index.html">EVENTS</a>
+          <a class="home-strip__link" href="admin/registrations/index.html">REGISTRATIONS</a>
+          <a class="home-strip__link" href="admin/payments/index.html">PAYMENTS</a>
+          <a class="home-strip__link" href="admin/scanner/index.html">SCANNER</a>
+          <a class="home-strip__link" href="admin/check-ins/index.html">CHECK-INS</a>
+        </nav>
+        <a class="home-strip__action" href="admin/login/index.html">SIGN OUT</a>
+      </div>
+    </header>
+
+    <main class="panel container" data-admin-dashboard style="max-width: 1300px; margin: 2rem auto; padding: 0;">
+      <div class="panel-head" style="padding: 24px 28px;">
+        <div>
+          <p class="section-label">Organiser Operations Center</p>
+          <h1 style="font-size: 2rem; margin: 4px 0 6px;">Event Operations Dashboard</h1>
+          <p>Real-time overview of college cultural events, registration passes, payments, and gate scanner entries.</p>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <a class="btn btn-primary" href="admin/events/new/index.html">+ Create New Event</a>
+          <a class="btn btn-secondary" href="admin/scanner/index.html">📷 Launch Scanner</a>
+        </div>
+      </div>
+
+      <div class="grid" style="padding: 24px 28px;">
+        <!-- Live Stat Metric Cards -->
+        <div class="summary-bar" style="grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
+          <div class="stat-card">
+            <span class="stat-card__label">Active Events</span>
+            <strong id="stat-events" class="stat-card__val">2</strong>
+            <small class="text-muted">In public catalog</small>
+          </div>
+          <div class="stat-card">
+            <span class="stat-card__label">Total Registrations</span>
+            <strong id="stat-tickets" class="stat-card__val">0</strong>
+            <small class="text-muted">Passes issued</small>
+          </div>
+          <div class="stat-card">
+            <span class="stat-card__label">Revenue Collected</span>
+            <strong id="stat-revenue" class="stat-card__val">₹0</strong>
+            <small class="text-muted">Verified UPI &amp; bookings</small>
+          </div>
+          <div class="stat-card">
+            <span class="stat-card__label">Verified Check-ins</span>
+            <strong id="stat-checkins" class="stat-card__val">0</strong>
+            <small class="text-muted">Scanned at gates</small>
+          </div>
+        </div>
+
+        <!-- Quick Navigation Shortcuts -->
+        <div class="admin-quick-nav" style="grid-column: 1 / -1; display: flex; gap: 10px; flex-wrap: wrap; margin-top: 0.5rem;">
+          <a class="btn btn-secondary" href="admin/events/index.html">📅 Manage Events</a>
+          <a class="btn btn-secondary" href="admin/registrations/index.html">👥 View Registrations</a>
+          <a class="btn btn-secondary" href="admin/payments/index.html">💳 Review Payments</a>
+          <a class="btn btn-secondary" href="admin/scanner/index.html">📱 QR Gate Scanner</a>
+          <a class="btn btn-secondary" href="admin/check-ins/index.html">📋 Check-in Activity Log</a>
+        </div>
+
+        <!-- Recent Registrations & Check-ins Grid -->
+        <div style="grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fit, minmax(460px, 1fr)); gap: 24px; margin-top: 1.5rem;">
+          <!-- Recent Registrations Card -->
+          <div class="admin-card" style="background:rgba(255,255,255,0.75);border-radius:20px;border:1px solid var(--border);padding:20px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+              <h3 style="margin:0;font-size:1.15rem;">Recent Registrations</h3>
+              <a href="admin/registrations/index.html" class="btn btn-sm btn-secondary">View All &rarr;</a>
+            </div>
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Attendee</th>
+                    <th>Event</th>
+                    <th>Token</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-recent-registrations">
+                  <tr><td colspan="5" class="text-muted">Loading registrations...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Live Gate Check-ins Stream -->
+          <div class="admin-card" style="background:rgba(255,255,255,0.75);border-radius:20px;border:1px solid var(--border);padding:20px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+              <h3 style="margin:0;font-size:1.15rem;">Gate Check-in Activity</h3>
+              <a href="admin/check-ins/index.html" class="btn btn-sm btn-secondary">View All &rarr;</a>
+            </div>
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Attendee</th>
+                    <th>Event</th>
+                    <th>Gate</th>
+                    <th>Timestamp</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-recent-checkins">
+                  <tr><td colspan="4" class="text-muted">Loading check-in stream...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Database Controls & Organizer Meta -->
+        <div style="grid-column: 1 / -1; margin-top: 2rem; padding: 18px 24px; background: rgba(255,255,255,0.5); border-radius: 18px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+          <div>
+            <strong>Client-Side Storage Engine Active (Local Mode)</strong>
+            <p class="text-muted" style="margin:0;font-size:0.85rem;">All registrations, payments, scanner logs, and events persist securely in your browser.</p>
+          </div>
+          <div style="display:flex;gap:10px;">
+            <button id="admin-reset-db" class="btn btn-sm btn-danger" type="button">Reset Sample Data</button>
+            <a class="btn btn-sm btn-secondary" href="index.html" target="_blank">Preview Public Site &rarr;</a>
+          </div>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>
+
+
+
+

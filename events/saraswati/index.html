@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UTSAVPASS - Saraswati Puja</title>
+    <base href="../../" />
+    <link rel="stylesheet" href="styles.css" />
+    <script defer src="vendor/qrcode.js"></script>
+    <script defer src="site.js"></script>
+  </head>
+  <body>
+    <main class="saraswati-page">
+      <section class="saraswati-card" aria-labelledby="saraswati-title">
+        <div class="saraswati-card__topbar">
+          <a class="brand" href="index.html" style="font-weight:800;letter-spacing:0.1em;color:inherit;">UTSAVPASS</a>
+          <nav class="nav" style="gap:12px;">
+            <a href="index.html">Home</a>
+            <a href="events/index.html" aria-current="page">Events</a>
+            <a href="pass/index.html">My Pass</a>
+            <a href="admin/index.html">Admin</a>
+          </nav>
+        </div>
+
+        <div class="saraswati-card__hero">
+          <img class="saraswati-card__heroImage" src="assets/saraswati-puja.svg" alt="Saraswati Puja Celebration" />
+          <div class="saraswati-card__heroOverlay" aria-hidden="true"></div>
+          <div class="saraswati-card__heroBadge" aria-hidden="true">
+            <span>SARASWATI PUJA 2027</span>
+            <span>CAMPUS CELEBRATION</span>
+          </div>
+        </div>
+
+        <div class="saraswati-card__body">
+          <div class="saraswati-card__details">
+            <p class="section-label">Campus Puja</p>
+            <h1 id="saraswati-title">Saraswati Puja 2027</h1>
+            <p class="saraswati-card__lede">A warm campus procession with flowers, morning anjali, recitation, traditional music, and student-led worship.</p>
+
+            <div class="saraswati-card__metaGrid">
+              <div class="saraswati-card__metaBlock"><span>Schedule</span><strong>21 January 2027</strong></div>
+              <div class="saraswati-card__metaBlock"><span>Venue</span><strong>College Campus</strong></div>
+              <div class="saraswati-card__metaBlock"><span>Pass Model</span><strong>Free Entry</strong></div>
+              <div class="saraswati-card__metaBlock"><span>Capacity</span><strong>180 Attendees</strong></div>
+            </div>
+
+            <div class="saraswati-card__board" style="margin-top:1.5rem;">
+              <img class="saraswati-card__boardImage" src="assets/flowers.svg" alt="Puja flowers decoration" />
+              <div class="saraswati-card__boardOverlay" aria-hidden="true"></div>
+              <div class="saraswati-card__boardCopy">
+                <p>Morning Anjali &amp; Prasad Distribution</p>
+                <span>Open for all students, faculty, and campus guests</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="mahalaya-card__formPane" style="background:rgba(255,255,255,0.72);border-radius:24px;padding:24px;border:1px solid var(--border);">
+            <div class="mahalaya-card__registerLabel" style="font-weight:700;color:var(--brand);margin-bottom:12px;">Get Your Free Puja Pass</div>
+            <form class="section" data-vanilla-registration data-event-slug="saraswati" data-event-name="Saraswati Puja" data-event-venue="College Campus" data-ticket-prefix="SPJ" data-pass-target="pass/index.html?token=">
+              <div class="section-title">
+                <h2>Register for Puja</h2>
+                <p>Instant free pass issuance with digital QR code.</p>
+              </div>
+              <div class="field-grid">
+                <div class="field"><label for="spj_full_name">Full name *</label><input id="spj_full_name" name="full_name" placeholder="e.g. Ananya Sen" required /></div>
+                <div class="field"><label for="spj_college_id">College ID *</label><input id="spj_college_id" name="college_id" placeholder="e.g. 202402118" required /></div>
+                <div class="field"><label for="spj_phone">Phone *</label><input id="spj_phone" name="phone" type="tel" placeholder="+91 98301 22334" required /></div>
+                <div class="field"><label for="spj_email">Email</label><input id="spj_email" name="email" type="email" placeholder="ananya.sen@students.iiit.ac.in" /></div>
+              </div>
+              <div class="row-actions" style="margin-top:1.25rem;">
+                <button class="btn btn-primary" type="submit" style="width:100%;">Claim Free Digital Pass</button>
+              </div>
+              <div class="form-status empty-state" aria-live="polite"></div>
+            </form>
+          </div>
+        </div>
+
+        <div class="saraswati-card__footer">
+          <div class="saraswati-card__accent">
+            <img class="saraswati-card__accentImage" src="assets/kash-cluster.svg" alt="Autumn Kash Cluster" />
+          </div>
+          <div class="saraswati-card__footerText">
+            <p>CAMPUS PUJA ENVIRONMENT &bull; TRADITION MEETS INNOVATION</p>
+            <span>Campus Season 2027 &bull; IIIT Bongio Samiti</span>
+          </div>
+          <a href="pass/index.html?token=SPJ-DEMO-001" class="saraswati-card__cta">View Demo Pass</a>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
+
+
+
+

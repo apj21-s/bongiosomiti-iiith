@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UTSAVPASS - Mahalaya Bhoj</title>
+    <base href="../../" />
+    <link rel="stylesheet" href="styles.css" />
+    <script defer src="vendor/qrcode.js"></script>
+    <script defer src="site.js"></script>
+  </head>
+  <body>
+    <main class="mahalaya-page">
+      <section class="mahalaya-card" aria-labelledby="mahalaya-title">
+        <div class="mahalaya-card__topbar">
+          <a class="brand" href="index.html" style="font-weight:800;letter-spacing:0.1em;color:inherit;">UTSAVPASS</a>
+          <nav class="nav" style="gap:12px;">
+            <a href="index.html">Home</a>
+            <a href="events/index.html" aria-current="page">Events</a>
+            <a href="pass/index.html">My Pass</a>
+            <a href="admin/index.html">Admin</a>
+          </nav>
+        </div>
+
+        <div class="mahalaya-card__hero">
+          <img class="mahalaya-card__heroImage" src="assets/mahalaya-bhoj.svg" alt="Mahalaya Bhoj Celebration" />
+          <div class="mahalaya-card__heroOverlay" aria-hidden="true"></div>
+          <div class="mahalaya-card__heroRibbon" aria-hidden="true">
+            <span>MAHALAYA BHOJ 2026</span>
+            <span>(NEIGHBOURHOOD &amp; BHOJ)</span>
+          </div>
+        </div>
+
+        <div class="mahalaya-card__body">
+          <div class="mahalaya-card__story">
+            <p class="section-label">Mahalaya Bhoj</p>
+            <h1 id="mahalaya-title">Register for Mahalaya Bhoj</h1>
+            <p class="mahalaya-card__lede">Shared tables, smoke, brass, and a warm autumn gathering built around authentic food, adda, and ritual warmth.</p>
+
+            <ul class="mahalaya-card__facts">
+              <li><span>Event date</span><strong>12 October 2026</strong></li>
+              <li><span>Venue</span><strong>Community Courtyard</strong></li>
+              <li><span>Capacity</span><strong>120 Attendees</strong></li>
+              <li><span>Price</span><strong>INR 250 / Pass</strong></li>
+            </ul>
+
+            <div style="margin-top:1.5rem;padding:1rem;background:rgba(255,255,255,0.6);border-radius:16px;border:1px solid var(--border);">
+              <strong style="color:var(--brand);display:block;margin-bottom:0.25rem;">Payment Note</strong>
+              <small class="text-muted">Pay via UPI (GPay/PhonePe/Paytm) to <code>utsav.iiit@okhdfcbank</code> and enter the UTR / Transaction ID below.</small>
+            </div>
+          </div>
+
+          <div class="mahalaya-card__formPane">
+            <div class="mahalaya-card__registerLabel">Reserve Your Bhoj Pass</div>
+            <form class="section" data-vanilla-registration data-event-slug="mahalaya" data-event-name="Mahalaya Bhoj" data-event-venue="Community Courtyard" data-ticket-prefix="MBH" data-pass-target="pass/index.html?token=">
+              <div class="section-title">
+                <h2>Participant Details</h2>
+                <p>Submit details to instantly generate your live digital QR pass.</p>
+              </div>
+              <div class="field-grid">
+                <div class="field"><label for="full_name">Full name *</label><input id="full_name" name="full_name" placeholder="e.g. Arka Mukhopadhyay" required /></div>
+                <div class="field"><label for="college_id">College ID *</label><input id="college_id" name="college_id" placeholder="e.g. 202401042" required /></div>
+                <div class="field"><label for="phone">Phone *</label><input id="phone" name="phone" type="tel" placeholder="+91 98765 43210" required /></div>
+                <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" placeholder="name@iiit.ac.in" /></div>
+                <div class="field"><label for="utr">UTR / Transaction ID *</label><input id="utr" name="utr" placeholder="e.g. UPI-429810294812" required /></div>
+                <div class="field"><label for="screenshotUrl">Payment Reference / Note</label><input id="screenshotUrl" name="screenshotUrl" placeholder="Optional note or reference" /></div>
+              </div>
+              <div class="row-actions" style="margin-top:1.25rem;">
+                <button class="btn btn-primary" type="submit" style="width:100%;">Create Booking &amp; Generate Pass</button>
+              </div>
+              <div class="form-status empty-state" aria-live="polite"></div>
+            </form>
+          </div>
+        </div>
+
+        <div class="mahalaya-card__footer">
+          <div class="mahalaya-card__passCopy">
+            <p>UTSAVPASS</p>
+            <span>Digital Pass Preview (Sample)</span>
+          </div>
+          <a href="pass/index.html?token=MBH-DEMO-001" class="mahalaya-card__pass" aria-label="Open digital pass preview">
+            <img class="mahalaya-card__passImage" src="assets/digital-pass-reference.svg" alt="Digital pass preview" />
+          </a>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
+
+
+
+

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UTSAVPASS - Organiser Sign In</title>
+    <base href="../../" />
+    <link rel="stylesheet" href="styles.css" />
+    <script defer src="vendor/qrcode.js"></script>
+    <script defer src="site.js"></script>
+  </head>
+  <body>
+    <header class="home-strip">
+      <div class="home-strip__inner">
+        <a class="home-strip__brand" href="index.html">UTSAVPASS &bull; ORGANISER</a>
+        <nav class="home-strip__nav" aria-label="Navigation">
+          <a class="home-strip__link" href="index.html">HOME</a>
+          <a class="home-strip__link" href="events/index.html">EVENTS</a>
+          <a class="home-strip__link" href="pass/index.html">MY PASS</a>
+          <a class="home-strip__link" href="admin/index.html">ADMIN</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="panel container" style="max-width: 580px; margin: 3rem auto; padding: 0;">
+      <div class="panel-head" style="padding: 24px 28px;">
+        <div>
+          <p class="section-label">Organiser Security</p>
+          <h1 style="font-size: 2rem; margin: 4px 0 6px;">Admin Access</h1>
+          <p>Sign in to access event controls, gate scanner verification, and payment records.</p>
+        </div>
+      </div>
+
+      <div class="grid" style="padding: 24px 28px;">
+        <form class="section" data-vanilla-login style="padding:0;">
+          <div class="field" style="margin-bottom:1.25rem;">
+            <label for="email" style="font-weight:600;display:block;margin-bottom:6px;">Organiser Email</label>
+            <input id="email" name="email" type="email" value="admin@iiit.ac.in" placeholder="admin@iiit.ac.in" style="width:100%;padding:12px 16px;border-radius:14px;border:1px solid var(--border);font-size:1rem;" required />
+          </div>
+
+          <div class="row-actions" style="display:flex;flex-direction:column;gap:10px;">
+            <button class="btn btn-primary" type="submit" style="width:100%;">Sign In as Organiser &rarr;</button>
+            <button id="admin-quick-login-btn" class="btn btn-secondary" type="button" style="width:100%;">⚡ One-Click Demo Admin Login</button>
+          </div>
+
+          <div class="form-status" aria-live="polite" style="margin-top:1rem;"></div>
+        </form>
+
+        <div style="margin-top:1.5rem;padding-top:1.25rem;border-top:1px solid var(--border);text-align:center;">
+          <a href="login/index.html" class="text-muted" style="font-size:0.9rem;">&larr; Are you an Attendee? Lookup your pass here</a>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>
+
+
+
+

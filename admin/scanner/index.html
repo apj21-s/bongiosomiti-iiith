@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UTSAVPASS - Gate QR Scanner</title>
+    <base href="../../" />
+    <link rel="stylesheet" href="styles.css" />
+    <script defer src="vendor/qrcode.js"></script>
+    <script defer src="site.js"></script>
+  </head>
+  <body>
+    <header class="home-strip">
+      <div class="home-strip__inner">
+        <a class="home-strip__brand" href="index.html">UTSAVPASS &bull; ADMIN</a>
+        <nav class="home-strip__nav" aria-label="Admin Navigation">
+          <a class="home-strip__link" href="index.html">WEBSITE</a>
+          <a class="home-strip__link" href="admin/index.html">DASHBOARD</a>
+          <a class="home-strip__link" href="admin/events/index.html">EVENTS</a>
+          <a class="home-strip__link" href="admin/registrations/index.html">REGISTRATIONS</a>
+          <a class="home-strip__link" href="admin/payments/index.html">PAYMENTS</a>
+          <a class="home-strip__link" href="admin/scanner/index.html" aria-current="page">SCANNER</a>
+          <a class="home-strip__link" href="admin/check-ins/index.html">CHECK-INS</a>
+        </nav>
+        <a class="home-strip__action" href="admin/login/index.html">SIGN OUT</a>
+      </div>
+    </header>
+
+    <main class="panel container" data-scanner-page data-event-slug="all" style="max-width: 1300px; margin: 2rem auto; padding: 0;">
+      <div class="panel-head" style="padding: 24px 28px;">
+        <div>
+          <p class="section-label">Gate Security &amp; Admissions</p>
+          <h1 style="font-size: 2rem; margin: 4px 0 6px;">Live Gate Scanner</h1>
+          <p>Validate QR passes via device camera, manual token entry, or quick preset test tokens.</p>
+        </div>
+        <a class="btn btn-secondary" href="admin/check-ins/index.html">View Check-in History &rarr;</a>
+      </div>
+
+      <div class="screen-grid scanner-grid" style="padding: 24px 28px; display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 24px;">
+        <!-- Camera Stage -->
+        <div class="art-panel scanner-stage">
+          <div class="frame-tag">Live Camera Optical Scanner</div>
+          <div class="scene-scanner scanner-shell">
+            <div class="scanner-card">
+              <div class="scanner-brand">
+                <strong>UTSAVPASS GATE SCANNER</strong>
+                <span>IIIT Bongio Samiti &bull; Realtime Verification</span>
+              </div>
+              <div class="scan-area" style="position:relative;background:#1a1614;border-radius:18px;overflow:hidden;min-height:260px;display:flex;align-items:center;justify-content:center;">
+                <video class="scan-video" muted playsinline style="width:100%;height:100%;object-fit:cover;"></video>
+                <div class="scan-overlay"></div>
+              </div>
+              <div class="scanner-status" style="margin-top:12px;padding:12px;background:rgba(255,255,255,0.7);border-radius:12px;text-align:center;">
+                <strong class="scanner-status__title" style="display:block;color:var(--brand);font-size:1rem;">READY</strong>
+                <span class="scanner-status__body" style="font-size:0.85rem;color:var(--muted);">Press start to request camera access or use manual input.</span>
+              </div>
+            </div>
+            <div class="scanner-controls" style="display:flex;gap:8px;margin-top:14px;">
+              <button type="button" class="btn btn-primary scanner-start" style="flex:1;">📷 Start Camera</button>
+              <button type="button" class="btn btn-secondary scanner-stop">Stop</button>
+              <button type="button" class="btn btn-secondary scanner-reset">Reset</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Verification & Check-in Control Pane -->
+        <div class="scanner-detail" style="padding:0;">
+          <div class="panel" style="margin-top:0;background:rgba(255,255,255,0.8);border-radius:22px;border:1px solid var(--border);">
+            <div class="panel-head" style="padding:18px 22px;">
+              <div>
+                <p class="section-label">Manual / Preset Verification</p>
+                <h2 style="font-size:1.35rem;margin:2px 0;">Pass Lookup &amp; Gate Entry</h2>
+              </div>
+            </div>
+
+            <div class="section" style="padding:18px 22px;">
+              <!-- Quick test preset selector -->
+              <div class="field" style="margin-bottom:14px;">
+                <label for="scanner-quick-select" style="font-weight:600;font-size:0.85rem;color:var(--brand);">⚡ Quick Test Preset Tokens (Offline Demo)</label>
+                <select id="scanner-quick-select" style="width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:#fff;">
+                  <option value="">-- Select a preset token to test --</option>
+                </select>
+              </div>
+
+              <div class="field-grid" style="grid-template-columns: 2fr 1fr; gap:12px;">
+                <div class="field">
+                  <label for="scanner-token">Pass Token</label>
+                  <input id="scanner-token" value="MBH-DEMO-001" placeholder="Paste or type token (e.g. MBH-DEMO-001)" />
+                </div>
+                <div class="field">
+                  <label for="scanner-gate">Gate Number</label>
+                  <input id="scanner-gate" value="Gate 1" placeholder="Gate 1" />
+                </div>
+              </div>
+
+              <div class="row-actions" style="display:flex;gap:10px;margin-top:14px;">
+                <button class="btn btn-secondary scanner-lookup" type="button" style="flex:1;">Verify Pass</button>
+                <button class="btn btn-primary scanner-checkin" type="button" style="flex:1.4;">✓ Check In Attendee</button>
+              </div>
+
+              <!-- Pass Verification Result Card -->
+              <div class="result-card scanner-detailCard" style="margin-top:18px;padding:18px;border-radius:18px;border:2px solid var(--border);background:#fff;transition:all 0.25s ease;">
+                <h3 class="result-title scanner-resultName" style="margin:0 0 6px;font-size:1.25rem;">Participant</h3>
+                <p class="result-copy scanner-message" style="margin:0 0 14px;color:var(--muted);font-size:0.95rem;">Enter or scan a pass token above to inspect validity.</p>
+                <div class="meta-row" style="display:flex;gap:8px;flex-wrap:wrap;">
+                  <span class="pill scanner-resultPill">Event</span>
+                  <span class="pill scanner-resultPill">College ID</span>
+                  <span class="pill scanner-resultPill">Token</span>
+                  <span class="pill scanner-resultPill">Status</span>
+                  <span class="pill scanner-resultPill">Venue</span>
+                  <span class="pill scanner-resultPill">Gate 1</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>
+
+
+
+

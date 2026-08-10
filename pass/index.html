@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UTSAVPASS - Digital Pass</title>
+    <base href="../" />
+    <link rel="stylesheet" href="styles.css" />
+    <script defer src="vendor/qrcode.js"></script>
+    <script defer src="site.js"></script>
+  </head>
+  <body>
+    <header class="home-strip">
+      <div class="home-strip__inner">
+        <a class="home-strip__brand" href="index.html">UTSAVPASS</a>
+        <nav class="home-strip__nav" aria-label="Primary">
+          <a class="home-strip__link" href="index.html">HOME</a>
+          <a class="home-strip__link" href="events/index.html">EVENTS</a>
+          <a class="home-strip__link" href="pass/index.html" aria-current="page">MY PASS</a>
+          <a class="home-strip__link" href="admin/scanner/index.html">SCANNER</a>
+          <a class="home-strip__link" href="admin/index.html">ADMIN</a>
+        </nav>
+        <a class="home-strip__action" href="login/index.html">PASS LOOKUP</a>
+      </div>
+    </header>
+
+    <main class="pass-world" data-pass-page style="padding: 1.5rem 1rem 3rem;">
+      <section class="pass-world__scene panel" style="max-width: 1040px; margin: 0 auto;">
+        <div class="panel-head">
+          <div>
+            <p class="section-label">Digital Entry Pass</p>
+            <h1>Show this QR Pass at the Gate</h1>
+            <p class="text-muted">Present this verified pass on your phone screen or bring a printout for entry verification.</p>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span class="badge pass-world__status">UNUSED</span>
+            <button type="button" class="btn btn-secondary pass-world__print" title="Print or Save as PDF">🖨 Print Pass</button>
+          </div>
+        </div>
+
+        <div class="pass-world__layout">
+          <div class="pass-world__art">
+            <div class="pass-world__artBlock">
+              <h2 class="pass-world__event">UTSAVPASS</h2>
+              <p class="pass-world__venue">Campus Venue</p>
+              <p class="pass-world__demoNote">Verified Digital Cultural Pass &bull; IIIT Bongio Samiti</p>
+              <div class="pass-world__artImage">
+                <img class="pass-world__artVisual" src="assets/digital-pass-reference.svg" alt="Pass artwork" />
+              </div>
+              <div style="margin-top:1.5rem;display:flex;flex-direction:column;gap:8px;">
+                <button type="button" class="btn btn-primary pass-world__openScanner">Test In Gate Scanner &rarr;</button>
+                <a href="events/index.html" class="btn btn-secondary" style="text-align:center;">&larr; Browse More Events</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="pass-world__card">
+            <article class="qr-pass" aria-label="Digital UtsavPass">
+              <div class="qr-pass__top">
+                <p class="qr-pass__eyebrow">IIIT BONGIO SAMITI &bull; UTSAVPASS</p>
+                <h2 class="qr-pass__title pass-world__event" style="margin:0.25rem 0;">Mahalaya Bhoj</h2>
+                <p class="qr-pass__subtitle pass-world__venue">Community Courtyard</p>
+              </div>
+
+              <div class="qr-pass__body">
+                <div class="qr-pass__details">
+                  <div><span>Attendee Name</span><strong class="pass-world__attendee">Guest</strong></div>
+                  <div><span>College ID</span><strong class="pass-world__collegeId">202401042</strong></div>
+                  <div><span>Pass Token</span><strong class="pass-world__token" style="font-family:monospace;letter-spacing:0.05em;">MBH-DEMO-001</strong></div>
+                  <div><span>Issue Date</span><strong class="pass-world__date">10 Aug 2026</strong></div>
+                  <div><span>Venue / Gate</span><strong class="pass-world__venue">Community Courtyard</strong></div>
+                  <div><span>Payment Proof</span><strong class="pass-world__utr">UPI-Verified</strong></div>
+                </div>
+
+                <div class="qr-pass__qrWrap">
+                  <div class="qr-pass__qrFrame pass-world__qr">
+                    <div style="padding:1rem;color:var(--muted);font-size:0.85rem;">Generating QR Code...</div>
+                  </div>
+                  <div class="qr-pass__status" style="margin-top:0.75rem;">
+                    <span class="badge pass-world__status">UNUSED</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="qr-pass__footer">
+                <div><span>Access Type</span><strong>General Entry</strong></div>
+                <div><span>Security</span><strong>Dynamic Hash Validated</strong></div>
+                <div><span>Status</span><strong class="pass-world__status">UNUSED</strong></div>
+              </div>
+            </article>
+          </div>
+        </div>
+
+        <!-- Quick Pass Lookup Footer Box -->
+        <div style="padding: 1.5rem 24px; background: rgba(255,255,255,0.4); border-top: 1px solid var(--border); margin-top: 1.5rem; border-radius: 0 0 28px 28px;">
+          <form class="pass-lookup-form" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+            <label for="pass-lookup-input" style="font-weight:600;font-size:0.9rem;">Lookup Another Pass:</label>
+            <input id="pass-lookup-input" placeholder="Enter Token ID or College ID..." style="flex:1;min-width:220px;padding:8px 14px;border-radius:12px;border:1px solid var(--border);background:#fff;" />
+            <button class="btn btn-secondary" type="submit">Find Pass</button>
+          </form>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
+
+
+
+

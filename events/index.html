@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UTSAVPASS - Cultural Events</title>
+    <base href="../" />
+    <link rel="stylesheet" href="styles.css" />
+    <script defer src="vendor/qrcode.js"></script>
+    <script defer src="site.js"></script>
+  </head>
+  <body>
+    <header class="home-strip">
+      <div class="home-strip__inner">
+        <a class="home-strip__brand" href="index.html">UTSAVPASS</a>
+        <nav class="home-strip__nav" aria-label="Primary">
+          <a class="home-strip__link" href="index.html">HOME</a>
+          <a class="home-strip__link" href="events/index.html" aria-current="page">EVENTS</a>
+          <a class="home-strip__link" href="index.html#story">STORY</a>
+          <a class="home-strip__link" href="pass/index.html">MY PASS</a>
+          <a class="home-strip__link" href="admin/index.html">ADMIN</a>
+        </nav>
+        <a class="home-strip__action" href="login/index.html">PASS LOOKUP / LOGIN</a>
+      </div>
+    </header>
+
+    <main class="events-page" style="padding-top: 1.5rem;">
+      <section class="events-scene" aria-labelledby="events-scene-title">
+        <div class="events-scene__label-row">
+          <p class="events-scene__eyebrow" id="events-scene-title">Courtyard &amp; Community Gatherings</p>
+          <a href="index.html" class="events-scene__backlink">&larr; Back to Home</a>
+        </div>
+
+        <div class="events-scene__panel">
+          <div class="events-scene__hero">
+            <img class="events-scene__hero-image" src="assets/community-puja.svg" alt="IIIT Bongio Samiti Celebrations" />
+          </div>
+
+          <div class="events-scene__copy" style="padding: 1.25rem 1.5rem 0.5rem;">
+            <p class="section-label">Campus &amp; Community Catalog</p>
+            <h1 style="margin: 0.25rem 0 0.5rem; font-size: 2rem;">Celebrate Heritage With Us</h1>
+            <p class="events-scene__lede">Choose an event below to reserve your digital pass, enjoy authentic feasts, and join communal rituals.</p>
+          </div>
+
+          <div id="public-events-catalog" class="events-scene__cards">
+            <a href="events/mahalaya/index.html" class="events-scene__card">
+              <div class="events-scene__card-media">
+                <img class="events-scene__card-image" src="assets/mahalaya-bhoj.svg" alt="Mahalaya Bhoj" style="object-position:center 34%" />
+              </div>
+              <div class="events-scene__card-body">
+                <div class="events-scene__card-meta">
+                  <span>12 Oct 2026</span>
+                  <span>Neighbourhood bhoj</span>
+                </div>
+                <h3>Mahalaya Bhoj</h3>
+                <p>Courtyard feast with shared tables, authentic Bengali cuisine, brassware, and ritual warmth.</p>
+                <div class="events-scene__card-footer" style="display:flex;justify-content:space-between;align-items:center;margin-top:1rem;">
+                  <strong style="color:var(--brand);font-size:1.1rem;">₹250</strong>
+                  <span class="events-scene__card-link">REGISTER NOW &rarr;</span>
+                </div>
+              </div>
+            </a>
+
+            <a href="events/saraswati/index.html" class="events-scene__card">
+              <div class="events-scene__card-media">
+                <img class="events-scene__card-image" src="assets/saraswati-puja.svg" alt="Saraswati Puja" style="object-position:center 22%" />
+              </div>
+              <div class="events-scene__card-body">
+                <div class="events-scene__card-meta">
+                  <span>21 Jan 2027</span>
+                  <span>Campus celebration</span>
+                </div>
+                <h3>Saraswati Puja</h3>
+                <p>A serene campus puja with flowers, morning anjali, prayer, music, and student gathering.</p>
+                <div class="events-scene__card-footer" style="display:flex;justify-content:space-between;align-items:center;margin-top:1rem;">
+                  <strong style="color:var(--brand);font-size:1.1rem;">Free</strong>
+                  <span class="events-scene__card-link">REGISTER NOW &rarr;</span>
+                </div>
+              </div>
+            </a>
+          </div>
+
+          <p class="events-scene__caption" style="text-align:center;padding:1.5rem 1rem;color:var(--muted);font-size:0.85rem;letter-spacing:0.1em;">
+            IIIT BONGIO SAMITI &bull; CULTURAL HERITAGE IN DIGITAL FORM
+          </p>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
+
+
+
+

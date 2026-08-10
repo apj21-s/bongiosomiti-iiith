@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UTSAVPASS - Payment Verifications</title>
+    <base href="../../" />
+    <link rel="stylesheet" href="styles.css" />
+    <script defer src="vendor/qrcode.js"></script>
+    <script defer src="site.js"></script>
+  </head>
+  <body>
+    <header class="home-strip">
+      <div class="home-strip__inner">
+        <a class="home-strip__brand" href="index.html">UTSAVPASS &bull; ADMIN</a>
+        <nav class="home-strip__nav" aria-label="Admin Navigation">
+          <a class="home-strip__link" href="index.html">WEBSITE</a>
+          <a class="home-strip__link" href="admin/index.html">DASHBOARD</a>
+          <a class="home-strip__link" href="admin/events/index.html">EVENTS</a>
+          <a class="home-strip__link" href="admin/registrations/index.html">REGISTRATIONS</a>
+          <a class="home-strip__link" href="admin/payments/index.html" aria-current="page">PAYMENTS</a>
+          <a class="home-strip__link" href="admin/scanner/index.html">SCANNER</a>
+          <a class="home-strip__link" href="admin/check-ins/index.html">CHECK-INS</a>
+        </nav>
+        <a class="home-strip__action" href="admin/login/index.html">SIGN OUT</a>
+      </div>
+    </header>
+
+    <main class="panel container" data-admin-payments style="max-width: 1300px; margin: 2rem auto; padding: 0;">
+      <div class="panel-head" style="padding: 24px 28px;">
+        <div>
+          <p class="section-label">Finance &amp; Verification</p>
+          <h1 style="font-size: 2rem; margin: 4px 0 6px;">Payment Verifications</h1>
+          <p>Review UPI transaction IDs, verify attendee proofs, and approve digital pass activation.</p>
+        </div>
+        <a class="btn btn-primary" href="admin/index.html">Dashboard &rarr;</a>
+      </div>
+
+      <div class="grid" style="padding: 24px 28px;">
+        <!-- Filter Bar -->
+        <div class="filter-bar" style="grid-column: 1 / -1; display: flex; gap: 12px; align-items: center; background: rgba(255,255,255,0.6); padding: 14px 18px; border-radius: 16px; border: 1px solid var(--border);">
+          <label for="admin-payments-filter-status" style="font-weight:600;">Filter by Status:</label>
+          <select id="admin-payments-filter-status" style="padding:8px 14px;border-radius:12px;border:1px solid var(--border);background:#fff;">
+            <option value="">All Transactions</option>
+            <option value="APPROVED">APPROVED (Active Passes)</option>
+            <option value="PENDING">PENDING (Action Required)</option>
+            <option value="REJECTED">REJECTED</option>
+          </select>
+        </div>
+
+        <!-- Payments Table -->
+        <div class="table-responsive" style="grid-column: 1 / -1; background: rgba(255,255,255,0.7); border-radius: 20px; border: 1px solid var(--border); padding: 14px; margin-top: 0.5rem;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Transaction UTR / Reference</th>
+                <th>Attendee &amp; College ID</th>
+                <th>Event</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Date Submitted</th>
+                <th>Verification Actions</th>
+              </tr>
+            </thead>
+            <tbody id="admin-payments-tbody">
+              <tr><td colspan="7" class="text-muted">Loading payments...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>
+
+
+
+
