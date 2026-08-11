@@ -1,92 +1,480 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>UTSAVPASS - Mahalaya Bhoj</title>
-    <base href="../../" />
-    <link rel="stylesheet" href="styles.css" />
-    <script defer src="vendor/qrcode.js"></script>
-    <script defer src="site.js"></script>
-  </head>
-  <body>
-    <main class="mahalaya-page">
-      <section class="mahalaya-card" aria-labelledby="mahalaya-title">
-        <div class="mahalaya-card__topbar">
-          <a class="brand" href="index.html" style="font-weight:800;letter-spacing:0.1em;color:inherit;">UTSAVPASS</a>
-          <nav class="nav" style="gap:12px;">
-            <a href="index.html">Home</a>
-            <a href="events/index.html" aria-current="page">Events</a>
-            <a href="pass/index.html">My Pass</a>
-            <a href="admin/index.html">Admin</a>
-          </nav>
-        </div>
 
-        <div class="mahalaya-card__hero">
-          <img class="mahalaya-card__heroImage" src="assets/mahalaya-bhoj.svg" alt="Mahalaya Bhoj Celebration" />
-          <div class="mahalaya-card__heroOverlay" aria-hidden="true"></div>
-          <div class="mahalaya-card__heroRibbon" aria-hidden="true">
-            <span>MAHALAYA BHOJ 2026</span>
-            <span>(NEIGHBOURHOOD &amp; BHOJ)</span>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BANGIYA.SAMITI - Mahalaya Bhoj 2026</title>
+  <base href="../../" />
+  <link rel="stylesheet" href="styles.css" />
+  <script defer src="vendor/qrcode.js"></script>
+  <script defer src="site.js"></script>
+</head>
+
+<body>
+  <!-- Full-Screen Sticky Header Ribbon Throughout the Screen -->
+  <header class="home-strip">
+    <div class="home-strip__inner">
+      <a class="home-strip__brand" href="index.html">BANGIYA.SAMITI</a>
+      <nav class="home-strip__nav" aria-label="Primary">
+        <a class="home-strip__link" href="index.html">HOME</a>
+      </nav>
+      <a class="home-strip__action" href="pass/index.html">PASS LOOKUP</a>
+    </div>
+  </header>
+
+  <main class="mahalaya-page">
+    <section class="mahalaya-card" aria-labelledby="mahalaya-title">
+      <!-- Full-Width Illustration Header Blended with Terracotta Palette -->
+      <div class="mahalaya-card__hero">
+        <img class="mahalaya-card__heroImage" src="assets/mahalaya-bhoj.svg"
+          alt="Mahalaya Bhoj Community Feast in Kolkata Lane" />
+        <div class="mahalaya-card__heroBlend" aria-hidden="true"></div>
+        <div class="mahalaya-card__heroRibbon" aria-hidden="true">
+          <span>MAHALAYA BHOJ 2026</span>
+        </div>
+      </div>
+
+      <!-- Terracotta Content Section -->
+      <div class="mahalaya-card__body">
+        <!-- Left Column: Event Information & Payment Instructions -->
+        <div class="mahalaya-card__story">
+          <div class="mahalaya-card__titleBlock">
+            <h1 id="mahalaya-title" class="mahalaya-title">MAHALAYA BHOJ PAGE</h1>
+            <p class="mahalaya-subtitle">(NEIGHBOURHOOD &amp; BHOJ)</p>
           </div>
-        </div>
 
-        <div class="mahalaya-card__body">
-          <div class="mahalaya-card__story">
-            <p class="section-label">Mahalaya Bhoj</p>
-            <h1 id="mahalaya-title">Register for Mahalaya Bhoj</h1>
-            <p class="mahalaya-card__lede">Shared tables, smoke, brass, and a warm autumn gathering built around authentic food, adda, and ritual warmth.</p>
-
-            <ul class="mahalaya-card__facts">
-              <li><span>Event date</span><strong>12 October 2026</strong></li>
-              <li><span>Venue</span><strong>Community Courtyard</strong></li>
-              <li><span>Capacity</span><strong>120 Attendees</strong></li>
-              <li><span>Price</span><strong>INR 250 / Pass</strong></li>
-            </ul>
-
-            <div style="margin-top:1.5rem;padding:1rem;background:rgba(255,255,255,0.6);border-radius:16px;border:1px solid var(--border);">
-              <strong style="color:var(--brand);display:block;margin-bottom:0.25rem;">Payment Note</strong>
-              <small class="text-muted">Pay via UPI (GPay/PhonePe/Paytm) to <code>utsav.iiit@okhdfcbank</code> and enter the UTR / Transaction ID below.</small>
+          <div class="mahalaya-timeline">
+            <div class="mahalaya-timeline__item">
+              <div class="mahalaya-timeline__dot"></div>
+              <strong class="mahalaya-timeline__title">Event date</strong>
+              <span class="mahalaya-timeline__desc">Celebrate autumn puja season (12 Oct 2026)</span>
+            </div>
+            <div class="mahalaya-timeline__item">
+              <div class="mahalaya-timeline__dot"></div>
+              <strong class="mahalaya-timeline__title">Time/Slot</strong>
+              <span class="mahalaya-timeline__desc">Shared community feast (1:00 PM – 4:30 PM)</span>
+            </div>
+            <div class="mahalaya-timeline__item">
+              <div class="mahalaya-timeline__dot"></div>
+              <strong class="mahalaya-timeline__title">Tradition</strong>
+              <span class="mahalaya-timeline__desc">Tradition &amp; cultural community dinner</span>
             </div>
           </div>
 
-          <div class="mahalaya-card__formPane">
-            <div class="mahalaya-card__registerLabel">Reserve Your Bhoj Pass</div>
-            <form class="section" data-vanilla-registration data-event-slug="mahalaya" data-event-name="Mahalaya Bhoj" data-event-venue="Community Courtyard" data-ticket-prefix="MBH" data-pass-target="pass/index.html?token=">
-              <div class="section-title">
-                <h2>Participant Details</h2>
-                <p>Submit details to instantly generate your live digital QR pass.</p>
+          <!-- Visually Separated Payment Instructions Card -->
+          <div class="mahalaya-payment-box">
+            <div class="mahalaya-payment-box__header">
+              <span class="mahalaya-payment-box__icon">💳</span>
+              <strong class="mahalaya-payment-box__title">Payment Instructions</strong>
+            </div>
+            <div class="mahalaya-payment-box__content">
+              <p><strong>Step 1:</strong> Pay <strong>₹250 / pass</strong> via UPI to: <code
+                  class="mahalaya-payment-box__upi">bangiya.samiti.iith@okhdfcbank</code></p>
+              <p><strong>Step 2:</strong> Copy your 12-digit UPI UTR / Transaction ID.</p>
+              <p><strong>Step 3:</strong> Fill in the registration form on the right and submit. Your verified QR Pass
+                will be dispatched to your email.</p>
+            </div>
+          </div>
+
+          <!-- Royal Mahalaya Bhoj Menu Card Showcase (Direct Floating Card with Subtle Premium Flash) -->
+          <div class="mahalaya-menu-card-showcase">
+            <button type="button" class="mahalaya-menu-card-btn" id="open-menu-modal-btn" aria-haspopup="dialog"
+              aria-expanded="false" aria-controls="mahalaya-menu-modal" aria-label="Open Mahalaya Bhoj Menu Card">
+              <div class="mahalaya-menu-card-frame">
+                <img src="assets/mahalaya-menu-envelope.png"
+                  alt="Official Mahalaya Bhoj Menu Card Envelope with Golden Seal" class="mahalaya-menu-card-img" />
               </div>
-              <div class="field-grid">
-                <div class="field"><label for="full_name">Full name *</label><input id="full_name" name="full_name" placeholder="e.g. Arka Mukhopadhyay" required /></div>
-                <div class="field"><label for="college_id">College ID *</label><input id="college_id" name="college_id" placeholder="e.g. 202401042" required /></div>
-                <div class="field"><label for="phone">Phone *</label><input id="phone" name="phone" type="tel" placeholder="+91 98765 43210" required /></div>
-                <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" placeholder="name@iiit.ac.in" /></div>
-                <div class="field"><label for="utr">UTR / Transaction ID *</label><input id="utr" name="utr" placeholder="e.g. UPI-429810294812" required /></div>
-                <div class="field"><label for="screenshotUrl">Payment Reference / Note</label><input id="screenshotUrl" name="screenshotUrl" placeholder="Optional note or reference" /></div>
-              </div>
-              <div class="row-actions" style="margin-top:1.25rem;">
-                <button class="btn btn-primary" type="submit" style="width:100%;">Create Booking &amp; Generate Pass</button>
-              </div>
-              <div class="form-status empty-state" aria-live="polite"></div>
-            </form>
+            </button>
           </div>
         </div>
 
-        <div class="mahalaya-card__footer">
-          <div class="mahalaya-card__passCopy">
-            <p>UTSAVPASS</p>
-            <span>Digital Pass Preview (Sample)</span>
+        <!-- Right Column: Registration & Payment Form Panel -->
+        <div class="mahalaya-card__formPane" id="mahalaya-form-container">
+          <div class="mahalaya-card__formHeader">
+            <h2 class="mahalaya-card__registerLabel">Register for Mahalaya Bhoj</h2>
+            <p class="mahalaya-card__registerSub">Quick 1-Minute Registration &bull; Instant QR Pass Dispatched</p>
           </div>
-          <a href="pass/index.html?token=MBH-DEMO-001" class="mahalaya-card__pass" aria-label="Open digital pass preview">
-            <img class="mahalaya-card__passImage" src="assets/digital-pass-reference.svg" alt="Digital pass preview" />
-          </a>
+
+          <form id="mahalaya-registration-form" data-vanilla-registration data-event-slug="mahalaya"
+            data-event-name="Mahalaya Bhoj" data-event-venue="Community Courtyard" data-ticket-prefix="MBH" novalidate>
+
+            <!-- Compact Section 1: YOUR DETAILS -->
+            <div class="mahalaya-form-section">
+              <h3 class="mahalaya-form-section__heading">YOUR DETAILS</h3>
+
+              <!-- Compact Association Toggle -->
+              <div class="mahalaya-affiliation-row">
+                <span class="mahalaya-affiliation-title">Are you associated with IIIT Hyderabad? *</span>
+                <div class="mahalaya-affiliation-group">
+                  <label class="mahalaya-radio-label">
+                    <input type="radio" name="is_iiit" value="yes" checked />
+                    <span>Yes (IIITH Member)</span>
+                  </label>
+                  <label class="mahalaya-radio-label">
+                    <input type="radio" name="is_iiit" value="no" />
+                    <span>No (Outside Guest)</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Fields for IIIT Hyderabad Member (2-Column Grid) -->
+              <div id="iiit-fields" class="mahalaya-form-grid">
+                <div class="field">
+                  <label for="full_name">Full Name *</label>
+                  <input id="full_name" name="full_name" type="text" placeholder="e.g. Arka Mukhopadhyay" required
+                    autocomplete="name" />
+                </div>
+
+                <div class="field">
+                  <label for="email">Email Address *</label>
+                  <input id="email" name="email" type="email" placeholder="name@students.iiit.ac.in" required
+                    autocomplete="email" />
+                </div>
+
+                <div class="field">
+                  <label for="phone">Phone Number *</label>
+                  <input id="phone" name="phone" type="tel" placeholder="+91 98765 43210" required autocomplete="tel" />
+                </div>
+
+                <div class="field">
+                  <label for="college_id">IIIT Roll No / ID *</label>
+                  <input id="college_id" name="college_id" type="text" placeholder="e.g. 202401042 / Staff ID"
+                    required />
+                </div>
+              </div>
+
+              <!-- Fields for Outside Participant (Shown when is_iiit === 'no') -->
+              <div id="outside-fields" class="mahalaya-form-grid" style="display: none;">
+                <div class="field">
+                  <label for="outside_full_name">Full Name *</label>
+                  <input id="outside_full_name" name="outside_full_name" type="text" placeholder="e.g. Priyobroto Sen"
+                    autocomplete="name" />
+                </div>
+
+                <div class="field">
+                  <label for="outside_email">Email Address *</label>
+                  <input id="outside_email" name="outside_email" type="email" placeholder="name@domain.com"
+                    autocomplete="email" />
+                </div>
+
+                <div class="field">
+                  <label for="outside_phone">Phone Number *</label>
+                  <input id="outside_phone" name="outside_phone" type="tel" placeholder="+91 98765 43210"
+                    autocomplete="tel" />
+                </div>
+
+                <div class="field">
+                  <label for="organization">College / Organization *</label>
+                  <input id="organization" name="organization" type="text" placeholder="e.g. University / Company" />
+                </div>
+
+                <div class="field" style="grid-column: 1 / -1;">
+                  <label for="city">City *</label>
+                  <input id="city" name="city" type="text" placeholder="e.g. Hyderabad / Kolkata" />
+                </div>
+              </div>
+
+              <!-- Combined Pass Quantity & Food Preference in same 2-column grid -->
+              <div class="mahalaya-form-grid" style="margin-top: 6px;">
+                <div class="field">
+                  <label for="num_passes">Number of Passes</label>
+                  <select id="num_passes" name="num_passes">
+                    <option value="1">1 Pass</option>
+                    <option value="2">2 Passes</option>
+                    <option value="3">3 Passes</option>
+                    <option value="4">4 Passes</option>
+                    <option value="5">5 Passes</option>
+                    <option value="6">6 Passes</option>
+                  </select>
+                </div>
+
+                <div class="field">
+                  <label for="food_pref">Food Preference</label>
+                  <select id="food_pref" name="food_pref">
+                    <option value="Non-Veg (Authentic Bhoj)">Non-Veg (Fish &amp; Chicken Feast)</option>
+                    <option value="Veg (Special Veg Thali)">Veg (Traditional Niramish Thali)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Compact Section 2: PAYMENT -->
+            <div class="mahalaya-form-section mahalaya-form-section--payment">
+              <h3 class="mahalaya-form-section__heading">PAYMENT</h3>
+
+              <div class="mahalaya-checkout-box">
+                <!-- Header with Amount Due + Rate + Coupon Indicator -->
+                <div class="mahalaya-checkout-box__header">
+                  <div>
+                    <span class="mahalaya-checkout-box__label">TOTAL AMOUNT DUE</span>
+                    <strong class="mahalaya-checkout-box__price" id="total-amount-display">₹250</strong>
+                    <span id="coupon-discount-tag" class="mahalaya-coupon-badge" style="display: none;">
+                      ✓ Coupon Applied (&minus;₹50)
+                    </span>
+                  </div>
+                  <div class="mahalaya-checkout-box__rate" id="rate-display">₹250 / pass</div>
+                </div>
+
+                <!-- Compact Coupon Field inside Payment -->
+                <div class="mahalaya-coupon-row">
+                  <div class="mahalaya-coupon-input-group">
+                    <input type="text" id="coupon_code" name="coupon_code" placeholder="Coupon code (e.g. mahalaya26)"
+                      autocomplete="off" />
+                    <button type="button" id="apply-coupon-btn" class="mahalaya-coupon-btn">APPLY</button>
+                  </div>
+                  <div id="coupon-message" class="mahalaya-coupon-msg" style="display: none;"></div>
+                </div>
+
+                <!-- UPI QR & Deep Link Section -->
+                <div class="mahalaya-upi-grid">
+                  <div class="mahalaya-upi-qr">
+                    <div class="mahalaya-upi-qr__frame" id="mahalaya-qr-box">
+                      <!-- Rendered via QRCode -->
+                    </div>
+                    <span class="mahalaya-upi-qr__hint">Scan with GPay / PhonePe / Paytm</span>
+                  </div>
+
+                  <div class="mahalaya-upi-info">
+                    <div class="mahalaya-upi-id-row">
+                      <span>UPI:</span>
+                      <code id="mahalaya-upi-id">utsav.iiit@okhdfcbank</code>
+                      <button type="button" id="copy-upi-btn" class="mahalaya-copy-btn"
+                        title="Copy UPI ID">Copy</button>
+                    </div>
+
+                    <a id="pay-now-upi-btn"
+                      href="upi://pay?pa=utsav.iiit@okhdfcbank&pn=BANGIYA.SAMITI&am=250&cu=INR&tn=Mahalaya%20Bhoj%20Pass"
+                      class="mahalaya-pay-now-btn">
+                      <span>⚡ PAY NOW VIA UPI APP</span>
+                    </a>
+                  </div>
+                </div>
+
+                <!-- UTR Input Field Integrated inside Payment Section -->
+                <div class="field mahalaya-utr-field">
+                  <label for="utr">12-Digit UPI Transaction UTR / Ref Number *</label>
+                  <input id="utr" name="utr" type="text" placeholder="e.g. 429810294812" required
+                    pattern="[0-9A-Za-z_-]{6,24}" autocomplete="off" />
+                  <small class="field-hint">Enter 12-digit UTR from your UPI payment receipt</small>
+                </div>
+              </div>
+            </div>
+
+            <!-- Confirmation Checkbox directly below payment -->
+            <div class="mahalaya-confirm-box">
+              <label class="mahalaya-checkbox-label">
+                <input type="checkbox" id="confirm_details" name="confirm_details" required />
+                <span>I confirm that the details provided are accurate and the UPI payment is completed /
+                  initiated.</span>
+              </label>
+            </div>
+
+            <button class="mahalaya-card__submitBtn" type="submit">
+              <span>REGISTER &amp; GET MY PASS &rarr;</span>
+            </button>
+            <div class="form-status empty-state" aria-live="polite"></div>
+          </form>
+
+          <!-- Success Confirmation State (Displayed inline upon form submission) -->
+          <div id="mahalaya-confirmation" class="mahalaya-confirmation" style="display: none;">
+            <div class="mahalaya-confirmation__badge">✓ REGISTRATION SUBMITTED</div>
+            <h3 class="mahalaya-confirmation__title">Mahalaya Bhoj Pass Request Recorded</h3>
+            <p class="mahalaya-confirmation__attendee">Attendee: <strong id="conf-name">Attendee</strong> (<span
+                id="conf-id">ID</span>)</p>
+
+            <div class="mahalaya-confirmation__tokenBox">
+              <span>RESERVATION TOKEN</span>
+              <strong id="conf-token">MBH-2026-XXXX</strong>
+            </div>
+
+            <div class="mahalaya-confirmation__details">
+              <p>🎟️ <strong>Passes:</strong> <span id="conf-passes">1 Pass</span></p>
+              <p>💳 <strong>Payment Status:</strong> Pending Verification (UTR: <code id="conf-utr">UTR</code>)</p>
+            </div>
+
+            <div class="mahalaya-confirmation__emailNotice">
+              <p>✉️ <strong>Digital QR Pass Delivery Notice:</strong></p>
+              <p>Your verified digital QR pass and entry confirmation will be dispatched directly to your registered
+                email (<strong id="conf-email">your email</strong>) upon transaction verification. Please present the QR
+                code received in your inbox at the gate.</p>
+            </div>
+
+            <div class="mahalaya-confirmation__actions">
+              <button type="button" id="conf-reset-btn" class="mahalaya-card__altBtn">Register Another Attendee</button>
+            </div>
+          </div>
         </div>
-      </section>
-    </main>
-  </body>
+      </div>
+    </section>
+  </main>
+  <footer class="utsav-footer" role="contentinfo">
+    <div class="utsav-footer__banner">
+      <img class="utsav-footer__bannerImage" src="assets/footer-banner.png"
+        alt="BANGIO.SAMITI Bengali Cultural Alpona &amp; Lotus Motif" />
+    </div>
+    <div class="utsav-footer__content">
+      <div class="utsav-footer__grid">
+        <!-- Col 1: Identity -->
+        <div class="utsav-footer__brandCol">
+          <div class="utsav-footer__brand">
+            <span class="utsav-footer__logo">BANGIYA.SAMITI</span>
+            <span class="utsav-footer__bengali">আইআইআইটি বঙ্গীয় সমিতি</span>
+          </div>
+          <p class="utsav-footer__about">
+            IIIT Hyderabad Bongio Samiti's digital pass &amp; cultural festivity portal.
+          </p>
+        </div>
+
+        <!-- Col 2: Navigation -->
+        <div class="utsav-footer__navCol">
+          <h4 class="utsav-footer__title">Quick Navigation</h4>
+          <ul class="utsav-footer__links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="events/index.html">Events Catalog</a></li>
+          </ul>
+        </div>
+
+        <!-- Col 3: Events -->
+        <div class="utsav-footer__navCol">
+          <h4 class="utsav-footer__title">Festivals &amp; Feasts</h4>
+          <ul class="utsav-footer__links">
+            <li><a href="events/mahalaya/index.html">Mahalaya Bhoj 2026</a></li>
+            <li><a href="events/saraswati/index.html">Saraswati Puja 2026</a></li>
+          </ul>
+        </div>
+
+        <!-- Col 4: Contact & Venue -->
+        <div class="utsav-footer__navCol">
+          <h4 class="utsav-footer__title">Contact &amp; Location</h4>
+          <div class="utsav-footer__contact">
+            <p>📍 IIIT Hyderabad, Gachibowli, Hyderabad 500032</p>
+            <p>✉️ <a href="mailto:bangiya.samiti.iith@gmail.com">bangiya.samiti.iith@gmail.com</a></p>
+            <p><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg> <a href="https://www.instagram.com/bongiyo.samiti.iiith" target="_blank" rel="noopener noreferrer">bongiyo.samiti.iiith</a></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Bar -->
+      <div class="utsav-footer__bottom">
+        <p class="utsav-footer__copyright">
+          &copy; 2026 IIIT Bongio Samiti &bull; All Rights Reserved
+        </p>
+        <p class="utsav-footer__quote">
+          বারো মাসে তেরো পার্বণ, এটাই তো খাঁটি বাঙালি জীবন   ||   বাঙালি শুধু একটা জাতি নয়, বাঙালি একটা আবেগ
+        </p>
+        <div class="utsav-footer__bottomLinks">
+          <a href="events/mahalaya/index.html#top">Back to top &uarr;</a>
+          <span>&bull;</span>
+          <a href="events/index.html">All Events</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Modal: Grand Mahalaya Bhoj Royal Menu Card -->
+  <div id="mahalaya-menu-modal" class="mahalaya-menu-modal" role="dialog" aria-modal="true"
+    aria-labelledby="menu-modal-title" hidden>
+    <div class="mahalaya-menu-modal__backdrop" id="close-menu-modal-backdrop"></div>
+    <div class="mahalaya-menu-modal__dialog">
+      <button type="button" class="mahalaya-menu-modal__close" id="close-menu-modal-btn"
+        aria-label="Close Menu Card">&times;</button>
+
+      <!-- Envelope Header Artwork (Exact to Reference) -->
+      <div class="mahalaya-menu-modal__envelope-banner">
+        <img src="assets/mahalaya-menu-envelope.png"
+          alt="Mahalaya Bhoj Royal Menu Envelope with IIIT Hyderabad Golden Seal"
+          class="mahalaya-menu-modal__envelope-img" />
+      </div>
+
+      <div class="mahalaya-menu-modal__body">
+        <div class="mahalaya-menu-modal__header">
+          <span class="mahalaya-menu-modal__tag">🍁 IIIT HYDERABAD BONGIO SAMITI 🍁</span>
+          <h3 id="menu-modal-title" class="mahalaya-menu-modal__title">মহালয়া ভোজ মেনু কার্ড</h3>
+          <p class="mahalaya-menu-modal__subtitle">Grand Traditional Autumn Bhoj &bull; 12 October 2026 &bull; Community
+            Courtyard</p>
+        </div>
+
+        <div class="mahalaya-menu-modal__sections">
+          <!-- Course 1: Starters & Bhaja -->
+          <div class="mahalaya-menu-course">
+            <h4 class="mahalaya-menu-course__heading">
+              <span>🌸</span> প্রারম্ভিক ও ভাজা (Starters &amp; Crispies)
+            </h4>
+            <ul class="mahalaya-menu-course__list">
+              <li><strong>বাসন্তী পোলাও (Fragrant Basanti Pulao)</strong> &bull; Slow-cooked with Gobindobhog rice, pure
+                ghee, cashew &amp; raisins</li>
+              <li><strong>ঝুরি আলু ভাজা (Crispy Jhuri Aloo Bhaja)</strong> &bull; Golden shredded potato crispies</li>
+              <li><strong>মুচমুচে বেগুনী (Crispy Beguni)</strong> &bull; Traditional batter-fried spiced eggplant slices
+              </li>
+              <li><strong>দুধ শুক্তো (Traditional Dudh Shukto)</strong> &bull; Classic Bengali bittersweet vegetable
+                medley</li>
+            </ul>
+          </div>
+
+          <!-- Course 2: Non-Veg & Veg Main Courses -->
+          <div class="mahalaya-menu-course">
+            <h4 class="mahalaya-menu-course__heading">
+              <span>🍲</span> প্রধান পদ (Main Course Selections)
+            </h4>
+            <div class="mahalaya-menu-course__grid">
+              <div class="mahalaya-menu-course__subcard">
+                <span class="mahalaya-menu-course__subtag non-veg">🍗 Non-Veg Feast</span>
+                <ul>
+                  <li><strong>কাতলা / রুই মাছের কালিয়া (Katla Machher Kalia)</strong> &bull; Rich river carp in spiced
+                    onion-ginger gravy</li>
+                  <li><strong>কষা মাংস (Traditional Bengali Kosha Mangsho)</strong> &bull; Slow-cooked rich spiced
+                    chicken/mutton curry with potatoes</li>
+                </ul>
+              </div>
+              <div class="mahalaya-menu-course__subcard">
+                <span class="mahalaya-menu-course__subtag veg">🌱 Pure Veg Feast</span>
+                <ul>
+                  <li><strong>ছানার ডালনা (Traditional Chhanar Dalna)</strong> &bull; Fresh cottage cheese koftas in
+                    rich cumin gravy</li>
+                  <li><strong>ধোঁকার ডালনা (Dhokar Dalna)</strong> &bull; Spiced lentil cakes simmered in aromatic gravy
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Course 3: Dal & Accompaniments -->
+          <div class="mahalaya-menu-course">
+            <h4 class="mahalaya-menu-course__heading">
+              <span>🍛</span> ডাল ও সহযোগী পদ (Lentils &amp; Accompaniments)
+            </h4>
+            <ul class="mahalaya-menu-course__list">
+              <li><strong>নারকেল দিয়ে ছোলার ডাল (Narkel diye Chholar Dal)</strong> &bull; Bengal gram with coconut
+                crisps</li>
+              <li><strong>গরম ফুলকো লুচি (Garam Luchi / Radhaballabhi)</strong> &bull; Puffed golden puris</li>
+              <li><strong>টমেটো খেজুর চাটনি (Tomato-Khejur Sweet Chutney)</strong> &bull; Rich spiced dates &amp; tomato
+                relish</li>
+              <li><strong>মুচমুচে পাপড় ভাজা (Crispy Roasted Papad)</strong></li>
+            </ul>
+          </div>
+
+          <!-- Course 4: Traditional Desserts -->
+          <div class="mahalaya-menu-course">
+            <h4 class="mahalaya-menu-course__heading">
+              <span>🍨</span> মিষ্টি মুখ (Traditional Desserts &amp; Mishti)
+            </h4>
+            <ul class="mahalaya-menu-course__list">
+              <li><strong>নলেন গুড়ের রসগোল্লা (Spongy Nolen Gur Rosogolla)</strong></li>
+              <li><strong>কলকাতার খাঁটি মিষ্টি দই (Authentic Kolkata Mishti Doi)</strong></li>
+              <li><strong>গোবিন্দভোগ চালের পায়েস (Gobindobhog Chaler Payesh)</strong></li>
+              <li><strong>নরোম পাকের সন্দেশ (Traditional Bengali Sandesh)</strong></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="mahalaya-menu-modal__footer">
+          <p>✨ Feast timings: <strong>1:00 PM – 4:30 PM</strong> &bull; Unlimited traditional sit-down banana leaf
+            service</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
 </html>
-
-
-
-

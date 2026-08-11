@@ -1,6 +1,6 @@
-# UTSAVPASS Static Site
+# BONGIO.SOMITI Static Site
 
-This folder is a standalone plain HTML, CSS, and vanilla JavaScript version of the current UTSAVPASS site.
+This folder is a standalone plain HTML, CSS, and vanilla JavaScript version of the current BONGIO.SOMITI site.
 
 ## Contents
 

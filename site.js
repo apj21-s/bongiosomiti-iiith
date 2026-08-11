@@ -85,10 +85,10 @@
   // UTSAV DATABASE (Client-Side LocalStorage Engine)
   // =========================================================================
   const STORAGE_KEYS = {
-    EVENTS: "utsavpass:events",
-    TICKETS: "utsavpass:tickets",
-    CHECKINS: "utsavpass:checkins",
-    AUTH: "utsavpass:auth"
+    EVENTS: "BONGIO.SOMITI:events",
+    TICKETS: "BONGIO.SOMITI:tickets",
+    CHECKINS: "BONGIO.SOMITI:checkins",
+    AUTH: "BONGIO.SOMITI:auth"
   };
 
   const SEED_EVENTS = [
@@ -112,7 +112,7 @@
       dateFormatted: "21 Jan 2027",
       venue: "College Campus",
       capacity: 180,
-      price: 0,
+      price: 250,
       category: "Campus celebration",
       description: "A serene campus procession with fresh yellow flowers, alpona, morning anjali, recitation, music, and student gathering.",
       image: "assets/saraswati-puja.svg",
@@ -146,8 +146,8 @@
       collegeId: "202402118",
       email: "ananya.sen@students.iiit.ac.in",
       phone: "+91 98301 22334",
-      utr: "FREE-PASS",
-      amount: 0,
+      utr: "UPI-551920837412",
+      amount: 250,
       createdAt: "2026-08-09T14:15:00.000Z",
       paymentStatus: "APPROVED",
       status: "UNUSED",
@@ -200,7 +200,7 @@
   ];
 
   const SEED_AUTH = {
-    email: "admin@utsavpass.local",
+    email: "admin@BONGIO.SOMITI.local",
     name: "IIIT Bongio Samiti Admin",
     role: "Organiser",
     loggedIn: true
@@ -323,7 +323,7 @@
         id: "chk-" + Date.now(),
         token: ticket.token,
         participantName: ticket.participantName || "Guest",
-        eventName: ticket.eventName || "UTSAVPASS",
+        eventName: ticket.eventName || "BONGIO.SOMITI",
         gate: gate,
         timestamp: new Date().toISOString()
       };
@@ -345,6 +345,44 @@
       }
       const next = checkins.filter((c) => c.id !== checkinId);
       this._write(STORAGE_KEYS.CHECKINS, next);
+    },
+    getCouponRedemptions(code) {
+      const key = "utsav_coupon_" + String(code).trim().toLowerCase() + "_count";
+      const val = localStorage.getItem(key);
+      return val ? parseInt(val, 10) : 0;
+    },
+    incrementCouponRedemptions(code) {
+      const key = "utsav_coupon_" + String(code).trim().toLowerCase() + "_count";
+      const current = this.getCouponRedemptions(code);
+      localStorage.setItem(key, String(current + 1));
+      return current + 1;
+    },
+    validateCoupon(code) {
+      const normalized = String(code || "").trim().toLowerCase();
+      if (!normalized) {
+        return { valid: false, discount: 50, message: "Please enter a coupon code." };
+      }
+      if (normalized === "mahalaya26" || normalized === "saraswati27" || normalized === "saraswati26") {
+        const couponKey = normalized === "saraswati26" ? "saraswati27" : normalized;
+        const count = this.getCouponRedemptions(couponKey);
+        if (count < 100) {
+          return {
+            valid: true,
+            code: couponKey,
+            discount: 50,
+            message: "Coupon applied · ₹50 saved",
+            remaining: 100 - count
+          };
+        } else {
+          return {
+            valid: false,
+            code: couponKey,
+            discount: 0,
+            message: "This offer has ended (limit of 100 redemptions reached)."
+          };
+        }
+      }
+      return { valid: false, discount: 0, message: "Invalid coupon code." };
     },
     getStats() {
       const events = this.getEvents();
@@ -439,48 +477,293 @@
   }
 
   // =========================================================================
-  // 2. STORY GALLERY LIGHTBOX
+  // 2. PHOTO ALBUM — dynamic grid builder + lightbox viewer
   // =========================================================================
   function initStoryGallery() {
-    const gallery = $(".story-gallery");
-    if (!gallery) return;
-    const items = $all(".story-gallery__item", gallery);
+    const albumEl = document.getElementById("photo-album");
     const lightbox = $(".story-lightbox");
+    if (!albumEl || !lightbox) return;
+
+    // ── 1. Read photo data from hidden <ul> ─────────────────────────────────
+    const dataItems = $all("li", $(".photo-album__data", albumEl));
+    if (dataItems.length === 0) return;
+
+    const photos = dataItems.map((li) => ({
+      src: li.dataset.src || "",
+      alt: li.dataset.alt || "",
+      title: li.dataset.title || li.dataset.alt || "",
+      date: li.dataset.date || "",
+      pos: li.dataset.pos || "center center",
+    }));
+
+    const total = photos.length;
+    const VISIBLE = 4; // cells shown in the mosaic grid
+
+    // ── 2. Update album count label ──────────────────────────────────────────
+    // Convert number to Bengali digits
+    function toBn(n) {
+      return String(n).replace(/[0-9]/g, (d) => "০১২৩৪৫৬৭৮৯"[d]);
+    }
+    const countEl = document.getElementById("photo-album-count");
+    if (countEl) countEl.textContent = toBn(total) + "টি স্মৃতি";
+
+    // ── 3. Build the mosaic grid ─────────────────────────────────────────────
+    const grid = $(".photo-album__grid", albumEl);
+    if (!grid) return;
+
+    // Layout:
+    //  [photo 0 — featured, left 62%] [side column right 38%]
+    //                                    [photo 1]
+    //                                    [photo 2]
+    //                                    [photo 3 or "+N more"]
+
+    // Helper: build an <img> element
+    function makeImg(photo) {
+      const img = document.createElement("img");
+      img.className = "photo-album__img";
+      img.src = photo.src;
+      img.alt = photo.alt;
+      img.style.objectPosition = photo.pos;
+      return img;
+    }
+
+    // Helper: build the gradient caption overlay inside a photo cell
+    function makeLabel(photo, hero) {
+      const label = document.createElement("div");
+      label.className = "photo-album__label";
+      label.setAttribute("aria-hidden", "true");
+      const titleEl = document.createElement("span");
+      titleEl.className = "photo-album__label-title";
+      titleEl.textContent = photo.title;
+      label.appendChild(titleEl);
+      if (photo.date) {
+        const dateEl = document.createElement("span");
+        dateEl.className = "photo-album__label-date";
+        dateEl.textContent = photo.date;
+        label.appendChild(dateEl);
+      }
+      return label;
+    }
+
+    // Helper: build a +N more overlay
+    function makeMoreOverlay(n) {
+      const overlay = document.createElement("div");
+      overlay.className = "photo-album__more-overlay";
+      overlay.setAttribute("aria-hidden", "true");
+      const txt = document.createElement("span");
+      txt.className = "photo-album__more-text";
+      txt.textContent = "+" + n;
+      overlay.appendChild(txt);
+      return overlay;
+    }
+
+    const moreCount = total > VISIBLE ? total - VISIBLE : 0;
+
+    // ── Hero cell (photo 0) ────────────────────────────────────────────────
+    const hero = document.createElement("button");
+    hero.type = "button";
+    hero.className = "photo-album__hero scroll-reveal";
+    hero.setAttribute("aria-label", photos[0].title + (photos[0].date ? " — " + photos[0].date : ""));
+    hero.addEventListener("click", () => openLightbox(0));
+    hero.appendChild(makeImg(photos[0]));
+    hero.appendChild(makeLabel(photos[0], true));
+    grid.appendChild(hero);
+
+    // ── Thumb row (photos 1–3) ─────────────────────────────────────────────
+    if (total > 1) {
+      const thumbRow = document.createElement("div");
+      thumbRow.className = "photo-album__thumb-row";
+
+      const thumbCount = Math.min(3, total - 1);
+      for (let i = 1; i <= thumbCount; i++) {
+        const isLast = i === thumbCount;
+        const showMore = isLast && moreCount > 0;
+        const openIdx = showMore ? (VISIBLE - 1) : i;
+
+        const thumb = document.createElement("button");
+        thumb.type = "button";
+        thumb.className = "photo-album__thumb scroll-reveal scroll-reveal--delay-" + i;
+        thumb.setAttribute("aria-label", photos[i].title + (showMore ? " and " + moreCount + " more" : ""));
+        thumb.addEventListener("click", () => openLightbox(openIdx));
+        thumb.appendChild(makeImg(photos[i]));
+
+        if (showMore) {
+          thumb.appendChild(makeMoreOverlay(moreCount));
+        } else {
+          thumb.appendChild(makeLabel(photos[i], false));
+        }
+
+        thumbRow.appendChild(thumb);
+      }
+
+      grid.appendChild(thumbRow);
+    }
+
+    // Observe new cells for scroll-reveal
+    [hero, ...$all(".photo-album__thumb", grid)].forEach((el) => {
+      if (window.reobserveReveal) window.reobserveReveal(el);
+    });
+
+    // ── 4. Lightbox ─────────────────────────────────────────────────────────
     const lightboxImg = $(".story-lightbox__image", lightbox);
     const lightboxTitle = $(".story-lightbox__title", lightbox);
     const lightboxDate = $(".story-lightbox__date", lightbox);
-    const lightboxCaption = $(".story-lightbox__caption", lightbox);
+    const lightboxCounter = $(".story-lightbox__counter", lightbox);
+    const panel = $(".story-lightbox__panel", lightbox);
+    const closeBtn = $(".story-lightbox__close", lightbox);
+    const prevBtn = $(".story-lightbox__prev", lightbox);
+    const nextBtn = $(".story-lightbox__next", lightbox);
+    if (!lightboxImg) return;
 
-    function open(item) {
-      if (!lightbox || !lightboxImg) return;
-      const img = $("img", item);
-      const title = $(".story-gallery__copy span", item)?.textContent || "আমাদের গল্প";
-      const date = $(".story-gallery__copy strong", item)?.textContent || "";
-      const caption = $(".story-gallery__copy p", item)?.textContent || "";
-      lightboxImg.src = img?.src || "";
-      lightboxImg.alt = img?.alt || title;
-      if (lightboxTitle) lightboxTitle.textContent = title;
-      if (lightboxDate) lightboxDate.textContent = date;
-      if (lightboxCaption) lightboxCaption.textContent = caption;
-      lightbox.hidden = false;
-      document.body.style.overflow = "hidden";
+    let current = 0;
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    function updateCounter() {
+      if (lightboxCounter) lightboxCounter.textContent = (current + 1) + " / " + total;
+      if (prevBtn) {
+        prevBtn.disabled = current <= 0;
+        prevBtn.setAttribute("aria-disabled", current <= 0 ? "true" : "false");
+      }
+      if (nextBtn) {
+        nextBtn.disabled = current >= total - 1;
+        nextBtn.setAttribute("aria-disabled", current >= total - 1 ? "true" : "false");
+      }
     }
 
-    function close() {
-      if (!lightbox) return;
-      lightbox.hidden = true;
+    function renderActivePhoto(instant = false) {
+      const p = photos[current];
+      if (!p) return;
+
+      updateCounter();
+
+      if (instant) {
+        lightboxImg.src = p.src;
+        lightboxImg.alt = p.alt;
+        if (lightboxTitle) lightboxTitle.textContent = p.title;
+        if (lightboxDate) {
+          lightboxDate.textContent = p.date || "";
+          lightboxDate.style.display = p.date ? "" : "none";
+        }
+        lightboxImg.classList.remove("is-changing");
+        return;
+      }
+
+      lightboxImg.classList.add("is-changing");
+      setTimeout(() => {
+        lightboxImg.src = p.src;
+        lightboxImg.alt = p.alt;
+        if (lightboxTitle) lightboxTitle.textContent = p.title;
+        if (lightboxDate) {
+          lightboxDate.textContent = p.date || "";
+          lightboxDate.style.display = p.date ? "" : "none";
+        }
+        lightboxImg.classList.remove("is-changing");
+      }, 90);
+    }
+
+    function goToPhoto(index) {
+      if (index < 0 || index >= total) return;
+      current = index;
+      renderActivePhoto(false);
+    }
+
+    function goPrev() {
+      if (current > 0) {
+        goToPhoto(current - 1);
+      }
+    }
+
+    function goNext() {
+      if (current < total - 1) {
+        goToPhoto(current + 1);
+      }
+    }
+
+    function openLightbox(index) {
+      current = Math.max(0, Math.min(index, total - 1));
+      renderActivePhoto(true);
+      lightbox.hidden = false;
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          lightbox.classList.add("is-open");
+        });
+      });
+      document.body.style.overflow = "hidden";
+      closeBtn?.focus();
+    }
+
+    function closeLightbox() {
+      lightbox.classList.remove("is-open");
+      const done = () => {
+        lightbox.hidden = true;
+        lightbox.removeEventListener("transitionend", done);
+      };
+      lightbox.addEventListener("transitionend", done);
       document.body.style.overflow = "";
     }
 
-    items.forEach((item) => item.addEventListener("click", () => open(item)));
-    const panel = $(".story-lightbox__panel", lightbox);
-    const closeBtn = $(".story-lightbox__close", lightbox);
-    closeBtn?.addEventListener("click", close);
-    panel?.addEventListener("click", (event) => event.stopPropagation());
-    lightbox?.addEventListener("click", close);
-    window.addEventListener("keydown", (event) => {
-      if (event.key === "Escape") close();
+    // Button event bindings (with stopPropagation so backdrop listener is not triggered)
+    closeBtn?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      closeLightbox();
     });
+
+    prevBtn?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      goPrev();
+    });
+
+    nextBtn?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      goNext();
+    });
+
+    // Close only when clicking directly on the backdrop (outside panel & controls)
+    lightbox.addEventListener("click", (e) => {
+      if (e.target === lightbox) {
+        closeLightbox();
+      }
+    });
+
+    panel?.addEventListener("click", (e) => {
+      e.stopPropagation();
+    });
+
+    // Keyboard navigation
+    window.addEventListener("keydown", (e) => {
+      if (lightbox.hidden || !lightbox.classList.contains("is-open")) return;
+      if (e.key === "Escape") {
+        e.preventDefault();
+        closeLightbox();
+      } else if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        goPrev();
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        goNext();
+      }
+    });
+
+    // Touch swipe support (left = next, right = prev)
+    lightbox.addEventListener("touchstart", (e) => {
+      if (e.touches.length === 1) {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+      }
+    }, { passive: true });
+
+    lightbox.addEventListener("touchend", (e) => {
+      if (e.changedTouches.length === 1) {
+        const dx = e.changedTouches[0].clientX - touchStartX;
+        const dy = e.changedTouches[0].clientY - touchStartY;
+        // Check horizontal swipe gesture (at least 36px horizontal & more horizontal than vertical)
+        if (Math.abs(dx) > 36 && Math.abs(dx) > Math.abs(dy)) {
+          if (dx < 0) goNext();
+          else goPrev();
+        }
+      }
+    }, { passive: true });
   }
 
   // =========================================================================
@@ -490,43 +773,382 @@
     const forms = $all("form[data-vanilla-registration]");
     forms.forEach((form) => {
       const status = $(".form-status", form);
+      const confContainer = $(".mahalaya-confirmation", form.parentElement) || $("#mahalaya-confirmation") || $("#saraswati-confirmation") || $(".registration-confirmation", form.parentElement);
+      const formHeading = $(".mahalaya-card__registerHeader", form.parentElement) || $(".mahalaya-card__registerLabel", form.parentElement);
+
+      const eventSlug = form.dataset.eventSlug || "general";
+      const matchedEvent = UtsavDB.getEvent(eventSlug) || {};
+      const isFreeEvent = matchedEvent.price === 0;
+
+      // Affiliation switching: IIIT Hyderabad vs Outside
+      const affiliationRadios = $all('input[name="is_iiit"]', form);
+      const iiitFields = $("#iiit-fields", form);
+      const outsideFields = $("#outside-fields", form);
+      const rateDisplay = $("#rate-display", form);
+
+      // Quantity & Pricing elements
+      const numPassesSelect = $("#num_passes", form);
+      const totalAmountDisplay = $("#total-amount-display", form);
+      const payNowBtn = $("#pay-now-upi-btn", form);
+      const qrBox = $("#mahalaya-qr-box", form) || $("#saraswati-qr-box", form);
+      const copyUpiBtn = $("#copy-upi-btn", form);
+      const upiIdText = "utsav.iiit@okhdfcbank";
+
+      // Coupon elements
+      const couponInput = $("#coupon_code", form);
+      const applyCouponBtn = $("#apply-coupon-btn", form);
+      const couponMessage = $("#coupon-message", form);
+      const couponDiscountTag = $("#coupon-discount-tag", form);
+
+      let appliedCoupon = null; // { code: 'mahalaya26', discount: 50 }
+
+      function isIiitSelected() {
+        const checked = $('input[name="is_iiit"]:checked', form);
+        return !checked || checked.value === "yes";
+      }
+
+      function getPassPrice() {
+        if (isFreeEvent) return 0;
+        return isIiitSelected() ? 250 : 350;
+      }
+
+      function updateAffiliationView() {
+        const isIiit = isIiitSelected();
+        if (iiitFields && outsideFields) {
+          if (isIiit) {
+            iiitFields.style.display = "grid";
+            outsideFields.style.display = "none";
+            $("#full_name", form)?.setAttribute("required", "");
+            $("#email", form)?.setAttribute("required", "");
+            $("#phone", form)?.setAttribute("required", "");
+            $("#college_id", form)?.setAttribute("required", "");
+            $("#outside_full_name", form)?.removeAttribute("required");
+            $("#outside_email", form)?.removeAttribute("required");
+            $("#outside_phone", form)?.removeAttribute("required");
+            $("#organization", form)?.removeAttribute("required");
+            $("#city", form)?.removeAttribute("required");
+          } else {
+            iiitFields.style.display = "none";
+            outsideFields.style.display = "grid";
+            $("#outside_full_name", form)?.setAttribute("required", "");
+            $("#outside_email", form)?.setAttribute("required", "");
+            $("#outside_phone", form)?.setAttribute("required", "");
+            $("#organization", form)?.setAttribute("required", "");
+            $("#city", form)?.setAttribute("required", "");
+            $("#full_name", form)?.removeAttribute("required");
+            $("#email", form)?.removeAttribute("required");
+            $("#phone", form)?.removeAttribute("required");
+            $("#college_id", form)?.removeAttribute("required");
+          }
+        }
+        if (rateDisplay) {
+          rateDisplay.textContent = `₹${getPassPrice()} / pass`;
+        }
+        updateUpiCheckout();
+      }
+
+      affiliationRadios.forEach((radio) => {
+        radio.addEventListener("change", updateAffiliationView);
+      });
+
+      let currentAmount = 0;
+
+      function animateAmount(elem, from, to, duration = 240) {
+        if (!elem) return;
+        if (from === to || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+          elem.textContent = formatCurrency(to);
+          return;
+        }
+        const start = performance.now();
+        function frame(now) {
+          const progress = Math.min((now - start) / duration, 1);
+          const ease = 1 - Math.pow(1 - progress, 3);
+          const val = Math.round(from + (to - from) * ease);
+          elem.textContent = formatCurrency(val);
+          if (progress < 1) {
+            requestAnimationFrame(frame);
+          }
+        }
+        requestAnimationFrame(frame);
+      }
+
+      function updateUpiCheckout(shouldAnimate = false) {
+        const passes = parseInt(numPassesSelect?.value || "1", 10);
+        const passPrice = getPassPrice();
+        const subtotal = passes * passPrice;
+        const discount = appliedCoupon ? appliedCoupon.discount : 0;
+        const finalAmount = Math.max(0, subtotal - discount);
+
+        if (totalAmountDisplay) {
+          if (shouldAnimate && currentAmount !== finalAmount) {
+            animateAmount(totalAmountDisplay, currentAmount, finalAmount);
+          } else {
+            totalAmountDisplay.textContent = formatCurrency(finalAmount);
+          }
+        }
+        currentAmount = finalAmount;
+
+        if (couponDiscountTag) {
+          if (appliedCoupon && appliedCoupon.discount > 0) {
+            couponDiscountTag.textContent = `✓ Coupon Applied (−₹${appliedCoupon.discount})`;
+            couponDiscountTag.style.display = "block";
+          } else {
+            couponDiscountTag.style.display = "none";
+          }
+        }
+
+        const noteText = `${matchedEvent.name || "Event"} Pass (${passes} attendee${passes > 1 ? "s" : ""}${appliedCoupon ? " - " + appliedCoupon.code : ""})`;
+        const upiUri = `upi://pay?pa=${encodeURIComponent(upiIdText)}&pn=BANGIYA.SAMITI&am=${finalAmount}&cu=INR&tn=${encodeURIComponent(noteText)}`;
+
+        if (payNowBtn) {
+          payNowBtn.setAttribute("href", upiUri);
+        }
+
+        if (qrBox && typeof QRCode !== "undefined" && QRCode.toDataURL) {
+          QRCode.toDataURL(upiUri, { width: 140, margin: 1, color: { dark: "#281208", light: "#ffffff" } })
+            .then((dataUrl) => {
+              qrBox.innerHTML = `<img src="${dataUrl}" alt="UPI Payment QR Code for ₹${finalAmount}" />`;
+            })
+            .catch(() => {
+              qrBox.innerHTML = `<span style="font-size:0.7rem;color:#8c3b1a;">QR Code Ready</span>`;
+            });
+        }
+      }
+
+      if (numPassesSelect) {
+        numPassesSelect.addEventListener("change", () => updateUpiCheckout(true));
+      }
+
+      // Coupon application handler
+      applyCouponBtn?.addEventListener("click", () => {
+        const rawCode = couponInput?.value || "";
+        const result = UtsavDB.validateCoupon(rawCode);
+
+        if (!couponMessage) return;
+
+        if (result.valid) {
+          appliedCoupon = { code: result.code, discount: result.discount };
+          applyCouponBtn.textContent = "✓ APPLIED";
+          applyCouponBtn.style.background = "#2b6e35";
+          applyCouponBtn.style.color = "#ffffff";
+          couponMessage.className = "mahalaya-coupon-msg mahalaya-coupon-msg--success";
+          couponMessage.textContent = `✓ Coupon applied · ₹${result.discount} saved (${result.remaining} offer slots left)`;
+          couponMessage.style.display = "block";
+          showToast(`Coupon applied! Saved ₹${result.discount}`, "success");
+        } else {
+          appliedCoupon = null;
+          applyCouponBtn.textContent = "APPLY";
+          applyCouponBtn.style.background = "";
+          applyCouponBtn.style.color = "";
+          couponMessage.className = "mahalaya-coupon-msg mahalaya-coupon-msg--error";
+          couponMessage.textContent = result.message;
+          couponMessage.style.display = "block";
+          showToast(result.message, "error");
+        }
+        updateUpiCheckout(true);
+      });
+
+      // Recalculate on coupon input clear
+      couponInput?.addEventListener("input", () => {
+        if (!couponInput.value.trim() && appliedCoupon) {
+          appliedCoupon = null;
+          if (applyCouponBtn) {
+            applyCouponBtn.textContent = "APPLY";
+            applyCouponBtn.style.background = "";
+            applyCouponBtn.style.color = "";
+          }
+          if (couponMessage) couponMessage.style.display = "none";
+          updateUpiCheckout(true);
+        }
+      });
+
+      copyUpiBtn?.addEventListener("click", () => {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(upiIdText).then(() => {
+            showToast("UPI ID copied to clipboard: " + upiIdText, "success");
+          });
+        } else {
+          showToast("UPI ID: " + upiIdText, "info");
+        }
+      });
+
+      // Initial view setup
+      updateAffiliationView();
+
       form.addEventListener("submit", (event) => {
         event.preventDefault();
+        
+        // Remove previous validation highlights
+        $all("input, select", form).forEach((el) => el.classList.remove("is-invalid"));
+
         const data = new FormData(form);
+        const isIiit = data.get("is_iiit") !== "no";
+        
+        const fullName = String(
+          isIiit ? data.get("full_name") || "" : data.get("outside_full_name") || ""
+        ).trim();
+
+        const email = String(
+          isIiit ? data.get("email") || "" : data.get("outside_email") || ""
+        ).trim();
+
+        const phone = String(
+          isIiit ? data.get("phone") || "" : data.get("outside_phone") || ""
+        ).trim();
+
+        const collegeId = isIiit
+          ? String(data.get("college_id") || "").trim()
+          : String(data.get("organization") || "").trim();
+
+        const city = !isIiit ? String(data.get("city") || "").trim() : "";
+        const utr = String(data.get("utr") || data.get("transaction_id") || "").trim();
+        const numPasses = parseInt(data.get("num_passes") || "1", 10);
+        const foodPref = String(data.get("food_pref") || "").trim();
+
+        // Validation checks
+        if (!fullName) {
+          showToast("Please enter your full name.", "error");
+          const el = isIiit ? $("#full_name", form) : $("#outside_full_name", form);
+          el?.classList.add("is-invalid");
+          el?.focus();
+          return;
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!email || !emailRegex.test(email)) {
+          showToast("Please provide a valid email address.", "error");
+          const el = isIiit ? $("#email", form) : $("#outside_email", form);
+          el?.classList.add("is-invalid");
+          el?.focus();
+          return;
+        }
+
+        if (!phone || phone.replace(/\D/g, "").length < 10) {
+          showToast("Please enter a valid 10-digit phone number.", "error");
+          const el = isIiit ? $("#phone", form) : $("#outside_phone", form);
+          el?.classList.add("is-invalid");
+          el?.focus();
+          return;
+        }
+
+        if (isIiit && !collegeId) {
+          showToast("Please enter your IIIT Hyderabad Roll Number or ID.", "error");
+          const el = $("#college_id", form);
+          el?.classList.add("is-invalid");
+          el?.focus();
+          return;
+        }
+
+        if (!isIiit && !collegeId) {
+          showToast("Please enter your College or Organization name.", "error");
+          const el = $("#organization", form);
+          el?.classList.add("is-invalid");
+          el?.focus();
+          return;
+        }
+
+        if (!isIiit && !city) {
+          showToast("Please enter your City.", "error");
+          const el = $("#city", form);
+          el?.classList.add("is-invalid");
+          el?.focus();
+          return;
+        }
 
         const eventSlug = form.dataset.eventSlug || "general";
         const matchedEvent = UtsavDB.getEvent(eventSlug) || {};
+
+        if ((matchedEvent.price > 0 || eventSlug === "mahalaya" || eventSlug === "saraswati") && (!utr || utr.length < 6)) {
+          showToast("Please complete payment and enter your 12-digit UPI UTR / Transaction reference number.", "error");
+          const el = $("#utr", form);
+          el?.classList.add("is-invalid");
+          el?.focus();
+          return;
+        }
+
+        const confirmCheck = $("#confirm_details", form);
+        if (confirmCheck && !confirmCheck.checked) {
+          showToast("Please confirm that your payment and registration details are accurate.", "error");
+          confirmCheck.focus();
+          return;
+        }
+
+        const passPrice = getPassPrice();
+        const subtotal = numPasses * passPrice;
+        const discount = appliedCoupon ? appliedCoupon.discount : 0;
+        const totalAmount = Math.max(0, subtotal - discount);
+
         const prefix = form.dataset.ticketPrefix || (eventSlug.slice(0, 3).toUpperCase());
 
         const ticket = {
           token: uniqueToken(prefix),
           eventSlug: eventSlug,
-          eventName: form.dataset.eventName || matchedEvent.name || "Community Event",
-          venue: form.dataset.eventVenue || matchedEvent.venue || "Campus Venue",
-          participantName: String(data.get("full_name") || data.get("name") || "Attendee").trim(),
-          collegeId: String(data.get("college_id") || "N/A").trim(),
-          phone: String(data.get("phone") || "N/A").trim(),
-          email: String(data.get("email") || "N/A").trim(),
-          utr: String(data.get("utr") || data.get("transaction_id") || (matchedEvent.price === 0 ? "FREE-PASS" : "MOCK-UTR-" + Math.floor(100000 + Math.random() * 900000))).trim(),
-          amount: matchedEvent.price !== undefined ? matchedEvent.price : 250,
+          eventName: form.dataset.eventName || matchedEvent.name || "Mahalaya Bhoj",
+          venue: form.dataset.eventVenue || matchedEvent.venue || "Community Courtyard",
+          participantName: fullName,
+          collegeId: collegeId + (city ? ` (${city})` : ""),
+          phone: phone,
+          email: email,
+          numPasses: numPasses,
+          isIiit: isIiit,
+          couponCode: appliedCoupon ? appliedCoupon.code : "",
+          discountAmount: discount,
+          utr: utr || (matchedEvent.price === 0 ? "FREE-ENTRY" : "UTR-" + Math.floor(100000000000 + Math.random() * 900000000000)),
+          amount: totalAmount,
           createdAt: new Date().toISOString(),
-          paymentStatus: matchedEvent.price === 0 ? "APPROVED" : "APPROVED", // instant approval for seamless offline testing
+          paymentStatus: "PENDING",
           status: "UNUSED",
-          gate: "Gate 1"
+          gate: "Gate 1",
+          notes: foodPref ? `${foodPref} (${numPasses} pass${numPasses > 1 ? "es" : ""})` : ""
         };
 
+        // If coupon was applied, increment backend redemption count
+        if (appliedCoupon && appliedCoupon.code) {
+          UtsavDB.incrementCouponRedemptions(appliedCoupon.code);
+        }
+
         UtsavDB.saveTicket(ticket);
-        showToast(`Registration confirmed for ${ticket.participantName}!`, "success");
+        showToast(`Registration received! QR Pass will be dispatched to ${ticket.email} after verification.`, "success");
+
+        // If inline confirmation is available, display it cleanly in the same parchment card
+        if (confContainer) {
+          form.style.display = "none";
+          if (formHeading) formHeading.style.display = "none";
+
+          const confName = $("#conf-name", confContainer);
+          const confId = $("#conf-id", confContainer);
+          const confEmail = $("#conf-email", confContainer);
+          const confToken = $("#conf-token", confContainer);
+          const confPasses = $("#conf-passes", confContainer);
+          const confUtr = $("#conf-utr", confContainer);
+          const resetBtn = $("#conf-reset-btn", confContainer);
+
+          if (confName) confName.textContent = ticket.participantName;
+          if (confId) confId.textContent = ticket.collegeId;
+          if (confEmail) confEmail.textContent = ticket.email;
+          if (confToken) confToken.textContent = ticket.token;
+          if (confPasses) confPasses.textContent = `${numPasses} Pass${numPasses > 1 ? "es" : ""} (${formatCurrency(totalAmount)})`;
+          if (confUtr) confUtr.textContent = ticket.utr;
+
+          confContainer.style.display = "flex";
+
+          resetBtn?.addEventListener("click", () => {
+            confContainer.style.display = "none";
+            form.reset();
+            appliedCoupon = null;
+            if (couponMessage) couponMessage.style.display = "none";
+            updateAffiliationView();
+            form.style.display = "block";
+            if (formHeading) formHeading.style.display = "block";
+          }, { once: true });
+
+          return;
+        }
 
         if (status) {
           status.className = "form-status form-status--success";
-          status.innerHTML = `<strong>Registration successful!</strong><br>Generated Pass Token: <code>${ticket.token}</code><br>Redirecting to your digital pass preview...`;
+          status.innerHTML = `<strong>Registration submitted for verification!</strong><br>Generated Pass Token: <code>${ticket.token}</code><br>Your verified QR Pass will be emailed to <strong>${escapeHtml(ticket.email)}</strong>.`;
         }
-
-        const target = form.dataset.passTarget || "pass/index.html?token=";
-        window.setTimeout(() => {
-          window.location.href = `${target}${encodeURIComponent(ticket.token)}`;
-        }, 700);
       });
     });
   }
@@ -546,7 +1168,7 @@
       ticket = {
         token: token,
         eventSlug: "general",
-        eventName: "UTSAVPASS",
+        eventName: "BONGIO.SOMITI",
         venue: "Campus Venue",
         participantName: "Guest Attendee",
         collegeId: "2026-GUEST",
@@ -557,7 +1179,7 @@
     }
 
     // Populate Pass Metadata
-    $all(".pass-world__event", root).forEach((el) => (el.textContent = ticket.eventName || "UTSAVPASS"));
+    $all(".pass-world__event", root).forEach((el) => (el.textContent = ticket.eventName || "BONGIO.SOMITI"));
     $all(".pass-world__venue", root).forEach((el) => (el.textContent = ticket.venue || "Campus Venue"));
     $all(".pass-world__attendee", root).forEach((el) => (el.textContent = ticket.participantName || "Guest"));
     $all(".pass-world__token", root).forEach((el) => (el.textContent = ticket.token));
@@ -917,7 +1539,7 @@
     // Reset Demo Data Button
     const resetBtn = $("#admin-reset-db", root);
     resetBtn?.addEventListener("click", () => {
-      if (confirm("Reset all UTSAVPASS local data back to initial sample state?")) {
+      if (confirm("Reset all BONGIO.SOMITI local data back to initial sample state?")) {
         UtsavDB.resetDatabase();
         showToast("Database reset to sample state.", "success");
         setTimeout(() => window.location.reload(), 600);
@@ -1137,7 +1759,7 @@
       const encodedUri = encodeURI(csvContent);
       const link = document.createElement("a");
       link.setAttribute("href", encodedUri);
-      link.setAttribute("download", `utsavpass_registrations_${new Date().toISOString().slice(0, 10)}.csv`);
+      link.setAttribute("download", `BONGIO.SOMITI_registrations_${new Date().toISOString().slice(0, 10)}.csv`);
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -1298,7 +1920,7 @@
     form.addEventListener("submit", (event) => {
       event.preventDefault();
       const emailInput = $("#email", form);
-      const email = (emailInput?.value || "admin@utsavpass.local").trim();
+      const email = (emailInput?.value || "admin@BONGIO.SOMITI.local").trim();
       doLogin(email, email.split("@")[0]);
     });
 
@@ -1379,22 +2001,108 @@
   // 8. SCROLL & MOTION POLISH
   // =========================================================================
   function initScrollPolish() {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const reveals = $all("[data-reveal]");
-    if (!("IntersectionObserver" in window) || !reveals.length) return;
-    reveals.forEach((node) => node.classList.add("is-reveal"));
+    // 1. Smooth section scrolling for internal anchor links
+    const anchorLinks = $all('a[href^="#"]');
+    anchorLinks.forEach((link) => {
+      link.addEventListener("click", (e) => {
+        const href = link.getAttribute("href");
+        if (!href || href === "#") return;
+        const target = $(href);
+        if (target) {
+          e.preventDefault();
+          const strip = $(".home-strip");
+          const stripOffset = strip ? strip.offsetHeight + 10 : 46;
+          const targetY = target.getBoundingClientRect().top + window.pageYOffset - stripOffset;
+          window.scrollTo({
+            top: Math.max(0, targetY),
+            behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"
+          });
+          if (history.pushState) {
+            history.pushState(null, null, href);
+          }
+        }
+      });
+    });
+
+    // 2. Viewport-based One-Time Scroll Reveal Animations
+    const reveals = $all(".scroll-reveal, [data-reveal]");
+    if (!reveals.length) return;
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || !("IntersectionObserver" in window)) {
+      reveals.forEach((el) => el.classList.add("is-revealed", "is-visible"));
+      // Expose a no-op for dynamic elements too
+      window.reobserveReveal = (el) => el.classList.add("is-revealed", "is-visible");
+      return;
+    }
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            entry.target.classList.add("is-visible");
+            entry.target.classList.add("is-revealed", "is-visible");
             observer.unobserve(entry.target);
           }
         });
       },
-      { threshold: 0.12 }
+      { threshold: 0.1, rootMargin: "0px 0px -30px 0px" }
     );
-    reveals.forEach((node) => observer.observe(node));
+
+    reveals.forEach((el) => observer.observe(el));
+
+    // Expose helper so dynamically-rendered elements (e.g. photo album grid) can be observed
+    window.reobserveReveal = (el) => observer.observe(el);
+  }
+
+  // =========================================================================
+  // 9. EVENT MENU CARD MODALS (MAHALAYA & SARASWATI PUJA)
+  // =========================================================================
+  function initMenuCardModal() {
+    const modalConfigs = [
+      {
+        trigger: $("#open-menu-modal-btn"),
+        modal: $("#mahalaya-menu-modal"),
+        closeBtn: $("#close-menu-modal-btn"),
+        backdrop: $("#close-menu-modal-backdrop")
+      },
+      {
+        trigger: $("#open-saraswati-menu-btn"),
+        modal: $("#saraswati-menu-modal"),
+        closeBtn: $("#close-saraswati-menu-btn"),
+        backdrop: $("#close-saraswati-menu-backdrop")
+      }
+    ];
+
+    modalConfigs.forEach(({ trigger, modal, closeBtn, backdrop }) => {
+      if (!trigger || !modal) return;
+
+      function openModal() {
+        modal.removeAttribute("hidden");
+        trigger.setAttribute("aria-expanded", "true");
+        document.body.style.overflow = "hidden";
+        if (closeBtn) closeBtn.focus();
+      }
+
+      function closeModal() {
+        modal.setAttribute("hidden", "");
+        trigger.setAttribute("aria-expanded", "false");
+        document.body.style.overflow = "";
+        trigger.focus();
+      }
+
+      trigger.addEventListener("click", (e) => {
+        e.preventDefault();
+        openModal();
+      });
+
+      if (closeBtn) closeBtn.addEventListener("click", closeModal);
+      if (backdrop) backdrop.addEventListener("click", closeModal);
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && !modal.hasAttribute("hidden")) {
+          closeModal();
+        }
+      });
+    });
   }
 
   // =========================================================================
@@ -1416,6 +2124,7 @@
     initPublicLoginPage();
     initPublicEventsCatalog();
     initScrollPolish();
+    initMenuCardModal();
   });
 })();
 

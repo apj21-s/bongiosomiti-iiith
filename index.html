@@ -4,8 +4,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BONGIO.SOMITI</title>
-  <meta name="description" content="BONGIO.SOMITI cultural event website" />
+  <title>BANGIYA.SAMITI - IIIT Hyderabad Cultural Festivities</title>
+  <meta name="description" content="BANGIYA.SAMITI IIIT Hyderabad cultural festivity portal" />
   <link rel="stylesheet" href="styles.css" />
   <script defer src="site.js"></script>
 </head>
@@ -14,13 +14,13 @@
   <main id="top" class="home-page">
     <header class="home-strip">
       <div class="home-strip__inner">
-        <div class="home-strip__brand">BONGIO.SOMITI</div>
+        <a class="home-strip__brand" href="index.html">BANGIYA.SAMITI</a>
         <nav class="home-strip__nav" aria-label="Primary">
           <a class="home-strip__link" href="#home" aria-current="page">HOME</a>
           <a class="home-strip__link" href="#events">EVENTS</a>
           <a class="home-strip__link" href="#story">STORY</a>
         </nav>
-        <a class="home-strip__action" href="login/index.html">REGISTER / LOGIN</a>
+        <a class="home-strip__action" href="events/mahalaya/index.html">REGISTER </a>
       </div>
     </header>
 
@@ -46,10 +46,11 @@
         </div>
       </div>
 
-      <div class="home-hero__content">
-        <h1 id="home-hero-title" class="home-hero__title">BONGIO.SOMITI</h1>
+      <div class="home-hero__content scroll-reveal">
+        <h1 id="home-hero-title" class="home-hero__title">BANGIYA.SAMITI</h1>
+        <p class="home-hero__subtitle">IIIT HYDERABAD</p>
         <div class="home-hero__card">
-          <p>আড্ডা হোক,
+          <p># আড্ডা হোক,
             বাংলা হোক</p>
           <a class="home-hero__cta" href="#events">[EXPLORE EVENTS]</a>
         </div>
@@ -59,45 +60,68 @@
     <section id="events" class="events-page" aria-labelledby="events-title">
       <div class="events-scene">
         <div class="events-scene__panel">
-          <div class="events-scene__hero">
+          <div class="events-scene__hero scroll-reveal scroll-reveal--delay-1">
             <img class="events-scene__hero-image" src="assets/community-puja.svg" alt="" />
           </div>
 
-          <div class="events-scene__copy">
+          <div class="events-scene__copy scroll-reveal">
             <p class="events-scene__eyebrow" id="events-title">Courtyard &amp; Community</p>
             <p class="events-scene__lede">Community events, one world.</p>
           </div>
 
           <div class="events-scene__cards">
-            <a class="events-scene__card" href="events/mahalaya/index.html">
+            <!-- Card 1: Mahalaya Bhoj -->
+            <a class="events-scene__card scroll-reveal scroll-reveal--delay-2" href="events/mahalaya/index.html"
+              aria-label="Register for Mahalaya Bhoj 2026">
               <div class="events-scene__card-media">
-                <img class="events-scene__card-image" src="assets/mahalaya-bhoj.svg" alt=""
-                  style="object-position:center 34%" />
+                <img class="events-scene__card-image" src="assets/mahalaya-bhoj.svg" alt="Mahalaya Bhoj Community Feast"
+                  style="object-position: center 36%;" />
+                <span class="events-scene__card-badge">Limited Bhoj Passes</span>
               </div>
               <div class="events-scene__card-body">
                 <div class="events-scene__card-meta">
-                  <span>12 Oct 2026</span>
-                  <span>Neighbourhood bhoj</span>
+                  <span class="events-scene__card-date">12 OCT 2026</span>
+                  <span class="events-scene__card-tag">Neighbourhood Feast</span>
                 </div>
-                <h3>Mahalaya Bhoj</h3>
-                <p>Courtyard feast with shared tables and ritual warmth.</p>
-                <span class="events-scene__card-link">REGISTER NOW</span>
+                <h3 class="events-scene__card-title">Mahalaya Bhoj</h3>
+                <p class="events-scene__card-desc">
+                  Courtyard celebration with authentic shared bhoj, ritual warmth, and traditional festive flavours.
+                </p>
+                <div class="events-scene__card-footer">
+                  <span class="events-scene__card-invitation">⚡ Seats are limited &bull; ₹250 / pass</span>
+                  <span class="events-scene__card-btn">
+                    <span>REGISTER NOW</span>
+                    <span class="events-scene__card-arrow">&rarr;</span>
+                  </span>
+                </div>
               </div>
             </a>
 
-            <a class="events-scene__card" href="events/saraswati/index.html">
+            <!-- Card 2: Saraswati Puja -->
+            <a class="events-scene__card scroll-reveal scroll-reveal--delay-3" href="events/saraswati/index.html"
+              aria-label="Register for Saraswati Puja 2027">
               <div class="events-scene__card-media">
-                <img class="events-scene__card-image" src="assets/saraswati-puja.svg" alt=""
-                  style="object-position:center 22%" />
+                <img class="events-scene__card-image" src="assets/saraswati-puja.svg"
+                  alt="Saraswati Puja Campus Celebration" style="object-position: center 20%;" />
+                <span class="events-scene__card-badge">Campus Celebration</span>
               </div>
               <div class="events-scene__card-body">
                 <div class="events-scene__card-meta">
-                  <span>21 Jan 2027</span>
-                  <span>Campus celebration</span>
+                  <span class="events-scene__card-date">21 JAN 2027</span>
+                  <span class="events-scene__card-tag">Basant Panchami</span>
                 </div>
-                <h3>Saraswati Puja</h3>
-                <p>Campus puja with flowers, prayer, and student gathering.</p>
-                <span class="events-scene__card-link">REGISTER NOW</span>
+                <h3 class="events-scene__card-title">Saraswati Puja</h3>
+                <p class="events-scene__card-desc">
+                  Sacred prayers, traditional pushpanjali, floral decorations, and musical adda with the campus
+                  fraternity.
+                </p>
+                <div class="events-scene__card-footer">
+                  <span class="events-scene__card-invitation">✨ Join the celebration &bull; Free Entry</span>
+                  <span class="events-scene__card-btn">
+                    <span>REGISTER NOW</span>
+                    <span class="events-scene__card-arrow">&rarr;</span>
+                  </span>
+                </div>
               </div>
             </a>
           </div>
@@ -107,13 +131,15 @@
 
     <section id="story" class="story-page" aria-labelledby="story-title">
       <article class="story-card">
-        <div class="story-card__intro">
-          <p class="section-label">আমাদের গল্প</p>
+        <div class="story-card__intro scroll-reveal">
+          <div class="story-card__introMeta">
+            <p class="section-label">আমাদের গল্প</p>
+          </div>
           <h2 id="story-title">A curated memory archive</h2>
           <p>Real event photographs, kept small and editorial so the images stay in focus.</p>
         </div>
 
-        <div class="story-card__header">
+        <div class="story-card__header scroll-reveal scroll-reveal--delay-1">
           <img class="story-card__headerImage" src="assets/amader%20golpo.svg" alt="" />
           <div class="story-card__headerOverlay" aria-hidden="true"></div>
           <div class="story-card__headerCopy">
@@ -124,139 +150,167 @@
         </div>
 
         <div class="story-card__body">
-          <div class="story-gallery" aria-label="আমাদের গল্প photo gallery">
-            <button type="button" class="story-gallery__item story-gallery__item--wide">
-              <div class="story-gallery__frame">
-                <img class="story-gallery__image" src="amader%20golpo.ong.png" alt="আমাদের গল্প"
-                  style="object-position:left center" />
-              </div>
-              <div class="story-gallery__copy">
-                <span>আমাদের গল্প</span>
-                <strong>১৪ অক্টোবর ২০২৬</strong>
-                <p>মহালয়া সন্ধ্যা</p>
-              </div>
-            </button>
-            <button type="button" class="story-gallery__item story-gallery__item--tall">
-              <div class="story-gallery__frame">
-                <img class="story-gallery__image" src="amader%20golpo.ong.png" alt="আমাদের গল্প"
-                  style="object-position:52% center" />
-              </div>
-              <div class="story-gallery__copy">
-                <span>আমাদের গল্প</span>
-                <strong>১৮ অক্টোবর ২০২৬</strong>
-                <p>সবার সঙ্গে ভোজ</p>
-              </div>
-            </button>
-            <button type="button" class="story-gallery__item story-gallery__item--small">
-              <div class="story-gallery__frame">
-                <img class="story-gallery__image" src="amader%20golpo.ong.png" alt="আমাদের গল্প"
-                  style="object-position:right center" />
-              </div>
-              <div class="story-gallery__copy">
-                <span>আমাদের গল্প</span>
-                <strong>২১ জানুয়ারি ২০২৭</strong>
-                <p>সারস্বতী প্রাঙ্গণ</p>
-              </div>
-            </button>
-            <button type="button" class="story-gallery__item story-gallery__item--wide story-gallery__item--low">
-              <div class="story-gallery__frame">
-                <img class="story-gallery__image" src="amader%20golpo.ong.png" alt="আমাদের গল্প"
-                  style="object-position:center center" />
-              </div>
-              <div class="story-gallery__copy">
-                <span>আমাদের গল্প</span>
-                <strong>০৬ ফেব্রুয়ারি ২০২৭</strong>
-                <p>ক্যাম্পাস আড্ডা</p>
-              </div>
-            </button>
+          <!-- Album header strip -->
+          <div class="photo-album__header">
+            <span class="photo-album__albumIcon" aria-hidden="true">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <polyline points="21 15 16 10 5 21" />
+              </svg>
+            </span>
+            <span class="photo-album__albumLabel">আমাদের ছবির অ্যালবাম</span>
+            <span class="photo-album__count" id="photo-album-count"></span>
           </div>
-        </div>
+
+          <!-- ================================================================
+               PHOTO ALBUM
+               To add a new photo: just add a <li> below with these attributes.
+               The gallery and lightbox update automatically.
+               ================================================================ -->
+          <div class="photo-album" id="photo-album" aria-label="আমাদের গল্প photo album" role="group">
+
+            <!-- Hidden photo data source — edit only here to manage photos -->
+            <ul class="photo-album__data" hidden aria-hidden="true">
+              <li data-src="assets/photo_1.jpg" data-alt="সরস্বতী পূজা" data-title="সরস্বতী পূজা"
+                data-date="১৪ অক্টোবর ২০২৬" data-pos="center 32%"></li>
+              <li data-src="assets/photo_2026-08-11_21-42-50.jpg" data-alt="হাতের আলপনা" data-title="হাতের আলপনা"
+                data-date="১৮ অক্টোবর ২০২৬" data-pos="center 28%"></li>
+              <li data-src="assets/photo_2026-08-11_21-42-48.jpg" data-alt="সরস্বতী প্রাঙ্গণ"
+                data-title="সরস্বতী প্রাঙ্গণ" data-date="২১ জানুয়ারি ২০২৭" data-pos="center 42%"></li>
+              <li data-src="assets/p10.jpg" data-alt="ভোগ বিতরণ" data-title="ভোগ ও প্রসাদ বিতরণ"
+                data-date="০৬ ফেব্রুয়ারি ২০২৭" data-pos="center 36%"></li>
+              <li data-src="assets/photo_2026-08-11_22-55-53.jpg" data-alt="পূজার প্রস্তুতি"
+                data-title="পূজার প্রস্তুতি ও সাজসজ্জা" data-date="১২ অক্টোবর ২০২৬" data-pos="center 30%"></li>
+              <li data-src="assets/photo_2026-08-11_22-56-00.jpg" data-alt="সন্ধ্যা আরতি"
+                data-title="সন্ধ্যা আরতি ও প্রার্থনা" data-date="১৩ অক্টোবর ২০২৬" data-pos="center 38%"></li>
+              <li data-src="assets/photo_2026-08-11_21-42-44.jpg" data-alt="মণ্ডপ পরিক্রমা"
+                data-title="মণ্ডপ পরিক্রমা ও উৎসব" data-date="১৯ অক্টোবর ২০২৬" data-pos="center 34%"></li>
+              <li data-src="assets/p7.jpg" data-alt="ধুনুচি নাচ" data-title="ধুনুচি নাচ ও ঢাকের বোল"
+                data-date="০৪ ফেব্রুয়ারি ২০২৭" data-pos="center 36%"></li>
+              <li data-src="assets/p8.jpg" data-alt="সাংস্কৃতিক সন্ধ্যা" data-title="সাংস্কৃতিক সন্ধ্যা ও সংগীত"
+                data-date="০৫ ফেব্রুয়ারি ২০২৭" data-pos="center 36%"></li>
+              <li data-src="assets/p9.jpg" data-alt="প্রদীপ প্রজ্জ্বলন" data-title="প্রদীপ প্রজ্জ্বলন ও পুষ্পাঞ্জলি"
+                data-date="০৫ ফেব্রুয়ারি ২০২৭" data-pos="center 36%"></li>
+              <li data-src="assets/p11.jpg" data-alt="ক্যাম্পাস আড্ডা" data-title="ক্যাম্পাস আড্ডা ও আনন্দ"
+                data-date="০৬ ফেব্রুয়ারি ২০২৭" data-pos="center 36%"></li>
+              <li data-src="assets/p12.jpg" data-alt="সন্ধ্যা মিলন" data-title="সন্ধ্যা মিলন ও প্রসাদ সেবা"
+                data-date="০৬ ফেব্রুয়ারি ২০২৭" data-pos="center 36%"></li>
+              <li data-src="assets/p13.jpg" data-alt="আনন্দ উৎসব" data-title="আনন্দ উৎসব ও স্মৃতি"
+                data-date="০৭ ফেব্রুয়ারি ২০২৭" data-pos="center 36%"></li>
+              <li data-src="assets/p14.jpg" data-alt="শুভ বিজয়া" data-title="শুভ বিজয়া সম্মিলনী"
+                data-date="০৭ ফেব্রুয়ারি ২০২৭" data-pos="center 36%"></li>
+            </ul>
+
+            <!-- JS renders the 4-cell mosaic grid here -->
+            <div class="photo-album__grid"></div>
+
+          </div><!-- /.photo-album -->
+        </div><!-- /.story-card__body -->
       </article>
     </section>
 
-    <footer class="home-footer" aria-labelledby="footer-title">
-      <div class="home-footer__watermark" aria-hidden="true">
-        <div class="home-footer__watermarkLayer home-footer__watermarkLayer--left">
-          <img class="home-footer__watermarkImage home-footer__watermarkImage--left" src="assets/autumn-landscape.svg"
-            alt="" />
-        </div>
-        <div class="home-footer__watermarkLayer home-footer__watermarkLayer--center">
-          <img class="home-footer__watermarkImage home-footer__watermarkImage--center" src="assets/kolkata-street.svg"
-            alt="" />
-        </div>
-        <div class="home-footer__watermarkLayer home-footer__watermarkLayer--right">
-          <img class="home-footer__watermarkImage home-footer__watermarkImage--right" src="assets/community-puja.svg"
-            alt="" />
-        </div>
+    <footer class="utsav-footer" role="contentinfo">
+      <div class="utsav-footer__banner">
+        <img class="utsav-footer__bannerImage" src="assets/footer-banner.png"
+          alt="BANGIYA.SAMITI.IIITH Bengali Cultural Alpona &amp; Lotus Motif" />
       </div>
-
-      <div class="home-footer__inner">
-        <div class="home-footer__grid">
-          <section class="home-footer__brandBlock">
-            <div class="home-footer__brandRow">
-              <span class="home-footer__mark" aria-hidden="true"><i></i><i></i><i></i></span>
-              <div>
-                <p id="footer-title">BONGIO.SOMITI</p>
-                <span>Connecting Heritage &amp; Technology</span>
-              </div>
+      <div class="utsav-footer__content">
+        <div class="utsav-footer__grid">
+          <!-- Col 1: Identity -->
+          <div class="utsav-footer__brandCol">
+            <div class="utsav-footer__brand">
+              <span class="utsav-footer__logo">BANGIYA.SAMITI</span>
+              <span class="utsav-footer__bengali">আইআইআইটি বঙ্গীয় সমিতি</span>
             </div>
-            <p class="home-footer__copy">A slim cultural event footer for campus gatherings, shared meals, puja seasons,
-              and community memories.</p>
-            <p class="home-footer__micro">In collaboration with IIIT Hyderabad</p>
-          </section>
+            <p class="utsav-footer__about">
+              IIIT Hyderabad Bongio Samiti's digital pass &amp; cultural festivity portal.
+            </p>
+          </div>
 
-          <section class="home-footer__column">
-            <p class="home-footer__sectionLabel">Explore</p>
-            <div class="home-footer__linkList" aria-label="Explore links">
-              <a href="#home">Home</a>
-              <a href="#events">Events</a>
-              <a href="#story">Story</a>
-              <a href="#story">Our Story</a>
-            </div>
-          </section>
+          <!-- Col 2: Navigation -->
+          <div class="utsav-footer__navCol">
+            <h4 class="utsav-footer__title">Quick Navigation</h4>
+            <ul class="utsav-footer__links">
+              <li><a href="index.html">Home</a></li>
+              <li><a href="events/index.html">Events Catalog</a></li>
+            </ul>
+          </div>
 
-          <section class="home-footer__column">
-            <p class="home-footer__sectionLabel">Events</p>
-            <div class="home-footer__linkList" aria-label="Event links">
-              <a href="events/mahalaya/index.html">Mahalaya</a>
-              <a href="events/saraswati/index.html">Saraswati</a>
-              <a href="#events">Community</a>
-            </div>
-          </section>
+          <!-- Col 3: Events -->
+          <div class="utsav-footer__navCol">
+            <h4 class="utsav-footer__title">Festivals &amp; Feasts</h4>
+            <ul class="utsav-footer__links">
+              <li><a href="events/mahalaya/index.html">Mahalaya Bhoj 2026</a></li>
+              <li><a href="events/saraswati/index.html">Saraswati Puja 2026</a></li>
+            </ul>
+          </div>
 
-          <section class="home-footer__column">
-            <p class="home-footer__sectionLabel">Connect</p>
-            <div class="home-footer__linkList" aria-label="Connect links">
-              <a href="mailto:hello@BONGIO.SOMITI.local">hello@BONGIO.SOMITI.local</a>
-              <a href="https://www.instagram.com/" target="_blank" rel="noreferrer">Instagram</a>
-              <a href="https://www.facebook.com/" target="_blank" rel="noreferrer">Facebook</a>
-              <a href="https://x.com/" target="_blank" rel="noreferrer">X / Twitter</a>
+          <!-- Col 4: Contact & Venue -->
+          <div class="utsav-footer__navCol">
+            <h4 class="utsav-footer__title">Contact &amp; Location</h4>
+            <div class="utsav-footer__contact">
+              <p>📍 IIIT Hyderabad, Gachibowli, Hyderabad 500032</p>
+              <p>✉️ <a href="mailto:bangiya.samiti.iith@gmail.com">bangiya.samiti.iith@gmail.com</a></p>
+              <p><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                  <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                </svg> <a href="https://www.instagram.com/bongiyo.samiti.iiith" target="_blank"
+                  rel="noopener noreferrer">bongiyo.samiti.iiith</a></p>
             </div>
-          </section>
+          </div>
         </div>
 
-        <div class="home-footer__bottom">
-          <p class="home-footer__legal">&copy; 2026 BONGIO.SOMITI</p>
-          <p class="home-footer__community">Warm meals, campus pujas, and shared Bengali community memory.</p>
-          <div class="home-footer__legalLinks" aria-label="Legal links">
-            <a href="#top">Back to top</a>
-            <span aria-hidden="true">&bull;</span>
-            <a href="mailto:hello@BONGIO.SOMITI.local">Contact</a>
+        <!-- Bottom Bar -->
+        <div class="utsav-footer__bottom">
+          <p class="utsav-footer__copyright">
+            &copy; 2026 IIIT Bongio Samiti &bull; All Rights Reserved
+          </p>
+          <p class="utsav-footer__quote">
+            বারো মাসে তেরো পার্বণ, এটাই তো খাঁটি বাঙালি জীবন   ||   বাঙালি শুধু একটা জাতি নয়, বাঙালি একটা আবেগ
+          </p>
+          <div class="utsav-footer__bottomLinks">
+            <a href="index.html#top">Back to top &uarr;</a>
+            <span>&bull;</span>
+            <a href="events/index.html">All Events</a>
           </div>
         </div>
       </div>
     </footer>
 
     <div class="story-lightbox" hidden aria-label="Photo viewer" role="dialog" aria-modal="true">
-      <div class="story-lightbox__panel">
-        <button type="button" class="story-lightbox__close" aria-label="Close photo viewer">&times;</button>
+      <button type="button" class="story-lightbox__close" aria-label="Close photo viewer">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </button>
+      <button type="button" class="story-lightbox__prev" aria-label="Previous photo">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6" />
+        </svg>
+      </button>
+      <button type="button" class="story-lightbox__next" aria-label="Next photo">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6" />
+        </svg>
+      </button>
+      <div class="story-lightbox__panel" role="document">
         <div class="story-lightbox__media">
           <img class="story-lightbox__image" src="" alt="" />
         </div>
         <div class="story-lightbox__copy">
           <p class="story-lightbox__title"></p>
-          <span class="story-lightbox__date"></span>
-          <strong class="story-lightbox__caption"></strong>
+          <div class="story-lightbox__meta">
+            <span class="story-lightbox__date"></span>
+            <span class="story-lightbox__counter"></span>
+          </div>
         </div>
       </div>
     </div>

@@ -1,95 +1,516 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>UTSAVPASS - Saraswati Puja</title>
-    <base href="../../" />
-    <link rel="stylesheet" href="styles.css" />
-    <script defer src="vendor/qrcode.js"></script>
-    <script defer src="site.js"></script>
-  </head>
-  <body>
-    <main class="saraswati-page">
-      <section class="saraswati-card" aria-labelledby="saraswati-title">
-        <div class="saraswati-card__topbar">
-          <a class="brand" href="index.html" style="font-weight:800;letter-spacing:0.1em;color:inherit;">UTSAVPASS</a>
-          <nav class="nav" style="gap:12px;">
-            <a href="index.html">Home</a>
-            <a href="events/index.html" aria-current="page">Events</a>
-            <a href="pass/index.html">My Pass</a>
-            <a href="admin/index.html">Admin</a>
-          </nav>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BANGIYA.SAMITI - Saraswati Puja 2027</title>
+  <meta name="description" content="IIIT Hyderabad Saraswati Puja 2027 - Basant Panchami Celebration, Morning Pushpanjali, Khichuri Prosad Lunch Feast & Cultural Adda." />
+  <base href="../../" />
+  <link rel="stylesheet" href="styles.css" />
+  <script defer src="vendor/qrcode.js"></script>
+  <script defer src="site.js"></script>
+</head>
+
+<body>
+  <!-- Full-Screen Sticky Header Ribbon Throughout the Screen -->
+  <header class="home-strip">
+    <div class="home-strip__inner">
+      <a class="home-strip__brand" href="index.html">BANGIYA.SAMITI</a>
+      <nav class="home-strip__nav" aria-label="Primary">
+        <a class="home-strip__link" href="index.html">HOME</a>
+      </nav>
+      <a class="home-strip__action" href="pass/index.html">PASS LOOKUP</a>
+    </div>
+  </header>
+
+  <main class="saraswati-page">
+
+    <!-- 1. FIRST SECTION: Handcrafted Cultural Programme & Schedule Panels -->
+    <section class="saraswati-invitation-section scroll-reveal" aria-labelledby="invitation-heading">
+      <div class="saraswati-invitation-container">
+        <div class="saraswati-invitation-header">
+          <span class="saraswati-invitation-tag">বসন্ত পঞ্চমী ২০২৭</span>
+          <h1 id="invitation-heading" class="saraswati-invitation-title">Saraswati Puja Programme &amp; Schedule</h1>
+          <p class="saraswati-invitation-sub">You are cordially invited to celebrate the divine worship of Devi Saraswati &bull; 21 January 2027 &bull; IIIT Hyderabad</p>
         </div>
 
-        <div class="saraswati-card__hero">
-          <img class="saraswati-card__heroImage" src="assets/saraswati-puja.svg" alt="Saraswati Puja Celebration" />
-          <div class="saraswati-card__heroOverlay" aria-hidden="true"></div>
-          <div class="saraswati-card__heroBadge" aria-hidden="true">
-            <span>SARASWATI PUJA 2027</span>
-            <span>CAMPUS CELEBRATION</span>
-          </div>
-        </div>
-
-        <div class="saraswati-card__body">
-          <div class="saraswati-card__details">
-            <p class="section-label">Campus Puja</p>
-            <h1 id="saraswati-title">Saraswati Puja 2027</h1>
-            <p class="saraswati-card__lede">A warm campus procession with flowers, morning anjali, recitation, traditional music, and student-led worship.</p>
-
-            <div class="saraswati-card__metaGrid">
-              <div class="saraswati-card__metaBlock"><span>Schedule</span><strong>21 January 2027</strong></div>
-              <div class="saraswati-card__metaBlock"><span>Venue</span><strong>College Campus</strong></div>
-              <div class="saraswati-card__metaBlock"><span>Pass Model</span><strong>Free Entry</strong></div>
-              <div class="saraswati-card__metaBlock"><span>Capacity</span><strong>180 Attendees</strong></div>
-            </div>
-
-            <div class="saraswati-card__board" style="margin-top:1.5rem;">
-              <img class="saraswati-card__boardImage" src="assets/flowers.svg" alt="Puja flowers decoration" />
-              <div class="saraswati-card__boardOverlay" aria-hidden="true"></div>
-              <div class="saraswati-card__boardCopy">
-                <p>Morning Anjali &amp; Prasad Distribution</p>
-                <span>Open for all students, faculty, and campus guests</span>
+        <div class="saraswati-programme-grid">
+          <!-- Panel 1: Vedic Puja & Pushpanjali -->
+          <article class="saraswati-programme-panel saraswati-programme-panel--pushpanjali">
+            <img class="saraswati-programme-panel__artwork" src="assets/saraswati-card-pushpanjali.png"
+              alt="Vedic Puja &amp; Pushpanjali Bengali cultural illustration" />
+            <div class="saraswati-programme-panel__scrim" aria-hidden="true"></div>
+            <div class="saraswati-programme-panel__content">
+              <time class="saraswati-programme-panel__time">09:30 AM &mdash; 11:30 AM</time>
+              <h2 class="saraswati-programme-panel__title">Vedic Puja &amp; Pushpanjali</h2>
+              <p class="saraswati-programme-panel__desc">
+                Sacred Vedic chanting, Shloka recitation &amp; floral Pushpanjali in three batches.
+              </p>
+              <div class="saraswati-programme-panel__location">
+                <span class="saraswati-programme-panel__loc-prefix">Location:</span> Campus Courtyard Mandir
               </div>
             </div>
+          </article>
+
+          <!-- Panel 2: Community Khichuri Prasad -->
+          <article class="saraswati-programme-panel saraswati-programme-panel--khichuri">
+            <img class="saraswati-programme-panel__artwork" src="assets/saraswati-card-khichuri.png"
+              alt="Community Khichuri Prasad Bengali cultural illustration" />
+            <div class="saraswati-programme-panel__scrim" aria-hidden="true"></div>
+            <div class="saraswati-programme-panel__content">
+              <time class="saraswati-programme-panel__time">12:30 PM &mdash; 03:30 PM</time>
+              <h2 class="saraswati-programme-panel__title">Community Khichuri Prasad</h2>
+              <p class="saraswati-programme-panel__desc">
+                Gobindobhog Khichuri, Labra, Beguni, Tomato-Khejur Chutney, Papad &amp; Mishti Payesh.
+              </p>
+              <div class="saraswati-programme-panel__location">
+                <span class="saraswati-programme-panel__loc-prefix">Location:</span> Dining Hall &amp; Covered Courtyard
+              </div>
+            </div>
+          </article>
+
+          <!-- Panel 3: Sandhya Aarti & Adda -->
+          <article class="saraswati-programme-panel saraswati-programme-panel--adda">
+            <img class="saraswati-programme-panel__artwork" src="assets/saraswati-card-adda.png"
+              alt="Sandhya Aarti &amp; Adda evening cultural illustration" />
+            <div class="saraswati-programme-panel__scrim" aria-hidden="true"></div>
+            <div class="saraswati-programme-panel__content">
+              <time class="saraswati-programme-panel__time">05:30 PM &mdash; 08:00 PM</time>
+              <h2 class="saraswati-programme-panel__title">Sandhya Aarti &amp; Adda</h2>
+              <p class="saraswati-programme-panel__desc">
+                Dhunuchi Aarti, sitar &amp; flute recitals, Rabindra Sangeet &amp; campus cultural adda.
+              </p>
+              <div class="saraswati-programme-panel__location">
+                <span class="saraswati-programme-panel__loc-prefix">Location:</span> Amphitheatre &amp; Open Stage
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. TWO-COLUMN POSTER & REGISTRATION SECTION (White & Basanti Yellow Theme) -->
+    <section class="saraswati-card" aria-labelledby="saraswati-title">
+      <!-- Hero Header with Divine Saraswati Artwork -->
+      <div class="saraswati-card__hero">
+        <img class="saraswati-card__heroImage" src="assets/saraswati-puja.svg"
+          alt="Divine Goddess Saraswati with Veena, Swan and Lotus Motif" />
+        <div class="saraswati-card__heroBlend" aria-hidden="true"></div>
+        <div class="saraswati-card__heroRibbon" aria-hidden="true">
+          <span>SARASWATI PUJA 2027 &bull; BASANT PANCHAMI</span>
+        </div>
+      </div>
+
+      <!-- Basanti Yellow Content Section -->
+      <div class="saraswati-card__body">
+        <!-- Left Column: Event Information & Khichuri Prosad Arrangements -->
+        <div class="saraswati-card__story">
+          <div class="saraswati-card__titleBlock">
+            <h2 id="saraswati-title" class="saraswati-title">SARASWATI PUJA 2027</h2>
+            <p class="saraswati-subtitle">(CAMPUS PUJA &amp; KHICHURI PROSAD)</p>
           </div>
 
-          <div class="mahalaya-card__formPane" style="background:rgba(255,255,255,0.72);border-radius:24px;padding:24px;border:1px solid var(--border);">
-            <div class="mahalaya-card__registerLabel" style="font-weight:700;color:var(--brand);margin-bottom:12px;">Get Your Free Puja Pass</div>
-            <form class="section" data-vanilla-registration data-event-slug="saraswati" data-event-name="Saraswati Puja" data-event-venue="College Campus" data-ticket-prefix="SPJ" data-pass-target="pass/index.html?token=">
-              <div class="section-title">
-                <h2>Register for Puja</h2>
-                <p>Instant free pass issuance with digital QR code.</p>
+          <div class="saraswati-timeline">
+            <div class="saraswati-timeline__item">
+              <div class="saraswati-timeline__dot"></div>
+              <strong class="saraswati-timeline__title">Event Date</strong>
+              <span class="saraswati-timeline__desc">Auspicious Basant Panchami (21 Jan 2027)</span>
+            </div>
+            <div class="saraswati-timeline__item">
+              <div class="saraswati-timeline__dot"></div>
+              <strong class="saraswati-timeline__title">Morning Pushpanjali</strong>
+              <span class="saraswati-timeline__desc">Morning Anjali &amp; Vedic chanting (9:30 AM – 11:30 AM)</span>
+            </div>
+            <div class="saraswati-timeline__item">
+              <div class="saraswati-timeline__dot"></div>
+              <strong class="saraswati-timeline__title">Khichuri Prosad Lunch Feast</strong>
+              <span class="saraswati-timeline__desc">Grand sit-down community lunch (12:30 PM – 3:30 PM)</span>
+            </div>
+            <div class="saraswati-timeline__item">
+              <div class="saraswati-timeline__dot"></div>
+              <strong class="saraswati-timeline__title">Sandhya Aarti &amp; Adda</strong>
+              <span class="saraswati-timeline__desc">Cultural evening, music &amp; Dhunuchi Naach (5:30 PM – 8:00 PM)</span>
+            </div>
+          </div>
+
+          <!-- Visually Separated Payment Instructions Card -->
+          <div class="saraswati-payment-box mahalaya-payment-box">
+            <div class="saraswati-payment-box__header mahalaya-payment-box__header">
+              <span class="saraswati-payment-box__icon mahalaya-payment-box__icon">💳</span>
+              <strong class="saraswati-payment-box__title mahalaya-payment-box__title">Payment Instructions</strong>
+            </div>
+            <div class="saraswati-payment-box__content mahalaya-payment-box__content">
+              <p><strong>Step 1:</strong> Pay <strong>₹250 / pass</strong> via UPI to: <code
+                  class="saraswati-payment-box__upi mahalaya-payment-box__upi">bangiya.samiti.iith@okhdfcbank</code></p>
+              <p><strong>Step 2:</strong> Copy your 12-digit UPI UTR / Transaction ID.</p>
+              <p><strong>Step 3:</strong> Fill in the registration form on the right and submit. Your verified QR Pass
+                will be dispatched to your email.</p>
+            </div>
+          </div>
+
+          <!-- Royal Saraswati Puja & Bhog Menu Card Showcase (Direct Floating Card with Subtle Premium Flash) -->
+          <div class="saraswati-menu-card-showcase">
+            <button type="button" class="saraswati-menu-card-btn" id="open-saraswati-menu-btn" aria-haspopup="dialog"
+              aria-expanded="false" aria-controls="saraswati-menu-modal" aria-label="Open Saraswati Puja Menu Card">
+              <div class="saraswati-menu-card-frame">
+                <img src="assets/mahalaya-menu-envelope.png"
+                  alt="Official Saraswati Puja Khichuri Bhog Menu Card Envelope with Golden Seal" class="saraswati-menu-card-img" />
               </div>
-              <div class="field-grid">
-                <div class="field"><label for="spj_full_name">Full name *</label><input id="spj_full_name" name="full_name" placeholder="e.g. Ananya Sen" required /></div>
-                <div class="field"><label for="spj_college_id">College ID *</label><input id="spj_college_id" name="college_id" placeholder="e.g. 202402118" required /></div>
-                <div class="field"><label for="spj_phone">Phone *</label><input id="spj_phone" name="phone" type="tel" placeholder="+91 98301 22334" required /></div>
-                <div class="field"><label for="spj_email">Email</label><input id="spj_email" name="email" type="email" placeholder="ananya.sen@students.iiit.ac.in" /></div>
-              </div>
-              <div class="row-actions" style="margin-top:1.25rem;">
-                <button class="btn btn-primary" type="submit" style="width:100%;">Claim Free Digital Pass</button>
-              </div>
-              <div class="form-status empty-state" aria-live="polite"></div>
-            </form>
+            </button>
           </div>
         </div>
 
-        <div class="saraswati-card__footer">
-          <div class="saraswati-card__accent">
-            <img class="saraswati-card__accentImage" src="assets/kash-cluster.svg" alt="Autumn Kash Cluster" />
+        <!-- Right Column: Registration Form Panel (Pure White Aesthetic) -->
+        <div class="saraswati-card__formPane" id="saraswati-form-container">
+          <div class="saraswati-card__formHeader">
+            <h3 class="saraswati-card__registerLabel">Register for Saraswati Puja</h3>
+            <p class="saraswati-card__registerSub">Quick 1-Minute Registration &bull; Instant QR Pass Dispatched</p>
           </div>
-          <div class="saraswati-card__footerText">
-            <p>CAMPUS PUJA ENVIRONMENT &bull; TRADITION MEETS INNOVATION</p>
-            <span>Campus Season 2027 &bull; IIIT Bongio Samiti</span>
+
+          <form id="saraswati-registration-form" data-vanilla-registration data-event-slug="saraswati"
+            data-event-name="Saraswati Puja" data-event-venue="Campus Courtyard &amp; Mandir" data-ticket-prefix="SPJ" novalidate>
+
+            <!-- Compact Section 1: YOUR DETAILS -->
+            <div class="saraswati-form-section">
+              <h4 class="saraswati-form-section__heading">YOUR DETAILS</h4>
+
+              <!-- Compact Association Toggle -->
+              <div class="mahalaya-affiliation-row">
+                <span class="mahalaya-affiliation-title">Are you associated with IIIT Hyderabad? *</span>
+                <div class="mahalaya-affiliation-group">
+                  <label class="mahalaya-radio-label">
+                    <input type="radio" name="is_iiit" value="yes" checked />
+                    <span>Yes (IIITH Member)</span>
+                  </label>
+                  <label class="mahalaya-radio-label">
+                    <input type="radio" name="is_iiit" value="no" />
+                    <span>No (Outside Guest)</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Fields for IIIT Hyderabad Member (2-Column Grid) -->
+              <div id="iiit-fields" class="mahalaya-form-grid">
+                <div class="field">
+                  <label for="full_name">Full Name *</label>
+                  <input id="full_name" name="full_name" type="text" placeholder="e.g. Ananya Sen" required
+                    autocomplete="name" />
+                </div>
+
+                <div class="field">
+                  <label for="email">Email Address *</label>
+                  <input id="email" name="email" type="email" placeholder="name@students.iiit.ac.in" required
+                    autocomplete="email" />
+                </div>
+
+                <div class="field">
+                  <label for="phone">Phone Number *</label>
+                  <input id="phone" name="phone" type="tel" placeholder="+91 98765 43210" required autocomplete="tel" />
+                </div>
+
+                <div class="field">
+                  <label for="college_id">IIIT Roll No / ID *</label>
+                  <input id="college_id" name="college_id" type="text" placeholder="e.g. 202402118 / Staff ID"
+                    required />
+                </div>
+              </div>
+
+              <!-- Fields for Outside Participant (Shown when is_iiit === 'no') -->
+              <div id="outside-fields" class="mahalaya-form-grid" style="display: none;">
+                <div class="field">
+                  <label for="outside_full_name">Full Name *</label>
+                  <input id="outside_full_name" name="outside_full_name" type="text" placeholder="e.g. Priyobroto Sen"
+                    autocomplete="name" />
+                </div>
+
+                <div class="field">
+                  <label for="outside_email">Email Address *</label>
+                  <input id="outside_email" name="outside_email" type="email" placeholder="name@domain.com"
+                    autocomplete="email" />
+                </div>
+
+                <div class="field">
+                  <label for="outside_phone">Phone Number *</label>
+                  <input id="outside_phone" name="outside_phone" type="tel" placeholder="+91 98765 43210"
+                    autocomplete="tel" />
+                </div>
+
+                <div class="field">
+                  <label for="organization">College / Organization *</label>
+                  <input id="organization" name="organization" type="text" placeholder="e.g. University / Company" />
+                </div>
+
+                <div class="field" style="grid-column: 1 / -1;">
+                  <label for="city">City *</label>
+                  <input id="city" name="city" type="text" placeholder="e.g. Hyderabad / Kolkata" />
+                </div>
+              </div>
+
+              <!-- Combined Pass Quantity & Lunch Preference in same 2-column grid -->
+              <div class="mahalaya-form-grid" style="margin-top: 6px;">
+                <div class="field">
+                  <label for="num_passes">Number of Passes</label>
+                  <select id="num_passes" name="num_passes">
+                    <option value="1">1 Pass</option>
+                    <option value="2">2 Passes</option>
+                    <option value="3">3 Passes</option>
+                    <option value="4">4 Passes</option>
+                    <option value="5">5 Passes</option>
+                    <option value="6">6 Passes</option>
+                  </select>
+                </div>
+
+                <div class="field">
+                  <label for="food_pref">Lunch &amp; Prasad Option</label>
+                  <select id="food_pref" name="food_pref">
+                    <option value="Khichuri Prosad Feast (Sit-down Lunch)">Khichuri Prosad Feast (Sit-down Lunch)</option>
+                    <option value="Pushpanjali & Sweet Prasad Only">Pushpanjali &amp; Sweet Prasad Only</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Compact Section 2: PAYMENT -->
+            <div class="saraswati-form-section mahalaya-form-section--payment">
+              <h4 class="saraswati-form-section__heading">PAYMENT</h4>
+
+              <div class="mahalaya-checkout-box">
+                <!-- Header with Amount Due + Rate + Coupon Indicator -->
+                <div class="mahalaya-checkout-box__header">
+                  <div>
+                    <span class="mahalaya-checkout-box__label">TOTAL AMOUNT DUE</span>
+                    <strong class="mahalaya-checkout-box__price" id="total-amount-display">₹250</strong>
+                    <span id="coupon-discount-tag" class="mahalaya-coupon-badge" style="display: none;">
+                      ✓ Coupon Applied (&minus;₹50)
+                    </span>
+                  </div>
+                  <div class="mahalaya-checkout-box__rate" id="rate-display">₹250 / pass</div>
+                </div>
+
+                <!-- Compact Coupon Field inside Payment -->
+                <div class="mahalaya-coupon-row">
+                  <div class="mahalaya-coupon-input-group">
+                    <input type="text" id="coupon_code" name="coupon_code" placeholder="Coupon code (e.g. saraswati27)"
+                      autocomplete="off" />
+                    <button type="button" id="apply-coupon-btn" class="mahalaya-coupon-btn">APPLY</button>
+                  </div>
+                  <div id="coupon-message" class="mahalaya-coupon-msg" style="display: none;"></div>
+                </div>
+
+                <!-- UPI QR & Deep Link Section -->
+                <div class="mahalaya-upi-grid">
+                  <div class="mahalaya-upi-qr">
+                    <div class="mahalaya-upi-qr__frame" id="saraswati-qr-box">
+                      <!-- Rendered via QRCode -->
+                    </div>
+                    <span class="mahalaya-upi-qr__hint">Scan with GPay / PhonePe / Paytm</span>
+                  </div>
+
+                  <div class="mahalaya-upi-info">
+                    <div class="mahalaya-upi-id-row">
+                      <span>UPI:</span>
+                      <code id="mahalaya-upi-id">utsav.iiit@okhdfcbank</code>
+                      <button type="button" id="copy-upi-btn" class="mahalaya-copy-btn"
+                        title="Copy UPI ID">Copy</button>
+                    </div>
+
+                    <a id="pay-now-upi-btn"
+                      href="upi://pay?pa=utsav.iiit@okhdfcbank&pn=BANGIYA.SAMITI&am=250&cu=INR&tn=Saraswati%20Puja%20Pass"
+                      class="mahalaya-pay-now-btn">
+                      <span>⚡ PAY NOW VIA UPI APP</span>
+                    </a>
+                  </div>
+                </div>
+
+                <!-- UTR Input Field Integrated inside Payment Section -->
+                <div class="field mahalaya-utr-field">
+                  <label for="utr">12-Digit UPI Transaction UTR / Ref Number *</label>
+                  <input id="utr" name="utr" type="text" placeholder="e.g. 429810294812" required
+                    pattern="[0-9A-Za-z_-]{6,24}" autocomplete="off" />
+                  <small class="field-hint">Enter 12-digit UTR from your UPI payment receipt</small>
+                </div>
+              </div>
+            </div>
+
+            <!-- Confirmation Checkbox directly below details -->
+            <div class="mahalaya-confirm-box">
+              <label class="mahalaya-checkbox-label">
+                <input type="checkbox" id="confirm_details" name="confirm_details" required />
+                <span>I confirm that the details provided are accurate and the UPI payment is completed /
+                  initiated.</span>
+              </label>
+            </div>
+
+            <button class="saraswati-card__submitBtn" type="submit">
+              <span>REGISTER &amp; GET MY PASS &rarr;</span>
+            </button>
+            <div class="form-status empty-state" aria-live="polite"></div>
+          </form>
+
+          <!-- Success Confirmation State (Displayed inline upon form submission) -->
+          <div id="saraswati-confirmation" class="mahalaya-confirmation" style="display: none;">
+            <div class="mahalaya-confirmation__badge" style="background: #237804;">✓ REGISTRATION CONFIRMED</div>
+            <h3 class="mahalaya-confirmation__title" style="color: #241402;">Saraswati Puja Pass Issued</h3>
+            <p class="mahalaya-confirmation__attendee">Attendee: <strong id="conf-name">Attendee</strong> (<span id="conf-id">ID</span>)</p>
+
+            <div class="mahalaya-confirmation__tokenBox" style="border-color: #d48806; background: #fffcf4;">
+              <span style="color: #8c5700;">RESERVATION &amp; PASS TOKEN</span>
+              <strong id="conf-token" style="color: #241402;">SPJ-2027-XXXX</strong>
+            </div>
+
+            <div class="mahalaya-confirmation__details" style="background: #fffcf4; border-color: rgba(212, 136, 6, 0.3);">
+              <p>🎟️ <strong>Passes:</strong> <span id="conf-passes">1 Pass</span></p>
+              <p>💳 <strong>Payment Status:</strong> Pending Verification (UTR: <code id="conf-utr">...</code>)</p>
+            </div>
+
+            <div class="mahalaya-confirmation__emailNotice" style="background: #fff9eb; border-color: rgba(212, 136, 6, 0.35);">
+              <p>✉️ <strong>Digital QR Pass Delivery Notice:</strong></p>
+              <p>Your verified digital QR pass and Khichuri Prosad lunch token will be dispatched to your registered email (<strong id="conf-email">your email</strong>) once your payment UTR is verified by organizers.</p>
+            </div>
+
+            <div class="mahalaya-confirmation__actions">
+              <button type="button" id="conf-reset-btn" class="mahalaya-card__altBtn" style="border-color: #d48806; color: #6e4b10;">Register Another Attendee</button>
+            </div>
           </div>
-          <a href="pass/index.html?token=SPJ-DEMO-001" class="saraswati-card__cta">View Demo Pass</a>
         </div>
-      </section>
-    </main>
-  </body>
+      </div>
+    </section>
+  </main>
+
+  <footer class="utsav-footer" role="contentinfo">
+    <div class="utsav-footer__banner">
+      <img class="utsav-footer__bannerImage" src="assets/footer-banner.png"
+        alt="BANGIO.SAMITI Bengali Cultural Alpona &amp; Lotus Motif" />
+    </div>
+    <div class="utsav-footer__content">
+      <div class="utsav-footer__grid">
+        <!-- Col 1: Identity -->
+        <div class="utsav-footer__brandCol">
+          <div class="utsav-footer__brand">
+            <span class="utsav-footer__logo">BANGIYA.SAMITI</span>
+            <span class="utsav-footer__bengali">আইআইআইটি বঙ্গীয় সমিতি</span>
+          </div>
+          <p class="utsav-footer__about">
+            IIIT Hyderabad Bongio Samiti's digital pass &amp; cultural festivity portal.
+          </p>
+        </div>
+
+        <!-- Col 2: Navigation -->
+        <div class="utsav-footer__navCol">
+          <h4 class="utsav-footer__title">Quick Navigation</h4>
+          <ul class="utsav-footer__links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="events/index.html">Events Catalog</a></li>
+          </ul>
+        </div>
+
+        <!-- Col 3: Events -->
+        <div class="utsav-footer__navCol">
+          <h4 class="utsav-footer__title">Festivals &amp; Feasts</h4>
+          <ul class="utsav-footer__links">
+            <li><a href="events/mahalaya/index.html">Mahalaya Bhoj 2026</a></li>
+            <li><a href="events/saraswati/index.html">Saraswati Puja 2026</a></li>
+          </ul>
+        </div>
+
+        <!-- Col 4: Contact & Venue -->
+        <div class="utsav-footer__navCol">
+          <h4 class="utsav-footer__title">Contact &amp; Location</h4>
+          <div class="utsav-footer__contact">
+            <p>📍 IIIT Hyderabad, Gachibowli, Hyderabad 500032</p>
+            <p>✉️ <a href="mailto:bangiya.samiti.iith@gmail.com">bangiya.samiti.iith@gmail.com</a></p>
+            <p><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg> <a href="https://www.instagram.com/bongiyo.samiti.iiith" target="_blank" rel="noopener noreferrer">bongiyo.samiti.iiith</a></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Bar -->
+      <div class="utsav-footer__bottom">
+        <p class="utsav-footer__copyright">
+          &copy; 2026 IIIT Bongio Samiti &bull; All Rights Reserved
+        </p>
+        <p class="utsav-footer__quote">
+          বারো মাসে তেরো পার্বণ, এটাই তো খাঁটি বাঙালি জীবন   ||   বাঙালি শুধু একটা জাতি নয়, বাঙালি একটা আবেগ
+        </p>
+        <div class="utsav-footer__bottomLinks">
+          <a href="events/saraswati/index.html#top">Back to top &uarr;</a>
+          <span>&bull;</span>
+          <a href="events/index.html">All Events</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Modal: Grand Saraswati Puja & Khichuri Bhog Royal Menu Card -->
+  <div id="saraswati-menu-modal" class="saraswati-menu-modal" role="dialog" aria-modal="true"
+    aria-labelledby="saraswati-menu-modal-title" hidden>
+    <div class="saraswati-menu-modal__backdrop" id="close-saraswati-menu-backdrop"></div>
+    <div class="saraswati-menu-modal__dialog">
+      <button type="button" class="saraswati-menu-modal__close" id="close-saraswati-menu-btn"
+        aria-label="Close Menu Card">&times;</button>
+
+      <!-- Envelope Header Artwork -->
+      <div class="saraswati-menu-modal__envelope-banner">
+        <img src="assets/mahalaya-menu-envelope.png"
+          alt="Saraswati Puja Royal Menu Envelope with IIIT Hyderabad Golden Seal"
+          class="saraswati-menu-modal__envelope-img" />
+      </div>
+
+      <div class="saraswati-menu-modal__body">
+        <div class="saraswati-menu-modal__header">
+          <span class="saraswati-menu-modal__tag">🌼 BASANT PANCHAMI 2027 🌼</span>
+          <h3 id="saraswati-menu-modal-title" class="saraswati-menu-modal__title">সরস্বতী পূজা ও খিচুড়ি ভোগ মেনু কার্ড</h3>
+          <p class="saraswati-menu-modal__subtitle">Grand Sacred Feast &bull; 21 January 2027 &bull; Campus Courtyard &amp; Dining Hall</p>
+        </div>
+
+        <div class="saraswati-menu-modal__sections">
+          <!-- Course 1: Pushpanjali & Morning Prasad -->
+          <div class="saraswati-menu-course">
+            <h4 class="saraswati-menu-course__heading">
+              <span>🌸</span> সকালের অঞ্জলি ও ফল প্রসাদ (Morning Pushpanjali &amp; Prasad)
+            </h4>
+            <ul class="saraswati-menu-course__list">
+              <li><strong>বাসন্তী ক্ষীর ও সন্দেশ (Basanti Kheer &amp; Sandesh)</strong> &bull; Pure saffron milk kheer with handmade cottage cheese sandesh</li>
+              <li><strong>পঞ্চফল ও মিষ্টি বাতাসা (Panchaphal &amp; Batasa)</strong> &bull; Fresh seasonal fruits, topa kul, and sugar drops</li>
+              <li><strong>ভিজানো ছোলা, আদা ও শসা (Sprouted Gram &amp; Ginger)</strong> &bull; Auspicious holy offering</li>
+            </ul>
+          </div>
+
+          <!-- Course 2: Sit-down Khichuri Prosad Lunch Feast -->
+          <div class="saraswati-menu-course">
+            <h4 class="saraswati-menu-course__heading">
+              <span>🍲</span> মহাপ্রসাদ মধ্যাহ্নভোজ (Community Khichuri Prosad Feast)
+            </h4>
+            <ul class="saraswati-menu-course__list">
+              <li><strong>ঘিয়ে ভাজা ভোগের খিচুড়ি (Bhoger Khichuri)</strong> &bull; Aromatic Gobindobhog rice &amp; roasted Sona Moong dal simmered in pure Desi Ghee with green peas &amp; whole spices</li>
+              <li><strong>সাতমিশালি লাবড়া (Sacred Niramish Labra)</strong> &bull; 7-vegetable traditional temple medley with Panch Phoron</li>
+              <li><strong>মুচমুচে বেগুনী ও ফুলকপি রোস্ট (Crispy Beguni &amp; Cauliflower Roast)</strong> &bull; Golden fried eggplant &amp; rich cashew-curd spiced cauliflower</li>
+              <li><strong>টমেটো-খেজুর-আমসত্ত্বের মিষ্টি চাটনি (Tomato-Khejur-Aamsotto Chutney)</strong> &bull; Traditional sweet mango-pulp and dates relish</li>
+              <li><strong>মুচমুচে ভাজা পাপড় (Crispy Papad Bhaja)</strong></li>
+            </ul>
+          </div>
+
+          <!-- Course 3: Traditional Mishti & Payesh -->
+          <div class="saraswati-menu-course">
+            <h4 class="saraswati-menu-course__heading">
+              <span>🍨</span> অন্তিম মিষ্টি মুখ (Traditional Desserts &amp; Mishti)
+            </h4>
+            <ul class="saraswati-menu-course__list">
+              <li><strong>মাটির ভাঁড়ে গোবিন্দভোগ চালের পায়েস (Gobindobhog Rice Payesh in Earthen Pots)</strong></li>
+              <li><strong>কমলাভোগ ও নরম পাকের রসগোল্লা (Kamlabhog &amp; Soft Rosogolla)</strong></li>
+              <li><strong>নলেন গুড়ের কাঁচাগোল্লা (Nolen Gur Kanchagolla)</strong></li>
+              <li><strong>খাঁটি মিষ্টি দই (Authentic Bengali Mishti Doi)</strong></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="saraswati-menu-modal__footer">
+          <p>✨ Sit-down lunch timings: <strong>12:30 PM – 3:30 PM</strong> &bull; Free community feast for all attendees with pass</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
 </html>
-
-
-
-

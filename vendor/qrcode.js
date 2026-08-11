@@ -1,5 +1,5 @@
 /**
- * UTSAVPASS QR Code Generator
+ * BONGIO.SOMITI QR Code Generator
  * Generates genuine, scannable QR codes for ticket passes.
  */
 (function (global) {
