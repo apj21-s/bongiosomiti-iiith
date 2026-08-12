@@ -977,13 +977,13 @@
 
       form.addEventListener("submit", (event) => {
         event.preventDefault();
-        
+
         // Remove previous validation highlights
         $all("input, select", form).forEach((el) => el.classList.remove("is-invalid"));
 
         const data = new FormData(form);
         const isIiit = data.get("is_iiit") !== "no";
-        
+
         const fullName = String(
           isIiit ? data.get("full_name") || "" : data.get("outside_full_name") || ""
         ).trim();
@@ -1106,6 +1106,11 @@
         if (appliedCoupon && appliedCoupon.code) {
           UtsavDB.incrementCouponRedemptions(appliedCoupon.code);
         }
+
+        window.UtsavLoader?.show("ডিজিটাল পাস প্রস্তুত হচ্ছে...");
+        setTimeout(() => {
+          window.UtsavLoader?.hide();
+        }, 750);
 
         UtsavDB.saveTicket(ticket);
         showToast(`Registration received! QR Pass will be dispatched to ${ticket.email} after verification.`, "success");
@@ -1803,12 +1808,11 @@
           <td><small>${formatDate(t.createdAt)}</small></td>
           <td>
             <div class="action-btn-group">
-              ${
-                t.paymentStatus === "PENDING"
-                  ? `<button class="btn btn-sm btn-success approve-pay-btn" data-token="${escapeHtml(t.token)}">✓ Approve</button>
+              ${t.paymentStatus === "PENDING"
+              ? `<button class="btn btn-sm btn-success approve-pay-btn" data-token="${escapeHtml(t.token)}">✓ Approve</button>
                      <button class="btn btn-sm btn-danger reject-pay-btn" data-token="${escapeHtml(t.token)}">✕ Reject</button>`
-                  : `<button class="btn btn-sm btn-secondary toggle-pay-btn" data-token="${escapeHtml(t.token)}">Toggle Status</button>`
-              }
+              : `<button class="btn btn-sm btn-secondary toggle-pay-btn" data-token="${escapeHtml(t.token)}">Toggle Status</button>`
+            }
             </div>
           </td>
         </tr>`
@@ -1952,9 +1956,10 @@
           status.className = "form-status form-status--success";
           status.innerHTML = `<strong>Pass Found!</strong> Redirecting to pass preview...`;
         }
+        window.UtsavLoader?.show("ডিজিটাল পাস অনুসন্ধান সফল... লোড হচ্ছে...");
         setTimeout(() => {
           window.location.href = `pass/index.html?token=${encodeURIComponent(ticket.token)}`;
-        }, 600);
+        }, 750);
       } else {
         showToast("No pass found matching that College ID or Token.", "error");
         if (status) {
@@ -2001,7 +2006,34 @@
   // 8. SCROLL & MOTION POLISH
   // =========================================================================
   function initScrollPolish() {
-    // 1. Smooth section scrolling for internal anchor links
+    // 1. Top Viewport Reading Progress Bar
+    let progressBar = $("#utsav-scroll-progress");
+    if (!progressBar) {
+      progressBar = document.createElement("div");
+      progressBar.id = "utsav-scroll-progress";
+      document.body.appendChild(progressBar);
+    }
+
+    let ticking = false;
+    function updateScrollProgress() {
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      if (scrollHeight > 0 && progressBar) {
+        const progress = Math.min(100, Math.max(0, (scrollTop / scrollHeight) * 100));
+        progressBar.style.width = `${progress}%`;
+      }
+      ticking = false;
+    }
+
+    window.addEventListener("scroll", () => {
+      if (!ticking) {
+        requestAnimationFrame(updateScrollProgress);
+        ticking = true;
+      }
+    }, { passive: true });
+    updateScrollProgress();
+
+    // 2. Smooth section scrolling for internal anchor links with sticky navbar offset
     const anchorLinks = $all('a[href^="#"]');
     anchorLinks.forEach((link) => {
       link.addEventListener("click", (e) => {
@@ -2011,7 +2043,7 @@
         if (target) {
           e.preventDefault();
           const strip = $(".home-strip");
-          const stripOffset = strip ? strip.offsetHeight + 10 : 46;
+          const stripOffset = strip ? strip.offsetHeight + 12 : 54;
           const targetY = target.getBoundingClientRect().top + window.pageYOffset - stripOffset;
           window.scrollTo({
             top: Math.max(0, targetY),
@@ -2024,14 +2056,13 @@
       });
     });
 
-    // 2. Viewport-based One-Time Scroll Reveal Animations
+    // 3. Viewport-based One-Time Scroll Reveal Animations with silky easing
     const reveals = $all(".scroll-reveal, [data-reveal]");
     if (!reveals.length) return;
 
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || !("IntersectionObserver" in window)) {
-      reveals.forEach((el) => el.classList.add("is-revealed", "is-visible"));
-      // Expose a no-op for dynamic elements too
-      window.reobserveReveal = (el) => el.classList.add("is-revealed", "is-visible");
+      reveals.forEach((el) => el.classList.add("is-revealed", "is-visible", "in-view"));
+      window.reobserveReveal = (el) => el.classList.add("is-revealed", "is-visible", "in-view");
       return;
     }
 
@@ -2039,12 +2070,12 @@
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            entry.target.classList.add("is-revealed", "is-visible");
+            entry.target.classList.add("is-revealed", "is-visible", "in-view");
             observer.unobserve(entry.target);
           }
         });
       },
-      { threshold: 0.1, rootMargin: "0px 0px -30px 0px" }
+      { threshold: 0.08, rootMargin: "0px 0px -25px 0px" }
     );
 
     reveals.forEach((el) => observer.observe(el));
@@ -2106,9 +2137,412 @@
   }
 
   // =========================================================================
+  // 10. BENGALI FESTIVE TROUPE (DHAKI & DHUNUCHI DANCERS) SLEEK LOADER
+  // =========================================================================
+  function initUtsavLoader() {
+    let loader = $("#utsav-loader");
+    if (!loader) {
+      loader = document.createElement("div");
+      loader.id = "utsav-loader";
+      loader.className = "utsav-loader";
+      loader.setAttribute("aria-hidden", "false");
+      loader.setAttribute("role", "status");
+      loader.innerHTML = `
+        <div class="utsav-loader__backdrop"></div>
+        
+        <div class="utsav-loader__stage">
+          <!-- Handcrafted Editorial Dhaki & Dhunuchi Troupe SVG -->
+          <div class="utsav-loader__graphic">
+            <svg viewBox="0 0 720 380" class="utsav-loader-svg" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="dhak-wood" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#5a2210" />
+                  <stop offset="50%" stop-color="#8a3c20" />
+                  <stop offset="100%" stop-color="#4a180a" />
+                </linearGradient>
+                <linearGradient id="dhak-drumhead" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stop-color="#e8d5b5" />
+                  <stop offset="50%" stop-color="#fdf3df" />
+                  <stop offset="100%" stop-color="#cbb592" />
+                </linearGradient>
+                <linearGradient id="terracotta-pot" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stop-color="#8f3c1d" />
+                  <stop offset="50%" stop-color="#be582d" />
+                  <stop offset="100%" stop-color="#6e2b12" />
+                </linearGradient>
+                <radialGradient id="ember-glow" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stop-color="#ffe680" />
+                  <stop offset="50%" stop-color="#ff7700" />
+                  <stop offset="100%" stop-color="#801c00" />
+                </radialGradient>
+              </defs>
+
+              <!-- 1. LEFT DHUNUCHI DANCER -->
+              <g id="dancer-left" class="dancer-left">
+                <!-- Smoke Plume -->
+                <g class="smoke-group-left">
+                  <path class="smoke-path-1" d="M128 32 C120 18 108 14 116 2 C122 -8 138 -6 130 -22 C124 -34 110 -30 118 -44" fill="none" stroke="rgba(195, 175, 155, 0.7)" stroke-width="6" stroke-linecap="round" />
+                  <path class="smoke-path-2" d="M132 30 C140 16 150 12 144 0 C138 -12 124 -10 132 -26" fill="none" stroke="rgba(215, 195, 175, 0.5)" stroke-width="4" stroke-linecap="round" />
+                </g>
+                <!-- Dhunuchi Pot -->
+                <g class="dhunuchi-left-pot">
+                  <ellipse cx="128" cy="36" rx="14" ry="4" fill="url(#ember-glow)" class="dhuno-fire-left" />
+                  <path d="M112 36 C112 36 116 54 128 54 C140 54 144 36 144 36 Z" fill="url(#terracotta-pot)" />
+                  <ellipse cx="128" cy="36" rx="16" ry="3.5" fill="#a44622" stroke="#5a1e0b" stroke-width="1" />
+                  <path d="M125 54 L123 68 L118 74 L138 74 L133 68 L131 54 Z" fill="url(#terracotta-pot)" />
+                </g>
+                <!-- Raised Arm holding Dhunuchi -->
+                <path class="dancer-arm-right" d="M122 72 L128 105 L116 128" fill="none" stroke="#d5926c" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" />
+                <circle cx="126" cy="73" r="7" fill="#c48058" />
+                <!-- Outstretched Left Arm -->
+                <path class="dancer-arm-left" d="M72 135 L42 152 L12 148" fill="none" stroke="#d5926c" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" />
+                <circle cx="12" cy="148" r="6" fill="#c48058" />
+                <!-- Head & Hair -->
+                <g class="dancer-head-left">
+                  <path d="M78 88 C70 96 68 112 80 118 C85 110 92 105 96 102 Z" fill="#2c2724" />
+                  <path d="M84 92 C88 84 100 84 106 90 C112 96 112 108 106 116 C98 122 88 120 84 112 Z" fill="#e0a37e" />
+                  <path d="M82 92 C80 80 94 72 104 74 C112 76 114 84 112 90 C104 84 92 84 86 92 Z" fill="#201b18" />
+                  <path d="M98 96 C100 94 104 95 106 98" fill="none" stroke="#4a2612" stroke-width="1.8" stroke-linecap="round" />
+                  <path d="M96 106 Q102 112 108 106" fill="none" stroke="#872917" stroke-width="2" stroke-linecap="round" />
+                  <path d="M92 115 L92 128 L102 128 L102 116 Z" fill="#d5926c" />
+                </g>
+                <!-- White Kurta with Red Accents -->
+                <g class="dancer-kurta-left">
+                  <path d="M82 128 C74 150 68 200 60 270 C80 274 120 274 140 268 C132 200 124 150 118 128 Z" fill="#ffffff" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.06))" />
+                  <path d="M94 128 L94 154 C94 158 102 158 102 154 L102 128 Z" fill="#c0392b" />
+                  <path d="M120 124 L126 132" stroke="#c0392b" stroke-width="3" stroke-linecap="round" />
+                  <path d="M90 170 Q100 210 88 250" fill="none" stroke="#e8e4dc" stroke-width="2.5" />
+                  <path d="M110 165 Q106 210 114 252" fill="none" stroke="#e8e4dc" stroke-width="2" />
+                </g>
+                <!-- Pleated Dhoti -->
+                <g class="dancer-dhoti-left">
+                  <path d="M60 268 C56 310 74 348 88 358 C96 348 94 300 96 270 Z" fill="#f5f2eb" />
+                  <path d="M140 268 C144 310 126 348 112 358 C104 348 106 300 104 270 Z" fill="#ede9e1" />
+                  <path d="M88 272 L76 348 L84 356" fill="none" stroke="#c0392b" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
+                  <path d="M112 272 L124 348 L116 356" fill="none" stroke="#c0392b" stroke-width="3" stroke-linecap="round" />
+                </g>
+                <!-- Bare Feet -->
+                <g class="dancer-feet-left">
+                  <path d="M84 354 C80 358 70 366 66 370 C72 372 86 370 90 364 Z" fill="#c48058" />
+                  <path d="M114 354 C118 358 128 366 136 368 C132 372 118 370 112 364 Z" fill="#c48058" />
+                  <path d="M66 370 C72 372 82 371 88 367" stroke="#c0392b" stroke-width="2.5" fill="none" stroke-linecap="round" />
+                  <path d="M136 368 C130 371 122 371 114 367" stroke="#c0392b" stroke-width="2.5" fill="none" stroke-linecap="round" />
+                </g>
+              </g>
+
+              <!-- 2. CENTER DHAKI (DHAK DRUMMER) -->
+              <g id="dhaki-center" class="dhaki-center">
+                <!-- Sound Rhythm Ripples -->
+                <g class="dhak-sound-waves">
+                  <circle cx="435" cy="180" r="48" fill="none" stroke="rgba(217, 147, 59, 0.45)" stroke-width="2.5" class="wave-1" />
+                  <circle cx="435" cy="180" r="70" fill="none" stroke="rgba(192, 57, 43, 0.35)" stroke-width="2" class="wave-2" />
+                  <circle cx="435" cy="180" r="92" fill="none" stroke="rgba(243, 156, 18, 0.25)" stroke-width="1.8" class="wave-3" />
+                </g>
+                <!-- Feathers Plume -->
+                <g class="dhak-feathers">
+                  <path d="M344 76 C340 50 332 40 338 28 C342 40 348 56 348 76 Z" fill="#1c2833" />
+                  <path d="M348 76 C348 46 346 34 354 22 C356 36 354 52 352 76 Z" fill="#2c3e50" />
+                  <path d="M352 76 C356 48 362 38 368 26 C364 42 358 58 354 76 Z" fill="#1c2833" />
+                  <ellipse cx="350" cy="76" rx="8" ry="3" fill="#c0392b" />
+                </g>
+                <!-- Dhak Body -->
+                <g class="dhak-drum-body">
+                  <path d="M360 82 L428 128 C416 182 396 216 360 226 L302 168 C324 130 344 98 360 82 Z" fill="#ffffff" stroke="#5a2210" stroke-width="2" />
+                  <path d="M366 86 L376 93 L324 186 L312 178 Z" fill="#c0392b" />
+                  <path d="M386 100 L398 108 L346 200 L334 192 Z" fill="#c0392b" />
+                  <path d="M408 115 L420 123 L370 215 L358 207 Z" fill="#c0392b" />
+                  <path d="M302 168 C308 152 338 108 360 82" fill="none" stroke="#78281f" stroke-width="5" stroke-linecap="round" />
+                  <ellipse cx="396" cy="180" rx="34" ry="46" fill="url(#dhak-wood)" stroke="#3e1407" stroke-width="2.5" />
+                  <ellipse cx="396" cy="180" rx="28" ry="38" fill="url(#dhak-drumhead)" stroke="#78281f" stroke-width="2" />
+                  <ellipse cx="396" cy="180" rx="9" ry="12" fill="#542310" opacity="0.65" />
+                  <path d="M336 108 C354 116 368 136 360 162" fill="none" stroke="#922b21" stroke-width="10" stroke-linecap="round" />
+                </g>
+                <!-- Dhaki Head -->
+                <g class="dhaki-head">
+                  <path d="M330 90 C324 74 340 64 354 66 C368 68 374 78 370 94 C364 86 356 82 344 84 Z" fill="#1a1412" />
+                  <path d="M336 86 C336 78 350 78 358 84 C366 92 364 104 358 112 C350 118 340 114 336 104 Z" fill="#be7a54" />
+                  <ellipse cx="334" cy="98" rx="4" ry="6" fill="#af6c48" />
+                  <path d="M344 110 L346 125 L358 125 L356 112 Z" fill="#af6c48" />
+                </g>
+                <!-- Dhaki Torso in Orange Kurta -->
+                <g class="dhaki-torso">
+                  <path d="M332 124 C318 160 300 200 292 248 C320 252 358 246 376 220 C370 180 366 148 358 124 Z" fill="#e67e22" />
+                  <path d="M342 124 L348 142 L356 124 Z" fill="#d35400" />
+                  <path d="M312 210 Q334 226 352 208" fill="none" stroke="#d35400" stroke-width="2.5" />
+                </g>
+                <!-- Drumming Arms & Sticks -->
+                <g class="dhaki-arm-drumming">
+                  <path d="M360 134 L384 158 L374 190" fill="none" stroke="#be7a54" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" />
+                  <circle cx="374" cy="190" r="6" fill="#af6c48" />
+                  <line class="drumstick-left" x1="374" y1="190" x2="402" y2="182" stroke="#d4ac0d" stroke-width="4.5" stroke-linecap="round" />
+                </g>
+                <g class="dhaki-arm-right">
+                  <path d="M326 138 L348 184 L372 216" fill="none" stroke="#be7a54" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" />
+                  <circle cx="372" cy="216" r="6" fill="#af6c48" />
+                  <line class="drumstick-right" x1="372" y1="216" x2="396" y2="226" stroke="#d4ac0d" stroke-width="4.5" stroke-linecap="round" />
+                </g>
+                <!-- Dhoti & Legs -->
+                <g class="dhaki-dhoti">
+                  <path d="M292 246 C284 278 300 316 324 330 C344 326 370 300 376 250 Z" fill="#fdfbf7" />
+                  <path d="M324 330 C346 332 378 322 396 290 C388 266 380 252 374 246 Z" fill="#f4efe6" />
+                  <path d="M312 250 Q306 290 326 328" fill="none" stroke="#c0392b" stroke-width="2.5" />
+                  <path d="M344 250 Q348 290 372 322" fill="none" stroke="#a04000" stroke-width="2" />
+                  <path d="M324 330 Q358 334 394 290" fill="none" stroke="#c0392b" stroke-width="3" />
+                </g>
+                <g class="dhaki-legs">
+                  <path d="M312 320 L296 352 L282 368 C290 372 304 368 312 358 Z" fill="#be7a54" />
+                  <path d="M380 308 L404 348 L426 358 C424 364 410 366 398 356 Z" fill="#be7a54" />
+                </g>
+              </g>
+
+              <!-- 3. RIGHT DHUNUCHI DANCER -->
+              <g id="dancer-right" class="dancer-right">
+                <!-- Smoke Plume -->
+                <g class="smoke-group-right">
+                  <path class="smoke-path-3" d="M592 32 C600 18 612 14 604 2 C598 -8 582 -6 590 -22 C596 -34 610 -30 602 -44" fill="none" stroke="rgba(195, 175, 155, 0.7)" stroke-width="6" stroke-linecap="round" />
+                  <path class="smoke-path-4" d="M588 30 C580 16 570 12 576 0 C582 -12 596 -10 588 -26" fill="none" stroke="rgba(215, 195, 175, 0.5)" stroke-width="4" stroke-linecap="round" />
+                </g>
+                <!-- Dhunuchi Pot -->
+                <g class="dhunuchi-right-pot">
+                  <ellipse cx="592" cy="36" rx="14" ry="4" fill="url(#ember-glow)" class="dhuno-fire-right" />
+                  <path d="M576 36 C576 36 580 54 592 54 C604 54 608 36 608 36 Z" fill="url(#terracotta-pot)" />
+                  <ellipse cx="592" cy="36" rx="16" ry="3.5" fill="#a44622" stroke="#5a1e0b" stroke-width="1" />
+                  <path d="M589 54 L587 68 L582 74 L602 74 L597 68 L595 54 Z" fill="url(#terracotta-pot)" />
+                </g>
+                <!-- Raised Left Arm -->
+                <path class="dancer-right-arm-up" d="M598 72 L592 105 L604 128" fill="none" stroke="#d5926c" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" />
+                <circle cx="594" cy="73" r="7" fill="#c48058" />
+                <!-- Outstretched Right Arm -->
+                <path class="dancer-right-arm-out" d="M648 135 L678 152 L708 148" fill="none" stroke="#d5926c" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" />
+                <circle cx="708" cy="148" r="6" fill="#c48058" />
+                <!-- Head & Face -->
+                <g class="dancer-head-right">
+                  <path d="M642 88 C650 96 652 112 640 118 C635 110 628 105 624 102 Z" fill="#2c2724" />
+                  <path d="M636 92 C632 84 620 84 614 90 C608 96 608 108 614 116 C622 122 632 120 636 112 Z" fill="#e0a37e" />
+                  <path d="M638 92 C640 80 626 72 616 74 C608 76 606 84 608 90 C616 84 628 84 634 92 Z" fill="#201b18" />
+                  <path d="M622 96 C620 94 616 95 614 98" fill="none" stroke="#4a2612" stroke-width="1.8" stroke-linecap="round" />
+                  <path d="M624 106 Q618 112 612 106" fill="none" stroke="#872917" stroke-width="2" stroke-linecap="round" />
+                  <path d="M628 115 L628 128 L618 128 L618 116 Z" fill="#d5926c" />
+                </g>
+                <!-- Kurta & Dhoti -->
+                <g class="dancer-kurta-right">
+                  <path d="M638 128 C646 150 652 200 660 270 C640 274 600 274 580 268 C588 200 596 150 602 128 Z" fill="#ffffff" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.06))" />
+                  <path d="M626 128 L626 154 C626 158 618 158 618 154 L618 128 Z" fill="#c0392b" />
+                  <path d="M600 124 L594 132" stroke="#c0392b" stroke-width="3" stroke-linecap="round" />
+                  <path d="M630 170 Q620 210 632 250" fill="none" stroke="#e8e4dc" stroke-width="2.5" />
+                  <path d="M610 165 Q614 210 606 252" fill="none" stroke="#e8e4dc" stroke-width="2" />
+                </g>
+                <g class="dancer-dhoti-right">
+                  <path d="M660 268 C664 310 646 348 632 358 C624 348 626 300 624 270 Z" fill="#f5f2eb" />
+                  <path d="M580 268 C576 310 594 348 608 358 C616 348 614 300 616 270 Z" fill="#ede9e1" />
+                  <path d="M632 272 L644 348 L636 356" fill="none" stroke="#c0392b" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
+                  <path d="M608 272 L596 348 L604 356" fill="none" stroke="#c0392b" stroke-width="3" stroke-linecap="round" />
+                </g>
+                <g class="dancer-feet-right">
+                  <path d="M636 354 C640 358 650 366 654 370 C648 372 634 370 630 364 Z" fill="#c48058" />
+                  <path d="M606 354 C602 358 592 366 584 368 C588 372 602 370 608 364 Z" fill="#c48058" />
+                  <path d="M654 370 C648 372 638 371 632 367" stroke="#c0392b" stroke-width="2.5" fill="none" stroke-linecap="round" />
+                  <path d="M584 368 C590 371 598 371 606 367" stroke="#c0392b" stroke-width="2.5" fill="none" stroke-linecap="round" />
+                </g>
+              </g>
+            </svg>
+          </div>
+
+          <!-- Sleek Festive Branding & Bengali Caption -->
+          <div class="utsav-loader__text-wrap">
+            <h3 class="utsav-loader__brand">BANGIYA.SAMITI</h3>
+            <p class="utsav-loader__sub">IIIT HYDERABAD &bull; উৎসব পোর্টাল</p>
+          </div>
+        </div>
+      `;
+      document.body.prepend(loader);
+    }
+
+    const startTime = Date.now();
+    const MIN_LOADER_DISPLAY_MS = 900;
+
+    function hideLoader() {
+      const elapsed = Date.now() - startTime;
+      const remaining = Math.max(0, MIN_LOADER_DISPLAY_MS - elapsed);
+      setTimeout(() => {
+        if (loader) {
+          loader.classList.add("utsav-loader--hidden");
+          loader.setAttribute("aria-hidden", "true");
+        }
+      }, remaining);
+    }
+
+    if (document.readyState === "complete") {
+      hideLoader();
+    } else {
+      window.addEventListener("load", hideLoader);
+      setTimeout(hideLoader, 2500);
+    }
+
+    // Expose programmatic API for any async actions or page buffering
+    window.UtsavLoader = {
+      show(bengaliText) {
+        if (!loader) return;
+        const msgEl = $("#utsav-loader-msg", loader);
+        if (msgEl && bengaliText) msgEl.textContent = bengaliText;
+        loader.classList.remove("utsav-loader--hidden");
+        loader.setAttribute("aria-hidden", "false");
+      },
+      hide() {
+        if (!loader) return;
+        loader.classList.add("utsav-loader--hidden");
+        loader.setAttribute("aria-hidden", "true");
+      }
+    };
+  }
+
+  // Auto-init loader early if DOM is ready or as soon as script runs
+  if (document.body) {
+    initUtsavLoader();
+  }
+
+  /* =========================================================================
+     PUJA LIVING ILLUSTRATION PURE CROSS-DISSOLVE LOOP
+     True 100% solid cross-dissolve with zero luminance dip or background bleed
+     No overlays, no fade-to-black, no flash, no zoom effects
+     ========================================================================= */
+  function initPujaSeamlessCrossfadeVideo() {
+    const heroHolders = document.querySelectorAll(".events-scene__hero");
+    if (!heroHolders.length) return;
+
+    heroHolders.forEach((hero) => {
+      const video1 = hero.querySelector(".events-scene__hero-video--1");
+      const video2 = hero.querySelector(".events-scene__hero-video--2");
+      if (!video1 || !video2) return;
+
+      // Strictly ensure both videos are muted, inline, and native loop disabled
+      [video1, video2].forEach((v) => {
+        v.muted = true;
+        v.playsInline = true;
+        v.loop = false;
+        v.setAttribute("muted", "");
+        v.setAttribute("playsinline", "");
+        v.removeAttribute("loop");
+      });
+
+      let baseVideo = video1;
+      let topVideo = video2;
+      let isDissolving = false;
+      let isVisible = true;
+      const DISSOLVE_SEC = 0.4; // 400ms pure linear cross-dissolve
+
+      baseVideo.className = "events-scene__hero-video events-scene__hero-video--1 is-base";
+      topVideo.className = "events-scene__hero-video events-scene__hero-video--2 is-hidden";
+
+      function triggerDissolve() {
+        if (isDissolving) return;
+        const dur = baseVideo.duration;
+        if (!dur || isNaN(dur) || dur <= 0) return;
+
+        const timeLeft = dur - baseVideo.currentTime;
+        if (timeLeft <= DISSOLVE_SEC && timeLeft > 0) {
+          isDissolving = true;
+
+          // 1. Prepare top video at frame 0 with opacity 0
+          topVideo.currentTime = 0;
+          topVideo.className = "events-scene__hero-video is-hidden";
+
+          // Force layout reflow before transitioning opacity
+          void topVideo.offsetWidth;
+
+          const playPromise = topVideo.play();
+          if (playPromise !== undefined) {
+            playPromise.catch(() => {});
+          }
+
+          // 2. Smoothly fade in top video directly over the solid 100% opaque base video
+          topVideo.className = "events-scene__hero-video is-top-fading-in";
+
+          // 3. When top video reaches 100% opacity, finalize swap
+          setTimeout(() => {
+            baseVideo.pause();
+            baseVideo.currentTime = 0;
+            baseVideo.className = "events-scene__hero-video is-hidden";
+
+            topVideo.className = "events-scene__hero-video is-base";
+
+            const oldBase = baseVideo;
+            baseVideo = topVideo;
+            topVideo = oldBase;
+
+            isDissolving = false;
+          }, Math.round(DISSOLVE_SEC * 1000) + 40);
+        }
+      }
+
+      function onTimeUpdate(e) {
+        if (e.target === baseVideo && !isDissolving) {
+          triggerDissolve();
+        }
+      }
+
+      video1.addEventListener("timeupdate", onTimeUpdate);
+      video2.addEventListener("timeupdate", onTimeUpdate);
+
+      video1.addEventListener("ended", () => {
+        if (baseVideo === video1 && !isDissolving) triggerDissolve();
+      });
+      video2.addEventListener("ended", () => {
+        if (baseVideo === video2 && !isDissolving) triggerDissolve();
+      });
+
+      // Start initial playback on base video
+      const initialPlay = baseVideo.play();
+      if (initialPlay !== undefined) {
+        initialPlay.catch(() => {
+          const unlock = () => {
+            if (baseVideo.paused) baseVideo.play().catch(() => {});
+            window.removeEventListener("scroll", unlock);
+            window.removeEventListener("touchstart", unlock);
+            window.removeEventListener("click", unlock);
+          };
+          window.addEventListener("scroll", unlock, { passive: true, once: true });
+          window.addEventListener("touchstart", unlock, { passive: true, once: true });
+          window.addEventListener("click", unlock, { passive: true, once: true });
+        });
+      }
+
+      // Viewport IntersectionObserver to pause when offscreen
+      if ("IntersectionObserver" in window) {
+        const observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              isVisible = entry.isIntersecting;
+              if (isVisible) {
+                if (baseVideo.paused) baseVideo.play().catch(() => {});
+              } else {
+                if (!baseVideo.paused) baseVideo.pause();
+                if (!topVideo.paused) topVideo.pause();
+              }
+            });
+          },
+          { threshold: 0.1 }
+        );
+        observer.observe(hero);
+      }
+
+      // Page Visibility handling
+      document.addEventListener("visibilitychange", () => {
+        if (document.hidden) {
+          if (!baseVideo.paused) baseVideo.pause();
+          if (!topVideo.paused) topVideo.pause();
+        } else {
+          if (isVisible && baseVideo.paused) baseVideo.play().catch(() => {});
+        }
+      });
+    });
+  }
+
+  // =========================================================================
   // DOM READY DISPATCHER
   // =========================================================================
   document.addEventListener("DOMContentLoaded", () => {
+    initUtsavLoader();
     initPrimaryNav();
     initStoryGallery();
     initRegistrationForms();
@@ -2125,6 +2559,7 @@
     initPublicEventsCatalog();
     initScrollPolish();
     initMenuCardModal();
+    initPujaSeamlessCrossfadeVideo();
   });
 })();
 
