@@ -2904,18 +2904,20 @@ button {
 /* Inner panel — parchment card */
 .story-lightbox__panel {
   position: relative;
-  width: min(880px, 100%);
-  max-height: calc(100vh - 32px);
+  width: min(840px, 94vw);
+  height: auto;
+  max-height: 88vh;
+  margin: auto;
   display: flex;
   flex-direction: column;
   gap: 0;
   background: linear-gradient(170deg, #fdf8f1 0%, #f5e9d0 100%);
   border: 1px solid rgba(120, 68, 28, 0.24);
-  border-radius: 6px;
+  border-radius: 14px;
   box-shadow: 0 32px 80px rgba(0, 0, 0, 0.48), 0 4px 16px rgba(0, 0, 0, 0.24);
   overflow: hidden;
-  transform: scale(0.94);
-  transition: transform 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: scale(0.96);
+  transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .story-lightbox.is-open .story-lightbox__panel {
@@ -2926,9 +2928,9 @@ button {
 .story-lightbox__media {
   position: relative;
   width: 100%;
-  max-height: calc(100vh - 120px);
+  max-height: clamp(220px, 58vh, 640px);
   overflow: hidden;
-  background: #1c130b;
+  background: #140d07;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2937,8 +2939,8 @@ button {
 .story-lightbox__image {
   display: block;
   width: 100%;
-  height: 100%;
-  max-height: calc(100vh - 120px);
+  height: auto;
+  max-height: clamp(220px, 58vh, 640px);
   object-fit: contain;
   transition: opacity 0.18s ease;
 }
@@ -2949,15 +2951,15 @@ button {
 
 /* Caption strip */
 .story-lightbox__copy {
-  padding: 12px 16px 14px;
+  padding: 10px 14px 12px;
   border-top: 1px solid rgba(120, 68, 28, 0.14);
   background: rgba(253, 248, 241, 0.97);
 }
 
 .story-lightbox__title {
-  margin: 0 0 3px;
+  margin: 0 0 2px;
   font-family: "Noto Serif Bengali", "Times New Roman", Georgia, serif;
-  font-size: clamp(0.88rem, 1.6vw, 1.02rem);
+  font-size: clamp(0.82rem, 2.8vw, 0.98rem);
   font-weight: 700;
   color: #2a180d;
   letter-spacing: 0.01em;
@@ -2973,7 +2975,7 @@ button {
 }
 
 .story-lightbox__date {
-  font-size: clamp(0.68rem, 1.2vw, 0.74rem);
+  font-size: clamp(0.65rem, 1.8vw, 0.72rem);
   font-weight: 500;
   color: #7c4a1e;
   letter-spacing: 0.03em;
@@ -2982,13 +2984,13 @@ button {
 
 /* Photo counter: "2 / 4" */
 .story-lightbox__counter {
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   font-weight: 600;
   color: #8a5131;
   letter-spacing: 0.08em;
   font-variant-numeric: tabular-nums;
   background: rgba(184, 92, 38, 0.10);
-  padding: 2px 8px;
+  padding: 2px 7px;
   border-radius: 3px;
   border: 1px solid rgba(184, 92, 38, 0.22);
 }
@@ -2996,22 +2998,34 @@ button {
 /* Mobile lightbox adjustments */
 @media (max-width: 560px) {
   .story-lightbox {
-    padding: 8px;
-    align-items: flex-end;
+    padding: 10px;
+    align-items: center;
   }
 
   .story-lightbox__panel {
-    width: 100%;
-    border-radius: 12px 12px 0 0;
-    max-height: 92vh;
+    width: 96vw;
+    border-radius: 12px;
+    max-height: 86vh;
+  }
+
+  .story-lightbox__media {
+    max-height: 52vh;
+  }
+
+  .story-lightbox__image {
+    max-height: 52vh;
   }
 
   .story-lightbox__prev {
-    left: 8px;
+    left: 6px;
+    width: 36px;
+    height: 36px;
   }
 
   .story-lightbox__next {
-    right: 8px;
+    right: 6px;
+    width: 36px;
+    height: 36px;
   }
 
   .story-lightbox__close {
@@ -6681,18 +6695,41 @@ button {
   }
 
   .home-strip__inner {
-    grid-template-columns: 1fr;
-    gap: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+    width: 100%;
+  }
+
+  .home-strip__brand {
+    font-size: clamp(0.72rem, 3.2vw, 0.88rem);
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
 
   .home-strip__nav {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    font-size: 0.44rem;
-    letter-spacing: 0.18em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(2px, 1.2vw, 8px);
+    font-size: clamp(0.48rem, 2vw, 0.58rem);
+    letter-spacing: 0.06em;
+    flex: 1 1 auto;
+    margin: 0;
+  }
+
+  .home-strip__link {
+    padding: 3px clamp(3px, 1vw, 6px);
   }
 
   .home-strip__action {
-    justify-self: start;
+    padding: 4px clamp(6px, 1.5vw, 10px);
+    font-size: clamp(0.48rem, 1.8vw, 0.54rem);
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+    justify-self: auto;
   }
 
   .story-page,
@@ -6899,51 +6936,69 @@ button {
 @media (max-width: 760px) {
   .home-page {
     padding-inline: 0;
+    gap: 0;
   }
 
   .home-hero {
     width: 100vw;
     margin-left: calc(50% - 50vw);
-    aspect-ratio: 1124 / 420;
-    min-height: 300px;
+    min-height: clamp(340px, 85vw, 460px);
+    overflow: hidden;
   }
 
   .home-hero__content {
-    padding-top: 18px;
+    padding: clamp(14px, 3vw, 24px) 12px 16px;
+    width: 100%;
+    box-sizing: border-box;
+    justify-items: center;
   }
 
   .home-hero__title {
-    margin-top: 3rem;
-    font-size: clamp(2.3rem, 10vw, 3.6rem);
+    margin: clamp(1.6rem, 5vw, 3.2rem) 0 0;
+    font-size: clamp(1.45rem, 6.4vw, 3.2rem);
+    letter-spacing: clamp(0.01em, 0.4vw, 0.05em);
+    line-height: 1.05;
+    max-width: 96vw;
+    text-align: center;
+  }
+
+  .home-hero__subtitle {
+    margin: clamp(0.35rem, 1.2vw, 0.8rem) 0 0;
+    font-size: clamp(0.62rem, 2.2vw, 0.82rem);
+    letter-spacing: clamp(0.12em, 0.8vw, 0.22em);
   }
 
   .home-hero__card {
-    width: min(170px, 56vw);
+    width: min(200px, 68vw);
+    padding: clamp(8px, 2vw, 12px) clamp(10px, 2.5vw, 14px);
+    margin-top: clamp(8px, 2vw, 14px);
     margin-left: 0;
   }
 
-  .home-page {
-    gap: 0;
+  .home-hero__card p {
+    font-size: clamp(0.78rem, 2.8vw, 0.95rem);
+    line-height: 1.2;
+  }
+
+  .home-hero__cta {
+    font-size: clamp(0.5rem, 1.8vw, 0.58rem);
+    letter-spacing: 0.1em;
+    margin-top: 6px;
   }
 
   .home-strip {
     min-height: 38px;
-    padding-inline: 8px;
-  }
-
-  .home-strip__nav {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-    font-size: 0.54rem;
-    letter-spacing: 0.24em;
+    padding: 4px clamp(6px, 2vw, 12px);
   }
 
   .home-banner {
     width: 100vw;
     margin-left: calc(50% - 50vw);
+    overflow: hidden;
   }
 
   .home-banner__scene {
-    height: 118px;
+    height: clamp(84px, 22vw, 130px);
   }
 
   .home-banner__layer--left {
@@ -8546,6 +8601,292 @@ div[id] {
   font-family: "Outfit", system-ui, -apple-system, sans-serif;
   color: #8c5d3d;
   font-weight: 600;
+}
+
+/* =========================================================================
+   COMPREHENSIVE MOBILE RESPONSIVENESS & FLUID SCALING (<= 480px & <= 360px)
+   ========================================================================= */
+
+@media (max-width: 480px) {
+  html, body {
+    overflow-x: hidden;
+    width: 100%;
+  }
+
+  /* 1. Header Sticky Ribbon */
+  .home-strip {
+    min-height: 36px;
+    padding: 3px 6px;
+  }
+
+  .home-strip__inner {
+    gap: 2px;
+  }
+
+  .home-strip__brand {
+    font-size: clamp(0.70rem, 3.2vw, 0.82rem);
+    letter-spacing: 0.01em;
+  }
+
+  .home-strip__nav {
+    gap: 2px;
+    font-size: clamp(0.46rem, 1.9vw, 0.54rem);
+    letter-spacing: 0.04em;
+  }
+
+  .home-strip__link {
+    padding: 2px 4px;
+  }
+
+  .home-strip__action {
+    padding: 3px 6px;
+    font-size: clamp(0.46rem, 1.8vw, 0.52rem);
+    letter-spacing: 0.02em;
+  }
+
+  /* 2. Top Triptych Banner */
+  .home-banner__scene {
+    height: clamp(80px, 22vw, 110px);
+  }
+
+  /* 3. Hero Section */
+  .home-hero {
+    min-height: clamp(320px, 86vw, 420px);
+  }
+
+  .home-hero__content {
+    padding: 12px 8px 14px;
+  }
+
+  .home-hero__title {
+    margin: 1.4rem 0 0;
+    font-size: clamp(1.35rem, 6.2vw, 2.2rem);
+    letter-spacing: 0.01em;
+    line-height: 1.05;
+    max-width: 98vw;
+  }
+
+  .home-hero__subtitle {
+    margin: 0.3rem 0 0;
+    font-size: clamp(0.58rem, 2vw, 0.72rem);
+    letter-spacing: 0.12em;
+  }
+
+  .home-hero__card {
+    width: min(180px, 66vw);
+    padding: 7px 10px;
+    margin-top: 8px;
+  }
+
+  .home-hero__card p {
+    font-size: clamp(0.74rem, 2.7vw, 0.88rem);
+    line-height: 1.18;
+  }
+
+  .home-hero__cta {
+    font-size: 0.48rem;
+    margin-top: 4px;
+  }
+
+  /* 4. Events Courtyard & Cards */
+  .events-scene {
+    padding: 14px 6px 20px;
+  }
+
+  .events-scene__panel {
+    border-radius: 12px;
+  }
+
+  .events-scene__hero {
+    aspect-ratio: 16 / 10;
+    min-height: 170px;
+  }
+
+  .events-scene__copy {
+    padding: 12px 14px 4px !important;
+  }
+
+  .events-scene__cards {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 0 10px 10px;
+  }
+
+  .events-scene__card {
+    border-radius: 10px;
+  }
+
+  .events-scene__card-body {
+    padding: 12px;
+  }
+
+  /* 5. Story Gallery & Photo Album */
+  .story-page {
+    padding: 0 6px 14px;
+  }
+
+  .story-card {
+    border-radius: 10px;
+    margin: 8px auto;
+  }
+
+  .story-card__intro {
+    padding: 2px 12px 0;
+  }
+
+  .story-card__header {
+    min-height: 160px;
+  }
+
+  .story-card__body {
+    padding: 12px 8px 16px;
+  }
+
+  .photo-album__grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+
+  .photo-album__hero {
+    height: 140px;
+  }
+
+  .photo-album__thumb-row {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+  }
+
+  .photo-album__thumb {
+    height: 84px;
+  }
+
+  /* 6. Event Registration Pages (Mahalaya & Saraswati) */
+  .mahalaya-page,
+  .saraswati-page {
+    padding: 0 4px 16px;
+  }
+
+  .mahalaya-card,
+  .saraswati-card {
+    border-radius: 12px;
+  }
+
+  .mahalaya-card__hero,
+  .saraswati-card__hero {
+    aspect-ratio: 16 / 8.5;
+    min-height: 150px;
+  }
+
+  .mahalaya-card__heroRibbon,
+  .saraswati-card__heroRibbon {
+    top: 8px;
+    left: 8px;
+    font-size: 0.52rem;
+    padding: 2px 7px;
+  }
+
+  .mahalaya-card__body,
+  .saraswati-card__body {
+    padding: 12px 8px 16px;
+    gap: 14px;
+  }
+
+  .mahalaya-programme-grid,
+  .saraswati-programme-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .mahalaya-programme-panel,
+  .saraswati-programme-panel {
+    min-height: 100px;
+    border-radius: 8px;
+  }
+
+  .mahalaya-menu-card-showcase,
+  .saraswati-menu-card-showcase {
+    margin: 10px 0;
+  }
+
+  .mahalaya-card__formPane,
+  .saraswati-card__formPane {
+    padding: 12px 10px;
+    border-radius: 10px;
+  }
+
+  /* 7. Pass World & QR Scanner */
+  .pass-world__layout {
+    padding: 0 4px 14px;
+    gap: 12px;
+  }
+
+  .qr-pass {
+    padding: 12px;
+    border-radius: 18px;
+  }
+
+  .qr-pass__body {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 10px 0;
+  }
+
+  .qr-pass__details {
+    gap: 8px;
+    font-size: 0.8rem;
+  }
+
+  .scanner-world {
+    padding: 0 4px;
+  }
+
+  /* 8. Footer Mobile Optimization */
+  .utsav-footer__bannerImage {
+    height: auto;
+    max-height: 64px;
+  }
+
+  .utsav-footer__content {
+    padding: 18px 10px;
+  }
+
+  .utsav-footer__grid {
+    gap: 14px;
+  }
+
+  .utsav-footer__bottom {
+    flex-direction: column;
+    gap: 6px;
+    text-align: center;
+  }
+}
+
+@media (max-width: 360px) {
+  .home-strip__brand {
+    font-size: 0.68rem;
+  }
+
+  .home-strip__nav {
+    font-size: 0.44rem;
+    gap: 1px;
+  }
+
+  .home-strip__link {
+    padding: 2px 3px;
+  }
+
+  .home-strip__action {
+    padding: 3px 5px;
+    font-size: 0.44rem;
+  }
+
+  .home-hero__title {
+    font-size: 1.3rem;
+  }
+
+  .home-hero__card {
+    width: 90%;
+  }
 }
 
 /* 5. Reduced Motion Accessibility Rule */
