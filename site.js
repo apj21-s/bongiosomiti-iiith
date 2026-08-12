@@ -523,6 +523,10 @@
       img.className = "photo-album__img";
       img.src = photo.src;
       img.alt = photo.alt;
+      img.loading = "lazy";
+      img.decoding = "async";
+      img.width = 600;
+      img.height = 400;
       img.style.objectPosition = photo.pos;
       return img;
     }
@@ -2359,7 +2363,7 @@
     }
 
     const startTime = Date.now();
-    const MIN_LOADER_DISPLAY_MS = 900;
+    const MIN_LOADER_DISPLAY_MS = 400;
 
     function hideLoader() {
       const elapsed = Date.now() - startTime;
@@ -2372,11 +2376,12 @@
       }, remaining);
     }
 
-    if (document.readyState === "complete") {
+    if (document.readyState === "complete" || document.readyState === "interactive") {
       hideLoader();
     } else {
-      window.addEventListener("load", hideLoader);
-      setTimeout(hideLoader, 2500);
+      document.addEventListener("DOMContentLoaded", hideLoader, { once: true });
+      window.addEventListener("load", hideLoader, { once: true });
+      setTimeout(hideLoader, 900); // hard fallback maximum 900ms
     }
 
     // Expose programmatic API for any async actions or page buffering
@@ -2402,9 +2407,9 @@
   }
 
   /* =========================================================================
-     PUJA LIVING ILLUSTRATION PURE CROSS-DISSOLVE LOOP
+     PUJA LIVING ILLUSTRATION PURE CROSS-DISSOLVE LOOP & LAZY LOADER
      True 100% solid cross-dissolve with zero luminance dip or background bleed
-     No overlays, no fade-to-black, no flash, no zoom effects
+     Lazy loads 9.8MB video only when approaching viewport (rootMargin: 350px)
      ========================================================================= */
   function initPujaSeamlessCrossfadeVideo() {
     const heroHolders = document.querySelectorAll(".events-scene__hero");
@@ -2428,14 +2433,52 @@
       let baseVideo = video1;
       let topVideo = video2;
       let isDissolving = false;
-      let isVisible = true;
+      let isVisible = false;
+      let isLoaded = false;
       const DISSOLVE_SEC = 0.4; // 400ms pure linear cross-dissolve
 
-      baseVideo.className = "events-scene__hero-video events-scene__hero-video--1 is-base";
+      baseVideo.className = "events-scene__hero-video events-scene__hero-video--1 is-hidden";
       topVideo.className = "events-scene__hero-video events-scene__hero-video--2 is-hidden";
 
+      function loadAndStartVideos() {
+        if (isLoaded) return;
+        isLoaded = true;
+
+        const src1 = video1.dataset.src || video1.getAttribute("src");
+        const src2 = video2.dataset.src || video2.getAttribute("src");
+
+        if (src1 && !video1.getAttribute("src")) video1.src = src1;
+        if (src2 && !video2.getAttribute("src")) video2.src = src2;
+
+        video1.load();
+        video2.load();
+
+        const onReady = () => {
+          video1.removeEventListener("canplay", onReady);
+          video1.removeEventListener("loadeddata", onReady);
+
+          baseVideo.className = "events-scene__hero-video events-scene__hero-video--1 is-base";
+          topVideo.className = "events-scene__hero-video events-scene__hero-video--2 is-hidden";
+
+          if (isVisible) {
+            const p = baseVideo.play();
+            if (p !== undefined) p.catch(() => {});
+          }
+        };
+
+        video1.addEventListener("canplay", onReady, { once: true });
+        video1.addEventListener("loadeddata", onReady, { once: true });
+
+        // Fallback safety timeout if cached
+        setTimeout(() => {
+          if (baseVideo.classList.contains("is-hidden") && baseVideo.readyState >= 2) {
+            onReady();
+          }
+        }, 300);
+      }
+
       function triggerDissolve() {
-        if (isDissolving) return;
+        if (isDissolving || !isLoaded) return;
         const dur = baseVideo.duration;
         if (!dur || isNaN(dur) || dur <= 0) return;
 
@@ -2491,48 +2534,72 @@
         if (baseVideo === video2 && !isDissolving) triggerDissolve();
       });
 
-      // Start initial playback on base video
-      const initialPlay = baseVideo.play();
-      if (initialPlay !== undefined) {
-        initialPlay.catch(() => {
-          const unlock = () => {
-            if (baseVideo.paused) baseVideo.play().catch(() => {});
-            window.removeEventListener("scroll", unlock);
-            window.removeEventListener("touchstart", unlock);
-            window.removeEventListener("click", unlock);
-          };
-          window.addEventListener("scroll", unlock, { passive: true, once: true });
-          window.addEventListener("touchstart", unlock, { passive: true, once: true });
-          window.addEventListener("click", unlock, { passive: true, once: true });
-        });
-      }
-
-      // Viewport IntersectionObserver to pause when offscreen
+      // Lazy Loading & Playback Visibility IntersectionObserver
       if ("IntersectionObserver" in window) {
-        const observer = new IntersectionObserver(
+        // 1. Preload Observer: starts loading video when 350px near viewport
+        const preloadObserver = new IntersectionObserver(
+          (entries, obs) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                loadAndStartVideos();
+                obs.unobserve(entry.target);
+              }
+            });
+          },
+          { rootMargin: "350px 0px" }
+        );
+        preloadObserver.observe(hero);
+
+        // 2. Playback Observer: plays/pauses based on actual visibility
+        const playbackObserver = new IntersectionObserver(
           (entries) => {
             entries.forEach((entry) => {
               isVisible = entry.isIntersecting;
               if (isVisible) {
-                if (baseVideo.paused) baseVideo.play().catch(() => {});
+                if (isLoaded && baseVideo.paused && baseVideo.readyState >= 2) {
+                  baseVideo.play().catch(() => {});
+                }
               } else {
-                if (!baseVideo.paused) baseVideo.pause();
-                if (!topVideo.paused) topVideo.pause();
+                if (isLoaded) {
+                  if (!baseVideo.paused) baseVideo.pause();
+                  if (!topVideo.paused) topVideo.pause();
+                }
               }
             });
           },
-          { threshold: 0.1 }
+          { threshold: 0.08 }
         );
-        observer.observe(hero);
+        playbackObserver.observe(hero);
+      } else {
+        // Fallback: load immediately if IntersectionObserver not available
+        isVisible = true;
+        loadAndStartVideos();
       }
 
-      // Page Visibility handling
+      // Autoplay unlock for strict browser gesture policies
+      const unlock = () => {
+        if (isLoaded && isVisible && baseVideo.paused && baseVideo.readyState >= 2) {
+          baseVideo.play().catch(() => {});
+        }
+        window.removeEventListener("scroll", unlock);
+        window.removeEventListener("touchstart", unlock);
+        window.removeEventListener("click", unlock);
+      };
+      window.addEventListener("scroll", unlock, { passive: true, once: true });
+      window.addEventListener("touchstart", unlock, { passive: true, once: true });
+      window.addEventListener("click", unlock, { passive: true, once: true });
+
+      // Page Visibility handling (tab backgrounding)
       document.addEventListener("visibilitychange", () => {
         if (document.hidden) {
-          if (!baseVideo.paused) baseVideo.pause();
-          if (!topVideo.paused) topVideo.pause();
+          if (isLoaded) {
+            if (!baseVideo.paused) baseVideo.pause();
+            if (!topVideo.paused) topVideo.pause();
+          }
         } else {
-          if (isVisible && baseVideo.paused) baseVideo.play().catch(() => {});
+          if (isLoaded && isVisible && baseVideo.paused && baseVideo.readyState >= 2) {
+            baseVideo.play().catch(() => {});
+          }
         }
       });
     });

@@ -27,13 +27,13 @@
     <section class="home-banner" aria-hidden="true">
       <div class="home-banner__scene">
         <div class="home-banner__layer home-banner__layer--left">
-          <img class="home-banner__image home-banner__image--left" src="assets/autumn-landscape.svg" alt="" />
+          <img class="home-banner__image home-banner__image--left" src="assets/autumn-landscape.webp" alt="" width="1792" height="592" fetchpriority="high" loading="eager" decoding="async" />
         </div>
         <div class="home-banner__layer home-banner__layer--center">
-          <img class="home-banner__image home-banner__image--center" src="assets/kolkata-street.svg" alt="" />
+          <img class="home-banner__image home-banner__image--center" src="assets/kolkata-street.webp" alt="" width="1792" height="592" fetchpriority="high" loading="eager" decoding="async" />
         </div>
         <div class="home-banner__layer home-banner__layer--right">
-          <img class="home-banner__image home-banner__image--right" src="assets/community-puja.svg" alt="" />
+          <img class="home-banner__image home-banner__image--right" src="assets/community-puja.webp" alt="" width="1200" height="880" fetchpriority="high" loading="eager" decoding="async" />
         </div>
       </div>
       <div class="home-banner__blend"></div>
@@ -42,7 +42,7 @@
     <section id="home" class="home-hero" aria-labelledby="home-hero-title">
       <div class="home-hero__scene" aria-hidden="true">
         <div class="home-hero__layer home-hero__layer--landscape">
-          <img class="home-hero__image home-hero__image--landscape" src="assets/autumn-landscape.svg" alt="" />
+          <img class="home-hero__image home-hero__image--landscape" src="assets/autumn-landscape.webp" alt="" width="1792" height="592" fetchpriority="high" loading="eager" decoding="async" />
         </div>
 
         <!-- Radiant Glowing Autumn Sun -->
@@ -122,9 +122,10 @@
     <section id="events" class="events-page" aria-labelledby="events-title">
       <div class="events-scene">
         <div class="events-scene__panel">
-          <div class="events-scene__hero scroll-reveal scroll-reveal--delay-1">
-            <video class="events-scene__hero-video events-scene__hero-video--1 is-base" src="assets/Animate_Bengali_Puja_courtyard.mp4" autoplay muted playsinline poster="assets/community-puja.svg" aria-label="Bengali Puja Courtyard Celebration"></video>
-            <video class="events-scene__hero-video events-scene__hero-video--2 is-hidden" src="assets/Animate_Bengali_Puja_courtyard.mp4" muted playsinline aria-hidden="true"></video>
+          <div class="events-scene__hero scroll-reveal scroll-reveal--delay-1" id="events-hero-player">
+            <img class="events-scene__hero-image events-scene__hero-poster" src="assets/community-puja.webp" alt="Bengali Puja Courtyard Celebration" width="1200" height="880" loading="lazy" decoding="async" />
+            <video class="events-scene__hero-video events-scene__hero-video--1 is-hidden" data-src="assets/Animate_Bengali_Puja_courtyard.mp4" preload="none" muted playsinline aria-label="Bengali Puja Courtyard Celebration"></video>
+            <video class="events-scene__hero-video events-scene__hero-video--2 is-hidden" data-src="assets/Animate_Bengali_Puja_courtyard.mp4" preload="none" muted playsinline aria-hidden="true"></video>
           </div>
 
           <div class="events-scene__copy scroll-reveal">
@@ -137,8 +138,8 @@
             <a class="events-scene__card scroll-reveal scroll-reveal--delay-2" href="events/mahalaya/index.html"
               aria-label="Register for Mahalaya Bhoj 2026">
               <div class="events-scene__card-media">
-                <img class="events-scene__card-image" src="assets/mahalaya-bhoj.svg" alt="Mahalaya Bhoj Community Feast"
-                  style="object-position: center 36%;" />
+                <img class="events-scene__card-image" src="assets/mahalaya-bhoj.webp" alt="Mahalaya Bhoj Community Feast"
+                  width="1264" height="848" loading="lazy" decoding="async" style="object-position: center 36%;" />
                 <span class="events-scene__card-badge">Limited Bhoj Passes</span>
               </div>
               <div class="events-scene__card-body">
@@ -164,8 +165,8 @@
             <a class="events-scene__card scroll-reveal scroll-reveal--delay-3" href="events/saraswati/index.html"
               aria-label="Register for Saraswati Puja 2027">
               <div class="events-scene__card-media">
-                <img class="events-scene__card-image" src="assets/saraswati-puja.svg"
-                  alt="Saraswati Puja Campus Celebration" style="object-position: center 20%;" />
+                <img class="events-scene__card-image" src="assets/saraswati-puja.webp"
+                  alt="Saraswati Puja Campus Celebration" width="544" height="880" loading="lazy" decoding="async" style="object-position: center 20%;" />
                 <span class="events-scene__card-badge">Campus Celebration</span>
               </div>
               <div class="events-scene__card-body">
@@ -203,7 +204,7 @@
         </div>
 
         <div class="story-card__header scroll-reveal scroll-reveal--delay-1">
-          <img class="story-card__headerImage" src="assets/amader%20golpo.svg" alt="" />
+          <img class="story-card__headerImage" src="assets/amader-golpo.webp" alt="Bangiya Samiti Story Illustration" width="1474" height="618" loading="lazy" decoding="async" />
           <div class="story-card__headerOverlay" aria-hidden="true"></div>
           <div class="story-card__headerCopy">
             <p class="section-label">আমাদের গল্প</p>
@@ -236,33 +237,33 @@
 
             <!-- Hidden photo data source — edit only here to manage photos -->
             <ul class="photo-album__data" hidden aria-hidden="true">
-              <li data-src="assets/photo_1.jpg" data-alt="সরস্বতী পূজা" data-title="সরস্বতী পূজা"
+              <li data-src="assets/photo_1.webp" data-alt="সরস্বতী পূজা" data-title="সরস্বতী পূজা"
                 data-date="১৪ অক্টোবর ২০২৬" data-pos="center 32%"></li>
-              <li data-src="assets/photo_2026-08-11_21-42-50.jpg" data-alt="হাতের আলপনা" data-title="হাতের আলপনা"
+              <li data-src="assets/photo_2026-08-11_21-42-50.webp" data-alt="হাতের আলপনা" data-title="হাতের আলপনা"
                 data-date="১৮ অক্টোবর ২০২৬" data-pos="center 28%"></li>
-              <li data-src="assets/photo_2026-08-11_21-42-48.jpg" data-alt="সরস্বতী প্রাঙ্গণ"
+              <li data-src="assets/photo_2026-08-11_21-42-48.webp" data-alt="সরস্বতী প্রাঙ্গণ"
                 data-title="সরস্বতী প্রাঙ্গণ" data-date="২১ জানুয়ারি ২০২৭" data-pos="center 42%"></li>
-              <li data-src="assets/p10.jpg" data-alt="ভোগ বিতরণ" data-title="ভোগ ও প্রসাদ বিতরণ"
+              <li data-src="assets/p10.webp" data-alt="ভোগ বিতরণ" data-title="ভোগ ও প্রসাদ বিতরণ"
                 data-date="০৬ ফেব্রুয়ারি ২০২৭" data-pos="center 36%"></li>
-              <li data-src="assets/photo_2026-08-11_22-55-53.jpg" data-alt="পূজার প্রস্তুতি"
+              <li data-src="assets/photo_2026-08-11_22-55-53.webp" data-alt="পূজার প্রস্তুতি"
                 data-title="পূজার প্রস্তুতি ও সাজসজ্জা" data-date="১২ অক্টোবর ২০২৬" data-pos="center 30%"></li>
-              <li data-src="assets/photo_2026-08-11_22-56-00.jpg" data-alt="সন্ধ্যা আরতি"
+              <li data-src="assets/photo_2026-08-11_22-56-00.webp" data-alt="সন্ধ্যা আরতি"
                 data-title="সন্ধ্যা আরতি ও প্রার্থনা" data-date="১৩ অক্টোবর ২০২৬" data-pos="center 38%"></li>
-              <li data-src="assets/photo_2026-08-11_21-42-44.jpg" data-alt="মণ্ডপ পরিক্রমা"
+              <li data-src="assets/photo_2026-08-11_21-42-44.webp" data-alt="মণ্ডপ পরিক্রমা"
                 data-title="মণ্ডপ পরিক্রমা ও উৎসব" data-date="১৯ অক্টোবর ২০২৬" data-pos="center 34%"></li>
-              <li data-src="assets/p7.jpg" data-alt="ধুনুচি নাচ" data-title="ধুনুচি নাচ ও ঢাকের বোল"
+              <li data-src="assets/p7.webp" data-alt="ধুনুচি নাচ" data-title="ধুনুচি নাচ ও ঢাকের বোল"
                 data-date="০৪ ফেব্রুয়ারি ২০২৭" data-pos="center 36%"></li>
-              <li data-src="assets/p8.jpg" data-alt="সাংস্কৃতিক সন্ধ্যা" data-title="সাংস্কৃতিক সন্ধ্যা ও সংগীত"
+              <li data-src="assets/p8.webp" data-alt="সাংস্কৃতিক সন্ধ্যা" data-title="সাংস্কৃতিক সন্ধ্যা ও সংগীত"
                 data-date="০৫ ফেব্রুয়ারি ২০২৭" data-pos="center 36%"></li>
-              <li data-src="assets/p9.jpg" data-alt="প্রদীপ প্রজ্জ্বলন" data-title="প্রদীপ প্রজ্জ্বলন ও পুষ্পাঞ্জলি"
+              <li data-src="assets/p9.webp" data-alt="প্রদীপ প্রজ্জ্বলন" data-title="প্রদীপ প্রজ্জ্বলন ও পুষ্পাঞ্জলি"
                 data-date="০৫ ফেব্রুয়ারি ২০২৭" data-pos="center 36%"></li>
-              <li data-src="assets/p11.jpg" data-alt="ক্যাম্পাস আড্ডা" data-title="ক্যাম্পাস আড্ডা ও আনন্দ"
+              <li data-src="assets/p11.webp" data-alt="ক্যাম্পাস আড্ডা" data-title="ক্যাম্পাস আড্ডা ও আনন্দ"
                 data-date="০৬ ফেব্রুয়ারি ২০২৭" data-pos="center 36%"></li>
-              <li data-src="assets/p12.jpg" data-alt="সন্ধ্যা মিলন" data-title="সন্ধ্যা মিলন ও প্রসাদ সেবা"
+              <li data-src="assets/p12.webp" data-alt="সন্ধ্যা মিলন" data-title="সন্ধ্যা মিলন ও প্রসাদ সেবা"
                 data-date="০৬ ফেব্রুয়ারি ২০২৭" data-pos="center 36%"></li>
-              <li data-src="assets/p13.jpg" data-alt="আনন্দ উৎসব" data-title="আনন্দ উৎসব ও স্মৃতি"
+              <li data-src="assets/p13.webp" data-alt="আনন্দ উৎসব" data-title="আনন্দ উৎসব ও স্মৃতি"
                 data-date="০৭ ফেব্রুয়ারি ২০২৭" data-pos="center 36%"></li>
-              <li data-src="assets/p14.jpg" data-alt="শুভ বিজয়া" data-title="শুভ বিজয়া সম্মিলনী"
+              <li data-src="assets/p14.webp" data-alt="শুভ বিজয়া" data-title="শুভ বিজয়া সম্মিলনী"
                 data-date="০৭ ফেব্রুয়ারি ২০২৭" data-pos="center 36%"></li>
             </ul>
 
@@ -276,8 +277,8 @@
 
     <footer class="utsav-footer" role="contentinfo">
       <div class="utsav-footer__banner">
-        <img class="utsav-footer__bannerImage" src="assets/footer-banner.png"
-          alt="BANGIYA.SAMITI.IIITH Bengali Cultural Alpona &amp; Lotus Motif" />
+        <img class="utsav-footer__bannerImage" src="assets/footer-banner.webp"
+          alt="BANGIYA.SAMITI.IIITH Bengali Cultural Alpona &amp; Lotus Motif" width="1024" height="136" loading="lazy" decoding="async" />
       </div>
       <div class="utsav-footer__content">
         <div class="utsav-footer__grid">

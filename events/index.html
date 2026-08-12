@@ -32,9 +32,10 @@
         </div>
 
         <div class="events-scene__panel">
-          <div class="events-scene__hero">
-            <video class="events-scene__hero-video events-scene__hero-video--1 is-base" src="assets/Animate_Bengali_Puja_courtyard.mp4" autoplay muted playsinline poster="assets/community-puja.svg" aria-label="IIIT Bongio Samiti Celebrations"></video>
-            <video class="events-scene__hero-video events-scene__hero-video--2 is-hidden" src="assets/Animate_Bengali_Puja_courtyard.mp4" muted playsinline aria-hidden="true"></video>
+          <div class="events-scene__hero" id="events-hero-player">
+            <img class="events-scene__hero-image events-scene__hero-poster" src="assets/community-puja.webp" alt="IIIT Bongio Samiti Celebrations" width="1200" height="880" loading="eager" fetchpriority="high" decoding="async" />
+            <video class="events-scene__hero-video events-scene__hero-video--1 is-hidden" data-src="assets/Animate_Bengali_Puja_courtyard.mp4" preload="none" muted playsinline aria-label="IIIT Bongio Samiti Celebrations"></video>
+            <video class="events-scene__hero-video events-scene__hero-video--2 is-hidden" data-src="assets/Animate_Bengali_Puja_courtyard.mp4" preload="none" muted playsinline aria-hidden="true"></video>
           </div>
 
           <div class="events-scene__copy" style="padding: 1.25rem 1.5rem 0.5rem;">
@@ -46,7 +47,7 @@
           <div id="public-events-catalog" class="events-scene__cards">
             <a href="events/mahalaya/index.html" class="events-scene__card">
               <div class="events-scene__card-media">
-                <img class="events-scene__card-image" src="assets/mahalaya-bhoj.svg" alt="Mahalaya Bhoj" style="object-position:center 34%" />
+                <img class="events-scene__card-image" src="assets/mahalaya-bhoj.webp" alt="Mahalaya Bhoj" width="1264" height="848" loading="lazy" decoding="async" style="object-position:center 34%" />
               </div>
               <div class="events-scene__card-body">
                 <div class="events-scene__card-meta">
@@ -61,7 +62,7 @@
 
             <a href="events/saraswati/index.html" class="events-scene__card">
               <div class="events-scene__card-media">
-                <img class="events-scene__card-image" src="assets/saraswati-puja.svg" alt="Saraswati Puja" style="object-position:center 22%" />
+                <img class="events-scene__card-image" src="assets/saraswati-puja.webp" alt="Saraswati Puja" width="544" height="880" loading="lazy" decoding="async" style="object-position:center 20%" />
               </div>
               <div class="events-scene__card-body">
                 <div class="events-scene__card-meta">
@@ -84,8 +85,8 @@
 
     <footer class="utsav-footer" role="contentinfo">
       <div class="utsav-footer__banner">
-        <img class="utsav-footer__bannerImage" src="assets/footer-banner.png"
-          alt="BANGIO.SAMITI Bengali Cultural Alpona &amp; Lotus Motif" />
+        <img class="utsav-footer__bannerImage" src="assets/footer-banner.webp"
+          alt="BANGIO.SAMITI Bengali Cultural Alpona &amp; Lotus Motif" width="1024" height="136" loading="lazy" decoding="async" />
       </div>
       <div class="utsav-footer__content">
         <div class="utsav-footer__grid">

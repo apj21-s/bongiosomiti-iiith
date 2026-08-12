@@ -45,7 +45,7 @@
               <p class="pass-world__venue">Campus Venue</p>
               <p class="pass-world__demoNote">Verified Digital Cultural Pass &bull; IIIT Hyderabad Bangiya Samiti</p>
               <div class="pass-world__artImage">
-                <img class="pass-world__artVisual" src="assets/digital-pass-reference.svg" alt="Pass artwork" />
+                <img class="pass-world__artVisual" src="assets/digital-pass-reference.webp" alt="Pass artwork" width="880" height="1216" loading="lazy" decoding="async" />
               </div>
               <div style="margin-top:1.5rem;display:flex;flex-direction:column;gap:8px;">
                 <button type="button" class="btn btn-primary pass-world__openScanner">Test In Gate Scanner &rarr;</button>
@@ -93,18 +93,26 @@
 
         <!-- Quick Pass Lookup Footer Box -->
         <div style="padding: 1.5rem 24px; background: rgba(255,255,255,0.4); border-top: 1px solid var(--border); margin-top: 1.5rem; border-radius: 0 0 28px 28px;">
-          <form class="pass-lookup-form" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
-            <label for="pass-lookup-input" style="font-weight:600;font-size:0.9rem;">Lookup Another Pass:</label>
-            <input id="pass-lookup-input" placeholder="Enter Token ID or College ID..." style="flex:1;min-width:220px;padding:8px 14px;border-radius:12px;border:1px solid var(--border);background:#fff;" />
-            <button class="btn btn-secondary" type="submit">Find Pass</button>
+          <form id="pass-lookup-form" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between;">
+            <div style="display:flex;gap:10px;align-items:center;flex:1;min-width:260px;">
+              <span style="font-size:1.25rem;">🔍</span>
+              <div>
+                <strong style="display:block;font-size:0.95rem;">Switch Pass / Lookup</strong>
+                <span style="font-size:0.8rem;color:var(--muted);">Enter registered Email, Phone or Token</span>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;flex:1;min-width:280px;">
+              <input type="text" id="lookup-query" class="form-input" placeholder="e.g. 202401042 or MBH-XXXX" style="flex:1;padding:8px 12px;font-size:0.9rem;" required />
+              <button type="submit" class="btn btn-secondary" style="padding:8px 16px;white-space:nowrap;">Find Pass</button>
+            </div>
           </form>
         </div>
       </section>
     </main>
     <footer class="utsav-footer" role="contentinfo">
       <div class="utsav-footer__banner">
-        <img class="utsav-footer__bannerImage" src="assets/footer-banner.png"
-          alt="BANGIO.SAMITI Bengali Cultural Alpona &amp; Lotus Motif" />
+        <img class="utsav-footer__bannerImage" src="assets/footer-banner.webp"
+          alt="BANGIO.SAMITI Bengali Cultural Alpona &amp; Lotus Motif" width="1024" height="136" loading="lazy" decoding="async" />
       </div>
       <div class="utsav-footer__content">
         <div class="utsav-footer__grid">
