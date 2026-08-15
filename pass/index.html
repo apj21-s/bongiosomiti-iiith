@@ -1,180 +1,413 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>BANGIYA.SAMITI - Digital Pass</title>
-    <base href="../" />
-    <link rel="stylesheet" href="styles.css" />
-    <script defer src="vendor/qrcode.js"></script>
-    <script defer src="site.js"></script>
-  </head>
-  <body>
-    <header class="home-strip">
-      <div class="home-strip__inner">
-        <a class="home-strip__brand" href="index.html">BANGIYA.SAMITI</a>
-        <nav class="home-strip__nav" aria-label="Primary">
-          <a class="home-strip__link" href="index.html">HOME</a>
-          <a class="home-strip__link" href="events/index.html">EVENTS</a>
-          <a class="home-strip__link" href="pass/index.html" aria-current="page">MY PASS</a>
-          <a class="home-strip__link" href="admin/scanner/index.html">SCANNER</a>
-          <a class="home-strip__link" href="admin/index.html">ADMIN</a>
-        </nav>
-        <a class="home-strip__action" href="login/index.html">PASS LOOKUP</a>
-      </div>
-    </header>
 
-    <main class="pass-world" data-pass-page style="padding: 1.5rem 1rem 3rem;">
-      <section class="pass-world__scene panel" style="max-width: 1040px; margin: 0 auto;">
-        <div class="panel-head">
-          <div>
-            <p class="section-label">Digital Entry Pass</p>
-            <h1>Show this QR Pass at the Gate</h1>
-            <p class="text-muted">Present this verified pass on your phone screen or bring a printout for entry verification.</p>
-          </div>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <span class="badge pass-world__status">UNUSED</span>
-            <button type="button" class="btn btn-secondary pass-world__print" title="Print or Save as PDF">🖨 Print Pass</button>
-          </div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BANGIYA.SAMITI - Check Payment Status &amp; Verification</title>
+  <base href="../" />
+  <link rel="stylesheet" href="styles.css" />
+  <script defer src="vendor/qrcode.js"></script>
+  <script defer src="site.js"></script>
+</head>
+
+<body>
+  <!-- Public Sticky Navigation Ribbon -->
+  <header class="home-strip">
+    <div class="home-strip__inner">
+      <a class="home-strip__brand" href="index.html">BANGIYA.SAMITI</a>
+      <nav class="home-strip__nav" aria-label="Primary">
+        <a class="home-strip__link" href="index.html">HOME</a>
+        <a class="home-strip__link" href="events/index.html">EVENTS</a>
+        <a class="home-strip__link" href="index.html#story">STORY</a>
+        <a class="home-strip__link" href="pass/index.html" aria-current="page">PAYMENT STATUS</a>
+      </nav>
+      <a class="home-strip__action" href="events/mahalaya/index.html">REGISTER</a>
+    </div>
+  </header>
+
+  <main class="verification-world" data-pass-page id="top">
+    <div class="verification-shell">
+      <section class="verification-card" aria-labelledby="verification-heading">
+        <!-- Header Area -->
+        <div class="verification-header">
+          <span class="verification-header__eyebrow">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+              <line x1="1" y1="10" x2="23" y2="10"></line>
+            </svg>
+            Payment Verification Portal
+          </span>
+          <h1 id="verification-heading" class="verification-header__title">Check Your Payment Status</h1>
+          <p class="verification-header__sub">Enter the UPI Transaction ID / UTR from your payment to check its status.
+          </p>
         </div>
 
-        <div class="pass-world__layout">
-          <div class="pass-world__art">
-            <div class="pass-world__artBlock">
-              <h2 class="pass-world__event">BANGIYA.SAMITI</h2>
-              <p class="pass-world__venue">Campus Venue</p>
-              <p class="pass-world__demoNote">Verified Digital Cultural Pass &bull; IIIT Hyderabad Bangiya Samiti</p>
-              <div class="pass-world__artImage">
-                <img class="pass-world__artVisual" src="assets/digital-pass-reference.webp" alt="Pass artwork" width="880" height="1216" loading="lazy" decoding="async" />
-              </div>
-              <div style="margin-top:1.5rem;display:flex;flex-direction:column;gap:8px;">
-                <button type="button" class="btn btn-primary pass-world__openScanner">Test In Gate Scanner &rarr;</button>
-                <a href="events/index.html" class="btn btn-secondary" style="text-align:center;">&larr; Browse More Events</a>
-              </div>
+        <!-- Body & Submission Form -->
+        <div class="verification-body">
+          <form id="payment-verification-form" class="verification-form" novalidate>
+            <div class="verification-field">
+              <label for="verification-utr">
+                <span>UPI Transaction ID / UTR <span class="required-star">*</span></span>
+              </label>
+              <input type="text" id="verification-utr" name="utr" class="verification-input"
+                placeholder="e.g. UPI-551920837412 or 12-digit UTR" required autocomplete="off" />
+              <span class="verification-hint">Found in your Google Pay, PhonePe, Paytm, or UPI bank transfer
+                confirmation.</span>
             </div>
-          </div>
 
-          <div class="pass-world__card">
-            <article class="qr-pass" aria-label="Digital BANGIYA.SAMITI Pass">
-              <div class="qr-pass__top">
-                <p class="qr-pass__eyebrow">IIIT HYDERABAD &bull; BANGIYA.SAMITI</p>
-                <h2 class="qr-pass__title pass-world__event" style="margin:0.25rem 0;">Mahalaya Bhoj</h2>
-                <p class="qr-pass__subtitle pass-world__venue">Community Courtyard</p>
-              </div>
-
-              <div class="qr-pass__body">
-                <div class="qr-pass__details">
-                  <div><span>Attendee Name</span><strong class="pass-world__attendee">Guest</strong></div>
-                  <div><span>College ID</span><strong class="pass-world__collegeId">202401042</strong></div>
-                  <div><span>Pass Token</span><strong class="pass-world__token" style="font-family:monospace;letter-spacing:0.05em;">MBH-DEMO-001</strong></div>
-                  <div><span>Issue Date</span><strong class="pass-world__date">10 Aug 2026</strong></div>
-                  <div><span>Venue / Gate</span><strong class="pass-world__venue">Community Courtyard</strong></div>
-                  <div><span>Payment Proof</span><strong class="pass-world__utr">UPI-Verified</strong></div>
-                </div>
-
-                <div class="qr-pass__qrWrap">
-                  <div class="qr-pass__qrFrame pass-world__qr">
-                    <div style="padding:1rem;color:var(--muted);font-size:0.85rem;">Generating QR Code...</div>
-                  </div>
-                  <div class="qr-pass__status" style="margin-top:0.75rem;">
-                    <span class="badge pass-world__status">UNUSED</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="qr-pass__footer">
-                <div><span>Access Type</span><strong>General Entry</strong></div>
-                <div><span>Security</span><strong>Dynamic Hash Validated</strong></div>
-                <div><span>Status</span><strong class="pass-world__status">UNUSED</strong></div>
-              </div>
-            </article>
-          </div>
-        </div>
-
-        <!-- Quick Pass Lookup Footer Box -->
-        <div style="padding: 1.5rem 24px; background: rgba(255,255,255,0.4); border-top: 1px solid var(--border); margin-top: 1.5rem; border-radius: 0 0 28px 28px;">
-          <form id="pass-lookup-form" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between;">
-            <div style="display:flex;gap:10px;align-items:center;flex:1;min-width:260px;">
-              <span style="font-size:1.25rem;">🔍</span>
-              <div>
-                <strong style="display:block;font-size:0.95rem;">Switch Pass / Lookup</strong>
-                <span style="font-size:0.8rem;color:var(--muted);">Enter registered Email, Phone or Token</span>
-              </div>
+            <div class="verification-field">
+              <label for="verification-email">
+                <span>Registered Email Address <span class="required-star">*</span></span>
+              </label>
+              <input type="email" id="verification-email" name="email" class="verification-input"
+                placeholder="e.g. yourname@students.iiit.ac.in" required autocomplete="email" />
+              <span class="verification-hint">The email address provided during your event pass registration.</span>
             </div>
-            <div style="display:flex;gap:8px;flex:1;min-width:280px;">
-              <input type="text" id="lookup-query" class="form-input" placeholder="e.g. 202401042 or MBH-XXXX" style="flex:1;padding:8px 12px;font-size:0.9rem;" required />
-              <button type="submit" class="btn btn-secondary" style="padding:8px 16px;white-space:nowrap;">Find Pass</button>
-            </div>
+
+            <button type="submit" id="verification-submit-btn" class="verification-submit-btn">
+              SUBMIT FOR VERIFICATION &rarr;
+            </button>
           </form>
+
+          <!-- Dynamic Result Area -->
+          <div id="verification-result-box" style="display:none; margin-top:2rem;">
+
+            <!-- 1. PENDING VERIFICATION STATE -->
+            <div id="panel-pending" class="status-result-panel">
+              <div class="status-banner status-banner--pending" role="status" aria-live="polite">
+                <span class="status-banner__icon">◷</span>
+                <div>
+                  <h2 class="status-banner__title">VERIFICATION REQUEST RECEIVED ✓</h2>
+                  <p class="status-banner__desc">
+                    Your payment details have been submitted successfully. Your digital pass will be sent to your
+                    registered email once your payment is confirmed.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Compact Status Indicator -->
+              <div class="compact-status-box" aria-label="Current verification lifecycle">
+                <div class="compact-status-grid">
+                  <div class="compact-status-item">
+                    <span class="compact-status-item__label">Registration</span>
+                    <strong class="compact-status-item__value compact-status-item__value--success">✓ Received</strong>
+                  </div>
+                  <div class="compact-status-item">
+                    <span class="compact-status-item__label">Payment</span>
+                    <strong class="compact-status-item__value compact-status-item__value--pending">◷ Under
+                      verification</strong>
+                  </div>
+                  <div class="compact-status-item">
+                    <span class="compact-status-item__label">Digital Pass</span>
+                    <strong class="compact-status-item__value compact-status-item__value--awaiting">— Awaiting
+                      confirmation</strong>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Submitted Details Review Table -->
+              <table class="verification-meta-table">
+                <tbody>
+                  <tr>
+                    <td>Registration ID</td>
+                    <td><code class="verify-val-token">---</code></td>
+                  </tr>
+                  <tr>
+                    <td>Attendee Name</td>
+                    <td><span class="verify-val-name">---</span></td>
+                  </tr>
+                  <tr>
+                    <td>Registered Email</td>
+                    <td><span class="verify-val-email">---</span></td>
+                  </tr>
+                  <tr>
+                    <td>Event &amp; Venue</td>
+                    <td><span class="verify-val-event">---</span> (<span class="verify-val-venue">---</span>)</td>
+                  </tr>
+                  <tr>
+                    <td>Submitted UTR / Ref</td>
+                    <td><strong class="verify-val-utr"
+                        style="color:var(--terracotta);letter-spacing:0.04em;">---</strong></td>
+                  </tr>
+                  <tr>
+                    <td>Expected Amount</td>
+                    <td><span class="verify-val-amount">---</span></td>
+                  </tr>
+                  <tr>
+                    <td>Submission Timestamp</td>
+                    <td><span class="verify-val-date">---</span></td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <div
+                style="background:rgba(255,250,242,0.9);padding:14px 18px;border-radius:14px;border:1px dashed var(--border);font-size:0.88rem;color:var(--muted);">
+                💡 <strong>What happens next?</strong> Our organizing committee verifies UPI settlements periodically
+                throughout the day. Once approved, your unique QR Entry Pass will be automatically generated and
+                dispatched to your email address.
+              </div>
+            </div>
+
+            <!-- 2. VERIFIED (APPROVED) STATE -->
+            <div id="panel-verified" class="status-result-panel">
+              <div class="status-banner status-banner--verified" role="status" aria-live="polite">
+                <span class="status-banner__icon">✓</span>
+                <div>
+                  <h2 class="status-banner__title">PAYMENT VERIFIED ✓</h2>
+                  <p class="status-banner__desc">
+                    Your payment has been verified by the organisers. Your digital entry pass is now active and has been
+                    dispatched to your email.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Compact Status Indicator -->
+              <div class="compact-status-box">
+                <div class="compact-status-grid">
+                  <div class="compact-status-item">
+                    <span class="compact-status-item__label">Registration</span>
+                    <strong class="compact-status-item__value compact-status-item__value--success">✓ Received</strong>
+                  </div>
+                  <div class="compact-status-item">
+                    <span class="compact-status-item__label">Payment</span>
+                    <strong class="compact-status-item__value compact-status-item__value--success">✓ Verified</strong>
+                  </div>
+                  <div class="compact-status-item">
+                    <span class="compact-status-item__label">Digital Pass</span>
+                    <strong class="compact-status-item__value compact-status-item__value--success">✓ Sent to
+                      email</strong>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Digital Pass Card Showcase -->
+              <div class="verified-pass-showcase"
+                style="margin: 1.5rem 0; padding: 24px; background: linear-gradient(135deg, #ffffff 0%, #fffdfa 100%); border-radius: 20px; border: 1.5px solid var(--border); box-shadow: 0 12px 32px rgba(110,43,18,0.1);">
+                <div
+                  style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; border-bottom: 1.5px solid rgba(223,200,174,0.5); padding-bottom:14px; margin-bottom:18px;">
+                  <div>
+                    <span
+                      style="font-size:0.72rem;font-weight:800;letter-spacing:0.12em;color:var(--terracotta);text-transform:uppercase;">OFFICIAL
+                      ENTRY PASS</span>
+                    <h3 style="margin:2px 0 0;font-size:1.35rem;" class="verify-val-event">Cultural Event</h3>
+                  </div>
+                  <span id="pass-badge-status" class="badge badge--verified verify-val-status">VERIFIED &bull; READY FOR ENTRY</span>
+                </div>
+
+                <div style="display:flex; gap:24px; flex-wrap:wrap; align-items:center; justify-content:center;">
+                  <div id="pass-qr-frame"
+                    style="padding:12px;background:#fff;border-radius:16px;border:1.5px solid var(--border);box-shadow:0 4px 14px rgba(0,0,0,0.06);min-width:200px;min-height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+                    <!-- QR generated via JS -->
+                  </div>
+                  <div style="flex:1;min-width:260px;">
+                    <table class="verification-meta-table" style="margin:0;">
+                      <tbody>
+                        <tr>
+                          <td>Event Name</td>
+                          <td><strong class="verify-val-event" style="color:var(--terracotta);">---</strong></td>
+                        </tr>
+                        <tr>
+                          <td>Participant Name</td>
+                          <td><strong class="verify-val-name">---</strong></td>
+                        </tr>
+                        <tr>
+                          <td>Registration ID</td>
+                          <td><code class="verify-val-token" style="font-weight:800;font-size:1.05rem;">---</code></td>
+                        </tr>
+                        <tr>
+                          <td>Event Date</td>
+                          <td><span class="verify-val-eventdate">---</span></td>
+                        </tr>
+                        <tr>
+                          <td>Venue</td>
+                          <td><span class="verify-val-venue">Campus Venue</span></td>
+                        </tr>
+                        <tr>
+                          <td>Pass Type</td>
+                          <td><span class="verify-val-passtype">IIIT Student / Faculty Pass</span></td>
+                        </tr>
+                        <tr>
+                          <td>Status</td>
+                          <td><strong class="verify-val-status-text" style="color:#2e7d32;">Verified &amp; Active</strong></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div style="margin-top:1.25rem; display:flex; gap:10px; justify-content:flex-end;">
+                  <button type="button" id="pass-print-btn" class="btn btn-secondary" style="padding:10px 18px;">
+                    🖨 Print / Save PDF
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. REJECTED STATE -->
+            <div id="panel-rejected" class="status-result-panel">
+              <div class="status-banner status-banner--rejected" role="status" aria-live="polite">
+                <span class="status-banner__icon">✕</span>
+                <div>
+                  <h2 class="status-banner__title">PAYMENT VERIFICATION NEEDS ATTENTION</h2>
+                  <p class="status-banner__desc">
+                    We could not verify the payment details submitted. Please check your transaction information or
+                    contact the organisers.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Compact Status Indicator -->
+              <div class="compact-status-box">
+                <div class="compact-status-grid">
+                  <div class="compact-status-item">
+                    <span class="compact-status-item__label">Registration</span>
+                    <strong class="compact-status-item__value compact-status-item__value--success">✓ Received</strong>
+                  </div>
+                  <div class="compact-status-item">
+                    <span class="compact-status-item__label">Payment</span>
+                    <strong class="compact-status-item__value compact-status-item__value--rejected">✕ Verification
+                      Failed</strong>
+                  </div>
+                  <div class="compact-status-item">
+                    <span class="compact-status-item__label">Digital Pass</span>
+                    <strong class="compact-status-item__value compact-status-item__value--awaiting">— On Hold</strong>
+                  </div>
+                </div>
+              </div>
+
+              <table class="verification-meta-table">
+                <tbody>
+                  <tr>
+                    <td>Registration ID</td>
+                    <td><code class="verify-val-token">---</code></td>
+                  </tr>
+                  <tr>
+                    <td>Attendee Name</td>
+                    <td><span class="verify-val-name">---</span></td>
+                  </tr>
+                  <tr>
+                    <td>Submitted UTR</td>
+                    <td><strong class="verify-val-utr" style="color:#c62828;">---</strong></td>
+                  </tr>
+                  <tr>
+                    <td>Registered Email</td>
+                    <td><span class="verify-val-email">---</span></td>
+                  </tr>
+                  <tr>
+                    <td>Event</td>
+                    <td><span class="verify-val-event">---</span></td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <div
+                style="background:rgba(255,235,238,0.7);padding:14px 18px;border-radius:14px;border:1px solid #ffcdd2;font-size:0.9rem;color:#b71c1c;">
+                <strong>Need assistance?</strong> If you have completed the payment and believe this is an error, please
+                reach out to our team at <a href="mailto:bangiya.samiti.iith@gmail.com"
+                  style="color:#b71c1c;font-weight:700;text-decoration:underline;">bangiya.samiti.iith@gmail.com</a> or
+                via Instagram <a href="https://www.instagram.com/bongiyo.samiti.iiith" target="_blank"
+                  rel="noopener noreferrer"
+                  style="color:#b71c1c;font-weight:700;text-decoration:underline;">@bongiyo.samiti.iiith</a> with your
+                payment screenshot.
+              </div>
+            </div>
+
+            <!-- 4. NOT FOUND STATE -->
+            <div id="panel-not-found" class="status-result-panel">
+              <div class="status-banner status-banner--rejected" role="status" aria-live="polite">
+                <span class="status-banner__icon">✕</span>
+                <div>
+                  <h2 class="status-banner__title">NO REGISTRATION FOUND</h2>
+                  <p id="not-found-message" class="status-banner__desc">
+                    We could not find any registration matching the provided email address and transaction details.
+                  </p>
+                </div>
+              </div>
+              <div style="text-align:center;margin-top:1rem;">
+                <a href="events/index.html" class="btn btn-primary">Browse Events &amp; Register &rarr;</a>
+              </div>
+            </div>
+
+          </div>
         </div>
       </section>
-    </main>
-    <footer class="utsav-footer" role="contentinfo">
-      <div class="utsav-footer__banner">
-        <img class="utsav-footer__bannerImage" src="assets/footer-banner.webp"
-          alt="BANGIO.SAMITI Bengali Cultural Alpona &amp; Lotus Motif" width="1024" height="136" loading="lazy" decoding="async" />
-      </div>
-      <div class="utsav-footer__content">
-        <div class="utsav-footer__grid">
-          <!-- Col 1: Identity -->
-          <div class="utsav-footer__brandCol">
-            <div class="utsav-footer__brand">
-              <span class="utsav-footer__logo">BANGIYA.SAMITI</span>
-              <span class="utsav-footer__bengali">আইআইআইটি বঙ্গীয় সমিতি</span>
-            </div>
-            <p class="utsav-footer__about">
-              IIIT Hyderabad Bongio Samiti's digital pass &amp; cultural festivity portal.
-            </p>
-          </div>
+    </div>
+  </main>
 
-          <!-- Col 2: Navigation -->
-          <div class="utsav-footer__navCol">
-            <h4 class="utsav-footer__title">Quick Navigation</h4>
-            <ul class="utsav-footer__links">
-              <li><a href="index.html">Home</a></li>
-              <li><a href="events/index.html">Events Catalog</a></li>
-            </ul>
+  <!-- Cultural Utsav Footer -->
+  <footer class="utsav-footer" role="contentinfo">
+    <div class="utsav-footer__banner">
+      <img class="utsav-footer__bannerImage" src="assets/footer-banner.webp"
+        alt="BANGIYA.SAMITI Bengali Cultural Alpona &amp; Lotus Motif" width="1024" height="136" loading="lazy"
+        decoding="async" />
+    </div>
+    <div class="utsav-footer__content">
+      <div class="utsav-footer__grid">
+        <!-- Col 1: Identity -->
+        <div class="utsav-footer__brandCol">
+          <div class="utsav-footer__brand">
+            <span class="utsav-footer__logo">BANGIYA.SAMITI</span>
+            <span class="utsav-footer__bengali">আইআইআইটি বঙ্গীয় সমিতি</span>
           </div>
-
-          <!-- Col 3: Events -->
-          <div class="utsav-footer__navCol">
-            <h4 class="utsav-footer__title">Festivals &amp; Feasts</h4>
-            <ul class="utsav-footer__links">
-              <li><a href="events/mahalaya/index.html">Mahalaya Bhoj 2026</a></li>
-              <li><a href="events/saraswati/index.html">Saraswati Puja 2026</a></li>
-            </ul>
-          </div>
-
-          <!-- Col 4: Contact & Venue -->
-          <div class="utsav-footer__navCol">
-            <h4 class="utsav-footer__title">Contact &amp; Location</h4>
-            <div class="utsav-footer__contact">
-              <p>📍 IIIT Hyderabad, Gachibowli, Hyderabad 500032</p>
-              <p>✉️ <a href="mailto:bangiya.samiti.iith@gmail.com">bangiya.samiti.iith@gmail.com</a></p>
-              <p><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg> <a href="https://www.instagram.com/bongiyo.samiti.iiith" target="_blank" rel="noopener noreferrer">bongiyo.samiti.iiith</a></p>
-            </div>
-          </div>
+          <p class="utsav-footer__about">
+            IIIT Hyderabad Bongio Samiti's digital pass &amp; cultural festivity portal.
+          </p>
         </div>
 
-        <!-- Bottom Bar -->
-        <div class="utsav-footer__bottom">
-          <p class="utsav-footer__copyright">
-            &copy; 2026 IIIT Bongio Samiti &bull; All Rights Reserved
-          </p>
-          <p class="utsav-footer__quote">
-            বারো মাসে তেরো পার্বণ, এটাই তো খাঁটি বাঙালি জীবন   ||   বাঙালি শুধু একটা জাতি নয়, বাঙালি একটা আবেগ
-          </p>
-          <div class="utsav-footer__bottomLinks">
-            <a href="pass/index.html#top">Back to top &uarr;</a>
-            <span>&bull;</span>
-            <a href="events/index.html">All Events</a>
+        <!-- Col 2: Navigation -->
+        <div class="utsav-footer__navCol">
+          <h4 class="utsav-footer__title">Quick Navigation</h4>
+          <ul class="utsav-footer__links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="events/index.html">Events Catalog</a></li>
+            <li><a href="pass/index.html">Payment Status Verification</a></li>
+          </ul>
+        </div>
+
+        <!-- Col 3: Events -->
+        <div class="utsav-footer__navCol">
+          <h4 class="utsav-footer__title">Festivals &amp; Feasts</h4>
+          <ul class="utsav-footer__links">
+            <li><a href="events/mahalaya/index.html">Mahalaya Bhoj 2026</a></li>
+            <li><a href="events/saraswati/index.html">Saraswati Puja 2026</a></li>
+          </ul>
+        </div>
+
+        <!-- Col 4: Contact & Venue -->
+        <div class="utsav-footer__navCol">
+          <h4 class="utsav-footer__title">Contact &amp; Location</h4>
+          <div class="utsav-footer__contact">
+            <p>📍 IIIT Hyderabad, Gachibowli, Hyderabad 500032</p>
+            <p>✉️ <a href="mailto:bangiya.samiti.iith@gmail.com">bangiya.samiti.iith@gmail.com</a></p>
+            <p><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+              </svg> <a href="https://www.instagram.com/bongiyo.samiti.iiith" target="_blank"
+                rel="noopener noreferrer">bongiyo.samiti.iiith</a></p>
           </div>
         </div>
       </div>
-    </footer>
-  </body>
+
+      <!-- Bottom Bar -->
+      <div class="utsav-footer__bottom">
+        <p class="utsav-footer__copyright">
+          &copy; 2026 IIIT Bongio Samiti &bull; All Rights Reserved
+        </p>
+        <p class="utsav-footer__quote">
+          বারো মাসে তেরো পার্বণ, এটাই তো খাঁটি বাঙালি জীবন   ||   বাঙালি শুধু একটা জাতি নয়, বাঙালি একটা আবেগ
+        </p>
+        <div class="utsav-footer__bottomLinks">
+          <a href="pass/index.html#top">Back to top &uarr;</a>
+          <span>&bull;</span>
+          <a href="events/index.html">All Events</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+</body>
+
 </html>
-
-
-
-

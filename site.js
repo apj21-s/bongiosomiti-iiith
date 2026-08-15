@@ -133,8 +133,10 @@
       utr: "UPI-429810294812",
       amount: 250,
       createdAt: "2026-08-08T10:30:00.000Z",
-      paymentStatus: "APPROVED",
+      paymentStatus: "verified",
       status: "UNUSED",
+      passGenerated: true,
+      emailSent: true,
       gate: "Gate 1"
     },
     {
@@ -149,8 +151,10 @@
       utr: "UPI-551920837412",
       amount: 250,
       createdAt: "2026-08-09T14:15:00.000Z",
-      paymentStatus: "APPROVED",
-      status: "UNUSED",
+      paymentStatus: "verification_pending",
+      status: "PENDING_VERIFICATION",
+      passGenerated: false,
+      emailSent: false,
       gate: "Gate 2"
     },
     {
@@ -165,8 +169,10 @@
       utr: "UPI-884920194821",
       amount: 250,
       createdAt: "2026-08-07T09:00:00.000Z",
-      paymentStatus: "APPROVED",
+      paymentStatus: "verified",
       status: "USED",
+      passGenerated: true,
+      emailSent: true,
       redeemedAt: "2026-08-10T11:45:00.000Z",
       redeemedGate: "Gate 1"
     },
@@ -182,9 +188,29 @@
       utr: "UPI-992817263541",
       amount: 250,
       createdAt: "2026-08-10T12:00:00.000Z",
-      paymentStatus: "PENDING",
-      status: "PENDING_PAYMENT",
+      paymentStatus: "verification_pending",
+      status: "PENDING_VERIFICATION",
+      passGenerated: false,
+      emailSent: false,
       gate: "Gate 1"
+    },
+    {
+      token: "MBH-2026-REJ1",
+      eventSlug: "mahalaya",
+      eventName: "Mahalaya Bhoj",
+      venue: "Community Courtyard",
+      participantName: "Souvik Ghosh",
+      collegeId: "202301142",
+      email: "souvik.g@iiit.ac.in",
+      phone: "+91 98450 11223",
+      utr: "UPI-001122334455",
+      amount: 250,
+      createdAt: "2026-08-11T16:00:00.000Z",
+      paymentStatus: "rejected",
+      status: "PAYMENT_REJECTED",
+      passGenerated: false,
+      emailSent: false,
+      adminNotes: "UTR not found in bank settlement statement"
     }
   ];
 
@@ -280,6 +306,97 @@
           (t.phone && t.phone.toLowerCase() === q)
       ) || null;
     },
+    findTicketByUtrAndEmail(utr, email) {
+      if (!utr || !email) return null;
+      const normUtr = String(utr).trim().toUpperCase();
+      const normEmail = String(email).trim().toLowerCase();
+      const tickets = this.getTickets();
+      return tickets.find((t) => {
+        const ticketEmail = String(t.email || "").trim().toLowerCase();
+        const ticketUtr = String(t.utr || "").trim().toUpperCase();
+        return ticketEmail === normEmail && (ticketUtr === normUtr || ticketUtr.includes(normUtr) || normUtr.includes(ticketUtr));
+      }) || null;
+    },
+    findTicketByEmail(email) {
+      if (!email) return null;
+      const normEmail = String(email).trim().toLowerCase();
+      const tickets = this.getTickets();
+      return tickets.find((t) => String(t.email || "").trim().toLowerCase() === normEmail) || null;
+    },
+    submitVerificationRequest(utr, email) {
+      const normUtr = String(utr || "").trim();
+      const normEmail = String(email || "").trim().toLowerCase();
+      if (!normUtr || !normEmail) {
+        return { success: false, message: "Please provide both UPI Transaction ID / UTR and registered email address." };
+      }
+
+      const tickets = this.getTickets();
+      // Match by email and UTR, or find registration with this email
+      let ticket = tickets.find((t) => {
+        const tEmail = String(t.email || "").trim().toLowerCase();
+        const tUtr = String(t.utr || "").trim().toUpperCase();
+        return tEmail === normEmail && (tUtr === normUtr.toUpperCase() || tUtr.includes(normUtr.toUpperCase()));
+      });
+
+      if (!ticket) {
+        // Find by email to link/update UTR
+        ticket = tickets.find((t) => String(t.email || "").trim().toLowerCase() === normEmail);
+      }
+
+      if (!ticket) {
+        return {
+          success: false,
+          notFound: true,
+          message: "No registration found matching this email address. Please make sure you entered the email used during registration."
+        };
+      }
+
+      // Check if duplicate pending request
+      const isSameUtr = String(ticket.utr || "").trim().toUpperCase() === normUtr.toUpperCase();
+      const isAlreadyPending = ticket.paymentStatus === "verification_pending" || ticket.paymentStatus === "PENDING";
+      const isDuplicate = isSameUtr && isAlreadyPending;
+
+      ticket.utr = normUtr;
+      ticket.paymentStatus = "verification_pending";
+      ticket.status = "PENDING_VERIFICATION";
+      ticket.verificationSubmittedAt = ticket.verificationSubmittedAt || new Date().toISOString();
+      ticket.passGenerated = false; // Do not generate QR pass at this stage
+      ticket.emailSent = false;     // Do not send pass email at this stage
+
+      this.saveTicket(ticket);
+
+      return {
+        success: true,
+        duplicate: isDuplicate,
+        ticket: this.sanitizeTicketForParticipant(ticket)
+      };
+    },
+    getPaymentVerificationStatus(utr, email) {
+      const ticket = this.findTicketByUtrAndEmail(utr, email);
+      if (!ticket) {
+        return null;
+      }
+      return this.sanitizeTicketForParticipant(ticket);
+    },
+    sanitizeTicketForParticipant(ticket) {
+      if (!ticket) return null;
+      return {
+        token: ticket.token,
+        participantName: ticket.participantName || "Participant",
+        eventName: ticket.eventName || "Event",
+        venue: ticket.venue || "Campus Venue",
+        email: ticket.email || "",
+        utr: ticket.utr || "",
+        amount: ticket.amount || 0,
+        numPasses: ticket.numPasses || 1,
+        paymentStatus: ticket.paymentStatus || "verification_pending",
+        status: ticket.status || "PENDING_VERIFICATION",
+        passGenerated: !!ticket.passGenerated,
+        createdAt: ticket.createdAt,
+        verificationSubmittedAt: ticket.verificationSubmittedAt || ticket.createdAt
+        // NOTE: adminNotes and internal organizer data are strictly stripped
+      };
+    },
     saveTicket(ticket) {
       const tickets = this.getTickets();
       const idx = tickets.findIndex((t) => t.token === ticket.token);
@@ -295,19 +412,44 @@
       const tickets = this.getTickets().filter((t) => t.token !== token);
       this._write(STORAGE_KEYS.TICKETS, tickets);
     },
-    updatePaymentStatus(token, status) {
+    verifyPayment(token) {
       const ticket = this.getTicket(token);
       if (!ticket) return null;
-      ticket.paymentStatus = status;
-      if (status === "APPROVED") {
-        ticket.status = ticket.status === "USED" ? "USED" : "UNUSED";
-      } else if (status === "REJECTED") {
-        ticket.status = "PAYMENT_REJECTED";
-      } else {
-        ticket.status = "PENDING_PAYMENT";
-      }
+      ticket.paymentStatus = "verified";
+      ticket.status = ticket.status === "USED" ? "USED" : "UNUSED";
+      ticket.passGenerated = true;
+      ticket.passGeneratedAt = new Date().toISOString();
+      ticket.emailSent = true;
+      ticket.emailSentAt = new Date().toISOString();
+      delete ticket.adminNotes;
       this.saveTicket(ticket);
       return ticket;
+    },
+    rejectPayment(token, internalReason = "") {
+      const ticket = this.getTicket(token);
+      if (!ticket) return null;
+      ticket.paymentStatus = "rejected";
+      ticket.status = "PAYMENT_REJECTED";
+      ticket.passGenerated = false;
+      ticket.adminNotes = internalReason || "Payment verification rejected by admin";
+      this.saveTicket(ticket);
+      return ticket;
+    },
+    updatePaymentStatus(token, status) {
+      const normalizedStatus = String(status || "").toLowerCase();
+      if (normalizedStatus === "verified" || normalizedStatus === "approved") {
+        return this.verifyPayment(token);
+      } else if (normalizedStatus === "rejected") {
+        return this.rejectPayment(token);
+      } else {
+        const ticket = this.getTicket(token);
+        if (!ticket) return null;
+        ticket.paymentStatus = "verification_pending";
+        ticket.status = "PENDING_VERIFICATION";
+        ticket.passGenerated = false;
+        this.saveTicket(ticket);
+        return ticket;
+      }
     },
     getCheckins() {
       return this._read(STORAGE_KEYS.CHECKINS, SEED_CHECKINS);
@@ -390,13 +532,15 @@
       const checkins = this.getCheckins();
 
       const totalRevenue = tickets.reduce((sum, t) => {
-        if (t.paymentStatus === "APPROVED" && Number(t.amount)) {
+        const isVerified = t.paymentStatus === "verified" || t.paymentStatus === "APPROVED";
+        if (isVerified && Number(t.amount)) {
           return sum + Number(t.amount);
         }
         return sum;
       }, 0);
 
-      const verifiedCount = tickets.filter((t) => t.status === "USED" || t.paymentStatus === "APPROVED").length;
+      const verifiedCount = tickets.filter((t) => t.status === "USED" || t.paymentStatus === "verified" || t.paymentStatus === "APPROVED").length;
+      const pendingCount = tickets.filter((t) => t.paymentStatus === "verification_pending" || t.paymentStatus === "PENDING").length;
       const checkinCount = tickets.filter((t) => t.status === "USED").length;
 
       return {
@@ -404,6 +548,7 @@
         ticketCount: tickets.length,
         revenue: totalRevenue,
         verifiedCount: verifiedCount,
+        pendingCount: pendingCount,
         checkinCount: checkinCount
       };
     },
@@ -892,6 +1037,24 @@
         }
         currentAmount = finalAmount;
 
+        // Update Trustworthy Price Breakdown Receipt
+        const receiptSubtotal = $("#receipt-subtotal", form);
+        const receiptDiscount = $("#receipt-discount", form);
+        const receiptTotal = $("#receipt-total", form);
+        const receiptDiscountRow = $("#receipt-discount-row", form);
+
+        if (receiptSubtotal) receiptSubtotal.textContent = formatCurrency(subtotal);
+        if (receiptDiscount) {
+          if (discount > 0) {
+            receiptDiscount.textContent = `−${formatCurrency(discount)}`;
+            if (receiptDiscountRow) receiptDiscountRow.style.color = "#2b6e35";
+          } else {
+            receiptDiscount.textContent = formatCurrency(0);
+            if (receiptDiscountRow) receiptDiscountRow.style.color = "#736458";
+          }
+        }
+        if (receiptTotal) receiptTotal.textContent = formatCurrency(finalAmount);
+
         if (couponDiscountTag) {
           if (appliedCoupon && appliedCoupon.discount > 0) {
             couponDiscountTag.textContent = `✓ Coupon Applied (−₹${appliedCoupon.discount})`;
@@ -1100,8 +1263,10 @@
           utr: utr || (matchedEvent.price === 0 ? "FREE-ENTRY" : "UTR-" + Math.floor(100000000000 + Math.random() * 900000000000)),
           amount: totalAmount,
           createdAt: new Date().toISOString(),
-          paymentStatus: "PENDING",
-          status: "UNUSED",
+          paymentStatus: "verification_pending",
+          status: "PENDING_VERIFICATION",
+          passGenerated: false,
+          emailSent: false,
           gate: "Gate 1",
           notes: foodPref ? `${foodPref} (${numPasses} pass${numPasses > 1 ? "es" : ""})` : ""
         };
@@ -1163,89 +1328,210 @@
   }
 
   // =========================================================================
-  // 4. DIGITAL PASS PAGE (/pass/)
+  // 4. PAYMENT STATUS VERIFICATION PAGE (/pass/)
   // =========================================================================
   function initPassPage() {
     const root = $("[data-pass-page]");
     if (!root) return;
 
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get("token") || "MBH-DEMO-001";
-    let ticket = UtsavDB.getTicket(token);
+    const form = $("#payment-verification-form", root);
+    const utrInput = $("#verification-utr", root);
+    const emailInput = $("#verification-email", root);
+    const submitBtn = $("#verification-submit-btn", root);
+    const resultBox = $("#verification-result-box", root);
 
-    if (!ticket) {
-      ticket = {
-        token: token,
-        eventSlug: "general",
-        eventName: "BONGIO.SOMITI",
-        venue: "Campus Venue",
-        participantName: "Guest Attendee",
-        collegeId: "2026-GUEST",
-        createdAt: new Date().toISOString(),
-        paymentStatus: "APPROVED",
-        status: "UNUSED"
-      };
+    // Dynamic result panels
+    const pendingPanel = $("#panel-pending", resultBox);
+    const verifiedPanel = $("#panel-verified", resultBox);
+    const rejectedPanel = $("#panel-rejected", resultBox);
+    const notFoundPanel = $("#panel-not-found", resultBox);
+
+    // QR & pass elements
+    const qrFrame = $("#pass-qr-frame", root);
+    const printBtn = $("#pass-print-btn", root);
+
+    function hideAllPanels() {
+      if (!resultBox) return;
+      resultBox.style.display = "block";
+      if (pendingPanel) pendingPanel.style.display = "none";
+      if (verifiedPanel) verifiedPanel.style.display = "none";
+      if (rejectedPanel) rejectedPanel.style.display = "none";
+      if (notFoundPanel) notFoundPanel.style.display = "none";
     }
 
-    // Populate Pass Metadata
-    $all(".pass-world__event", root).forEach((el) => (el.textContent = ticket.eventName || "BONGIO.SOMITI"));
-    $all(".pass-world__venue", root).forEach((el) => (el.textContent = ticket.venue || "Campus Venue"));
-    $all(".pass-world__attendee", root).forEach((el) => (el.textContent = ticket.participantName || "Guest"));
-    $all(".pass-world__token", root).forEach((el) => (el.textContent = ticket.token));
+    function renderVerificationStatus(ticket) {
+      if (!ticket) {
+        hideAllPanels();
+        if (notFoundPanel) {
+          notFoundPanel.style.display = "block";
+          const queryMsg = $("#not-found-message", notFoundPanel);
+          if (queryMsg) {
+            queryMsg.textContent = "No registration records found matching the provided UPI Transaction ID and Email address.";
+          }
+        }
+        return;
+      }
 
-    const dateNode = $(".pass-world__date", root);
-    if (dateNode) dateNode.textContent = formatShortDate(ticket.createdAt);
+      hideAllPanels();
 
-    const statusBadge = $(".pass-world__status", root);
-    if (statusBadge) {
-      statusBadge.textContent = ticket.status;
-      statusBadge.className = `badge pass-world__status badge--${ticket.status.toLowerCase()}`;
+      const eventDateStr = ticket.eventDate || (String(ticket.eventSlug).includes("saraswati") ? "21 January 2027" : "12 October 2026");
+      const passTypeStr = ticket.passType || (ticket.collegeId ? "IIIT Student / Faculty Pass" : "Community Guest Pass") + (ticket.numPasses > 1 ? ` (${ticket.numPasses} Attendees)` : " (1 Attendee)");
+
+      // Populate common details across all views
+      $all(".verify-val-token", root).forEach((el) => (el.textContent = ticket.token));
+      $all(".verify-val-name", root).forEach((el) => (el.textContent = ticket.participantName));
+      $all(".verify-val-email", root).forEach((el) => (el.textContent = ticket.email));
+      $all(".verify-val-utr", root).forEach((el) => (el.textContent = ticket.utr));
+      $all(".verify-val-event", root).forEach((el) => (el.textContent = ticket.eventName));
+      $all(".verify-val-venue", root).forEach((el) => (el.textContent = ticket.venue));
+      $all(".verify-val-eventdate", root).forEach((el) => (el.textContent = eventDateStr));
+      $all(".verify-val-passtype", root).forEach((el) => (el.textContent = passTypeStr));
+      $all(".verify-val-amount", root).forEach((el) => (el.textContent = formatCurrency(ticket.amount)));
+      $all(".verify-val-date", root).forEach((el) => (el.textContent = formatDate(ticket.verificationSubmittedAt || ticket.createdAt)));
+
+      const normStatus = String(ticket.paymentStatus || "").toLowerCase();
+
+      if (normStatus === "verified" || normStatus === "approved") {
+        // ==========================================
+        // STATE: VERIFIED
+        // ==========================================
+        if (verifiedPanel) {
+          verifiedPanel.style.display = "block";
+        }
+
+        const isUsed = ticket.status === "USED";
+        const statusBadge = $("#pass-badge-status", verifiedPanel);
+        const statusText = $(".verify-val-status-text", verifiedPanel);
+
+        if (statusBadge) {
+          if (isUsed) {
+            statusBadge.className = "badge badge--rejected";
+            statusBadge.textContent = "USED • REDEEMED AT GATE";
+          } else {
+            statusBadge.className = "badge badge--verified";
+            statusBadge.textContent = "VERIFIED • READY FOR ENTRY";
+          }
+        }
+
+        if (statusText) {
+          if (isUsed) {
+            statusText.style.color = "#c62828";
+            statusText.textContent = `Used / Checked In at ${ticket.redeemedGate || "Gate"}`;
+          } else {
+            statusText.style.color = "#2e7d32";
+            statusText.textContent = "Verified & Active Entry Pass";
+          }
+        }
+
+        // Generate QR code encoding UNIQUE PASS IDENTIFIER (Not personal data)
+        if (qrFrame && window.QRCode?.toDataURL) {
+          qrFrame.innerHTML = '<div style="padding:1rem;color:var(--muted);font-size:0.85rem;">Generating QR Pass...</div>';
+          const qrPayload = `UTSAV-PASS:${ticket.token}`;
+          window.QRCode.toDataURL(qrPayload, { width: 240, margin: 2, color: { dark: "#281208", light: "#ffffff" } }).then((url) => {
+            const img = document.createElement("img");
+            img.alt = `${ticket.eventName} Official QR Pass for ${ticket.token}`;
+            img.src = url;
+            img.className = "pass-world__qrImage";
+            img.style.maxWidth = "200px";
+            img.style.height = "auto";
+            img.style.borderRadius = "10px";
+            img.style.display = "block";
+            qrFrame.replaceChildren(img);
+          });
+        }
+
+        if (printBtn) {
+          printBtn.onclick = () => window.print();
+        }
+      } else if (normStatus === "rejected") {
+        // ==========================================
+        // STATE: REJECTED (Needs Attention)
+        // ==========================================
+        if (rejectedPanel) {
+          rejectedPanel.style.display = "block";
+        }
+        if (qrFrame) qrFrame.innerHTML = "";
+      } else {
+        // ==========================================
+        // STATE: VERIFICATION PENDING
+        // ==========================================
+        if (pendingPanel) {
+          pendingPanel.style.display = "block";
+        }
+        // CRITICAL: Do not display a QR code while payment verification is pending
+        if (qrFrame) qrFrame.innerHTML = "";
+      }
+
+      // Smoothly scroll down to result box
+      resultBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
 
-    // Additional fields if pass template has them
-    const collegeIdNode = $(".pass-world__collegeId", root);
-    if (collegeIdNode) collegeIdNode.textContent = ticket.collegeId || "N/A";
-    const phoneNode = $(".pass-world__phone", root);
-    if (phoneNode) phoneNode.textContent = ticket.phone || "N/A";
-    const utrNode = $(".pass-world__utr", root);
-    if (utrNode) utrNode.textContent = ticket.utr || "Verified";
+    form?.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const utr = (utrInput?.value || "").trim();
+      const email = (emailInput?.value || "").trim();
 
-    // QR Code Frame
-    const qrFrame = $(".pass-world__qr", root);
-    if (qrFrame && window.QRCode?.toDataURL) {
-      window.QRCode.toDataURL(ticket.token, { width: 240, margin: 2 }).then((url) => {
-        const img = document.createElement("img");
-        img.alt = `${ticket.eventName} QR Code for ${ticket.token}`;
-        img.src = url;
-        img.className = "pass-world__qrImage";
-        qrFrame.replaceChildren(img);
-      });
-    }
+      if (!utr) {
+        showToast("Please enter your UPI Transaction ID / UTR.", "error");
+        utrInput?.focus();
+        return;
+      }
 
-    // Print Pass Action
-    const printBtn = $(".pass-world__print", root);
-    printBtn?.addEventListener("click", () => window.print());
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!email || !emailRegex.test(email)) {
+        showToast("Please enter a valid registered email address.", "error");
+        emailInput?.focus();
+        return;
+      }
 
-    // Scanner shortcut
-    const scanBtn = $(".pass-world__openScanner", root);
-    scanBtn?.addEventListener("click", () => {
-      window.location.href = `admin/scanner/index.html?token=${encodeURIComponent(ticket.token)}`;
+      // Check if ticket exists by both UTR and Email strictly
+      let ticket = UtsavDB.findTicketByUtrAndEmail(utr, email);
+      if (ticket) {
+        renderVerificationStatus(ticket);
+        showToast("Payment status retrieved.", "info");
+        return;
+      }
+
+      // Otherwise submit/create verification request
+      const res = UtsavDB.submitVerificationRequest(utr, email);
+      if (res.success && res.ticket) {
+        if (res.duplicate) {
+          showToast("Payment status retrieved for this transaction.", "info");
+        } else {
+          showToast("✓ Verification request submitted successfully!", "success");
+        }
+        renderVerificationStatus(res.ticket);
+      } else {
+        showToast(res.message || "No registration found with this email.", "error");
+        hideAllPanels();
+        if (notFoundPanel) {
+          notFoundPanel.style.display = "block";
+          const queryMsg = $("#not-found-message", notFoundPanel);
+          if (queryMsg) {
+            queryMsg.textContent = res.message || "We could not find a registration matching this email and UTR combination. Please check your details or register for the event.";
+          }
+          notFoundPanel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+      }
     });
 
-    // Pass Lookup Box (if present)
-    const lookupForm = $(".pass-lookup-form", root);
-    if (lookupForm) {
-      lookupForm.addEventListener("submit", (e) => {
-        e.preventDefault();
-        const input = $("#pass-lookup-input", lookupForm);
-        const query = (input?.value || "").trim();
-        const found = UtsavDB.findTicketByAttendee(query);
-        if (found) {
-          window.location.href = `pass/index.html?token=${encodeURIComponent(found.token)}`;
-        } else {
-          showToast("No pass found matching that token or ID.", "error");
+    // Support query parameters in URL (requires BOTH utr and email for security)
+    const params = new URLSearchParams(window.location.search);
+    const qUtr = params.get("utr");
+    const qEmail = params.get("email");
+
+    if (qUtr && qEmail) {
+      if (utrInput) utrInput.value = qUtr;
+      if (emailInput) emailInput.value = qEmail;
+      const t = UtsavDB.findTicketByUtrAndEmail(qUtr, qEmail);
+      if (t) {
+        renderVerificationStatus(t);
+      } else {
+        const res = UtsavDB.submitVerificationRequest(qUtr, qEmail);
+        if (res.success && res.ticket) {
+          renderVerificationStatus(res.ticket);
         }
-      });
+      }
     }
   }
 
@@ -1306,38 +1592,46 @@
       }
     });
 
-    function lookupTicket(token, eventSlug) {
-      const ticket = UtsavDB.getTicket(token);
+    function lookupTicket(rawToken, eventSlug) {
+      if (!rawToken) {
+        return { outcome: "INVALID", message: "Please enter or scan a pass QR code.", ticket: null };
+      }
+      const cleanToken = String(rawToken).replace(/^UTSAV-PASS:/i, "").trim();
+      const ticket = UtsavDB.getTicket(cleanToken) || UtsavDB.findTicket(cleanToken);
+
       if (!ticket) {
-        return { outcome: "INVALID", message: "No pass found for this token in system records.", ticket: null };
+        return { outcome: "INVALID", message: "INVALID PASS: No matching registration found in system database.", ticket: null };
       }
       if (eventSlug && ticket.eventSlug && ticket.eventSlug !== eventSlug && eventSlug !== "all") {
         return {
           outcome: "BLOCKED",
-          message: `This pass is registered for ${ticket.eventName}, not ${eventSlug}.`,
+          message: `EVENT MISMATCH: This pass is registered for ${ticket.eventName}, not ${eventSlug}.`,
           ticket
         };
       }
       if (ticket.status === "USED") {
         return {
           outcome: "ALREADY_USED",
-          message: `Already checked in at ${ticket.redeemedGate || "Gate"} on ${formatDate(ticket.redeemedAt)}.`,
+          message: `ALREADY USED: This pass was already scanned and admitted at ${ticket.redeemedGate || "Gate 1"} on ${formatDate(ticket.redeemedAt)}. Re-use blocked.`,
           ticket
         };
       }
-      if (ticket.status === "PENDING_PAYMENT" || ticket.paymentStatus === "PENDING") {
+      const isVerified = ticket.paymentStatus === "verified" || ticket.paymentStatus === "APPROVED" || ticket.amount === 0;
+      if (!isVerified) {
         return {
-          outcome: "PAYMENT_PENDING",
-          message: `Payment verification is pending for UTR ${ticket.utr || "N/A"}.`,
+          outcome: "INVALID",
+          message: `PAYMENT UNVERIFIED: Status is ${ticket.paymentStatus || "verification_pending"}. Gate entry denied until verified.`,
           ticket
         };
       }
-      return { outcome: "VALID", message: "Pass verified & valid for entry.", ticket };
+      return { outcome: "VALID", message: "VALID PASS: Verified & approved for admission.", ticket };
     }
 
     function renderResult(payload, token) {
       currentTicket = payload.ticket || null;
       if (!detail || !message) return;
+
+      const cleanToken = String(token).replace(/^UTSAV-PASS:/i, "").trim();
 
       if (payload.outcome === "VALID") {
         detail.dataset.state = "valid";
@@ -1360,8 +1654,8 @@
       if (resultMeta) resultMeta.textContent = payload.message;
       if (resultPills[0]) resultPills[0].textContent = payload.ticket?.eventName || "Event";
       if (resultPills[1]) resultPills[1].textContent = payload.ticket?.collegeId ? `ID: ${payload.ticket.collegeId}` : "Guest";
-      if (resultPills[2]) resultPills[2].textContent = token.slice(0, 16).toUpperCase();
-      if (resultPills[3]) resultPills[3].textContent = payload.ticket?.status || payload.outcome;
+      if (resultPills[2]) resultPills[2].textContent = cleanToken.slice(0, 16).toUpperCase();
+      if (resultPills[3]) resultPills[3].textContent = payload.ticket?.status === "USED" ? "ALREADY USED" : payload.outcome;
       if (resultPills[4]) resultPills[4].textContent = payload.ticket?.venue || "Venue";
       if (resultPills[5]) resultPills[5].textContent = gateInput?.value || "Gate 1";
       message.textContent = payload.message;
@@ -1423,40 +1717,49 @@
     }
 
     function lookupCurrent() {
-      const token = (tokenInput?.value || "").trim();
-      if (!token) {
+      const rawToken = (tokenInput?.value || "").trim();
+      if (!rawToken) {
         showToast("Please enter or scan a pass token.", "info");
         return;
       }
       const eventSlug = root.dataset.eventSlug || "all";
-      const payload = lookupTicket(token, eventSlug);
-      renderResult(payload, token);
+      const payload = lookupTicket(rawToken, eventSlug);
+      renderResult(payload, rawToken);
       setStatus(
-        payload.outcome === "VALID" ? "VALID PASS" : payload.outcome === "ALREADY_USED" ? "ALREADY REDEEMED" : "FLAGGED",
+        payload.outcome === "VALID" ? "VALID PASS ✓" : payload.outcome === "ALREADY_USED" ? "ALREADY USED ⚠" : "INVALID PASS ✕",
         payload.message
       );
     }
 
     function redeemCurrent() {
-      const token = (tokenInput?.value || "").trim();
-      if (!token) return;
-      const ticket = UtsavDB.getTicket(token);
+      const rawToken = (tokenInput?.value || "").trim();
+      if (!rawToken) return;
+      const cleanToken = String(rawToken).replace(/^UTSAV-PASS:/i, "").trim();
+      const ticket = UtsavDB.getTicket(cleanToken) || UtsavDB.findTicket(cleanToken);
       if (!ticket) {
         showToast("Cannot check in: Ticket not found.", "error");
         return;
       }
       if (ticket.status === "USED") {
-        showToast("Ticket has already been redeemed!", "error");
+        showToast("Pass has already been used and redeemed!", "error");
+        return;
+      }
+      const isVerified = ticket.paymentStatus === "verified" || ticket.paymentStatus === "APPROVED" || ticket.amount === 0;
+      if (!isVerified) {
+        showToast("Cannot check in unverified pass!", "error");
         return;
       }
 
       const gate = gateInput?.value || "Gate 1";
       UtsavDB.recordCheckin(ticket, gate);
-      showToast(`✓ Checked in ${ticket.participantName} at ${gate}!`, "success");
-      renderResult({ outcome: "ALREADY_USED", message: `Checked in successfully at ${gate}.`, ticket }, token);
-      setStatus("CHECKED IN", `Entry recorded at ${gate} for ${ticket.participantName}.`);
+      showToast(`✓ Checked in ${ticket.participantName} at ${gate}! Pass marked as USED.`, "success");
+      renderResult({ outcome: "ALREADY_USED", message: `Checked in successfully at ${gate}. Pass marked as USED.`, ticket }, cleanToken);
+      setStatus("CHECKED IN ✓", `Entry recorded at ${gate} for ${ticket.participantName}. Pass marked as USED.`);
       populateQuickSelect();
     }
+
+    lookupButton?.addEventListener("click", lookupCurrent);
+    checkinButton?.addEventListener("click", redeemCurrent);
 
     startButton?.addEventListener("click", startCamera);
     stopButton?.addEventListener("click", stopCamera);
@@ -1516,7 +1819,7 @@
           <tr>
             <td><strong>${escapeHtml(t.participantName)}</strong><br><small>${escapeHtml(t.collegeId || "")}</small></td>
             <td>${escapeHtml(t.eventName)}</td>
-            <td><a class="token-link" href="pass/index.html?token=${encodeURIComponent(t.token)}" title="View Pass"><code>${escapeHtml(t.token)}</code></a></td>
+            <td><a class="token-link" href="pass/index.html?utr=${encodeURIComponent(t.utr || '')}&email=${encodeURIComponent(t.email || '')}" title="Check Status / Pass"><code>${escapeHtml(t.token)}</code></a></td>
             <td><span class="badge badge--${t.status.toLowerCase()}">${escapeHtml(t.status)}</span></td>
             <td>${formatDate(t.createdAt)}</td>
           </tr>`
@@ -1721,7 +2024,7 @@
           <td><small>${formatDate(t.createdAt)}</small></td>
           <td>
             <div class="action-btn-group">
-              <a class="btn btn-sm btn-secondary" href="pass/index.html?token=${encodeURIComponent(t.token)}" target="_blank">Pass</a>
+              <a class="btn btn-sm btn-secondary" href="pass/index.html?utr=${encodeURIComponent(t.utr || '')}&email=${encodeURIComponent(t.email || '')}" target="_blank">Status / Pass</a>
               <button class="btn btn-sm btn-danger delete-ticket-btn" data-token="${escapeHtml(t.token)}">✕</button>
             </div>
           </td>
@@ -1785,67 +2088,150 @@
 
     const tbody = $("#admin-payments-tbody", root);
     const statusFilter = $("#admin-payments-filter-status", root);
+    const modal = $("#admin-review-modal");
+    const modalClose = $("#admin-review-modal-close");
+    const modalBody = $("#admin-review-modal-content");
+    const modalVerifyBtn = $("#admin-modal-verify-btn");
+    const modalRejectBtn = $("#admin-modal-reject-btn");
+
+    let currentReviewToken = null;
+
+    function openReviewModal(token) {
+      const ticket = UtsavDB.getTicket(token);
+      if (!ticket || !modal || !modalBody) return;
+      currentReviewToken = token;
+
+      modalBody.innerHTML = `
+        <table class="verification-meta-table" style="margin:0;">
+          <tbody>
+            <tr><td>Registration ID</td><td><code>${escapeHtml(ticket.token)}</code></td></tr>
+            <tr><td>Participant Name</td><td><strong>${escapeHtml(ticket.participantName)}</strong></td></tr>
+            <tr><td>College ID / Org</td><td>${escapeHtml(ticket.collegeId || "N/A")}</td></tr>
+            <tr><td>Registered Email</td><td><a href="mailto:${escapeHtml(ticket.email)}">${escapeHtml(ticket.email)}</a></td></tr>
+            <tr><td>Phone Number</td><td>${escapeHtml(ticket.phone || "N/A")}</td></tr>
+            <tr><td>Event &amp; Venue</td><td>${escapeHtml(ticket.eventName)} (${escapeHtml(ticket.venue)})</td></tr>
+            <tr><td>Passes / Details</td><td>${escapeHtml(ticket.numPasses || 1)} Pass${(ticket.numPasses || 1) > 1 ? "es" : ""} ${ticket.notes ? `&bull; ${escapeHtml(ticket.notes)}` : ""}</td></tr>
+            <tr><td>UPI Transaction UTR</td><td><strong style="color:var(--terracotta);letter-spacing:0.05em;">${escapeHtml(ticket.utr || "N/A")}</strong></td></tr>
+            <tr><td>Expected Amount</td><td><strong style="color:#2e7d32;font-size:1.05rem;">${formatCurrency(ticket.amount)}</strong></td></tr>
+            <tr><td>Submitted At</td><td>${formatDate(ticket.verificationSubmittedAt || ticket.createdAt)}</td></tr>
+            <tr><td>Payment Status</td><td><span class="badge badge--${(ticket.paymentStatus || "verification_pending").toLowerCase()}">${escapeHtml(ticket.paymentStatus || "verification_pending")}</span></td></tr>
+            ${ticket.adminNotes ? `<tr><td>Admin Notes</td><td style="color:#c62828;">${escapeHtml(ticket.adminNotes)}</td></tr>` : ""}
+          </tbody>
+        </table>
+      `;
+
+      if (modalVerifyBtn) {
+        modalVerifyBtn.style.display = (ticket.paymentStatus === "verified" || ticket.paymentStatus === "APPROVED") ? "none" : "inline-flex";
+      }
+      if (modalRejectBtn) {
+        modalRejectBtn.style.display = (ticket.paymentStatus === "rejected") ? "none" : "inline-flex";
+      }
+
+      modal.classList.add("is-active");
+    }
+
+    function closeReviewModal() {
+      if (modal) modal.classList.remove("is-active");
+      currentReviewToken = null;
+    }
+
+    modalClose?.addEventListener("click", closeReviewModal);
+    modal?.addEventListener("click", (e) => {
+      if (e.target === modal) closeReviewModal();
+    });
+
+    modalVerifyBtn?.addEventListener("click", () => {
+      if (!currentReviewToken) return;
+      const t = UtsavDB.verifyPayment(currentReviewToken);
+      showToast(`✓ Payment verified for ${t?.participantName || "participant"}! Digital pass generated and emailed.`, "success");
+      closeReviewModal();
+      render();
+    });
+
+    modalRejectBtn?.addEventListener("click", () => {
+      if (!currentReviewToken) return;
+      const reason = prompt("Optional internal note for rejection (internal only):", "UTR not matching bank records");
+      UtsavDB.rejectPayment(currentReviewToken, reason || "Payment verification rejected");
+      showToast(`Payment rejected for registration ${currentReviewToken}.`, "info");
+      closeReviewModal();
+      render();
+    });
 
     function render() {
       if (!tbody) return;
-      const selectedStatus = statusFilter?.value || "";
+      const selectedStatus = (statusFilter?.value || "").toLowerCase();
 
       let tickets = UtsavDB.getTickets();
       if (selectedStatus) {
-        tickets = tickets.filter((t) => (t.paymentStatus || "APPROVED") === selectedStatus);
+        tickets = tickets.filter((t) => {
+          const s = (t.paymentStatus || "verification_pending").toLowerCase();
+          if (selectedStatus === "verified" || selectedStatus === "approved") {
+            return s === "verified" || s === "approved";
+          }
+          if (selectedStatus === "verification_pending" || selectedStatus === "pending") {
+            return s === "verification_pending" || s === "pending" || s === "pending_verification";
+          }
+          return s === selectedStatus;
+        });
       }
 
       if (tickets.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted" style="padding: 2rem;">No payment transactions recorded.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted" style="padding: 2rem;">No payment transactions recorded for the selected filter.</td></tr>`;
         return;
       }
 
       tbody.innerHTML = tickets
         .map(
-          (t) => `
+          (t) => {
+            const rawStatus = (t.paymentStatus || "verification_pending").toLowerCase();
+            const displayStatus = rawStatus === "approved" || rawStatus === "verified"
+              ? "VERIFIED"
+              : rawStatus === "rejected"
+              ? "REJECTED"
+              : "VERIFICATION_PENDING";
+
+            return `
         <tr>
-          <td><code>${escapeHtml(t.utr || "FREE-PASS")}</code></td>
+          <td><code style="font-weight:700;">${escapeHtml(t.token)}</code></td>
           <td><strong>${escapeHtml(t.participantName)}</strong><br><small class="text-muted">${escapeHtml(t.collegeId || "")}</small></td>
-          <td>${escapeHtml(t.eventName)}</td>
+          <td><small><a href="mailto:${escapeHtml(t.email)}">${escapeHtml(t.email)}</a></small></td>
+          <td><strong style="font-family:monospace;letter-spacing:0.04em;">${escapeHtml(t.utr || "FREE-PASS")}</strong></td>
           <td><strong>${formatCurrency(t.amount)}</strong></td>
-          <td><span class="badge badge--${(t.paymentStatus || "approved").toLowerCase()}">${escapeHtml(t.paymentStatus || "APPROVED")}</span></td>
-          <td><small>${formatDate(t.createdAt)}</small></td>
+          <td><small>${formatDate(t.verificationSubmittedAt || t.createdAt)}</small></td>
+          <td><span class="badge badge--${displayStatus.toLowerCase()}">${escapeHtml(displayStatus)}</span></td>
           <td>
-            <div class="action-btn-group">
-              ${t.paymentStatus === "PENDING"
-              ? `<button class="btn btn-sm btn-success approve-pay-btn" data-token="${escapeHtml(t.token)}">✓ Approve</button>
-                     <button class="btn btn-sm btn-danger reject-pay-btn" data-token="${escapeHtml(t.token)}">✕ Reject</button>`
-              : `<button class="btn btn-sm btn-secondary toggle-pay-btn" data-token="${escapeHtml(t.token)}">Toggle Status</button>`
-            }
+            <div class="action-btn-group" style="display:flex;gap:6px;flex-wrap:wrap;">
+              ${displayStatus !== "VERIFIED" ? `<button class="btn btn-sm btn-success verify-pay-btn" data-token="${escapeHtml(t.token)}" title="Verify payment and generate digital QR pass">VERIFY PAYMENT</button>` : ""}
+              ${displayStatus !== "REJECTED" ? `<button class="btn btn-sm btn-danger reject-pay-btn" data-token="${escapeHtml(t.token)}" title="Reject this payment">REJECT</button>` : ""}
+              <button class="btn btn-sm btn-secondary review-pay-btn" data-token="${escapeHtml(t.token)}" title="Review registration &amp; transaction details">REVIEW</button>
             </div>
           </td>
-        </tr>`
+        </tr>`;
+          }
         )
         .join("");
 
-      $all(".approve-pay-btn", tbody).forEach((btn) => {
+      $all(".verify-pay-btn", tbody).forEach((btn) => {
         btn.addEventListener("click", () => {
-          UtsavDB.updatePaymentStatus(btn.dataset.token, "APPROVED");
-          showToast("Payment approved and pass activated!", "success");
+          const t = UtsavDB.verifyPayment(btn.dataset.token);
+          showToast(`✓ Payment verified for ${t?.participantName || "participant"}! Digital QR pass generated & dispatched.`, "success");
           render();
         });
       });
 
       $all(".reject-pay-btn", tbody).forEach((btn) => {
         btn.addEventListener("click", () => {
-          UtsavDB.updatePaymentStatus(btn.dataset.token, "REJECTED");
-          showToast("Payment rejected.", "info");
-          render();
+          if (confirm(`Reject payment verification for registration ${btn.dataset.token}?`)) {
+            UtsavDB.rejectPayment(btn.dataset.token, "Rejected by admin");
+            showToast("Payment rejected.", "info");
+            render();
+          }
         });
       });
 
-      $all(".toggle-pay-btn", tbody).forEach((btn) => {
+      $all(".review-pay-btn", tbody).forEach((btn) => {
         btn.addEventListener("click", () => {
-          const t = UtsavDB.getTicket(btn.dataset.token);
-          const next = t.paymentStatus === "APPROVED" ? "PENDING" : "APPROVED";
-          UtsavDB.updatePaymentStatus(btn.dataset.token, next);
-          showToast(`Payment status updated to ${next}.`, "info");
-          render();
+          openReviewModal(btn.dataset.token);
         });
       });
     }
@@ -2091,7 +2477,197 @@
   // =========================================================================
   // 9. EVENT MENU CARD MODALS (MAHALAYA & SARASWATI PUJA)
   // =========================================================================
+
+  /* ---- Mahalaya Bhoj Menu Data ---- */
+  const MAHALAYA_MENU = [
+    {
+      nameBn: "বাসন্তী পোলাও",
+      nameEn: "Fragrant Basanti Pulao",
+      description: "Slow-cooked Gobindobhog rice with ghee, cashews and raisins.",
+      type: "veg",
+      image: "assets/menu-basanti-pulao.jpg",
+      searchQuery: "Basanti Pulao Bengali dish"
+    },
+    {
+      nameBn: "ঝুরি আলু ভাজা",
+      nameEn: "Crispy Jhuri Aloo Bhaja",
+      description: "Golden shredded potato crispies, seasoned with salt and a touch of chilli.",
+      type: "veg",
+      image: "assets/menu-jhuri-aloo.jpg",
+      searchQuery: "Jhuri Aloo Bhaja Bengali dish"
+    },
+    {
+      nameBn: "মুচমুচে বেগুনী",
+      nameEn: "Crispy Beguni",
+      description: "Traditional batter-fried spiced eggplant slices.",
+      type: "veg",
+      image: "assets/menu-beguni.jpg",
+      searchQuery: "Beguni Bengali dish"
+    },
+    {
+      nameBn: "দুধ শুক্তো",
+      nameEn: "Traditional Dudh Shukto",
+      description: "Classic Bengali bittersweet vegetable medley in milk gravy.",
+      type: "veg",
+      image: "assets/menu-shukto.jpg",
+      searchQuery: "Dudh Shukto Bengali dish"
+    },
+    {
+      nameBn: "ছানার ডালনা",
+      nameEn: "Traditional Chhanar Dalna",
+      description: "Fresh cottage cheese koftas in rich cumin gravy.",
+      type: "veg",
+      image: "assets/menu-chhanar-dalna.jpg",
+      searchQuery: "Chhanar Dalna Bengali dish"
+    },
+    {
+      nameBn: "ধোঁকার ডালনা",
+      nameEn: "Dhokar Dalna",
+      description: "Spiced lentil cakes simmered in aromatic gravy.",
+      type: "veg",
+      image: "assets/menu-dhokar-dalna.jpg",
+      searchQuery: "Dhokar Dalna Bengali dish"
+    },
+    {
+      nameBn: "নারকেল দিয়ে ছোলার ডাল",
+      nameEn: "Narkel diye Chholar Dal",
+      description: "Bengal gram with coconut crisps and warm spices.",
+      type: "veg",
+      image: "assets/menu-chholar-dal.jpg",
+      searchQuery: "Chholar Dal Bengali dish"
+    },
+    {
+      nameBn: "গরম ফুলকো লুচি",
+      nameEn: "Garam Luchi / Radhaballabhi",
+      description: "Puffed golden deep-fried puris served piping hot.",
+      type: "veg",
+      image: "assets/menu-luchi.jpg",
+      searchQuery: "Bengali Luchi puri"
+    },
+    {
+      nameBn: "টমেটো খেজুর চাটনি",
+      nameEn: "Tomato-Khejur Sweet Chutney",
+      description: "Rich spiced dates and tomato relish.",
+      type: "veg",
+      image: "assets/menu-chutney.jpg",
+      searchQuery: "Tomato Khejur Chutney Bengali"
+    },
+    {
+      nameBn: "মুচমুচে পাপড় ভাজা",
+      nameEn: "Crispy Roasted Papad",
+      description: "Traditional crispy lentil wafers, flame-roasted.",
+      type: "veg",
+      image: "assets/menu-papad.jpg",
+      searchQuery: "Papad Indian crispy wafer"
+    },
+    {
+      nameBn: "নলেন গুড়ের রসগোল্লা",
+      nameEn: "Spongy Nolen Gur Rosogolla",
+      description: "Soft cottage cheese balls in date palm jaggery syrup.",
+      type: "veg",
+      image: "assets/menu-rosogolla.jpg",
+      searchQuery: "Nolen Gur Rosogolla Bengali sweet"
+    },
+    {
+      nameBn: "কলকাতার খাঁটি মিষ্টি দই",
+      nameEn: "Authentic Kolkata Mishti Doi",
+      description: "Caramelised sweetened yoghurt set in earthen pots.",
+      type: "veg",
+      image: "assets/menu-rosogolla.jpg",
+      searchQuery: "Mishti Doi Kolkata Bengali sweet"
+    },
+    {
+      nameBn: "গোবিন্দভোগ চালের পায়েস",
+      nameEn: "Gobindobhog Chaler Payesh",
+      description: "Creamy slow-cooked rice pudding with aromatic Gobindobhog rice.",
+      type: "veg",
+      image: "assets/menu-rosogolla.jpg",
+      searchQuery: "Payesh Bengali rice pudding"
+    },
+    {
+      nameBn: "নরোম পাকের সন্দেশ",
+      nameEn: "Traditional Bengali Sandesh",
+      description: "Delicate fresh cottage cheese confection with cardamom.",
+      type: "veg",
+      image: "assets/menu-rosogolla.jpg",
+      searchQuery: "Bengali Sandesh sweet"
+    },
+    {
+      nameBn: "কাতলা / রুই মাছের কালিয়া",
+      nameEn: "Katla Machher Kalia",
+      description: "Rich river carp in spiced onion-ginger gravy.",
+      type: "nonveg",
+      image: "assets/menu-katla-kalia.jpg",
+      searchQuery: "Katla Machher Kalia Bengali fish curry"
+    },
+    {
+      nameBn: "কষা মাংস",
+      nameEn: "Traditional Bengali Kosha Mangsho",
+      description: "Slow-cooked rich spiced mutton curry with potatoes.",
+      type: "nonveg",
+      image: "assets/menu-kosha-mangsho.jpg",
+      searchQuery: "Kosha Mangsho Bengali mutton curry"
+    }
+  ];
+
+  /**
+   * Render the illustrated menu catalogue into the #mahalaya-menu-sections container.
+   * Separates dishes into Vegetarian and Non-Vegetarian editorial sections
+   * with FSSAI-style dietary symbols, small inset thumbnails, and Google search links.
+   */
+  function renderMahalayaMenu() {
+    const container = $("#mahalaya-menu-sections");
+    if (!container) return;
+
+    const vegDishes = MAHALAYA_MENU.filter(d => d.type === "veg");
+    const nonvegDishes = MAHALAYA_MENU.filter(d => d.type === "nonveg");
+
+    function buildDishHTML(dish, index) {
+      const searchUrl = "https://www.google.com/search?q=" + encodeURIComponent(dish.searchQuery);
+      const dietClass = dish.type === "veg" ? "veg" : "nonveg";
+      return `
+        <a class="mahalaya-menu-dish" href="${searchUrl}" target="_blank" rel="noopener noreferrer"
+           style="animation-delay: ${index * 0.06}s" title="Search: ${dish.nameEn}">
+          <div class="mahalaya-menu-dish__thumb">
+            <img src="${dish.image}" alt="${dish.nameBn}" width="48" height="48" loading="lazy" decoding="async" />
+          </div>
+          <div class="mahalaya-menu-dish__info">
+            <div class="mahalaya-menu-dish__name-row">
+              <span class="mahalaya-menu-dish__diet-mark mahalaya-menu-dish__diet-mark--${dietClass}"></span>
+              <span class="mahalaya-menu-dish__name-bn">${dish.nameBn}</span>
+            </div>
+            <span class="mahalaya-menu-dish__name-en">${dish.nameEn}</span>
+            ${dish.description ? `<span class="mahalaya-menu-dish__desc">${dish.description}</span>` : ""}
+          </div>
+          <span class="mahalaya-menu-dish__learn">↗</span>
+        </a>`;
+    }
+
+    function buildSectionHTML(type, labelBn, labelEn, dishes) {
+      const symbolClass = type === "veg" ? "veg" : "nonveg";
+      return `
+        <div class="mahalaya-menu-diet-section">
+          <div class="mahalaya-menu-diet-section__header">
+            <span class="mahalaya-menu-diet-symbol mahalaya-menu-diet-symbol--${symbolClass}"></span>
+            <span class="mahalaya-menu-diet-section__label">
+              <span class="mahalaya-menu-diet-section__label-bn">${labelBn}</span> · ${labelEn}
+            </span>
+          </div>
+          <div class="mahalaya-menu-dish-grid">
+            ${dishes.map((d, i) => buildDishHTML(d, i)).join("")}
+          </div>
+        </div>`;
+    }
+
+    container.innerHTML =
+      buildSectionHTML("veg", "নিরামিষ", "VEGETARIAN", vegDishes) +
+      buildSectionHTML("nonveg", "আমিষ", "NON-VEGETARIAN", nonvegDishes);
+  }
+
   function initMenuCardModal() {
+    // Render the data-driven Mahalaya menu catalogue
+    renderMahalayaMenu();
+
     const modalConfigs = [
       {
         trigger: $("#open-menu-modal-btn"),

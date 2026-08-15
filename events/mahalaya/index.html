@@ -18,8 +18,11 @@
       <a class="home-strip__brand" href="index.html">BANGIYA.SAMITI</a>
       <nav class="home-strip__nav" aria-label="Primary">
         <a class="home-strip__link" href="index.html">HOME</a>
+        <a class="home-strip__link" href="events/index.html">EVENTS</a>
+        <a class="home-strip__link" href="index.html#story">STORY</a>
+        <a class="home-strip__link" href="pass/index.html">PAYMENT STATUS</a>
       </nav>
-      <a class="home-strip__action" href="pass/index.html">PASS LOOKUP</a>
+      <a class="home-strip__action" href="events/mahalaya/index.html">REGISTER</a>
     </div>
   </header>
 
@@ -28,7 +31,8 @@
       <!-- Full-Width Illustration Header Blended with Terracotta Palette -->
       <div class="mahalaya-card__hero">
         <img class="mahalaya-card__heroImage" src="assets/mahalaya-bhoj.webp"
-          alt="Mahalaya Bhoj Community Feast in Kolkata Lane" width="1264" height="848" loading="eager" fetchpriority="high" decoding="async" />
+          alt="Mahalaya Bhoj Community Feast in Kolkata Lane" width="1264" height="848" loading="eager"
+          fetchpriority="high" decoding="async" />
         <div class="mahalaya-card__heroBlend" aria-hidden="true"></div>
         <div class="mahalaya-card__heroRibbon" aria-hidden="true">
           <span>MAHALAYA BHOJ 2026</span>
@@ -83,7 +87,8 @@
               aria-expanded="false" aria-controls="mahalaya-menu-modal" aria-label="Open Mahalaya Bhoj Menu Card">
               <div class="mahalaya-menu-card-frame">
                 <img src="assets/mahalaya-menu-envelope.webp"
-                  alt="Official Mahalaya Bhoj Menu Card Envelope with Golden Seal" width="1457" height="978" loading="lazy" decoding="async" class="mahalaya-menu-card-img" />
+                  alt="Official Mahalaya Bhoj Menu Card Envelope with Golden Seal" width="1457" height="978"
+                  loading="lazy" decoding="async" class="mahalaya-menu-card-img" />
               </div>
             </button>
           </div>
@@ -226,6 +231,23 @@
                   <div id="coupon-message" class="mahalaya-coupon-msg" style="display: none;"></div>
                 </div>
 
+                <!-- Trustworthy Dynamic Price Breakdown Receipt -->
+                <div class="mahalaya-price-receipt" id="price-breakdown-receipt">
+                  <div class="mahalaya-price-receipt__row">
+                    <span class="mahalaya-price-receipt__label">Subtotal</span>
+                    <span class="mahalaya-price-receipt__val" id="receipt-subtotal">₹250</span>
+                  </div>
+                  <div class="mahalaya-price-receipt__row mahalaya-price-receipt__row--discount" id="receipt-discount-row">
+                    <span class="mahalaya-price-receipt__label">Discount</span>
+                    <span class="mahalaya-price-receipt__val" id="receipt-discount">₹0</span>
+                  </div>
+                  <div class="mahalaya-price-receipt__divider"></div>
+                  <div class="mahalaya-price-receipt__row mahalaya-price-receipt__row--total">
+                    <span class="mahalaya-price-receipt__label">TOTAL</span>
+                    <span class="mahalaya-price-receipt__val" id="receipt-total">₹250</span>
+                  </div>
+                </div>
+
                 <!-- UPI QR & Deep Link Section -->
                 <div class="mahalaya-upi-grid">
                   <div class="mahalaya-upi-qr">
@@ -311,7 +333,8 @@
   <footer class="utsav-footer" role="contentinfo">
     <div class="utsav-footer__banner">
       <img class="utsav-footer__bannerImage" src="assets/footer-banner.webp"
-        alt="BANGIO.SAMITI Bengali Cultural Alpona &amp; Lotus Motif" width="1024" height="136" loading="lazy" decoding="async" />
+        alt="BANGIO.SAMITI Bengali Cultural Alpona &amp; Lotus Motif" width="1024" height="136" loading="lazy"
+        decoding="async" />
     </div>
     <div class="utsav-footer__content">
       <div class="utsav-footer__grid">
@@ -350,7 +373,13 @@
           <div class="utsav-footer__contact">
             <p>📍 IIIT Hyderabad, Gachibowli, Hyderabad 500032</p>
             <p>✉️ <a href="mailto:bangiya.samiti.iith@gmail.com">bangiya.samiti.iith@gmail.com</a></p>
-            <p><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg> <a href="https://www.instagram.com/bongiyo.samiti.iiith" target="_blank" rel="noopener noreferrer">bongiyo.samiti.iiith</a></p>
+            <p><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+              </svg> <a href="https://www.instagram.com/bongiyo.samiti.iiith" target="_blank"
+                rel="noopener noreferrer">bongiyo.samiti.iiith</a></p>
           </div>
         </div>
       </div>
@@ -389,88 +418,18 @@
 
       <div class="mahalaya-menu-modal__body">
         <div class="mahalaya-menu-modal__header">
-          <span class="mahalaya-menu-modal__tag">🍁 IIIT HYDERABAD BONGIO SAMITI 🍁</span>
+          <span class="mahalaya-menu-modal__tag">IIIT HYDERABAD BONGIO SAMITI</span>
           <h3 id="menu-modal-title" class="mahalaya-menu-modal__title">মহালয়া ভোজ মেনু কার্ড</h3>
           <p class="mahalaya-menu-modal__subtitle">Grand Traditional Autumn Bhoj &bull; 12 October 2026 &bull; Community
             Courtyard</p>
         </div>
 
-        <div class="mahalaya-menu-modal__sections">
-          <!-- Course 1: Starters & Bhaja -->
-          <div class="mahalaya-menu-course">
-            <h4 class="mahalaya-menu-course__heading">
-              <span>🌸</span> প্রারম্ভিক ও ভাজা (Starters &amp; Crispies)
-            </h4>
-            <ul class="mahalaya-menu-course__list">
-              <li><strong>বাসন্তী পোলাও (Fragrant Basanti Pulao)</strong> &bull; Slow-cooked with Gobindobhog rice, pure
-                ghee, cashew &amp; raisins</li>
-              <li><strong>ঝুরি আলু ভাজা (Crispy Jhuri Aloo Bhaja)</strong> &bull; Golden shredded potato crispies</li>
-              <li><strong>মুচমুচে বেগুনী (Crispy Beguni)</strong> &bull; Traditional batter-fried spiced eggplant slices
-              </li>
-              <li><strong>দুধ শুক্তো (Traditional Dudh Shukto)</strong> &bull; Classic Bengali bittersweet vegetable
-                medley</li>
-            </ul>
-          </div>
-
-          <!-- Course 2: Non-Veg & Veg Main Courses -->
-          <div class="mahalaya-menu-course">
-            <h4 class="mahalaya-menu-course__heading">
-              <span>🍲</span> প্রধান পদ (Main Course Selections)
-            </h4>
-            <div class="mahalaya-menu-course__grid">
-              <div class="mahalaya-menu-course__subcard">
-                <span class="mahalaya-menu-course__subtag non-veg">🍗 Non-Veg Feast</span>
-                <ul>
-                  <li><strong>কাতলা / রুই মাছের কালিয়া (Katla Machher Kalia)</strong> &bull; Rich river carp in spiced
-                    onion-ginger gravy</li>
-                  <li><strong>কষা মাংস (Traditional Bengali Kosha Mangsho)</strong> &bull; Slow-cooked rich spiced
-                    chicken/mutton curry with potatoes</li>
-                </ul>
-              </div>
-              <div class="mahalaya-menu-course__subcard">
-                <span class="mahalaya-menu-course__subtag veg">🌱 Pure Veg Feast</span>
-                <ul>
-                  <li><strong>ছানার ডালনা (Traditional Chhanar Dalna)</strong> &bull; Fresh cottage cheese koftas in
-                    rich cumin gravy</li>
-                  <li><strong>ধোঁকার ডালনা (Dhokar Dalna)</strong> &bull; Spiced lentil cakes simmered in aromatic gravy
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          <!-- Course 3: Dal & Accompaniments -->
-          <div class="mahalaya-menu-course">
-            <h4 class="mahalaya-menu-course__heading">
-              <span>🍛</span> ডাল ও সহযোগী পদ (Lentils &amp; Accompaniments)
-            </h4>
-            <ul class="mahalaya-menu-course__list">
-              <li><strong>নারকেল দিয়ে ছোলার ডাল (Narkel diye Chholar Dal)</strong> &bull; Bengal gram with coconut
-                crisps</li>
-              <li><strong>গরম ফুলকো লুচি (Garam Luchi / Radhaballabhi)</strong> &bull; Puffed golden puris</li>
-              <li><strong>টমেটো খেজুর চাটনি (Tomato-Khejur Sweet Chutney)</strong> &bull; Rich spiced dates &amp; tomato
-                relish</li>
-              <li><strong>মুচমুচে পাপড় ভাজা (Crispy Roasted Papad)</strong></li>
-            </ul>
-          </div>
-
-          <!-- Course 4: Traditional Desserts -->
-          <div class="mahalaya-menu-course">
-            <h4 class="mahalaya-menu-course__heading">
-              <span>🍨</span> মিষ্টি মুখ (Traditional Desserts &amp; Mishti)
-            </h4>
-            <ul class="mahalaya-menu-course__list">
-              <li><strong>নলেন গুড়ের রসগোল্লা (Spongy Nolen Gur Rosogolla)</strong></li>
-              <li><strong>কলকাতার খাঁটি মিষ্টি দই (Authentic Kolkata Mishti Doi)</strong></li>
-              <li><strong>গোবিন্দভোগ চালের পায়েস (Gobindobhog Chaler Payesh)</strong></li>
-              <li><strong>নরোম পাকের সন্দেশ (Traditional Bengali Sandesh)</strong></li>
-            </ul>
-          </div>
-        </div>
+        <!-- JS-rendered menu sections will be injected here -->
+        <div class="mahalaya-menu-modal__sections" id="mahalaya-menu-sections"></div>
 
         <div class="mahalaya-menu-modal__footer">
-          <p>✨ Feast timings: <strong>1:00 PM – 4:30 PM</strong> &bull; Unlimited traditional sit-down banana leaf
-            service</p>
+          <p class="mahalaya-menu-modal__footer-timing">Feast timings: <strong>1:00 PM – 4:30 PM</strong> &bull; Unlimited traditional sit-down banana leaf service</p>
+          <p class="mahalaya-menu-modal__footer-closing">পরম্পরার স্বাদে, একসাথে বসে।</p>
         </div>
       </div>
     </div>
