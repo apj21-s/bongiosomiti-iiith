@@ -3020,14 +3020,23 @@
         if (isLoaded) return;
         isLoaded = true;
 
-        const src1 = video1.dataset.src || video1.getAttribute("src");
-        const src2 = video2.dataset.src || video2.getAttribute("src");
-
-        if (src1 && !video1.getAttribute("src")) video1.src = src1;
-        if (src2 && !video2.getAttribute("src")) video2.src = src2;
-
-        video1.load();
-        video2.load();
+        [video1, video2].forEach((video) => {
+          const sources = video.querySelectorAll("source");
+          if (sources.length > 0) {
+            sources.forEach((source) => {
+              const src = source.dataset.src;
+              if (src && !source.getAttribute("src")) {
+                source.src = src;
+              }
+            });
+          } else {
+            const src = video.dataset.src || video.getAttribute("src");
+            if (src && !video.getAttribute("src")) {
+              video.src = src;
+            }
+          }
+          video.load();
+        });
 
         const onReady = () => {
           video1.removeEventListener("canplay", onReady);

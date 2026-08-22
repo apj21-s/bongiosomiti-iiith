@@ -33,8 +33,14 @@
         <div class="events-scene__panel">
           <div class="events-scene__hero" id="events-hero-player">
             <img class="events-scene__hero-image events-scene__hero-poster" src="assets/community-puja.webp" alt="IIIT Bongio Samiti Celebrations" width="1200" height="880" loading="eager" fetchpriority="high" decoding="async" />
-            <video class="events-scene__hero-video events-scene__hero-video--1 is-hidden" data-src="assets/Animate_Bengali_Puja_courtyard.mp4" preload="none" muted playsinline aria-label="IIIT Bongio Samiti Celebrations"></video>
-            <video class="events-scene__hero-video events-scene__hero-video--2 is-hidden" data-src="assets/Animate_Bengali_Puja_courtyard.mp4" preload="none" muted playsinline aria-hidden="true"></video>
+            <video class="events-scene__hero-video events-scene__hero-video--1 is-hidden" preload="none" muted playsinline aria-label="IIIT Bongio Samiti Celebrations">
+              <source data-src="assets/Animate_Bengali_Puja_courtyard_opt.webm" type="video/webm" />
+              <source data-src="assets/Animate_Bengali_Puja_courtyard_opt_small.mp4" type="video/mp4" />
+            </video>
+            <video class="events-scene__hero-video events-scene__hero-video--2 is-hidden" preload="none" muted playsinline aria-hidden="true">
+              <source data-src="assets/Animate_Bengali_Puja_courtyard_opt.webm" type="video/webm" />
+              <source data-src="assets/Animate_Bengali_Puja_courtyard_opt_small.mp4" type="video/mp4" />
+            </video>
           </div>
 
           <div class="events-scene__copy" style="padding: 1rem 0 0.5rem;">
