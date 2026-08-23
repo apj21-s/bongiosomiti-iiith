@@ -1,0 +1,197 @@
+import Link from 'next/link'
+import { createClient } from '@/utils/supabase/server'
+import SiteHeader from '@/components/site-header'
+import SiteFooter from '@/components/site-footer'
+import PhotoAlbum from '@/components/photo-album'
+
+export const revalidate = 0
+
+export default async function Home() {
+  const supabase = await createClient()
+  const { data: events } = await supabase
+    .from('events')
+    .select('*')
+    .eq('status', 'OPEN')
+    .order('event_date', { ascending: true })
+
+  const activeEvents: any[] = events || []
+
+  return (
+    <main id="top" className="home-page">
+      <SiteHeader />
+
+      <section className="home-banner" aria-hidden="true">
+        <div className="home-banner__scene">
+          <div className="home-banner__layer home-banner__layer--left">
+            <img className="home-banner__image home-banner__image--left" src="/assets/autumn-landscape.webp" alt="" />
+          </div>
+          <div className="home-banner__layer home-banner__layer--center">
+            <img className="home-banner__image home-banner__image--center" src="/assets/kolkata-street.webp" alt="" />
+          </div>
+          <div className="home-banner__layer home-banner__layer--right">
+            <img className="home-banner__image home-banner__image--right" src="/assets/community-puja.webp" alt="" />
+          </div>
+        </div>
+        <div className="home-banner__blend"></div>
+      </section>
+
+      <section id="home" className="home-hero" aria-labelledby="home-hero-title">
+        <div className="home-hero__scene" aria-hidden="true">
+          <div className="home-hero__layer home-hero__layer--landscape">
+            <img className="home-hero__image home-hero__image--landscape" src="/assets/autumn-landscape.webp" alt="" />
+          </div>
+
+          <div className="home-hero__sun-glow">
+            <div className="sun-corona"></div>
+            <div className="sun-flare"></div>
+            <div className="sun-rays"></div>
+          </div>
+
+          <div className="home-hero__birds-sky">
+            <div className="hero-bird-flock flock-1">
+              <div className="hero-bird bird-lead">
+                <svg className="bird-svg" viewBox="0 0 32 18">
+                  <path className="bird-wing-left" d="M16 12 C10 4, 3 3, 0 6 C5 12, 12 13, 16 12 Z" fill="#3c2618" />
+                  <path className="bird-wing-right" d="M16 12 C22 4, 29 3, 32 6 C27 12, 20 13, 16 12 Z" fill="#3c2618" />
+                  <path className="bird-body" d="M13 11 C15 10, 18 10, 20 12 C17 14, 15 14, 13 11 Z" fill="#28180e" />
+                </svg>
+              </div>
+              <div className="hero-bird bird-wingman-1">
+                <svg className="bird-svg" viewBox="0 0 32 18">
+                  <path className="bird-wing-left" d="M16 12 C10 4, 3 3, 0 6 C5 12, 12 13, 16 12 Z" fill="#442c1d" />
+                  <path className="bird-wing-right" d="M16 12 C22 4, 29 3, 32 6 C27 12, 20 13, 16 12 Z" fill="#442c1d" />
+                  <path className="bird-body" d="M13 11 C15 10, 18 10, 20 12 C17 14, 15 14, 13 11 Z" fill="#28180e" />
+                </svg>
+              </div>
+              <div className="hero-bird bird-wingman-2">
+                <svg className="bird-svg" viewBox="0 0 32 18">
+                  <path className="bird-wing-left" d="M16 12 C10 4, 3 3, 0 6 C5 12, 12 13, 16 12 Z" fill="#4d3322" />
+                  <path className="bird-wing-right" d="M16 12 C22 4, 29 3, 32 6 C27 12, 20 13, 16 12 Z" fill="#4d3322" />
+                  <path className="bird-body" d="M13 11 C15 10, 18 10, 20 12 C17 14, 15 14, 13 11 Z" fill="#28180e" />
+                </svg>
+              </div>
+            </div>
+
+            <div className="hero-bird-flock flock-2">
+              <div className="hero-bird bird-lead">
+                <svg className="bird-svg" viewBox="0 0 32 18">
+                  <path className="bird-wing-left" d="M16 12 C10 4, 3 3, 0 6 C5 12, 12 13, 16 12 Z" fill="#523826" />
+                  <path className="bird-wing-right" d="M16 12 C22 4, 29 3, 32 6 C27 12, 20 13, 16 12 Z" fill="#523826" />
+                  <path className="bird-body" d="M13 11 C15 10, 18 10, 20 12 C17 14, 15 14, 13 11 Z" fill="#28180e" />
+                </svg>
+              </div>
+              <div className="hero-bird bird-wingman-1">
+                <svg className="bird-svg" viewBox="0 0 32 18">
+                  <path className="bird-wing-left" d="M16 12 C10 4, 3 3, 0 6 C5 12, 12 13, 16 12 Z" fill="#5a3d2a" />
+                  <path className="bird-wing-right" d="M16 12 C22 4, 29 3, 32 6 C27 12, 20 13, 16 12 Z" fill="#5a3d2a" />
+                  <path className="bird-body" d="M13 11 C15 10, 18 10, 20 12 C17 14, 15 14, 13 11 Z" fill="#28180e" />
+                </svg>
+              </div>
+            </div>
+
+            <div className="hero-bird hero-bird-solo">
+              <svg className="bird-svg" viewBox="0 0 32 18">
+                <path className="bird-wing-left" d="M16 12 C10 4, 3 3, 0 6 C5 12, 12 13, 16 12 Z" fill="#3c2618" />
+                <path className="bird-wing-right" d="M16 12 C22 4, 29 3, 32 6 C27 12, 20 13, 16 12 Z" fill="#3c2618" />
+                <path className="bird-body" d="M13 11 C15 10, 18 10, 20 12 C17 14, 15 14, 13 11 Z" fill="#28180e" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div className="home-hero__content scroll-reveal">
+          <h1 id="home-hero-title" className="home-hero__title">BANGIYA.SAMITI</h1>
+          <p className="home-hero__subtitle">IIIT HYDERABAD</p>
+          <div className="home-hero__card">
+            <p># আড্ডা হোক,
+              বাংলা হোক</p>
+            <Link className="home-hero__cta" href="#events">[EXPLORE EVENTS]</Link>
+          </div>
+        </div>
+      </section>
+
+      <section id="events" className="events-page" aria-labelledby="events-title">
+        <div className="events-scene">
+          <div className="events-scene__panel">
+            <div className="events-scene__hero scroll-reveal scroll-reveal--delay-1" id="events-hero-player">
+              <img className="events-scene__hero-image events-scene__hero-poster" src="/assets/community-puja.webp" alt="Bengali Puja Courtyard Celebration" />
+            </div>
+
+            <div className="events-scene__copy scroll-reveal">
+              <h2 className="events-scene__eyebrow" id="events-title">Courtyard &amp; Community</h2>
+              <p className="events-scene__lede">Community events, one world.</p>
+            </div>
+
+            <div className="events-scene__cards">
+              {activeEvents.map((event: any, i: number) => (
+                <Link
+                  className="events-scene__card scroll-reveal"
+                  style={{ animationDelay: `${i * 2}s` }}
+                  href={`/events/${event.slug}`}
+                  key={event.id}
+                  aria-label={`Register for ${event.name}`}
+                >
+                  <div className="events-scene__card-media">
+                    <img
+                      className="events-scene__card-image"
+                      src={event.image_url?.startsWith('/') ? event.image_url : `/assets/${event.image_url?.replace(/^assets\//, '') || 'community-puja.webp'}`}
+                      alt={event.name}
+                    />
+                    <span className="events-scene__card-badge">
+                      {event.price === 0 ? 'Free Entry' : 'Limited Passes'}
+                    </span>
+                  </div>
+                  <div className="events-scene__card-body">
+                    <div className="events-scene__card-meta">
+                      <span className="events-scene__card-date">{new Date(event.event_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()}</span>
+                      <span className="events-scene__card-tag">{event.category}</span>
+                    </div>
+                    <h3 className="events-scene__card-title">{event.name}</h3>
+                    <p className="events-scene__card-desc">{event.description}</p>
+                    <div className="events-scene__card-footer">
+                      <span className="events-scene__card-invitation">
+                        {event.price === 0 ? '✨ Join the celebration • Free Entry' : `⚡ Seats are limited • ₹${event.price} / pass`}
+                      </span>
+                      <span className="events-scene__card-btn">
+                        <span>REGISTER NOW</span>
+                        <span className="events-scene__card-arrow">&rarr;</span>
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="story" className="story-page" aria-labelledby="story-title">
+        <article className="story-card">
+          <div className="story-card__intro scroll-reveal">
+            <div className="story-card__introMeta">
+              <p className="section-label">আমাদের গল্প</p>
+            </div>
+            <h2 id="story-title">A curated memory archive</h2>
+            <p>Real event photographs, kept small and editorial so the images stay in focus.</p>
+          </div>
+
+          <div className="story-card__header scroll-reveal scroll-reveal--delay-1">
+            <img className="story-card__headerImage" src="/assets/amader-golpo.webp" alt="Bangiya Samiti Story Illustration" />
+            <div className="story-card__headerOverlay" aria-hidden="true"></div>
+            <div className="story-card__headerCopy">
+              <p className="section-label">আমাদের গল্প</p>
+              <h2>Our story</h2>
+              <p>Real moments from Bengali community events, gathered in one editable archive.</p>
+            </div>
+          </div>
+
+          <div className="story-card__body">
+            <PhotoAlbum />
+          </div>
+        </article>
+      </section>
+
+      <SiteFooter />
+    </main>
+  )
+}

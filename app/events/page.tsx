@@ -1,0 +1,70 @@
+import Link from 'next/link'
+import { createClient } from '@/utils/supabase/server'
+import SiteHeader from '@/components/site-header'
+import SiteFooter from '@/components/site-footer'
+import PujaVideo from '@/components/puja-video'
+
+export const revalidate = 0
+
+export default async function EventsPage() {
+  const supabase = await createClient()
+  const { data: events } = await supabase
+    .from('events')
+    .select('*')
+    .eq('status', 'OPEN')
+    .order('event_date', { ascending: true })
+
+  const activeEvents: any[] = events || []
+
+  return (
+    <main className="events-page" style={{ paddingTop: '1.5rem' }}>
+      <SiteHeader />
+
+      <section className="events-scene" aria-labelledby="events-scene-title">
+        <div className="events-scene__label-row">
+          <p className="events-scene__eyebrow" id="events-scene-title">Courtyard &amp; Community Gatherings</p>
+          <Link href="/" className="events-scene__backlink">&larr; Back to Home</Link>
+        </div>
+
+        <div className="events-scene__panel">
+          <PujaVideo />
+
+          <div className="events-scene__copy" style={{ padding: '1rem 0 0.5rem' }}>
+            <p className="section-label">Campus &amp; Community Catalog</p>
+            <h1 style={{ margin: '0.25rem 0 0.5rem', fontSize: '2rem' }}>Celebrate Heritage With Us</h1>
+            <p className="events-scene__lede">Choose an event below to reserve your digital pass, enjoy authentic feasts, and join communal rituals.</p>
+          </div>
+
+          <div id="public-events-catalog" className="events-scene__cards">
+            {activeEvents.map((event) => (
+              <Link href={`/events/${event.slug}`} className="events-scene__card" key={event.id}>
+                <div className="events-scene__card-media">
+                  <img
+                    className="events-scene__card-image"
+                    src={event.image_url?.startsWith('/') ? event.image_url : `/assets/${event.image_url?.replace(/^assets\//, '') || 'community-puja.webp'}`}
+                    alt={event.name}
+                  />
+                </div>
+                <div className="events-scene__card-body">
+                  <div className="events-scene__card-meta">
+                    <span>{new Date(event.event_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                    <span>{event.category}</span>
+                  </div>
+                  <h3 className="events-scene__card-title">{event.name}</h3>
+                  <p>{event.description}</p>
+                  <span className="events-scene__card-link">REGISTER NOW</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          <p className="events-scene__caption">
+            IIIT BONGIO SAMITI &bull; CULTURAL HERITAGE IN DIGITAL FORM
+          </p>
+        </div>
+      </section>
+
+      <SiteFooter />
+    </main>
+  )
+}
