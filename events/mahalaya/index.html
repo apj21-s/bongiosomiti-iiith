@@ -4,9 +4,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BANGIYA.SAMITI - Mahalaya Bhoj 2026</title>
+  <title>বঙ্গীয়.SAMITI - Mahalaya Bhoj 2026</title>
   <base href="../../" />
   <link rel="preload" as="image" href="assets/mahalaya-bhoj.webp" />
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/logo.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/logo.png" />
+  <link rel="icon" type="image/png" sizes="48x48" href="assets/logo.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/logo.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/logo.png" />
   <link rel="stylesheet" href="styles.css" />
   <script defer src="vendor/qrcode.js"></script>
   <script defer src="site.js"></script>
@@ -16,10 +21,13 @@
   <!-- Full-Screen Sticky Header Ribbon Throughout the Screen -->
   <header class="home-strip">
     <div class="home-strip__inner">
-      <a class="home-strip__brand" href="index.html">BANGIYA.SAMITI</a>
+      <a class="home-strip__brand" href="index.html">
+        <img src="assets/logo.png" alt="বঙ্গীয়.SAMITI Emblem" class="brand-emblem" />
+        <span>বঙ্গীয়.SAMITI</span>
+      </a>
       <nav class="home-strip__nav" aria-label="Primary">
         <a class="home-strip__link" href="index.html">HOME</a>
-        <a class="home-strip__link" href="events/index.html">EVENTS</a>
+        <a class="home-strip__link" href="index.html#events">EVENTS</a>
         <a class="home-strip__link" href="index.html#story">STORY</a>
         <a class="home-strip__link" href="pass/index.html">PAYMENT STATUS</a>
       </nav>
@@ -36,7 +44,7 @@
           fetchpriority="high" decoding="async" />
         <div class="mahalaya-card__heroBlend" aria-hidden="true"></div>
         <div class="mahalaya-card__heroRibbon" aria-hidden="true">
-          <span>MAHALAYA BHOJ 2026</span>
+          <span>মহালয়া ভোজ ২০২৬</span>
         </div>
       </div>
 
@@ -45,25 +53,25 @@
         <!-- Left Column: Event Information & Payment Instructions -->
         <div class="mahalaya-card__story">
           <div class="mahalaya-card__titleBlock">
-            <h1 id="mahalaya-title" class="mahalaya-title">MAHALAYA BHOJ PAGE</h1>
-            <p class="mahalaya-subtitle">(NEIGHBOURHOOD &amp; BHOJ)</p>
+            <h1 id="mahalaya-title" class="mahalaya-title">MAHALAYA BHOJ 2026</h1>
+            <p class="mahalaya-subtitle">COMMUNITY FEAST & CELEBRATION</p>
           </div>
 
           <div class="mahalaya-timeline">
             <div class="mahalaya-timeline__item">
               <div class="mahalaya-timeline__dot"></div>
-              <strong class="mahalaya-timeline__title">Event date</strong>
-              <span class="mahalaya-timeline__desc">Celebrate autumn puja season (12 Oct 2026)</span>
+              <strong class="mahalaya-timeline__title">Event Date</strong>
+              <span class="mahalaya-timeline__desc">Saturday, 12 October 2026</span>
             </div>
             <div class="mahalaya-timeline__item">
               <div class="mahalaya-timeline__dot"></div>
-              <strong class="mahalaya-timeline__title">Time/Slot</strong>
-              <span class="mahalaya-timeline__desc">Shared community feast (1:00 PM – 4:30 PM)</span>
+              <strong class="mahalaya-timeline__title">Time</strong>
+              <span class="mahalaya-timeline__desc">Lunch Feast &bull; 1:00 PM – 4:30 PM</span>
             </div>
             <div class="mahalaya-timeline__item">
               <div class="mahalaya-timeline__dot"></div>
-              <strong class="mahalaya-timeline__title">Tradition</strong>
-              <span class="mahalaya-timeline__desc">Tradition &amp; cultural community dinner</span>
+              <strong class="mahalaya-timeline__title">Service</strong>
+              <span class="mahalaya-timeline__desc">Traditional sit-down banana leaf service</span>
             </div>
           </div>
 
@@ -74,11 +82,10 @@
               <strong class="mahalaya-payment-box__title">Payment Instructions</strong>
             </div>
             <div class="mahalaya-payment-box__content">
-              <p><strong>Step 1:</strong> Pay <strong>₹250 / pass</strong> via UPI to: <code
+              <p><strong>Step 1:</strong> Pay the pass fee via UPI to: <code
                   class="mahalaya-payment-box__upi">bangiya.samiti.iith@okhdfcbank</code></p>
-              <p><strong>Step 2:</strong> Copy your 12-digit UPI UTR / Transaction ID.</p>
-              <p><strong>Step 3:</strong> Fill in the registration form on the right and submit. Your verified QR Pass
-                will be dispatched to your email.</p>
+              <p><strong>Step 2:</strong> Copy the 12-digit UPI UTR / Transaction ID.</p>
+              <p><strong>Step 3:</strong> Submit the registration form. Your QR Pass will be emailed after verification.</p>
             </div>
           </div>
 
@@ -144,9 +151,8 @@
                 </div>
 
                 <div class="field">
-                  <label for="college_id">IIIT Roll No / ID *</label>
-                  <input id="college_id" name="college_id" type="text" placeholder="e.g. 202401042 / Staff ID"
-                    required />
+                  <label for="college_id">IIIT Roll No / ID</label>
+                  <input id="college_id" name="college_id" type="text" placeholder="e.g. 202401042 / Staff ID" />
                 </div>
               </div>
 
@@ -164,20 +170,10 @@
                     autocomplete="email" />
                 </div>
 
-                <div class="field">
+                <div class="field" style="grid-column: 1 / -1;">
                   <label for="outside_phone">Phone Number *</label>
                   <input id="outside_phone" name="outside_phone" type="tel" placeholder="+91 98765 43210"
                     autocomplete="tel" />
-                </div>
-
-                <div class="field">
-                  <label for="organization">College / Organization *</label>
-                  <input id="organization" name="organization" type="text" placeholder="e.g. University / Company" />
-                </div>
-
-                <div class="field" style="grid-column: 1 / -1;">
-                  <label for="city">City *</label>
-                  <input id="city" name="city" type="text" placeholder="e.g. Hyderabad / Kolkata" />
                 </div>
               </div>
 
@@ -198,8 +194,11 @@
                 <div class="field">
                   <label for="food_pref">Food Preference</label>
                   <select id="food_pref" name="food_pref">
-                    <option value="Non-Veg (Authentic Bhoj)">Non-Veg (Fish &amp; Chicken Feast)</option>
-                    <option value="Veg (Special Veg Thali)">Veg (Traditional Niramish Thali)</option>
+                    <option value="Breakfast Thali">Breakfast Thali</option>
+                    <option value="Non-Veg Lunch (Fish Thali)">Non-Veg Lunch (Fish Thali)</option>
+                    <option value="Veg Lunch Thali">Veg Lunch Thali</option>
+                    <option value="Breakfast + Non-Veg Lunch combo">Breakfast + Non-Veg Lunch combo</option>
+                    <option value="Breakfast + Veg Lunch combo">Breakfast + Veg Lunch combo</option>
                   </select>
                 </div>
               </div>
@@ -238,7 +237,8 @@
                     <span class="mahalaya-price-receipt__label">Subtotal</span>
                     <span class="mahalaya-price-receipt__val" id="receipt-subtotal">₹250</span>
                   </div>
-                  <div class="mahalaya-price-receipt__row mahalaya-price-receipt__row--discount" id="receipt-discount-row">
+                  <div class="mahalaya-price-receipt__row mahalaya-price-receipt__row--discount"
+                    id="receipt-discount-row">
                     <span class="mahalaya-price-receipt__label">Discount</span>
                     <span class="mahalaya-price-receipt__val" id="receipt-discount">₹0</span>
                   </div>
@@ -281,6 +281,21 @@
                     pattern="[0-9A-Za-z_-]{6,24}" autocomplete="off" />
                   <small class="field-hint">Enter 12-digit UTR from your UPI payment receipt</small>
                 </div>
+
+                <!-- Payment Screenshot Upload Field -->
+                <div class="field mahalaya-screenshot-field">
+                  <label for="payment_screenshot">Upload Payment Screenshot *</label>
+                  <div class="mahalaya-file-upload-wrapper">
+                    <input id="payment_screenshot" name="payment_screenshot" type="file" accept="image/*" required
+                      class="mahalaya-file-input" />
+                    <div class="mahalaya-file-upload-button">
+                      <span class="mahalaya-file-upload-icon">📤</span>
+                      <span>Choose File</span>
+                    </div>
+                    <span class="mahalaya-file-upload-text">No file selected</span>
+                  </div>
+                  <small class="field-hint">Upload JPG, PNG or WEBP receipt screenshot (Max 5MB)</small>
+                </div>
               </div>
             </div>
 
@@ -317,7 +332,15 @@
             </div>
 
             <div class="mahalaya-confirmation__emailNotice">
-              <p>✉️ <strong>Digital QR Pass Delivery Notice:</strong></p>
+              <p><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+                  style="vertical-align: middle; margin-right: 4px; color: #d48806;">
+                  <path d="M2 10v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V10L12 4Z" />
+                  <rect x="6" y="2" width="12" height="10" rx="1.5" />
+                  <circle cx="12" cy="7" r="1.2" />
+                  <path d="M13.2 7v0.8a1.2 1.2 0 0 0 2.4 0V7a3.6 3.6 0 1 0-3.6 3.6h0.5" />
+                  <path d="M2 12v8a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-8L12 15Z" />
+                </svg> <strong>Digital QR Pass Delivery Notice:</strong></p>
               <p>Your verified digital QR pass and entry confirmation will be dispatched directly to your registered
                 email (<strong id="conf-email">your email</strong>) upon transaction verification. Please present the QR
                 code received in your inbox at the gate.</p>
@@ -334,7 +357,7 @@
   <footer class="utsav-footer" role="contentinfo">
     <div class="utsav-footer__banner">
       <img class="utsav-footer__bannerImage" src="assets/footer-banner.webp"
-        alt="BANGIO.SAMITI Bengali Cultural Alpona &amp; Lotus Motif" width="1024" height="136" loading="lazy"
+        alt="BANGIYA.SAMITI.IIITH Bengali Cultural Alpona &amp; Lotus Motif" width="1024" height="136" loading="lazy"
         decoding="async" />
     </div>
     <div class="utsav-footer__content">
@@ -342,7 +365,8 @@
         <!-- Col 1: Identity -->
         <div class="utsav-footer__brandCol">
           <div class="utsav-footer__brand">
-            <span class="utsav-footer__logo">BANGIYA.SAMITI</span>
+            <img class="utsav-footer__emblem" src="assets/logo.png" alt="বঙ্গীয়.SAMITI Emblem" />
+            <span class="utsav-footer__logo">বঙ্গীয়.SAMITI</span>
             <span class="utsav-footer__bengali">আইআইআইটি বঙ্গীয় সমিতি</span>
           </div>
           <p class="utsav-footer__about">
@@ -355,7 +379,7 @@
           <h3 class="utsav-footer__title">Quick Navigation</h3>
           <ul class="utsav-footer__links">
             <li><a href="index.html">Home</a></li>
-            <li><a href="events/index.html">Events Catalog</a></li>
+            <li><a href="index.html#events">Events Catalog</a></li>
           </ul>
         </div>
 
@@ -364,7 +388,7 @@
           <h3 class="utsav-footer__title">Festivals &amp; Feasts</h3>
           <ul class="utsav-footer__links">
             <li><a href="events/mahalaya/index.html">Mahalaya Bhoj 2026</a></li>
-            <li><a href="events/saraswati/index.html">Saraswati Puja 2026</a></li>
+            <li><a href="events/saraswati/index.html">Saraswati Puja 2027</a></li>
           </ul>
         </div>
 
@@ -372,8 +396,16 @@
         <div class="utsav-footer__navCol">
           <h3 class="utsav-footer__title">Contact &amp; Location</h3>
           <div class="utsav-footer__contact">
-            <p>📍 IIIT Hyderabad, Gachibowli, Hyderabad 500032</p>
-            <p>✉️ <a href="mailto:bangiya.samiti.iith@gmail.com">bangiya.samiti.iith@gmail.com</a></p>
+            <p>📍<a href="https://maps.app.goo.gl/DJQVksxmKAVi3aRJ9">IIIT Hyderabad, Gachibowli, Hyderabad 500032</a>
+            </p>
+            <p><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M2 10v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V10L12 4Z" />
+                <rect x="6" y="2" width="12" height="10" rx="1.5" />
+                <circle cx="12" cy="7" r="1.2" />
+                <path d="M13.2 7v0.8a1.2 1.2 0 0 0 2.4 0V7a3.6 3.6 0 1 0-3.6 3.6h0.5" />
+                <path d="M2 12v8a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-8L12 15Z" />
+              </svg> <a href="mailto:bangiya.samiti.iith@gmail.com">bangiya.samiti.iith@gmail.com</a></p>
             <p><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
@@ -393,11 +425,7 @@
         <p class="utsav-footer__quote">
           বারো মাসে তেরো পার্বণ, এটাই তো খাঁটি বাঙালি জীবন   ||   বাঙালি শুধু একটা জাতি নয়, বাঙালি একটা আবেগ
         </p>
-        <div class="utsav-footer__bottomLinks">
-          <a href="events/mahalaya/index.html#top">Back to top &uarr;</a>
-          <span>&bull;</span>
-          <a href="events/index.html">All Events</a>
-        </div>
+
       </div>
     </div>
   </footer>
@@ -413,23 +441,52 @@
       <!-- Envelope Header Artwork (Exact to Reference) -->
       <div class="mahalaya-menu-modal__envelope-banner">
         <img src="assets/mahalaya-menu-envelope.webp"
-          alt="Mahalaya Bhoj Royal Menu Envelope with IIIT Hyderabad Golden Seal" width="1457" height="978" loading="lazy" decoding="async"
-          class="mahalaya-menu-modal__envelope-img" />
+          alt="Mahalaya Bhoj Royal Menu Envelope with IIIT Hyderabad Golden Seal" width="1457" height="978"
+          loading="lazy" decoding="async" class="mahalaya-menu-modal__envelope-img" />
       </div>
 
       <div class="mahalaya-menu-modal__body">
         <div class="mahalaya-menu-modal__header">
-          <span class="mahalaya-menu-modal__tag">IIIT HYDERABAD BONGIO SAMITI</span>
+          <span class="mahalaya-menu-modal__tag"><span class="tag-flourish">❖</span> IIIT HYDERABAD BONGIO SAMITI <span class="tag-flourish">❖</span></span>
           <h3 id="menu-modal-title" class="mahalaya-menu-modal__title">মহালয়া ভোজ মেনু কার্ড</h3>
-          <p class="mahalaya-menu-modal__subtitle">Grand Traditional Autumn Bhoj &bull; 12 October 2026 &bull; Community
-            Courtyard</p>
+          <p class="mahalaya-menu-modal__subtitle">Grand Traditional Autumn Feast &bull; 12 October 2026 &bull; Community Courtyard</p>
+
+          <!-- Interactive Editorial Meal Time Switcher (No Box, Traditional Minimalist) -->
+          <div class="mahalaya-meal-tabs" role="tablist" aria-label="Meal Selection">
+            <button type="button" class="mahalaya-meal-tab" id="tab-mahalaya-breakfast" role="tab" aria-selected="false" data-meal="breakfast">
+              <div class="mahalaya-meal-tab__icon-wrap">
+                <span class="mahalaya-meal-tab__icon">🌅</span>
+                <span class="mahalaya-meal-tab__sunrays" aria-hidden="true"></span>
+              </div>
+              <div class="mahalaya-meal-tab__text">
+                <span class="mahalaya-meal-tab__bn">প্রাতরাশ</span>
+                <span class="mahalaya-meal-tab__en">BREAKFAST</span>
+              </div>
+            </button>
+            <span class="mahalaya-meal-tabs__divider" aria-hidden="true">❖</span>
+            <button type="button" class="mahalaya-meal-tab is-active" id="tab-mahalaya-lunch" role="tab" aria-selected="true" data-meal="lunch">
+              <div class="mahalaya-meal-tab__icon-wrap">
+                <span class="mahalaya-meal-tab__icon">🍲</span>
+                <div class="mahalaya-meal-tab__steam" aria-hidden="true">
+                  <span class="steam-wisp steam-wisp--1"></span>
+                  <span class="steam-wisp steam-wisp--2"></span>
+                  <span class="steam-wisp steam-wisp--3"></span>
+                </div>
+              </div>
+              <div class="mahalaya-meal-tab__text">
+                <span class="mahalaya-meal-tab__bn">মহালয়া ভোজ</span>
+                <span class="mahalaya-meal-tab__en">LUNCH FEAST</span>
+              </div>
+            </button>
+          </div>
         </div>
 
         <!-- JS-rendered menu sections will be injected here -->
         <div class="mahalaya-menu-modal__sections" id="mahalaya-menu-sections"></div>
 
         <div class="mahalaya-menu-modal__footer">
-          <p class="mahalaya-menu-modal__footer-timing">Feast timings: <strong>1:00 PM – 4:30 PM</strong> &bull; Unlimited traditional sit-down banana leaf service</p>
+          <p class="mahalaya-menu-modal__footer-timing">Feast timings: <strong>1:00 PM – 4:30 PM</strong> &bull;
+            Unlimited traditional sit-down banana leaf service</p>
           <p class="mahalaya-menu-modal__footer-closing">পরম্পরার স্বাদে, একসাথে বসে।</p>
         </div>
       </div>

@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shoulder Perch Calibrator</title>
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/logo.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/logo.png" />
+  <link rel="icon" type="image/png" sizes="48x48" href="assets/logo.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/logo.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/logo.png" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #1a0f06;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 24px;
+      gap: 20px;
+    }
+
+    h1 {
+      color: #ffe4b5;
+      font-size: 1.1rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      opacity: 0.8;
+    }
+
+    /* The hero scene — exactly mirroring the real page */
+    #scene {
+      position: relative;
+      width: 100%;
+      max-width: 1100px;
+      aspect-ratio: 1792 / 592;
+      overflow: hidden;
+      border-radius: 8px;
+      border: 2px solid #a0522d55;
+      cursor: crosshair;
+      user-select: none;
+    }
+
+    #scene img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: right 45%;
+      display: block;
+      pointer-events: none;
+    }
+
+    /* The draggable perch dot */
+    #perch {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      background: #ff3b30;
+      border: 2px solid #fff;
+      border-radius: 50%;
+      box-shadow: 0 0 0 3px rgba(255,59,48,0.4), 0 2px 8px rgba(0,0,0,0.5);
+      transform: translate(-50%, -50%);
+      cursor: grab;
+      z-index: 10;
+      transition: box-shadow 0.15s ease;
+    }
+    #perch:active { cursor: grabbing; box-shadow: 0 0 0 6px rgba(255,59,48,0.3), 0 4px 16px rgba(0,0,0,0.6); }
+
+    /* Crosshair lines from dot */
+    #perch::before, #perch::after {
+      content: '';
+      position: absolute;
+      background: rgba(255,59,48,0.5);
+      pointer-events: none;
+    }
+    #perch::before { width: 1px; height: 400px; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+    #perch::after  { width: 400px; height: 1px; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+
+    /* Label on dot */
+    #perch-label {
+      position: absolute;
+      left: 50%;
+      top: -28px;
+      transform: translateX(-50%);
+      background: #1a0f06;
+      color: #ffe4b5;
+      font-size: 10px;
+      font-family: monospace;
+      padding: 2px 6px;
+      border-radius: 4px;
+      white-space: nowrap;
+      border: 1px solid #a0522d;
+      pointer-events: none;
+    }
+
+    /* Info panel */
+    #panel {
+      background: #231208;
+      border: 1px solid #a0522d55;
+      border-radius: 10px;
+      padding: 20px 28px;
+      display: flex;
+      gap: 32px;
+      align-items: center;
+      width: 100%;
+      max-width: 1100px;
+    }
+
+    .val-group { display: flex; flex-direction: column; gap: 4px; }
+    .val-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: #a0522d; }
+    .val-display {
+      font-size: 1.5rem;
+      font-family: 'Courier New', monospace;
+      font-weight: 700;
+      color: #ffe4b5;
+      min-width: 80px;
+    }
+
+    .divider { width: 1px; height: 48px; background: #a0522d33; }
+
+    #copy-btn {
+      margin-left: auto;
+      padding: 10px 22px;
+      background: linear-gradient(135deg, #b5541a, #8b3a0f);
+      color: #ffe4b5;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    #copy-btn:hover { background: linear-gradient(135deg, #cc6622, #a04410); transform: translateY(-1px); }
+    #copy-btn:active { transform: translateY(0); }
+    #copy-btn.copied { background: #2d6a2d; color: #b4ffb4; }
+
+    #css-output {
+      font-family: monospace;
+      font-size: 0.78rem;
+      color: #c8a060;
+      background: #120a04;
+      border: 1px solid #a0522d33;
+      border-radius: 6px;
+      padding: 10px 14px;
+      width: 100%;
+      max-width: 1100px;
+      white-space: pre;
+    }
+
+    .hint {
+      font-size: 0.75rem;
+      color: #a0522d99;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🐦 Shoulder Perch Calibrator</h1>
+  <p class="hint">Drag the red dot to the man's shoulder. Values update live.</p>
+
+  <div id="scene">
+    <img src="assets/autumn-landscape.webp" alt="Hero landscape" draggable="false" />
+    <div id="perch" style="left: 83%; top: 42%;">
+      <div id="perch-label">drag me</div>
+    </div>
+  </div>
+
+  <div id="panel">
+    <div class="val-group">
+      <span class="val-label">left %</span>
+      <span class="val-display" id="out-left">83.00%</span>
+    </div>
+    <div class="divider"></div>
+    <div class="val-group">
+      <span class="val-label">top %</span>
+      <span class="val-display" id="out-top">42.00%</span>
+    </div>
+    <div class="divider"></div>
+    <div class="val-group">
+      <span class="val-label">CSS to paste</span>
+      <span class="val-display" id="out-css" style="font-size:0.9rem; color:#c8a060;">left: 83%; top: 42%;</span>
+    </div>
+    <button id="copy-btn">📋 Copy CSS</button>
+  </div>
+
+  <pre id="css-output">.hero-shoulder-perch {
+  position: absolute;
+  left: 83%;
+  top: 42%;
+  width: 2px;
+  height: 2px;
+  pointer-events: none;
+}</pre>
+
+  <script>
+    const scene = document.getElementById('scene');
+    const perch = document.getElementById('perch');
+    const outLeft = document.getElementById('out-left');
+    const outTop = document.getElementById('out-top');
+    const outCss = document.getElementById('out-css');
+    const cssOutput = document.getElementById('css-output');
+    const copyBtn = document.getElementById('copy-btn');
+    const perchLabel = document.getElementById('perch-label');
+
+    let isDragging = false;
+    let offsetX = 0, offsetY = 0;
+
+    function updateDisplay(leftPct, topPct) {
+      const l = leftPct.toFixed(2);
+      const t = topPct.toFixed(2);
+      outLeft.textContent = `${l}%`;
+      outTop.textContent = `${t}%`;
+      outCss.textContent = `left: ${l}%; top: ${t}%;`;
+      perchLabel.textContent = `${l}%, ${t}%`;
+      cssOutput.textContent = `.hero-shoulder-perch {\n  position: absolute;\n  left: ${l}%;\n  top: ${t}%;\n  width: 2px;\n  height: 2px;\n  pointer-events: none;\n}`;
+    }
+
+    perch.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      const perchRect = perch.getBoundingClientRect();
+      offsetX = e.clientX - (perchRect.left + perchRect.width / 2);
+      offsetY = e.clientY - (perchRect.top + perchRect.height / 2);
+      e.preventDefault();
+    });
+
+    // Also allow clicking the scene to jump the dot there
+    scene.addEventListener('click', (e) => {
+      if (isDragging) return;
+      const rect = scene.getBoundingClientRect();
+      const leftPct = ((e.clientX - rect.left) / rect.width) * 100;
+      const topPct  = ((e.clientY - rect.top)  / rect.height) * 100;
+      perch.style.left = `${leftPct}%`;
+      perch.style.top  = `${topPct}%`;
+      updateDisplay(leftPct, topPct);
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      const rect = scene.getBoundingClientRect();
+      let x = e.clientX - offsetX - rect.left;
+      let y = e.clientY - offsetY - rect.top;
+      // Clamp within scene
+      x = Math.max(0, Math.min(rect.width,  x));
+      y = Math.max(0, Math.min(rect.height, y));
+      const leftPct = (x / rect.width)  * 100;
+      const topPct  = (y / rect.height) * 100;
+      perch.style.left = `${leftPct}%`;
+      perch.style.top  = `${topPct}%`;
+      updateDisplay(leftPct, topPct);
+    });
+
+    document.addEventListener('mouseup', () => { isDragging = false; });
+
+    // Touch support
+    perch.addEventListener('touchstart', (e) => {
+      isDragging = true;
+      const touch = e.touches[0];
+      const perchRect = perch.getBoundingClientRect();
+      offsetX = touch.clientX - (perchRect.left + perchRect.width / 2);
+      offsetY = touch.clientY - (perchRect.top + perchRect.height / 2);
+      e.preventDefault();
+    }, { passive: false });
+
+    document.addEventListener('touchmove', (e) => {
+      if (!isDragging) return;
+      const touch = e.touches[0];
+      const rect = scene.getBoundingClientRect();
+      let x = touch.clientX - offsetX - rect.left;
+      let y = touch.clientY - offsetY - rect.top;
+      x = Math.max(0, Math.min(rect.width,  x));
+      y = Math.max(0, Math.min(rect.height, y));
+      const leftPct = (x / rect.width)  * 100;
+      const topPct  = (y / rect.height) * 100;
+      perch.style.left = `${leftPct}%`;
+      perch.style.top  = `${topPct}%`;
+      updateDisplay(leftPct, topPct);
+      e.preventDefault();
+    }, { passive: false });
+
+    document.addEventListener('touchend', () => { isDragging = false; });
+
+    // Copy button
+    copyBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(cssOutput.textContent).then(() => {
+        copyBtn.textContent = '✅ Copied!';
+        copyBtn.classList.add('copied');
+        setTimeout(() => {
+          copyBtn.textContent = '📋 Copy CSS';
+          copyBtn.classList.remove('copied');
+        }, 2000);
+      });
+    });
+  </script>
+</body>
+</html>

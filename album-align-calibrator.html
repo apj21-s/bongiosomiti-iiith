@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Album Image Fit, Title & Alignment Calibrator</title>
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/logo.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/logo.png" />
+  <link rel="icon" type="image/png" sizes="48x48" href="assets/logo.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/logo.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/logo.png" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: #120a05;
+      color: #f5e9da;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    header {
+      background: #1e1209;
+      border-bottom: 1px solid rgba(184, 122, 75, 0.25);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand h1 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #ffd89b;
+      letter-spacing: 0.02em;
+    }
+
+    .brand span {
+      font-size: 0.72rem;
+      background: rgba(184, 122, 75, 0.2);
+      border: 1px solid rgba(184, 122, 75, 0.4);
+      color: #df9e6d;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    .app-layout {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* Left Sidebar: Photo Selector */
+    .sidebar {
+      width: 320px;
+      background: #180e07;
+      border-right: 1px solid rgba(184, 122, 75, 0.2);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    .sidebar-header {
+      padding: 14px 16px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #a3724c;
+      border-bottom: 1px solid rgba(184, 122, 75, 0.15);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .photo-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .photo-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid transparent;
+      border-radius: 6px;
+      cursor: grab;
+      transition: all 0.18s ease;
+      user-select: none;
+    }
+
+    .photo-item:active {
+      cursor: grabbing;
+    }
+
+    .photo-item:hover {
+      background: rgba(184, 122, 75, 0.12);
+      border-color: rgba(184, 122, 75, 0.3);
+    }
+
+    .photo-item.is-selected {
+      background: rgba(107, 27, 16, 0.4);
+      border-color: #b85c26;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+
+    .photo-item.is-dragging {
+      opacity: 0.35;
+      border: 1px dashed #b85c26;
+      background: rgba(184, 92, 38, 0.15);
+    }
+
+    .photo-item.drag-over {
+      border-top: 2.5px solid #f5af2d;
+      background: rgba(245, 175, 45, 0.15);
+    }
+
+    .drag-handle {
+      color: #7c4a1e;
+      font-size: 1.05rem;
+      cursor: grab;
+      padding: 0 2px;
+      line-height: 1;
+      font-weight: 700;
+      letter-spacing: -1px;
+    }
+
+    .photo-item:hover .drag-handle {
+      color: #f5af2d;
+    }
+
+    .photo-item img {
+      width: 52px;
+      height: 52px;
+      object-fit: cover;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      flex-shrink: 0;
+    }
+
+    .photo-item__info {
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .photo-item__title {
+      font-family: 'Noto Serif Bengali', serif;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #f5e9da;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .photo-item__sub {
+      font-size: 0.68rem;
+      color: #9c7353;
+      margin-top: 2px;
+    }
+
+    /* Center Stage: Workspace / Preview */
+    .workspace {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: #0d0703;
+      position: relative;
+      overflow-y: auto;
+    }
+
+    .preview-container {
+      position: relative;
+      width: 100%;
+      max-width: 780px;
+      aspect-ratio: 16 / 10;
+      background: #180e07;
+      border: 2px dashed rgba(184, 122, 75, 0.4);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+    }
+
+    .preview-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: 50% 50%;
+      display: block;
+      transition: object-position 0.05s ease, transform 0.05s ease;
+    }
+
+    .preview-badge {
+      position: absolute;
+      bottom: 16px;
+      left: 16px;
+      background: rgba(18, 10, 4, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 235, 195, 0.3);
+      border-radius: 999px;
+      padding: 6px 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+      pointer-events: none;
+    }
+
+    .preview-badge-title {
+      font-family: 'Noto Serif Bengali', serif;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .preview-badge-date {
+      font-size: 0.72rem;
+      color: #ffd89a;
+      font-weight: 600;
+    }
+
+    .preview-target-crosshair {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 24px;
+      height: 24px;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      border: 2px solid #ff4d4f;
+      border-radius: 50%;
+      box-shadow: 0 0 0 2px rgba(0,0,0,0.5);
+    }
+
+    .preview-target-crosshair::before {
+      content: "";
+      position: absolute;
+      top: -200px;
+      bottom: -200px;
+      left: 50%;
+      width: 1px;
+      background: rgba(255, 77, 79, 0.4);
+    }
+
+    .preview-target-crosshair::after {
+      content: "";
+      position: absolute;
+      left: -200px;
+      right: -200px;
+      top: 50%;
+      height: 1px;
+      background: rgba(255, 77, 79, 0.4);
+    }
+
+    /* Right Sidebar: Calibration & Title Controls */
+    .controls-panel {
+      width: 340px;
+      background: #180e07;
+      border-left: 1px solid rgba(184, 122, 75, 0.2);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+
+    .panel-section {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .panel-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #df9e6d;
+    }
+
+    .text-input {
+      width: 100%;
+      background: #0d0703;
+      border: 1px solid rgba(184, 122, 75, 0.35);
+      border-radius: 6px;
+      padding: 8px 12px;
+      color: #fff9ee;
+      font-family: 'Noto Serif Bengali', 'Inter', sans-serif;
+      font-size: 0.88rem;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .text-input:focus {
+      border-color: #b85c26;
+      box-shadow: 0 0 0 2px rgba(184, 92, 38, 0.25);
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(184, 122, 75, 0.3);
+      color: #f5e9da;
+      padding: 6px 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn:hover {
+      background: rgba(184, 122, 75, 0.2);
+      border-color: #b87a4b;
+    }
+
+    .btn.is-active {
+      background: #b85c26;
+      border-color: #b85c26;
+      color: #ffffff;
+    }
+
+    .range-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .range-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: #c49c7d;
+    }
+
+    .range-input {
+      accent-color: #b85c26;
+      width: 100%;
+      cursor: pointer;
+    }
+
+    .code-box {
+      background: #0d0703;
+      border: 1px solid rgba(184, 122, 75, 0.3);
+      border-radius: 6px;
+      padding: 10px;
+      font-family: monospace;
+      font-size: 0.70rem;
+      color: #ffd89b;
+      word-break: break-all;
+      max-height: 90px;
+      overflow-y: auto;
+    }
+
+    .action-btn-main {
+      width: 100%;
+      padding: 11px;
+      background: linear-gradient(135deg, #b85c26 0%, #8c2d19 100%);
+      border: none;
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.85rem;
+      border-radius: 6px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(184, 92, 38, 0.3);
+      transition: transform 0.15s ease;
+    }
+
+    .action-btn-main:hover {
+      transform: translateY(-1px);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <h1>🖼️ Album Title & Alignment Calibrator</h1>
+      <span>Bongio Samiti Developer Tool</span>
+    </div>
+    <div style="display: flex; gap: 10px; align-items: center;">
+      <button type="button" id="header-save-btn" style="font-size: 0.8rem; color: #ffffff; background: linear-gradient(135deg, #b85c26 0%, #8c2d19 100%); padding: 6px 16px; border-radius: 6px; border: 1px solid rgba(255,235,195,0.3); font-weight: 700; cursor: pointer; box-shadow: 0 2px 8px rgba(184, 92, 38, 0.4); transition: transform 0.15s ease;">
+        ⚡ Save All Bulk Changes
+      </button>
+      <a href="index.html" style="font-size: 0.78rem; color: #ffd89b; text-decoration: none; font-weight: 600; background: rgba(184, 92, 38, 0.25); padding: 6px 12px; border-radius: 4px; border: 1px solid rgba(184, 92, 38, 0.4);">
+        ← Back to Website
+      </a>
+    </div>
+  </header>
+
+  <div class="app-layout">
+    <!-- Left Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <span>Select Photo to Edit</span>
+        <span id="photo-count-badge" style="color: #ffd89a;">14 Photos</span>
+      </div>
+      <div class="photo-list" id="photo-list"></div>
+    </div>
+
+    <!-- Center Workspace -->
+    <div class="workspace">
+      <div class="preview-container">
+        <img id="preview-img" class="preview-img" src="" alt="Preview" />
+        <div id="preview-badge" class="preview-badge">
+          <span id="badge-title" class="preview-badge-title"></span>
+          <span id="badge-date" class="preview-badge-date"></span>
+        </div>
+        <div id="crosshair" class="preview-target-crosshair"></div>
+      </div>
+      <div style="margin-top: 14px; font-size: 0.78rem; color: #c49c7d; text-align: center;">
+        💡 Edit photo title & date on the right, or adjust object-fit & alignment sliders.
+      </div>
+    </div>
+
+    <!-- Right Controls Panel -->
+    <div class="controls-panel">
+      <!-- Title & Date Editors -->
+      <div class="panel-section">
+        <div class="panel-label">Edit Photo Title (Bengali)</div>
+        <input type="text" id="input-title" class="text-input" placeholder="Enter photo title in Bengali" />
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-label">Edit Photo Date (Bengali)</div>
+        <input type="text" id="input-date" class="text-input" placeholder="e.g. ১৪ অক্টোবর ২০২৬" />
+      </div>
+
+      <hr style="border: none; border-top: 1px solid rgba(184, 122, 75, 0.2);" />
+
+      <div class="panel-section">
+        <div class="panel-label">Card Framing Mode</div>
+        <div class="btn-group">
+          <button type="button" class="btn is-active" id="mode-hero">Hero (Full Width)</button>
+          <button type="button" class="btn" id="mode-thumb">Thumbnail Tile</button>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-label">Object Fit Mode</div>
+        <div class="btn-group">
+          <button type="button" class="btn is-active" data-fit="cover">cover</button>
+          <button type="button" class="btn" data-fit="contain">contain</button>
+          <button type="button" class="btn" data-fit="fill">fill</button>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-label">Horizontal Position (X)</div>
+        <div class="range-group">
+          <div class="range-header">
+            <span>Left ↔ Right</span>
+            <strong id="val-x">50%</strong>
+          </div>
+          <input type="range" id="input-x" class="range-input" min="0" max="100" value="50" />
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-label">Vertical Position (Y)</div>
+        <div class="range-group">
+          <div class="range-header">
+            <span>Top ↕ Bottom</span>
+            <strong id="val-y">50%</strong>
+          </div>
+          <input type="range" id="input-y" class="range-input" min="0" max="100" value="50" />
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-label">Zoom Scale</div>
+        <div class="range-group">
+          <div class="range-header">
+            <span>Scale</span>
+            <strong id="val-scale">100%</strong>
+          </div>
+          <input type="range" id="input-scale" class="range-input" min="50" max="200" value="100" />
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-label">Generated Config</div>
+        <div class="code-box" id="code-output">object-fit: cover; object-position: 50% 50%;</div>
+      </div>
+
+      <button type="button" class="action-btn-main" id="save-btn">⚡ Save All Bulk Changes (Sync Site & Order)</button>
+      <button type="button" class="btn" id="export-btn" style="margin-top: 6px;">📋 Copy Updated HTML Data Block</button>
+    </div>
+  </div>
+
+  <script>
+    // Real photos loaded from website assets
+    const DEFAULT_PHOTOS = [
+      { id: "photo_1", title: "সরস্বতী পূজা", date: "১৪ অক্টোবর ২০২৬", src: "assets/photo_1.webp", pos: "center 32%" },
+      { id: "photo_2", title: "হাতের আলপনা", date: "১৮ অক্টোবর ২০২৬", src: "assets/photo_2026-08-11_21-42-50.webp", pos: "center 28%" },
+      { id: "photo_3", title: "সরস্বতী প্রাঙ্গণ", date: "২১ জানুয়ারি ২০২৭", src: "assets/photo_2026-08-11_21-42-48.webp", pos: "center 42%" },
+      { id: "photo_4", title: "ভোগ ও প্রসাদ বিতরণ", date: "০৬ ফেব্রুয়ারি ২০২৭", src: "assets/p10.webp", pos: "center 36%" },
+      { id: "photo_5", title: "পূজার প্রস্তুতি ও সাজসজ্জা", date: "১২ অক্টোবর ২০২৬", src: "assets/photo_2026-08-11_22-55-53.webp", pos: "center 30%" },
+      { id: "photo_6", title: "সন্ধ্যা আরতি ও প্রার্থনা", date: "১৩ অক্টোবর ২০২৬", src: "assets/photo_2026-08-11_22-56-00.webp", pos: "center 38%" },
+      { id: "photo_7", title: "মণ্ডপ পরিক্রমা ও উৎসব", date: "১৯ অক্টোবর ২০২৬", src: "assets/photo_2026-08-11_21-42-44.webp", pos: "center 34%" },
+      { id: "photo_8", title: "ধুনুচি নাচ ও ঢাকের বোল", date: "০৪ ফেব্রুয়ারি ২০২৭", src: "assets/p7.webp", pos: "center 36%" },
+      { id: "photo_9", title: "সাংস্কৃতিক সন্ধ্যা ও সংগীত", date: "০৫ ফেব্রুয়ারি ২০২৭", src: "assets/p8.webp", pos: "center 36%" },
+      { id: "photo_10", title: "প্রদীপ প্রজ্জ্বলন ও পুষ্পাঞ্জলি", date: "০৫ ফেব্রুয়ারি ২০২৭", src: "assets/p9.webp", pos: "center 36%" },
+      { id: "photo_11", title: "ক্যাম্পাস আড্ডা ও আনন্দ", date: "০৬ ফেব্রুয়ারি ২০২৭", src: "assets/p11.webp", pos: "center 36%" },
+      { id: "photo_12", title: "সন্ধ্যা মিলন ও প্রসাদ সেবা", date: "০৬ ফেব্রুয়ারি ২০২৭", src: "assets/p12.webp", pos: "center 36%" },
+      { id: "photo_13", title: "আনন্দ উৎসব ও স্মৃতি", date: "০৭ ফেব্রুয়ারি ২০২৭", src: "assets/p13.webp", pos: "center 36%" },
+      { id: "photo_14", title: "শুভ বিজয়া সম্মিলনী", date: "০৭ ফেব্রুয়ারি ২০২৭", src: "assets/p14.webp", pos: "center 36%" }
+    ];
+
+    let PHOTOS = [...DEFAULT_PHOTOS];
+
+    let alignConfig = {};
+    try {
+      alignConfig = JSON.parse(localStorage.getItem("album_image_alignments") || "{}");
+    } catch(e) {}
+
+    let customTitles = {};
+    try {
+      customTitles = JSON.parse(localStorage.getItem("album_custom_titles") || "{}");
+    } catch(e) {}
+
+    let photoOrder = [];
+    try {
+      photoOrder = JSON.parse(localStorage.getItem("album_photo_order") || "[]");
+    } catch(e) {}
+
+    // Sort PHOTOS by saved custom order if present
+    if (photoOrder && photoOrder.length > 0) {
+      PHOTOS.sort((a, b) => {
+        const idxA = photoOrder.indexOf(a.src);
+        const idxB = photoOrder.indexOf(b.src);
+        if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+        if (idxA !== -1) return -1;
+        if (idxB !== -1) return 1;
+        return 0;
+      });
+    }
+
+    // Apply custom titles saved in localStorage
+    PHOTOS.forEach(p => {
+      if (customTitles[p.src]) {
+        p.title = customTitles[p.src].title || p.title;
+        p.date = customTitles[p.src].date || p.date;
+      }
+    });
+
+    let currentPhotoId = PHOTOS[0].id;
+
+    const listEl = document.getElementById("photo-list");
+    const previewImg = document.getElementById("preview-img");
+    const badgeTitle = document.getElementById("badge-title");
+    const badgeDate = document.getElementById("badge-date");
+    const crosshair = document.getElementById("crosshair");
+
+    const inputTitle = document.getElementById("input-title");
+    const inputDate = document.getElementById("input-date");
+
+    const valX = document.getElementById("val-x");
+    const valY = document.getElementById("val-y");
+    const valScale = document.getElementById("val-scale");
+    const inputX = document.getElementById("input-x");
+    const inputY = document.getElementById("input-y");
+    const inputScale = document.getElementById("input-scale");
+    const codeOutput = document.getElementById("code-output");
+    const fitBtns = document.querySelectorAll("[data-fit]");
+    const saveBtn = document.getElementById("save-btn");
+    const exportBtn = document.getElementById("export-btn");
+
+    let draggedIdx = null;
+
+    function renderSidebar() {
+      listEl.innerHTML = "";
+      PHOTOS.forEach((p, index) => {
+        const item = document.createElement("div");
+        item.className = "photo-item" + (p.id === currentPhotoId ? " is-selected" : "");
+        item.draggable = true;
+        item.dataset.index = index;
+
+        item.innerHTML = `
+          <div class="drag-handle" title="Drag to reorder">⋮⋮</div>
+          <img src="${p.src}" alt="${p.title}" />
+          <div class="photo-item__info">
+            <div class="photo-item__title">${p.title}</div>
+            <div class="photo-item__sub">${p.date || p.src}</div>
+          </div>
+        `;
+
+        item.addEventListener("click", (e) => {
+          selectPhoto(p.id);
+        });
+
+        // HTML5 Drag & Drop handlers
+        item.addEventListener("dragstart", (e) => {
+          draggedIdx = index;
+          item.classList.add("is-dragging");
+          e.dataTransfer.effectAllowed = "move";
+          e.dataTransfer.setData("text/plain", index);
+        });
+
+        item.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "move";
+          if (draggedIdx !== index) {
+            item.classList.add("drag-over");
+          }
+        });
+
+        item.addEventListener("dragleave", () => {
+          item.classList.remove("drag-over");
+        });
+
+        item.addEventListener("drop", (e) => {
+          e.preventDefault();
+          item.classList.remove("drag-over");
+          if (draggedIdx !== null && draggedIdx !== index) {
+            const targetIdx = index;
+            const movedItem = PHOTOS.splice(draggedIdx, 1)[0];
+            PHOTOS.splice(targetIdx, 0, movedItem);
+            
+            renderSidebar();
+            selectPhoto(currentPhotoId);
+          }
+        });
+
+        item.addEventListener("dragend", () => {
+          item.classList.remove("is-dragging");
+          draggedIdx = null;
+          document.querySelectorAll(".photo-item").forEach(el => el.classList.remove("drag-over"));
+        });
+
+        listEl.appendChild(item);
+      });
+    }
+
+    function selectPhoto(id) {
+      currentPhotoId = id;
+      renderSidebar();
+      const photo = PHOTOS.find(p => p.id === id);
+      if (!photo) return;
+
+      previewImg.src = photo.src;
+      inputTitle.value = photo.title;
+      inputDate.value = photo.date || "";
+      badgeTitle.textContent = photo.title;
+      badgeDate.textContent = photo.date ? "• " + photo.date : "";
+
+      const cfg = alignConfig[photo.src] || alignConfig[id] || { fit: "cover", x: 50, y: 50, zoom: 100 };
+
+      // Parse default pos if x, y not set
+      if (!alignConfig[photo.src] && !alignConfig[id] && photo.pos) {
+        const parts = photo.pos.split(" ");
+        if (parts[0] && parts[0].includes("%")) cfg.x = parseInt(parts[0], 10);
+        if (parts[1] && parts[1].includes("%")) cfg.y = parseInt(parts[1], 10);
+      }
+      
+      inputX.value = cfg.x;
+      inputY.value = cfg.y;
+      inputScale.value = cfg.zoom || 100;
+      valX.textContent = cfg.x + "%";
+      valY.textContent = cfg.y + "%";
+      valScale.textContent = (cfg.zoom || 100) + "%";
+
+      fitBtns.forEach(btn => {
+        btn.classList.toggle("is-active", btn.dataset.fit === (cfg.fit || "cover"));
+      });
+
+      updatePreview();
+    }
+
+    function updatePreview() {
+      const activeFitBtn = document.querySelector("[data-fit].is-active");
+      const fit = activeFitBtn ? activeFitBtn.dataset.fit : "cover";
+      const x = inputX.value;
+      const y = inputY.value;
+      const scale = inputScale.value;
+
+      valX.textContent = x + "%";
+      valY.textContent = y + "%";
+      valScale.textContent = scale + "%";
+
+      crosshair.style.left = x + "%";
+      crosshair.style.top = y + "%";
+
+      previewImg.style.objectFit = fit;
+      previewImg.style.objectPosition = `${x}% ${y}%`;
+      previewImg.style.transform = scale != 100 ? `scale(${scale / 100})` : "none";
+
+      const photo = PHOTOS.find(p => p.id === currentPhotoId);
+      if (photo) {
+        photo.title = inputTitle.value;
+        photo.date = inputDate.value;
+        badgeTitle.textContent = photo.title;
+        badgeDate.textContent = photo.date ? "• " + photo.date : "";
+      }
+
+      const css = `Title: "${inputTitle.value}"\nobject-fit: ${fit};\nobject-position: ${x}% ${y}%;${scale != 100 ? ` transform: scale(${scale / 100});` : ""}`;
+      codeOutput.textContent = css;
+    }
+
+    inputTitle.addEventListener("input", () => {
+      updatePreview();
+      const currentItemTitle = document.querySelector(".photo-item.is-selected .photo-item__title");
+      if (currentItemTitle) currentItemTitle.textContent = inputTitle.value;
+    });
+
+    inputDate.addEventListener("input", () => {
+      updatePreview();
+      const currentItemSub = document.querySelector(".photo-item.is-selected .photo-item__sub");
+      if (currentItemSub) currentItemSub.textContent = inputDate.value;
+    });
+
+    inputX.addEventListener("input", updatePreview);
+    inputY.addEventListener("input", updatePreview);
+    inputScale.addEventListener("input", updatePreview);
+
+    const modeHero = document.getElementById("mode-hero");
+    const modeThumb = document.getElementById("mode-thumb");
+    const previewContainer = document.querySelector(".preview-container");
+
+    if (modeHero && modeThumb && previewContainer) {
+      modeHero.addEventListener("click", () => {
+        modeHero.classList.add("is-active");
+        modeThumb.classList.remove("is-active");
+        previewContainer.style.aspectRatio = "16 / 7";
+      });
+      modeThumb.addEventListener("click", () => {
+        modeThumb.classList.add("is-active");
+        modeHero.classList.remove("is-active");
+        previewContainer.style.aspectRatio = "4 / 3";
+      });
+    }
+
+    fitBtns.forEach(btn => {
+      btn.addEventListener("click", () => {
+        fitBtns.forEach(b => b.classList.remove("is-active"));
+        btn.classList.add("is-active");
+        updatePreview();
+      });
+    });
+
+    function performBulkSave() {
+      const photo = PHOTOS.find(p => p.id === currentPhotoId);
+      if (photo) {
+        const activeFitBtn = document.querySelector("[data-fit].is-active");
+        const fit = activeFitBtn ? activeFitBtn.dataset.fit : "cover";
+        alignConfig[photo.src] = {
+          fit: fit,
+          x: parseInt(inputX.value, 10),
+          y: parseInt(inputY.value, 10),
+          zoom: parseInt(inputScale.value, 10)
+        };
+        customTitles[photo.src] = {
+          title: inputTitle.value,
+          date: inputDate.value
+        };
+      }
+
+      PHOTOS.forEach(p => {
+        if (!customTitles[p.src]) {
+          customTitles[p.src] = { title: p.title, date: p.date };
+        }
+      });
+
+      const currentOrder = PHOTOS.map(p => p.src);
+      localStorage.setItem("album_image_alignments", JSON.stringify(alignConfig));
+      localStorage.setItem("album_custom_titles", JSON.stringify(customTitles));
+      localStorage.setItem("album_photo_order", JSON.stringify(currentOrder));
+
+      alert("⚡ Bulk Save Complete!\n\nAll 14 photo titles, dates, crop alignments, and custom dragged order have been saved in bulk! The main website will update live.");
+    }
+
+    const headerSaveBtn = document.getElementById("header-save-btn");
+    if (headerSaveBtn) {
+      headerSaveBtn.addEventListener("click", performBulkSave);
+    }
+    saveBtn.addEventListener("click", performBulkSave);
+
+    exportBtn.addEventListener("click", () => {
+      performBulkSave();
+      const lis = PHOTOS.map(p => {
+        const cfg = alignConfig[p.src] || { x: 50, y: 50 };
+        return `  <li data-src="${p.src}" data-alt="${p.title}" data-title="${p.title}" data-date="${p.date}" data-pos="${cfg.x}% ${cfg.y}%"></li>`;
+      }).join("\n");
+      const htmlBlock = `<ul class="photo-album__data" hidden aria-hidden="true">\n${lis}\n</ul>`;
+      
+      navigator.clipboard.writeText(htmlBlock).then(() => {
+        alert("📋 Copied full updated HTML data block (all 14 photos in custom order with individual crop coordinates) to clipboard!");
+      });
+    });
+
+    // Initialize
+    renderSidebar();
+    selectPhoto(PHOTOS[0].id);
+  </script>
+</body>
+</html>

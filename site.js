@@ -624,27 +624,53 @@
   // =========================================================================
   // 2. PHOTO ALBUM — dynamic grid builder + lightbox viewer
   // =========================================================================
+  // =========================================================================
+  // 2. PHOTO ALBUM — Google Photos style Bento Gallery + Smart Lightbox
+  // =========================================================================
   function initStoryGallery() {
     const albumEl = document.getElementById("photo-album");
     const lightbox = $(".story-lightbox");
     if (!albumEl || !lightbox) return;
 
-    // ── 1. Read photo data from hidden <ul> ─────────────────────────────────
+    // ── 1. Read photo data ──────────────────────────────────────────────────
     const dataItems = $all("li", $(".photo-album__data", albumEl));
     if (dataItems.length === 0) return;
 
-    const photos = dataItems.map((li) => ({
-      src: li.dataset.src || "",
-      alt: li.dataset.alt || "",
-      title: li.dataset.title || li.dataset.alt || "",
-      date: li.dataset.date || "",
-      pos: li.dataset.pos || "center center",
-    }));
+    let customTitles = {};
+    try {
+      customTitles = JSON.parse(localStorage.getItem("album_custom_titles") || "{}");
+    } catch (e) {}
+
+    let customOrder = [];
+    try {
+      customOrder = JSON.parse(localStorage.getItem("album_photo_order") || "[]");
+    } catch (e) {}
+
+    let photos = dataItems.map((li) => {
+      const src = li.dataset.src || "";
+      const custom = customTitles[src] || {};
+      return {
+        src: src,
+        alt: custom.title || li.dataset.alt || "",
+        title: custom.title || li.dataset.title || li.dataset.alt || "",
+        date: custom.date !== undefined ? custom.date : (li.dataset.date || ""),
+        pos: li.dataset.pos || "center center",
+      };
+    });
+
+    if (customOrder && customOrder.length > 0) {
+      photos.sort((a, b) => {
+        const idxA = customOrder.indexOf(a.src);
+        const idxB = customOrder.indexOf(b.src);
+        if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+        if (idxA !== -1) return -1;
+        if (idxB !== -1) return 1;
+        return 0;
+      });
+    }
 
     const total = photos.length;
-    const VISIBLE = 4; // cells shown in the mosaic grid
 
-    // ── 2. Update album count label ──────────────────────────────────────────
     // Convert number to Bengali digits
     function toBn(n) {
       return String(n).replace(/[0-9]/g, (d) => "০১২৩৪৫৬৭৮৯"[d]);
@@ -652,121 +678,114 @@
     const countEl = document.getElementById("photo-album-count");
     if (countEl) countEl.textContent = toBn(total) + "টি স্মৃতি";
 
-    // ── 3. Build the mosaic grid ─────────────────────────────────────────────
+    // ── 2. Build Bento Grid Layout ──────────────────────────────────────────
     const grid = $(".photo-album__grid", albumEl);
     if (!grid) return;
 
-    // Layout:
-    //  [photo 0 — featured, left 62%] [side column right 38%]
-    //                                    [photo 1]
-    //                                    [photo 2]
-    //                                    [photo 3 or "+N more"]
+    grid.innerHTML = "";
 
-    // Helper: build an <img> element
-    function makeImg(photo) {
+    // We render a compact 4-tile mosaic (1 Top Hero + 3 Bottom Thumbnails)
+    const PREVIEW_COUNT = 4;
+    const moreCount = total > PREVIEW_COUNT ? total - PREVIEW_COUNT : 0;
+
+    const cardClasses = [
+      "photo-album__card--hero",
+      "photo-album__card--thumb",
+      "photo-album__card--thumb",
+      "photo-album__card--thumb"
+    ];
+
+    const previewItems = photos.slice(0, PREVIEW_COUNT);
+
+    previewItems.forEach((photo, i) => {
+      const card = document.createElement("button");
+      card.type = "button";
+      card.className = `photo-album__card ${cardClasses[i]} scroll-reveal scroll-reveal--delay-${(i % 3) + 1}`;
+      card.setAttribute("aria-label", photo.title + (photo.date ? " — " + photo.date : ""));
+
+      const isLast = (i === PREVIEW_COUNT - 1) && (moreCount > 0);
+      const openIdx = isLast ? (PREVIEW_COUNT - 1) : i;
+
+      card.addEventListener("click", () => openLightbox(openIdx));
+
+      // Image element — FORCE object-fit: cover !important so NO letterboxing ever occurs!
       const img = document.createElement("img");
       img.className = "photo-album__img";
       img.src = photo.src;
       img.alt = photo.alt;
-      img.loading = "lazy";
+      img.loading = i === 0 ? "eager" : "lazy";
       img.decoding = "async";
-      img.width = 600;
-      img.height = 400;
-      img.style.objectPosition = photo.pos;
-      return img;
-    }
+      img.style.objectFit = "cover";
+      img.style.objectPosition = photo.pos || "center center";
 
-    // Helper: build the gradient caption overlay inside a photo cell
-    function makeLabel(photo, hero) {
-      const label = document.createElement("div");
-      label.className = "photo-album__label";
-      label.setAttribute("aria-hidden", "true");
-      const titleEl = document.createElement("span");
-      titleEl.className = "photo-album__label-title";
-      titleEl.textContent = photo.title;
-      label.appendChild(titleEl);
-      if (photo.date) {
-        const dateEl = document.createElement("span");
-        dateEl.className = "photo-album__label-date";
-        dateEl.textContent = photo.date;
-        label.appendChild(dateEl);
-      }
-      return label;
-    }
+      card.appendChild(img);
 
-    // Helper: build a +N more overlay
-    function makeMoreOverlay(n) {
-      const overlay = document.createElement("div");
-      overlay.className = "photo-album__more-overlay";
-      overlay.setAttribute("aria-hidden", "true");
-      const txt = document.createElement("span");
-      txt.className = "photo-album__more-text";
-      txt.textContent = "+" + n;
-      overlay.appendChild(txt);
-      return overlay;
-    }
+      // Scrim gradient
+      const scrim = document.createElement("div");
+      scrim.className = "photo-album__scrim";
+      scrim.setAttribute("aria-hidden", "true");
+      card.appendChild(scrim);
 
-    const moreCount = total > VISIBLE ? total - VISIBLE : 0;
-
-    // ── Hero cell (photo 0) ────────────────────────────────────────────────
-    const hero = document.createElement("button");
-    hero.type = "button";
-    hero.className = "photo-album__hero scroll-reveal";
-    hero.setAttribute("aria-label", photos[0].title + (photos[0].date ? " — " + photos[0].date : ""));
-    hero.addEventListener("click", () => openLightbox(0));
-    hero.appendChild(makeImg(photos[0]));
-    hero.appendChild(makeLabel(photos[0], true));
-    grid.appendChild(hero);
-
-    // ── Thumb row (photos 1–3) ─────────────────────────────────────────────
-    if (total > 1) {
-      const thumbRow = document.createElement("div");
-      thumbRow.className = "photo-album__thumb-row";
-
-      const thumbCount = Math.min(3, total - 1);
-      for (let i = 1; i <= thumbCount; i++) {
-        const isLast = i === thumbCount;
-        const showMore = isLast && moreCount > 0;
-        const openIdx = showMore ? (VISIBLE - 1) : i;
-
-        const thumb = document.createElement("button");
-        thumb.type = "button";
-        thumb.className = "photo-album__thumb scroll-reveal scroll-reveal--delay-" + i;
-        thumb.setAttribute("aria-label", photos[i].title + (showMore ? " and " + moreCount + " more" : ""));
-        thumb.addEventListener("click", () => openLightbox(openIdx));
-        thumb.appendChild(makeImg(photos[i]));
-
-        if (showMore) {
-          thumb.appendChild(makeMoreOverlay(moreCount));
-        } else {
-          thumb.appendChild(makeLabel(photos[i], false));
-        }
-
-        thumbRow.appendChild(thumb);
+      if (isLast) {
+        // "+N smart photo memories" frosted overlay
+        const overlay = document.createElement("div");
+        overlay.className = "photo-album__more-overlay";
+        overlay.innerHTML = `
+          <span class="photo-album__more-badge">+${toBn(moreCount + 1)}</span>
+          <span class="photo-album__more-sub">সকল ${toBn(total)}টি স্মৃতি দেখুন</span>
+        `;
+        card.appendChild(overlay);
+      } else {
+        // Compact bottom gradient caption
+        const badge = document.createElement("div");
+        badge.className = "photo-album__badge";
+        badge.innerHTML = `
+          <span class="photo-album__badge-title">${photo.title}</span>
+          ${photo.date ? `<span class="photo-album__badge-date">${photo.date}</span>` : ""}
+        `;
+        card.appendChild(badge);
       }
 
-      grid.appendChild(thumbRow);
-    }
+      grid.appendChild(card);
+    });
 
-    // Observe new cells for scroll-reveal
-    [hero, ...$all(".photo-album__thumb", grid)].forEach((el) => {
+    // Re-observe scroll reveal items
+    $all(".photo-album__card", grid).forEach((el) => {
       if (window.reobserveReveal) window.reobserveReveal(el);
     });
 
-    // ── 4. Lightbox ─────────────────────────────────────────────────────────
+    // ── 3. Lightbox Controls & Filmstrip ─────────────────────────────────────
     const lightboxImg = $(".story-lightbox__image", lightbox);
     const lightboxTitle = $(".story-lightbox__title", lightbox);
     const lightboxDate = $(".story-lightbox__date", lightbox);
     const lightboxCounter = $(".story-lightbox__counter", lightbox);
-    const panel = $(".story-lightbox__panel", lightbox);
+    const downloadBtn = $(".story-lightbox__download", lightbox);
+    const fullscreenBtn = $(".story-lightbox__fullscreen", lightbox);
     const closeBtn = $(".story-lightbox__close", lightbox);
     const prevBtn = $(".story-lightbox__prev", lightbox);
     const nextBtn = $(".story-lightbox__next", lightbox);
+    const filmstrip = $(".story-lightbox__filmstrip", lightbox);
+
     if (!lightboxImg) return;
 
     let current = 0;
     let touchStartX = 0;
     let touchStartY = 0;
+
+    // Build horizontal thumbnail filmstrip for ALL photos
+    if (filmstrip && filmstrip.children.length === 0) {
+      photos.forEach((photo, idx) => {
+        const thumb = document.createElement("button");
+        thumb.type = "button";
+        thumb.className = "story-lightbox__thumb";
+        thumb.setAttribute("role", "tab");
+        thumb.setAttribute("aria-label", `View ${photo.title}`);
+        thumb.title = photo.title;
+        thumb.innerHTML = `<img src="${photo.src}" alt="${photo.alt}" loading="lazy" decoding="async" />`;
+        thumb.addEventListener("click", () => goToPhoto(idx));
+        filmstrip.appendChild(thumb);
+      });
+    }
 
     function updateCounter() {
       if (lightboxCounter) lightboxCounter.textContent = (current + 1) + " / " + total;
@@ -778,6 +797,21 @@
         nextBtn.disabled = current >= total - 1;
         nextBtn.setAttribute("aria-disabled", current >= total - 1 ? "true" : "false");
       }
+
+      // Update filmstrip active state & auto-scroll into view
+      if (filmstrip) {
+        const thumbs = $all(".story-lightbox__thumb", filmstrip);
+        thumbs.forEach((t, i) => {
+          if (i === current) {
+            t.classList.add("is-active");
+            t.setAttribute("aria-selected", "true");
+            t.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+          } else {
+            t.classList.remove("is-active");
+            t.setAttribute("aria-selected", "false");
+          }
+        });
+      }
     }
 
     function renderActivePhoto(instant = false) {
@@ -786,9 +820,15 @@
 
       updateCounter();
 
+      if (downloadBtn) {
+        downloadBtn.href = p.src;
+        downloadBtn.setAttribute("download", p.title + ".webp");
+      }
+
       if (instant) {
         lightboxImg.src = p.src;
         lightboxImg.alt = p.alt;
+        lightboxImg.style.objectFit = "contain";
         if (lightboxTitle) lightboxTitle.textContent = p.title;
         if (lightboxDate) {
           lightboxDate.textContent = p.date || "";
@@ -802,6 +842,7 @@
       setTimeout(() => {
         lightboxImg.src = p.src;
         lightboxImg.alt = p.alt;
+        lightboxImg.style.objectFit = "contain";
         if (lightboxTitle) lightboxTitle.textContent = p.title;
         if (lightboxDate) {
           lightboxDate.textContent = p.date || "";
@@ -818,15 +859,11 @@
     }
 
     function goPrev() {
-      if (current > 0) {
-        goToPhoto(current - 1);
-      }
+      if (current > 0) goToPhoto(current - 1);
     }
 
     function goNext() {
-      if (current < total - 1) {
-        goToPhoto(current + 1);
-      }
+      if (current < total - 1) goToPhoto(current + 1);
     }
 
     function openLightbox(index) {
@@ -850,9 +887,21 @@
       };
       lightbox.addEventListener("transitionend", done);
       document.body.style.overflow = "";
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      }
     }
 
-    // Button event bindings (with stopPropagation so backdrop listener is not triggered)
+    // Toggle Fullscreen
+    fullscreenBtn?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (!document.fullscreenElement) {
+        lightbox.requestFullscreen?.().catch(() => {});
+      } else {
+        document.exitFullscreen?.().catch(() => {});
+      }
+    });
+
     closeBtn?.addEventListener("click", (e) => {
       e.stopPropagation();
       closeLightbox();
@@ -868,15 +917,11 @@
       goNext();
     });
 
-    // Close only when clicking directly on the backdrop (outside panel & controls)
+    // Backdrop click close
     lightbox.addEventListener("click", (e) => {
-      if (e.target === lightbox) {
+      if (e.target === lightbox || e.target.classList.contains("story-lightbox__viewport")) {
         closeLightbox();
       }
-    });
-
-    panel?.addEventListener("click", (e) => {
-      e.stopPropagation();
     });
 
     // Keyboard navigation
@@ -891,10 +936,16 @@
       } else if (e.key === "ArrowRight") {
         e.preventDefault();
         goNext();
+      } else if (e.key === "f" || e.key === "F") {
+        if (!document.fullscreenElement) {
+          lightbox.requestFullscreen?.().catch(() => {});
+        } else {
+          document.exitFullscreen?.().catch(() => {});
+        }
       }
     });
 
-    // Touch swipe support (left = next, right = prev)
+    // Touch swipe support
     lightbox.addEventListener("touchstart", (e) => {
       if (e.touches.length === 1) {
         touchStartX = e.touches[0].clientX;
@@ -906,7 +957,6 @@
       if (e.changedTouches.length === 1) {
         const dx = e.changedTouches[0].clientX - touchStartX;
         const dy = e.changedTouches[0].clientY - touchStartY;
-        // Check horizontal swipe gesture (at least 36px horizontal & more horizontal than vertical)
         if (Math.abs(dx) > 36 && Math.abs(dx) > Math.abs(dy)) {
           if (dx < 0) goNext();
           else goPrev();
@@ -958,7 +1008,24 @@
 
       function getPassPrice() {
         if (isFreeEvent) return 0;
-        return isIiitSelected() ? 250 : 350;
+        const foodSelect = $("#food_pref", form);
+        const foodVal = foodSelect ? foodSelect.value : "";
+        const isIiit = isIiitSelected();
+        if (isIiit) {
+          if (foodVal === "Breakfast Thali") return 100;
+          if (foodVal === "Non-Veg Lunch (Fish Thali)") return 250;
+          if (foodVal === "Veg Lunch Thali") return 200;
+          if (foodVal === "Breakfast + Non-Veg Lunch combo") return 300;
+          if (foodVal === "Breakfast + Veg Lunch combo") return 250;
+          return 250;
+        } else {
+          if (foodVal === "Breakfast Thali") return 150;
+          if (foodVal === "Non-Veg Lunch (Fish Thali)") return 350;
+          if (foodVal === "Veg Lunch Thali") return 300;
+          if (foodVal === "Breakfast + Non-Veg Lunch combo") return 450;
+          if (foodVal === "Breakfast + Veg Lunch combo") return 400;
+          return 350;
+        }
       }
 
       function updateAffiliationView() {
@@ -970,20 +1037,16 @@
             $("#full_name", form)?.setAttribute("required", "");
             $("#email", form)?.setAttribute("required", "");
             $("#phone", form)?.setAttribute("required", "");
-            $("#college_id", form)?.setAttribute("required", "");
+            $("#college_id", form)?.removeAttribute("required");
             $("#outside_full_name", form)?.removeAttribute("required");
             $("#outside_email", form)?.removeAttribute("required");
             $("#outside_phone", form)?.removeAttribute("required");
-            $("#organization", form)?.removeAttribute("required");
-            $("#city", form)?.removeAttribute("required");
           } else {
             iiitFields.style.display = "none";
             outsideFields.style.display = "grid";
             $("#outside_full_name", form)?.setAttribute("required", "");
             $("#outside_email", form)?.setAttribute("required", "");
             $("#outside_phone", form)?.setAttribute("required", "");
-            $("#organization", form)?.setAttribute("required", "");
-            $("#city", form)?.setAttribute("required", "");
             $("#full_name", form)?.removeAttribute("required");
             $("#email", form)?.removeAttribute("required");
             $("#phone", form)?.removeAttribute("required");
@@ -1085,6 +1148,10 @@
       if (numPassesSelect) {
         numPassesSelect.addEventListener("change", () => updateUpiCheckout(true));
       }
+      const foodPrefSelect = $("#food_pref", form);
+      if (foodPrefSelect) {
+        foodPrefSelect.addEventListener("change", () => updateUpiCheckout(true));
+      }
 
       // Coupon application handler
       applyCouponBtn?.addEventListener("click", () => {
@@ -1142,6 +1209,24 @@
       // Initial view setup
       updateAffiliationView();
 
+      // Handle screenshot file input change
+      const screenshotInput = $("#payment_screenshot", form);
+      if (screenshotInput) {
+        const uploadContainer = screenshotInput.closest(".mahalaya-file-upload-wrapper");
+        const textSpan = uploadContainer ? $(".mahalaya-file-upload-text", uploadContainer) : null;
+
+        screenshotInput.addEventListener("change", (e) => {
+          const file = e.target.files[0];
+          if (file) {
+            if (textSpan) textSpan.textContent = file.name;
+            uploadContainer?.classList.add("has-file");
+          } else {
+            if (textSpan) textSpan.textContent = "No file selected";
+            uploadContainer?.classList.remove("has-file");
+          }
+        });
+      }
+
       form.addEventListener("submit", (event) => {
         event.preventDefault();
 
@@ -1198,29 +1283,7 @@
           return;
         }
 
-        if (isIiit && !collegeId) {
-          showToast("Please enter your IIIT Hyderabad Roll Number or ID.", "error");
-          const el = $("#college_id", form);
-          el?.classList.add("is-invalid");
-          el?.focus();
-          return;
-        }
-
-        if (!isIiit && !collegeId) {
-          showToast("Please enter your College or Organization name.", "error");
-          const el = $("#organization", form);
-          el?.classList.add("is-invalid");
-          el?.focus();
-          return;
-        }
-
-        if (!isIiit && !city) {
-          showToast("Please enter your City.", "error");
-          const el = $("#city", form);
-          el?.classList.add("is-invalid");
-          el?.focus();
-          return;
-        }
+        // college_id, organization, and city are optional fields and do not require validation
 
         const eventSlug = form.dataset.eventSlug || "general";
         const matchedEvent = UtsavDB.getEvent(eventSlug) || {};
@@ -1240,88 +1303,120 @@
           return;
         }
 
-        const passPrice = getPassPrice();
-        const subtotal = numPasses * passPrice;
-        const discount = appliedCoupon ? appliedCoupon.discount : 0;
-        const totalAmount = Math.max(0, subtotal - discount);
+        const fileInput = $("#payment_screenshot", form);
+        const file = fileInput && fileInput.files ? fileInput.files[0] : null;
 
-        const prefix = form.dataset.ticketPrefix || (eventSlug.slice(0, 3).toUpperCase());
-
-        const ticket = {
-          token: uniqueToken(prefix),
-          eventSlug: eventSlug,
-          eventName: form.dataset.eventName || matchedEvent.name || "Mahalaya Bhoj",
-          venue: form.dataset.eventVenue || matchedEvent.venue || "Community Courtyard",
-          participantName: fullName,
-          collegeId: collegeId + (city ? ` (${city})` : ""),
-          phone: phone,
-          email: email,
-          numPasses: numPasses,
-          isIiit: isIiit,
-          couponCode: appliedCoupon ? appliedCoupon.code : "",
-          discountAmount: discount,
-          utr: utr || (matchedEvent.price === 0 ? "FREE-ENTRY" : "UTR-" + Math.floor(100000000000 + Math.random() * 900000000000)),
-          amount: totalAmount,
-          createdAt: new Date().toISOString(),
-          paymentStatus: "verification_pending",
-          status: "PENDING_VERIFICATION",
-          passGenerated: false,
-          emailSent: false,
-          gate: "Gate 1",
-          notes: foodPref ? `${foodPref} (${numPasses} pass${numPasses > 1 ? "es" : ""})` : ""
-        };
-
-        // If coupon was applied, increment backend redemption count
-        if (appliedCoupon && appliedCoupon.code) {
-          UtsavDB.incrementCouponRedemptions(appliedCoupon.code);
-        }
-
-        window.UtsavLoader?.show("ডিজিটাল পাস প্রস্তুত হচ্ছে...");
-        setTimeout(() => {
-          window.UtsavLoader?.hide();
-        }, 750);
-
-        UtsavDB.saveTicket(ticket);
-        showToast(`Registration received! QR Pass will be dispatched to ${ticket.email} after verification.`, "success");
-
-        // If inline confirmation is available, display it cleanly in the same parchment card
-        if (confContainer) {
-          form.style.display = "none";
-          if (formHeading) formHeading.style.display = "none";
-
-          const confName = $("#conf-name", confContainer);
-          const confId = $("#conf-id", confContainer);
-          const confEmail = $("#conf-email", confContainer);
-          const confToken = $("#conf-token", confContainer);
-          const confPasses = $("#conf-passes", confContainer);
-          const confUtr = $("#conf-utr", confContainer);
-          const resetBtn = $("#conf-reset-btn", confContainer);
-
-          if (confName) confName.textContent = ticket.participantName;
-          if (confId) confId.textContent = ticket.collegeId;
-          if (confEmail) confEmail.textContent = ticket.email;
-          if (confToken) confToken.textContent = ticket.token;
-          if (confPasses) confPasses.textContent = `${numPasses} Pass${numPasses > 1 ? "es" : ""} (${formatCurrency(totalAmount)})`;
-          if (confUtr) confUtr.textContent = ticket.utr;
-
-          confContainer.style.display = "flex";
-
-          resetBtn?.addEventListener("click", () => {
-            confContainer.style.display = "none";
-            form.reset();
-            appliedCoupon = null;
-            if (couponMessage) couponMessage.style.display = "none";
-            updateAffiliationView();
-            form.style.display = "block";
-            if (formHeading) formHeading.style.display = "block";
-          }, { once: true });
-
+        if ((matchedEvent.price > 0 || eventSlug === "mahalaya" || eventSlug === "saraswati") && !file) {
+          showToast("Please upload a payment screenshot.", "error");
+          fileInput?.focus();
           return;
         }
 
-        if (status) {
-          status.className = "form-status form-status--success";
-          status.innerHTML = `<strong>Registration submitted for verification!</strong><br>Generated Pass Token: <code>${ticket.token}</code><br>Your verified QR Pass will be emailed to <strong>${escapeHtml(ticket.email)}</strong>.`;
+        const proceedWithTicket = (screenshotBase64) => {
+          const passPrice = getPassPrice();
+          const subtotal = numPasses * passPrice;
+          const discount = appliedCoupon ? appliedCoupon.discount : 0;
+          const totalAmount = Math.max(0, subtotal - discount);
+
+          const prefix = form.dataset.ticketPrefix || (eventSlug.slice(0, 3).toUpperCase());
+
+          const ticket = {
+            token: uniqueToken(prefix),
+            eventSlug: eventSlug,
+            eventName: form.dataset.eventName || matchedEvent.name || "Mahalaya Bhoj",
+            venue: form.dataset.eventVenue || matchedEvent.venue || "Community Courtyard",
+            participantName: fullName,
+            collegeId: collegeId + (city ? (collegeId ? ` (${city})` : city) : ""),
+            phone: phone,
+            email: email,
+            numPasses: numPasses,
+            isIiit: isIiit,
+            couponCode: appliedCoupon ? appliedCoupon.code : "",
+            discountAmount: discount,
+            utr: utr || (matchedEvent.price === 0 ? "FREE-ENTRY" : "UTR-" + Math.floor(100000000000 + Math.random() * 900000000000)),
+            amount: totalAmount,
+            screenshot: screenshotBase64 || "",
+            createdAt: new Date().toISOString(),
+            paymentStatus: "verification_pending",
+            status: "PENDING_VERIFICATION",
+            passGenerated: false,
+            emailSent: false,
+            gate: "Gate 1",
+            notes: foodPref ? `${foodPref} (${numPasses} pass${numPasses > 1 ? "es" : ""})` : ""
+          };
+
+          // If coupon was applied, increment backend redemption count
+          if (appliedCoupon && appliedCoupon.code) {
+            UtsavDB.incrementCouponRedemptions(appliedCoupon.code);
+          }
+
+          window.UtsavLoader?.show("ডিজিটাল পাস প্রস্তুত হচ্ছে...");
+          setTimeout(() => {
+            window.UtsavLoader?.hide();
+          }, 750);
+
+          UtsavDB.saveTicket(ticket);
+          showToast(`Registration received! QR Pass will be dispatched to ${ticket.email} after verification.`, "success");
+
+          // If inline confirmation is available, display it cleanly in the same parchment card
+          if (confContainer) {
+            form.style.display = "none";
+            if (formHeading) formHeading.style.display = "none";
+
+            const confName = $("#conf-name", confContainer);
+            const confId = $("#conf-id", confContainer);
+            const confEmail = $("#conf-email", confContainer);
+            const confToken = $("#conf-token", confContainer);
+            const confPasses = $("#conf-passes", confContainer);
+            const confUtr = $("#conf-utr", confContainer);
+            const resetBtn = $("#conf-reset-btn", confContainer);
+
+            if (confName) confName.textContent = ticket.participantName;
+            if (confId) confId.textContent = ticket.collegeId || "N/A";
+            if (confEmail) confEmail.textContent = ticket.email;
+            if (confToken) confToken.textContent = ticket.token;
+            if (confPasses) confPasses.textContent = `${numPasses} Pass${numPasses > 1 ? "es" : ""} (${formatCurrency(totalAmount)})`;
+            if (confUtr) confUtr.textContent = ticket.utr;
+
+            confContainer.style.display = "flex";
+
+            resetBtn?.addEventListener("click", () => {
+              confContainer.style.display = "none";
+              form.reset();
+              appliedCoupon = null;
+              if (couponMessage) couponMessage.style.display = "none";
+
+              // Reset file upload styling and text
+              const uploadContainer = fileInput?.closest(".mahalaya-file-upload-wrapper");
+              const textSpan = uploadContainer ? $(".mahalaya-file-upload-text", uploadContainer) : null;
+              if (textSpan) textSpan.textContent = "No file selected";
+              uploadContainer?.classList.remove("has-file");
+
+              updateAffiliationView();
+              form.style.display = "block";
+              if (formHeading) formHeading.style.display = "block";
+            }, { once: true });
+
+            return;
+          }
+
+          if (status) {
+            status.className = "form-status form-status--success";
+            status.innerHTML = `<strong>Registration submitted for verification!</strong><br>Generated Pass Token: <code>${ticket.token}</code><br>Your verified QR Pass will be emailed to <strong>${escapeHtml(ticket.email)}</strong>.`;
+          }
+        };
+
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            proceedWithTicket(e.target.result);
+          };
+          reader.onerror = () => {
+            proceedWithTicket("");
+          };
+          reader.readAsDataURL(file);
+        } else {
+          proceedWithTicket("");
         }
       });
     });
@@ -2116,6 +2211,18 @@
             <tr><td>Submitted At</td><td>${formatDate(ticket.verificationSubmittedAt || ticket.createdAt)}</td></tr>
             <tr><td>Payment Status</td><td><span class="badge badge--${(ticket.paymentStatus || "verification_pending").toLowerCase()}">${escapeHtml(ticket.paymentStatus || "verification_pending")}</span></td></tr>
             ${ticket.adminNotes ? `<tr><td>Admin Notes</td><td style="color:#c62828;">${escapeHtml(ticket.adminNotes)}</td></tr>` : ""}
+            ${ticket.screenshot ? `
+              <tr>
+                <td>Payment Screenshot</td>
+                <td>
+                  <a href="${ticket.screenshot}" target="_blank" title="Click to view full image">
+                    <img src="${ticket.screenshot}" alt="Payment Receipt Screenshot" style="max-width:100%; max-height:220px; border-radius:8px; border:1px solid #ddd; box-shadow:0 4px 10px rgba(0,0,0,0.1); margin-top:8px;" />
+                  </a>
+                </td>
+              </tr>
+            ` : `
+              <tr><td>Payment Screenshot</td><td class="text-muted">No screenshot uploaded</td></tr>
+            `}
           </tbody>
         </table>
       `;
@@ -2480,11 +2587,69 @@
 
   /* ---- Mahalaya Bhoj Menu Data ---- */
   const MAHALAYA_MENU = [
+    // ── BREAKFAST MENU ITEMS ────────────────────────────────────────────────
+    {
+      nameBn: "গরম ফুলকো লুচি",
+      nameEn: "Garam Luchi / Radhaballabhi",
+      description: "Puffed golden deep-fried puris served piping hot.",
+      type: "veg",
+      meal: "breakfast",
+      image: "assets/menu-luchi.jpg",
+      searchQuery: "Bengali Luchi puri"
+    },
+    {
+      nameBn: "হিং দিয়ে আলুর দম",
+      nameEn: "Classic Hing-Aloor Dom",
+      description: "Slow-simmered baby potatoes in asafoetida & cumin gravy.",
+      type: "veg",
+      meal: "breakfast",
+      image: "assets/menu-jhuri-aloo.jpg",
+      searchQuery: "Hing Aloor Dom Bengali dish"
+    },
+    {
+      nameBn: "নারকেল দিয়ে ছোলার ডাল",
+      nameEn: "Narkel diye Chholar Dal",
+      description: "Bengal gram with fried coconut crisps and warm aromatic spices.",
+      type: "veg",
+      meal: "breakfast",
+      image: "assets/menu-chholar-dal.jpg",
+      searchQuery: "Chholar Dal Bengali dish"
+    },
+    {
+      nameBn: "মুচমুচে কড়াইশুঁটির কচুরি",
+      nameEn: "Crispy Koraishutir Kochuri",
+      description: "Delicate puris stuffed with seasoned green pea filling.",
+      type: "veg",
+      meal: "breakfast",
+      image: "assets/menu-luchi.jpg",
+      searchQuery: "Koraishutir Kochuri Bengali dish"
+    },
+    {
+      nameBn: "গরম জিলিপি ও মিহিদান",
+      nameEn: "Hot Jalebi & Mihidana",
+      description: "Crispy saffron syrup jalebis & authentic Burdwan Mihidana.",
+      type: "veg",
+      meal: "breakfast",
+      image: "assets/menu-rosogolla.jpg",
+      searchQuery: "Burdwan Mihidana Jalebi sweet"
+    },
+    {
+      nameBn: "দার্জিলিং কড়াক চা ও কফি",
+      nameEn: "Darjeeling Tea & Filter Coffee",
+      description: "Fragrant spiced milk tea & freshly brewed coffee.",
+      type: "veg",
+      meal: "breakfast",
+      image: "assets/menu-papad.jpg",
+      searchQuery: "Darjeeling Chai Bengali"
+    },
+
+    // ── LUNCH FEAST MENU ITEMS ──────────────────────────────────────────────
     {
       nameBn: "বাসন্তী পোলাও",
       nameEn: "Fragrant Basanti Pulao",
       description: "Slow-cooked Gobindobhog rice with ghee, cashews and raisins.",
       type: "veg",
+      meal: "lunch",
       image: "assets/menu-basanti-pulao.jpg",
       searchQuery: "Basanti Pulao Bengali dish"
     },
@@ -2493,6 +2658,7 @@
       nameEn: "Crispy Jhuri Aloo Bhaja",
       description: "Golden shredded potato crispies, seasoned with salt and a touch of chilli.",
       type: "veg",
+      meal: "lunch",
       image: "assets/menu-jhuri-aloo.jpg",
       searchQuery: "Jhuri Aloo Bhaja Bengali dish"
     },
@@ -2501,6 +2667,7 @@
       nameEn: "Crispy Beguni",
       description: "Traditional batter-fried spiced eggplant slices.",
       type: "veg",
+      meal: "lunch",
       image: "assets/menu-beguni.jpg",
       searchQuery: "Beguni Bengali dish"
     },
@@ -2509,6 +2676,7 @@
       nameEn: "Traditional Dudh Shukto",
       description: "Classic Bengali bittersweet vegetable medley in milk gravy.",
       type: "veg",
+      meal: "lunch",
       image: "assets/menu-shukto.jpg",
       searchQuery: "Dudh Shukto Bengali dish"
     },
@@ -2517,6 +2685,7 @@
       nameEn: "Traditional Chhanar Dalna",
       description: "Fresh cottage cheese koftas in rich cumin gravy.",
       type: "veg",
+      meal: "lunch",
       image: "assets/menu-chhanar-dalna.jpg",
       searchQuery: "Chhanar Dalna Bengali dish"
     },
@@ -2525,30 +2694,16 @@
       nameEn: "Dhokar Dalna",
       description: "Spiced lentil cakes simmered in aromatic gravy.",
       type: "veg",
+      meal: "lunch",
       image: "assets/menu-dhokar-dalna.jpg",
       searchQuery: "Dhokar Dalna Bengali dish"
-    },
-    {
-      nameBn: "নারকেল দিয়ে ছোলার ডাল",
-      nameEn: "Narkel diye Chholar Dal",
-      description: "Bengal gram with coconut crisps and warm spices.",
-      type: "veg",
-      image: "assets/menu-chholar-dal.jpg",
-      searchQuery: "Chholar Dal Bengali dish"
-    },
-    {
-      nameBn: "গরম ফুলকো লুচি",
-      nameEn: "Garam Luchi / Radhaballabhi",
-      description: "Puffed golden deep-fried puris served piping hot.",
-      type: "veg",
-      image: "assets/menu-luchi.jpg",
-      searchQuery: "Bengali Luchi puri"
     },
     {
       nameBn: "টমেটো খেজুর চাটনি",
       nameEn: "Tomato-Khejur Sweet Chutney",
       description: "Rich spiced dates and tomato relish.",
       type: "veg",
+      meal: "lunch",
       image: "assets/menu-chutney.jpg",
       searchQuery: "Tomato Khejur Chutney Bengali"
     },
@@ -2557,6 +2712,7 @@
       nameEn: "Crispy Roasted Papad",
       description: "Traditional crispy lentil wafers, flame-roasted.",
       type: "veg",
+      meal: "lunch",
       image: "assets/menu-papad.jpg",
       searchQuery: "Papad Indian crispy wafer"
     },
@@ -2565,6 +2721,7 @@
       nameEn: "Spongy Nolen Gur Rosogolla",
       description: "Soft cottage cheese balls in date palm jaggery syrup.",
       type: "veg",
+      meal: "lunch",
       image: "assets/menu-rosogolla.jpg",
       searchQuery: "Nolen Gur Rosogolla Bengali sweet"
     },
@@ -2573,6 +2730,7 @@
       nameEn: "Authentic Kolkata Mishti Doi",
       description: "Caramelised sweetened yoghurt set in earthen pots.",
       type: "veg",
+      meal: "lunch",
       image: "assets/menu-rosogolla.jpg",
       searchQuery: "Mishti Doi Kolkata Bengali sweet"
     },
@@ -2581,22 +2739,16 @@
       nameEn: "Gobindobhog Chaler Payesh",
       description: "Creamy slow-cooked rice pudding with aromatic Gobindobhog rice.",
       type: "veg",
+      meal: "lunch",
       image: "assets/menu-rosogolla.jpg",
       searchQuery: "Payesh Bengali rice pudding"
-    },
-    {
-      nameBn: "নরোম পাকের সন্দেশ",
-      nameEn: "Traditional Bengali Sandesh",
-      description: "Delicate fresh cottage cheese confection with cardamom.",
-      type: "veg",
-      image: "assets/menu-rosogolla.jpg",
-      searchQuery: "Bengali Sandesh sweet"
     },
     {
       nameBn: "কাতলা / রুই মাছের কালিয়া",
       nameEn: "Katla Machher Kalia",
       description: "Rich river carp in spiced onion-ginger gravy.",
       type: "nonveg",
+      meal: "lunch",
       image: "assets/menu-katla-kalia.jpg",
       searchQuery: "Katla Machher Kalia Bengali fish curry"
     },
@@ -2605,6 +2757,7 @@
       nameEn: "Traditional Bengali Kosha Mangsho",
       description: "Slow-cooked rich spiced mutton curry with potatoes.",
       type: "nonveg",
+      meal: "lunch",
       image: "assets/menu-kosha-mangsho.jpg",
       searchQuery: "Kosha Mangsho Bengali mutton curry"
     }
@@ -2615,19 +2768,20 @@
    * Separates dishes into Vegetarian and Non-Vegetarian editorial sections
    * with FSSAI-style dietary symbols, small inset thumbnails, and Google search links.
    */
-  function renderMahalayaMenu() {
+  function renderMahalayaMenu(activeMeal = "lunch") {
     const container = $("#mahalaya-menu-sections");
     if (!container) return;
 
-    const vegDishes = MAHALAYA_MENU.filter(d => d.type === "veg");
-    const nonvegDishes = MAHALAYA_MENU.filter(d => d.type === "nonveg");
+    const filteredMenu = MAHALAYA_MENU.filter(d => d.meal === activeMeal || d.meal === "both");
+    const vegDishes = filteredMenu.filter(d => d.type === "veg");
+    const nonvegDishes = filteredMenu.filter(d => d.type === "nonveg");
 
     function buildDishHTML(dish, index) {
       const searchUrl = "https://www.google.com/search?q=" + encodeURIComponent(dish.searchQuery);
       const dietClass = dish.type === "veg" ? "veg" : "nonveg";
       return `
         <a class="mahalaya-menu-dish" href="${searchUrl}" target="_blank" rel="noopener noreferrer"
-           style="animation-delay: ${index * 0.06}s" title="Search: ${dish.nameEn}">
+           style="animation-delay: ${index * 0.05}s" title="Search: ${dish.nameEn}">
           <div class="mahalaya-menu-dish__thumb">
             <img src="${dish.image}" alt="${dish.nameBn}" width="48" height="48" loading="lazy" decoding="async" />
           </div>
@@ -2644,6 +2798,7 @@
     }
 
     function buildSectionHTML(type, labelBn, labelEn, dishes) {
+      if (dishes.length === 0) return "";
       const symbolClass = type === "veg" ? "veg" : "nonveg";
       return `
         <div class="mahalaya-menu-diet-section">
@@ -2665,8 +2820,34 @@
   }
 
   function initMenuCardModal() {
-    // Render the data-driven Mahalaya menu catalogue
-    renderMahalayaMenu();
+    // Render the data-driven Mahalaya menu catalogue (default to Lunch)
+    renderMahalayaMenu("lunch");
+
+    // Connect Breakfast / Lunch meal tabs
+    const mealTabs = $all(".mahalaya-meal-tab");
+    const footerTiming = $(".mahalaya-menu-modal__footer-timing");
+
+    mealTabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        mealTabs.forEach((t) => {
+          t.classList.remove("is-active");
+          t.setAttribute("aria-selected", "false");
+        });
+        tab.classList.add("is-active");
+        tab.setAttribute("aria-selected", "true");
+
+        const meal = tab.dataset.meal;
+        renderMahalayaMenu(meal);
+
+        if (footerTiming) {
+          if (meal === "breakfast") {
+            footerTiming.innerHTML = "Feast timings: <strong>8:30 AM – 11:00 AM</strong> &bull; Fresh hot breakfast &amp; morning adda";
+          } else {
+            footerTiming.innerHTML = "Feast timings: <strong>1:00 PM – 4:30 PM</strong> &bull; Unlimited traditional sit-down banana leaf service";
+          }
+        }
+      });
+    });
 
     const modalConfigs = [
       {
@@ -2930,7 +3111,8 @@
 
           <!-- Sleek Festive Branding & Bengali Caption -->
           <div class="utsav-loader__text-wrap">
-            <h3 class="utsav-loader__brand">BANGIYA.SAMITI</h3>
+            <img src="assets/logo.png" alt="বঙ্গীয়.SAMITI Emblem" class="utsav-loader__emblem" />
+            <h3 class="utsav-loader__brand">বঙ্গীয়.SAMITI</h3>
             <p class="utsav-loader__sub">IIIT HYDERABAD &bull; উৎসব পোর্টাল</p>
           </div>
         </div>
@@ -3190,6 +3372,381 @@
     });
   }
 
+  function initHeroLandingBird() {
+    const bird = $(".hero-landing-bird");
+    const charA1 = $(".hero-char-a1");
+    const charY = $(".hero-char-y");
+    const charS = $(".hero-char-s");
+    const charT = $(".hero-char-t");
+    const sky = $(".home-hero__birds-sky");
+
+    if (!bird || !charA1 || !charY || !charS || !charT || !sky) return;
+
+    let timeoutId = null;
+    let currentlyRestingTarget = null; // charA1 | charY | charS | charT | "shoulder" | null
+
+    // Precise calculation of object-fit: cover rendered image box
+    function getCoverImageRect(img, container) {
+      const cRect = container.getBoundingClientRect();
+      const cW = cRect.width;
+      const cH = cRect.height || 1;
+      const imgW = (img && img.naturalWidth) ? img.naturalWidth : 1792;
+      const imgH = (img && img.naturalHeight) ? img.naturalHeight : 592;
+      const imgRatio = imgW / imgH;
+      const cRatio = cW / cH;
+
+      let renderedW, renderedH, leftOffset, topOffset;
+
+      if (cRatio >= imgRatio) {
+        renderedW = cW;
+        renderedH = cW / imgRatio;
+        leftOffset = 0;
+        topOffset = (cH - renderedH) * 0.45; // object-position: right 45%
+      } else {
+        renderedH = cH;
+        renderedW = cH * imgRatio;
+        leftOffset = cW - renderedW; // object-position: right
+        topOffset = 0;
+      }
+
+      return {
+        left: leftOffset,
+        top: topOffset,
+        width: renderedW,
+        height: renderedH
+      };
+    }
+
+    // Real-time dynamic target coordinate getter
+    function getCoords(element) {
+      const skyRect = sky.getBoundingClientRect();
+      const elemRect = element.getBoundingClientRect();
+      const birdW = parseFloat(getComputedStyle(bird).width) || 22;
+      const birdH = parseFloat(getComputedStyle(bird).height) || 13;
+
+      // If it's the Y character, sit on the left arm of Y (approx 18% width mark)
+      const horizontalOffset = (element === charY) ? (elemRect.width * 0.18) : (elemRect.width / 2);
+      return {
+        x: elemRect.left - skyRect.left + horizontalOffset - (birdW / 2),
+        y: elemRect.top - skyRect.top - birdH + 1
+      };
+    }
+
+    // Dynamic shoulder perch mapping based on image cover geometry
+    function getShoulderCoords() {
+      const skyRect = sky.getBoundingClientRect();
+      const img = $(".home-hero__image--landscape");
+      const imgRect = getCoverImageRect(img, sky);
+
+      // Normalized relative shoulder coordinates in raw autumn-landscape.webp (1792 x 592)
+      const X_norm = 1508 / 1792; // ~0.8415
+      const Y_norm = 237 / 592;   // ~0.4003
+
+      const shoulderX = imgRect.left + (imgRect.width * X_norm);
+      const shoulderY = imgRect.top + (imgRect.height * Y_norm);
+
+      const birdW = parseFloat(getComputedStyle(bird).width) || 22;
+      const birdH = parseFloat(getComputedStyle(bird).height) || 13;
+
+      const perch = $(".hero-shoulder-perch");
+      if (perch && skyRect.width > 0 && skyRect.height > 0) {
+        perch.style.left = `${(shoulderX / skyRect.width) * 100}%`;
+        perch.style.top = `${(shoulderY / skyRect.height) * 100}%`;
+      }
+
+      return {
+        x: shoulderX - (birdW / 2),
+        y: shoulderY - birdH + 1
+      };
+    }
+
+    // Lock position to target if window is resized mid-resting
+    window.addEventListener("resize", () => {
+      if (currentlyRestingTarget && bird.classList.contains("is-resting")) {
+        const coords = (currentlyRestingTarget === "shoulder")
+          ? getShoulderCoords()
+          : getCoords(currentlyRestingTarget);
+        bird.style.transition = "none";
+        bird.style.left = `${coords.x}px`;
+        bird.style.top = `${coords.y}px`;
+      }
+    }, { passive: true });
+
+    function runAnimationCycle() {
+      currentlyRestingTarget = null;
+      const skyRect = sky.getBoundingClientRect();
+      const skyWidth = skyRect.width;
+      const skyHeight = skyRect.height;
+      const scaleFactor = Math.min(1.2, Math.max(0.4, skyWidth / 1100));
+      const distThreshold = Math.max(65, 140 * scaleFactor);
+
+      // Start position: Off-screen left (high up)
+      bird.style.transition = "none";
+      bird.style.left = "-50px";
+      bird.style.top = "30px";
+      bird.style.transform = "rotate(25deg) scale(1.15)";
+      bird.style.display = "block";
+      bird.classList.remove("is-resting", "is-thrilled", "is-thrilled-y");
+      bird.classList.add("is-flying");
+
+      // Real-time flock proximity checker
+      let isChecking = true;
+      function checkProximity() {
+        if (!isChecking) return;
+
+        const landingRect = bird.getBoundingClientRect();
+
+        // Flock 1
+        const f1Lead = $(".flock-1 .bird-lead");
+        const flock1 = $(".flock-1");
+        if (f1Lead && flock1) {
+          const leadRect = f1Lead.getBoundingClientRect();
+          const dx = (landingRect.left + landingRect.width / 2) - (leadRect.left + leadRect.width / 2);
+          const dy = (landingRect.top + landingRect.height / 2) - (leadRect.top + leadRect.height / 2);
+          const dist = Math.hypot(dx, dy);
+          if (dist < distThreshold) {
+            flock1.classList.add("is-scattered");
+          } else {
+            flock1.classList.remove("is-scattered");
+          }
+        }
+
+        // Flock 2
+        const f2Lead = $(".flock-2 .bird-lead");
+        const flock2 = $(".flock-2");
+        if (f2Lead && flock2) {
+          const leadRect = f2Lead.getBoundingClientRect();
+          const dx = (landingRect.left + landingRect.width / 2) - (leadRect.left + leadRect.width / 2);
+          const dy = (landingRect.top + landingRect.height / 2) - (leadRect.top + leadRect.height / 2);
+          const dist = Math.hypot(dx, dy);
+          if (dist < distThreshold) {
+            flock2.classList.add("is-scattered");
+          } else {
+            flock2.classList.remove("is-scattered");
+          }
+        }
+
+        requestAnimationFrame(checkProximity);
+      }
+      requestAnimationFrame(checkProximity);
+
+      // Small delay before first flight starts
+      setTimeout(() => {
+        // Step 1: Fly to A (Dramatic swoop down and climb up)
+        const coordsA = getCoords(charA1);
+        bird.style.transition = "left 1.8s cubic-bezier(0.25, 1, 0.5, 1), top 1.8s cubic-bezier(0.2, 1.8, 0.3, 0.9), transform 1.8s ease";
+        bird.style.transform = "rotate(25deg) scale(1.15)";
+        bird.style.left = `${coordsA.x}px`;
+        bird.style.top = `${coordsA.y}px`;
+
+        // Pitch up halfway through the swoop
+        setTimeout(() => {
+          if (bird.classList.contains("is-flying")) {
+            bird.style.transform = "rotate(-8deg) scale(0.95)";
+          }
+        }, 900);
+
+        // Land on A
+        setTimeout(() => {
+          currentlyRestingTarget = charA1;
+          bird.classList.remove("is-flying");
+          bird.classList.add("is-resting", "is-thrilled");
+          bird.style.transform = "rotate(0deg) scale(1)";
+          charA1.classList.add("is-thrilled");
+
+          // Remove thrill wobble
+          setTimeout(() => {
+            charA1.classList.remove("is-thrilled");
+            bird.classList.remove("is-thrilled");
+          }, 600);
+
+          // Rest on A for 1.1 seconds, then Hop to Y
+          setTimeout(() => {
+            currentlyRestingTarget = null;
+            bird.classList.remove("is-resting", "is-thrilled");
+            bird.classList.add("is-flying");
+
+            const coordsY = getCoords(charY);
+            // Hop to Y
+            bird.style.transition = "left 0.7s cubic-bezier(0.25, 1, 0.5, 1), top 0.7s cubic-bezier(0.1, 1.8, 0.3, 1), transform 0.7s ease";
+            bird.style.transform = "rotate(-12deg) scale(1.05)";
+            bird.style.left = `${coordsY.x}px`;
+            bird.style.top = `${coordsY.y}px`;
+
+            // Settle transformation halfway through the hop
+            setTimeout(() => {
+              if (bird.classList.contains("is-flying")) {
+                bird.style.transform = "rotate(8deg) scale(0.95)";
+              }
+            }, 350);
+
+            // Land on Y
+            setTimeout(() => {
+              currentlyRestingTarget = charY;
+              bird.classList.remove("is-flying");
+              bird.classList.add("is-resting", "is-thrilled-y");
+              bird.style.transform = "rotate(14deg) scale(1)";
+              charY.classList.add("is-thrilled");
+
+              // Remove thrill
+              setTimeout(() => {
+                charY.classList.remove("is-thrilled");
+                bird.classList.remove("is-thrilled-y");
+              }, 600);
+
+              // Rest on Y for 1.1 seconds, then Hop to S
+              setTimeout(() => {
+                currentlyRestingTarget = null;
+                bird.classList.remove("is-resting", "is-thrilled-y");
+                bird.classList.add("is-flying");
+
+                const coordsS = getCoords(charS);
+                // Hop to S
+                bird.style.transition = "left 0.7s cubic-bezier(0.25, 1, 0.5, 1), top 0.7s cubic-bezier(0.1, 1.8, 0.3, 1), transform 0.7s ease";
+                bird.style.transform = "rotate(-12deg) scale(1.05)";
+                bird.style.left = `${coordsS.x}px`;
+                bird.style.top = `${coordsS.y}px`;
+
+                // Settle transformation halfway
+                setTimeout(() => {
+                  if (bird.classList.contains("is-flying")) {
+                    bird.style.transform = "rotate(8deg) scale(0.95)";
+                  }
+                }, 350);
+
+                // Land on S
+                setTimeout(() => {
+                  currentlyRestingTarget = charS;
+                  bird.classList.remove("is-flying");
+                  bird.classList.add("is-resting", "is-thrilled");
+                  bird.style.transform = "rotate(0deg) scale(1)";
+                  charS.classList.add("is-thrilled");
+
+                  // Remove thrill
+                  setTimeout(() => {
+                    charS.classList.remove("is-thrilled");
+                    bird.classList.remove("is-thrilled");
+                  }, 600);
+
+                  // Rest on S for 1.1 seconds, then Hop to T
+                  setTimeout(() => {
+                    currentlyRestingTarget = null;
+                    bird.classList.remove("is-resting", "is-thrilled");
+                    bird.classList.add("is-flying");
+
+                    const coordsT = getCoords(charT);
+                    // Hop to T
+                    bird.style.transition = "left 0.65s cubic-bezier(0.25, 1, 0.5, 1), top 0.65s cubic-bezier(0.1, 1.8, 0.3, 1), transform 0.65s ease";
+                    bird.style.transform = "rotate(-12deg) scale(1.05)";
+                    bird.style.left = `${coordsT.x}px`;
+                    bird.style.top = `${coordsT.y}px`;
+
+                    // Settle transformation halfway
+                    setTimeout(() => {
+                      if (bird.classList.contains("is-flying")) {
+                        bird.style.transform = "rotate(8deg) scale(0.95)";
+                      }
+                    }, 320);
+
+                    // Land on T
+                    setTimeout(() => {
+                      currentlyRestingTarget = charT;
+                      bird.classList.remove("is-flying");
+                      bird.classList.add("is-resting", "is-thrilled");
+                      bird.style.transform = "rotate(0deg) scale(1)";
+                      charT.classList.add("is-thrilled");
+
+                      // Remove thrill
+                      setTimeout(() => {
+                        charT.classList.remove("is-thrilled");
+                        bird.classList.remove("is-thrilled");
+                      }, 600);
+
+                      // ---- DRAMATIC OUTRO SEQUENCE ----
+                      // Rests on T briefly...
+                      setTimeout(() => {
+                        currentlyRestingTarget = null;
+                        bird.classList.remove("is-resting", "is-thrilled");
+                        bird.classList.add("is-flying");
+
+                        // STEP A: Shoot up & right — as if leaving boldly (scaled proportionally)
+                        bird.style.transition = "left 1.0s cubic-bezier(0.4, 0, 0.2, 1), top 1.0s cubic-bezier(0.4, 0, 0.2, 1), transform 1.0s ease";
+                        bird.style.transform = "rotate(-30deg) scale(1.2)";
+                        const coordsTCurrent = getCoords(charT);
+                        bird.style.left = `${coordsTCurrent.x + Math.round(120 * scaleFactor)}px`;
+                        bird.style.top = `${coordsTCurrent.y - Math.round(80 * scaleFactor)}px`;
+
+                        // STEP B: Arc back left — like it forgot something (scaled proportionally)
+                        setTimeout(() => {
+                          bird.style.transition = "left 1.1s cubic-bezier(0.4, 0, 0.6, 1), top 1.1s cubic-bezier(0.4, 0, 0.6, 1), transform 1.1s ease";
+                          bird.style.transform = "rotate(180deg) scale(1.05)";
+                          bird.style.left = `${coordsTCurrent.x - Math.round(40 * scaleFactor)}px`;
+                          bird.style.top = `${coordsTCurrent.y - Math.round(30 * scaleFactor)}px`;
+                        }, 950);
+
+                        // STEP C: Swoop down toward the shoulder
+                        setTimeout(() => {
+                          const shoulderCoords = getShoulderCoords();
+
+                          bird.style.transition = "left 1.4s cubic-bezier(0.25, 1, 0.5, 1), top 1.4s cubic-bezier(0.2, 1.6, 0.3, 0.9), transform 1.4s ease";
+                          bird.style.transform = "rotate(15deg) scale(0.95)";
+                          bird.style.left = `${shoulderCoords.x}px`;
+                          bird.style.top = `${shoulderCoords.y}px`;
+
+                          // Settle on shoulder
+                          setTimeout(() => {
+                            currentlyRestingTarget = "shoulder";
+                            bird.classList.remove("is-flying");
+                            bird.classList.add("is-resting");
+                            bird.style.transform = "rotate(0deg) scale(1)";
+
+                            // Rest a moment on the shoulder...
+                            setTimeout(() => {
+                              currentlyRestingTarget = null;
+                              bird.classList.remove("is-resting");
+                              bird.classList.add("is-flying");
+
+                              // STEP D: Final soar — dramatic swoop-down then climb off-screen
+                              bird.style.transition = "left 2.4s cubic-bezier(0.25, 1, 0.5, 1), top 2.4s cubic-bezier(0.3, -0.5, 0.2, 1.1), transform 2.4s ease";
+                              bird.style.transform = "rotate(20deg) scale(0.9)";
+                              bird.style.left = `${skyWidth + 80}px`;
+                              bird.style.top = `${skyHeight * 0.15}px`;
+
+                              // Pitch up to climbing glory halfway
+                              setTimeout(() => {
+                                if (bird.classList.contains("is-flying")) {
+                                  bird.style.transform = "rotate(-32deg) scale(1.25)";
+                                }
+                              }, 800);
+
+                              // Hide after exiting screen
+                              setTimeout(() => {
+                                bird.style.display = "none";
+                                isChecking = false;
+                                const flock1 = $(".flock-1");
+                                const flock2 = $(".flock-2");
+                                if (flock1) flock1.classList.remove("is-scattered");
+                                if (flock2) flock2.classList.remove("is-scattered");
+                                timeoutId = setTimeout(runAnimationCycle, 4000);
+                              }, 2400);
+                            }, 1600);
+                          }, 1350);
+                        }, 1900);
+                      }, 900);
+                    }, 650);
+                  }, 1750);
+                }, 700);
+              }, 1750);
+            }, 700);
+          }, 1750);
+        }, 1800);
+      }, 100);
+    }
+
+    // Initial delay before first animation starts (3 seconds)
+    timeoutId = setTimeout(runAnimationCycle, 3000);
+  }
+
   // =========================================================================
   // DOM READY DISPATCHER
   // =========================================================================
@@ -3212,6 +3769,7 @@
     initScrollPolish();
     initMenuCardModal();
     initPujaSeamlessCrossfadeVideo();
+    initHeroLandingBird();
   });
 })();
 

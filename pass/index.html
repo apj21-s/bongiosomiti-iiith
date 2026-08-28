@@ -4,8 +4,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BANGIYA.SAMITI - Check Payment Status &amp; Verification</title>
+  <title>বঙ্গীয়.SAMITI - Check Payment Status &amp; Verification</title>
   <base href="../" />
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/logo.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/logo.png" />
+  <link rel="icon" type="image/png" sizes="48x48" href="assets/logo.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/logo.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/logo.png" />
   <link rel="stylesheet" href="styles.css" />
   <script defer src="vendor/qrcode.js"></script>
   <script defer src="site.js"></script>
@@ -15,7 +20,10 @@
   <!-- Public Sticky Navigation Ribbon -->
   <header class="home-strip">
     <div class="home-strip__inner">
-      <a class="home-strip__brand" href="index.html">BANGIYA.SAMITI</a>
+      <a class="home-strip__brand" href="index.html">
+        <img src="assets/logo.png" alt="বঙ্গীয়.SAMITI Emblem" class="brand-emblem" />
+        <span>বঙ্গীয়.SAMITI</span>
+      </a>
       <nav class="home-strip__nav" aria-label="Primary">
         <a class="home-strip__link" href="index.html">HOME</a>
         <a class="home-strip__link" href="events/index.html">EVENTS</a>
@@ -340,7 +348,7 @@
   <footer class="utsav-footer" role="contentinfo">
     <div class="utsav-footer__banner">
       <img class="utsav-footer__bannerImage" src="assets/footer-banner.webp"
-        alt="BANGIYA.SAMITI Bengali Cultural Alpona &amp; Lotus Motif" width="1024" height="136" loading="lazy"
+        alt="BANGIYA.SAMITI.IIITH Bengali Cultural Alpona &amp; Lotus Motif" width="1024" height="136" loading="lazy"
         decoding="async" />
     </div>
     <div class="utsav-footer__content">
@@ -348,7 +356,8 @@
         <!-- Col 1: Identity -->
         <div class="utsav-footer__brandCol">
           <div class="utsav-footer__brand">
-            <span class="utsav-footer__logo">BANGIYA.SAMITI</span>
+            <img class="utsav-footer__emblem" src="assets/logo.png" alt="বঙ্গীয়.SAMITI Emblem" />
+            <span class="utsav-footer__logo">বঙ্গীয়.SAMITI</span>
             <span class="utsav-footer__bengali">আইআইআইটি বঙ্গীয় সমিতি</span>
           </div>
           <p class="utsav-footer__about">
@@ -361,8 +370,7 @@
           <h3 class="utsav-footer__title">Quick Navigation</h3>
           <ul class="utsav-footer__links">
             <li><a href="index.html">Home</a></li>
-            <li><a href="events/index.html">Events Catalog</a></li>
-            <li><a href="pass/index.html">Payment Status Verification</a></li>
+            <li><a href="index.html#events">Events Catalog</a></li>
           </ul>
         </div>
 
@@ -371,7 +379,7 @@
           <h3 class="utsav-footer__title">Festivals &amp; Feasts</h3>
           <ul class="utsav-footer__links">
             <li><a href="events/mahalaya/index.html">Mahalaya Bhoj 2026</a></li>
-            <li><a href="events/saraswati/index.html">Saraswati Puja 2026</a></li>
+            <li><a href="events/saraswati/index.html">Saraswati Puja 2027</a></li>
           </ul>
         </div>
 
@@ -379,8 +387,16 @@
         <div class="utsav-footer__navCol">
           <h3 class="utsav-footer__title">Contact &amp; Location</h3>
           <div class="utsav-footer__contact">
-            <p>📍 IIIT Hyderabad, Gachibowli, Hyderabad 500032</p>
-            <p>✉️ <a href="mailto:bangiya.samiti.iith@gmail.com">bangiya.samiti.iith@gmail.com</a></p>
+            <p>📍<a href="https://maps.app.goo.gl/DJQVksxmKAVi3aRJ9">IIIT Hyderabad, Gachibowli, Hyderabad 500032</a>
+            </p>
+            <p><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M2 10v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V10L12 4Z" />
+                <rect x="6" y="2" width="12" height="10" rx="1.5" />
+                <circle cx="12" cy="7" r="1.2" />
+                <path d="M13.2 7v0.8a1.2 1.2 0 0 0 2.4 0V7a3.6 3.6 0 1 0-3.6 3.6h0.5" />
+                <path d="M2 12v8a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-8L12 15Z" />
+              </svg> <a href="mailto:bangiya.samiti.iith@gmail.com">bangiya.samiti.iith@gmail.com</a></p>
             <p><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
@@ -400,11 +416,7 @@
         <p class="utsav-footer__quote">
           বারো মাসে তেরো পার্বণ, এটাই তো খাঁটি বাঙালি জীবন   ||   বাঙালি শুধু একটা জাতি নয়, বাঙালি একটা আবেগ
         </p>
-        <div class="utsav-footer__bottomLinks">
-          <a href="pass/index.html#top">Back to top &uarr;</a>
-          <span>&bull;</span>
-          <a href="events/index.html">All Events</a>
-        </div>
+
       </div>
     </div>
   </footer>
