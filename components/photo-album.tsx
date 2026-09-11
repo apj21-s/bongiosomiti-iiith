@@ -91,74 +91,138 @@ export default function PhotoAlbum() {
 
       <div className="photo-album" aria-label="আমাদের গল্প photo album" role="group">
         <div className="photo-album__grid">
-          <button type="button" className="photo-album__hero" onClick={() => openLightbox(0)} aria-label={PHOTOS[0].title}>
+          <button type="button" className="photo-album__card photo-album__card--hero scroll-reveal scroll-reveal--delay-1" onClick={() => openLightbox(0)} aria-label={PHOTOS[0].title}>
             <img className="photo-album__img" src={PHOTOS[0].src} alt={PHOTOS[0].alt} loading="lazy" decoding="async" style={{ objectPosition: PHOTOS[0].pos }} />
+            <div className="photo-album__scrim"></div>
             <div className="photo-album__label" aria-hidden="true">
               <span className="photo-album__label-title">{PHOTOS[0].title}</span>
               <span className="photo-album__label-date">{PHOTOS[0].date}</span>
             </div>
           </button>
 
-          <div className="photo-album__thumb-row">
-            {PHOTOS.slice(1, 4).map((photo, i) => {
-              const idx = i + 1
-              const isLast = idx === Math.min(3, total - 1)
-              const showMore = isLast && moreCount > 0
-              return (
-                <button
-                  type="button"
-                  className={`photo-album__thumb scroll-reveal scroll-reveal--delay-${idx}`}
-                  key={photo.src}
-                  onClick={() => openLightbox(showMore ? VISIBLE - 1 : idx)}
-                  aria-label={photo.title + (showMore ? ` and ${moreCount} more` : '')}
-                >
-                  <img className="photo-album__img" src={photo.src} alt={photo.alt} loading="lazy" decoding="async" style={{ objectPosition: photo.pos }} />
-                  {showMore ? (
-                    <div className="photo-album__more-overlay" aria-hidden="true">
-                      <span className="photo-album__more-text">+{moreCount}</span>
-                    </div>
-                  ) : (
-                    <div className="photo-album__label" aria-hidden="true">
-                      <span className="photo-album__label-title">{photo.title}</span>
-                      <span className="photo-album__label-date">{photo.date}</span>
-                    </div>
-                  )}
-                </button>
-              )
-            })}
-          </div>
+          {PHOTOS.slice(1, 4).map((photo, i) => {
+            const idx = i + 1
+            const isLast = idx === Math.min(3, total - 1)
+            const showMore = isLast && moreCount > 0
+            return (
+              <button
+                type="button"
+                className={`photo-album__card photo-album__card--thumb scroll-reveal scroll-reveal--delay-${(i % 3) + 2}`}
+                key={photo.src}
+                onClick={() => openLightbox(showMore ? VISIBLE - 1 : idx)}
+                aria-label={photo.title + (showMore ? ` and ${moreCount} more` : '')}
+              >
+                <img className="photo-album__img" src={photo.src} alt={photo.alt} loading="lazy" decoding="async" style={{ objectPosition: photo.pos }} />
+                <div className="photo-album__scrim"></div>
+                {showMore ? (
+                  <div className="photo-album__more-overlay" aria-hidden="true">
+                    <span className="photo-album__more-badge">+{toBn(moreCount + 1)}</span>
+                    <span className="photo-album__more-sub">সকল {toBn(total)}টি স্মৃতি দেখুন</span>
+                  </div>
+                ) : (
+                  <div className="photo-album__label" aria-hidden="true">
+                    <span className="photo-album__label-title">{photo.title}</span>
+                    <span className="photo-album__label-date">{photo.date}</span>
+                  </div>
+                )}
+              </button>
+            )
+          })}
         </div>
       </div>
 
       {active !== null && (
-        <div className="story-lightbox is-open" role="dialog" aria-modal="true" aria-label="Photo viewer">
-          <button type="button" className="story-lightbox__close" onClick={close} aria-label="Close photo viewer">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
-          <button type="button" className="story-lightbox__prev" onClick={goPrev} disabled={active <= 0} aria-label="Previous photo">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
-          </button>
-          <button type="button" className="story-lightbox__next" onClick={goNext} disabled={active >= total - 1} aria-label="Next photo">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
-          </button>
-          <div className="story-lightbox__panel" role="document" onClick={(e) => e.stopPropagation()}>
-            <div className="story-lightbox__media">
-              <img className={`story-lightbox__image ${changing ? 'is-changing' : ''}`} src={PHOTOS[active].src} alt={PHOTOS[active].alt} />
-            </div>
-            <div className="story-lightbox__copy">
-              <p className="story-lightbox__title">{PHOTOS[active].title}</p>
-              <div className="story-lightbox__meta">
+        <div className="story-lightbox is-open" role="dialog" aria-modal="true" aria-label="Photo album viewer">
+          <div className="story-lightbox__container" role="document">
+            {/* Top Smart Bar */}
+            <header className="story-lightbox__topbar">
+              <div className="story-lightbox__info">
+                <span className="story-lightbox__album-name">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                    <circle cx="8.5" cy="8.5" r="1.5" />
+                    <polyline points="21 15 16 10 5 21" />
+                  </svg>
+                  আমাদের ছবির অ্যালবাম
+                </span>
+                <h3 className="story-lightbox__title">{PHOTOS[active].title}</h3>
                 <span className="story-lightbox__date">{PHOTOS[active].date}</span>
-                <span className="story-lightbox__counter">{active + 1} / {total}</span>
               </div>
+
+              <div className="story-lightbox__actions">
+                <span className="story-lightbox__counter">{toBn(active + 1)} / {toBn(total)}</span>
+
+                <a className="story-lightbox__action-btn story-lightbox__download" href={PHOTOS[active].src} download aria-label="Download high resolution photo" title="Download Photo">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                </a>
+
+                <button
+                  type="button"
+                  className="story-lightbox__action-btn story-lightbox__fullscreen"
+                  aria-label="Toggle fullscreen"
+                  title="Fullscreen (F)"
+                  onClick={() => {
+                    if (!document.fullscreenElement) {
+                      document.documentElement.requestFullscreen().catch(() => {})
+                    } else {
+                      document.exitFullscreen()
+                    }
+                  }}
+                >
+                  <svg className="icon-expand" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
+                  </svg>
+                </button>
+
+                <button type="button" className="story-lightbox__action-btn story-lightbox__close" onClick={close} aria-label="Close photo viewer" title="Close (Esc)">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              </div>
+            </header>
+
+            {/* Central Media Viewport */}
+            <div className="story-lightbox__viewport">
+              <button type="button" className="story-lightbox__nav story-lightbox__prev" onClick={goPrev} disabled={active <= 0} aria-label="Previous photo" title="Previous photo (←)">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
+              </button>
+
+              <div className="story-lightbox__media" onClick={(e) => e.stopPropagation()}>
+                <img className={`story-lightbox__image ${changing ? 'is-changing' : ''}`} src={PHOTOS[active].src} alt={PHOTOS[active].alt} />
+              </div>
+
+              <button type="button" className="story-lightbox__nav story-lightbox__next" onClick={goNext} disabled={active >= total - 1} aria-label="Next photo" title="Next photo (→)">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </button>
             </div>
+
+            {/* Google Photos Smart Filmstrip Preview Bar */}
+            <footer className="story-lightbox__filmstrip-bar" aria-label="Photo thumbnails scrubber">
+              <div className="story-lightbox__filmstrip" role="tablist" aria-label="All album photos">
+                {PHOTOS.map((photo, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    role="tab"
+                    aria-selected={active === index}
+                    className={`story-lightbox__film-thumb ${active === index ? 'is-active' : ''}`}
+                    onClick={() => openLightbox(index)}
+                  >
+                    <img src={photo.src} alt={photo.title} loading="lazy" />
+                  </button>
+                ))}
+              </div>
+            </footer>
           </div>
         </div>
       )}

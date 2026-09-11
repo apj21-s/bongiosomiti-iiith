@@ -10,17 +10,21 @@ export default function SiteFooter({ variant = 'public' }: SiteFooterProps) {
       <div className="utsav-footer__banner">
         <img
           className="utsav-footer__bannerImage"
-          src="/assets/footer-banner.png"
+          src="/assets/footer-banner.webp"
           alt="BANGIYA.SAMITI.IIITH Bengali Cultural Alpona & Lotus Motif"
+          width="1024"
+          height="136"
           loading="lazy"
           decoding="async"
         />
       </div>
       <div className="utsav-footer__content">
         <div className="utsav-footer__grid">
+          {/* Col 1: Identity */}
           <div className="utsav-footer__brandCol">
             <div className="utsav-footer__brand">
-              <span className="utsav-footer__logo">BANGIYA.SAMITI{variant === 'admin' ? ' &bull; ADMIN' : ''}</span>
+              <img className="utsav-footer__emblem" src="/assets/logo.png" alt="বঙ্গীয়.SAMITI Emblem" />
+              <span className="utsav-footer__logo">বঙ্গীয়.SAMITI{variant === 'admin' ? ' \u2022 ADMIN' : ''}</span>
               <span className="utsav-footer__bengali">আইআইআইটি বঙ্গীয় সমিতি</span>
             </div>
             <p className="utsav-footer__about">
@@ -30,49 +34,48 @@ export default function SiteFooter({ variant = 'public' }: SiteFooterProps) {
             </p>
           </div>
 
+          {/* Col 2: Navigation */}
           <div className="utsav-footer__navCol">
-            <h4 className="utsav-footer__title">{variant === 'admin' ? 'Admin Suite' : 'Quick Navigation'}</h4>
+            <h3 className="utsav-footer__title">Quick Navigation</h3>
             <ul className="utsav-footer__links">
               {variant === 'admin' ? (
                 <>
-                  <li><Link href="/admin">Dashboard</Link></li>
-                  <li><Link href="/admin/registrations">Registrations</Link></li>
-                  <li><Link href="/admin/payments">Payments</Link></li>
-                  <li><Link href="/admin/scanner">Gate Scanner</Link></li>
+                  <li><Link href="/">Home</Link></li>
+                  <li><Link href="/#events">Events Catalog</Link></li>
                 </>
               ) : (
                 <>
                   <li><Link href="/">Home</Link></li>
-                  <li><Link href="/events">Events Catalog</Link></li>
-                  <li><Link href="/pass">Payment Status</Link></li>
+                  <li><Link href="/#events">Events Catalog</Link></li>
                 </>
               )}
             </ul>
           </div>
 
+          {/* Col 3: Events */}
           <div className="utsav-footer__navCol">
-            <h4 className="utsav-footer__title">{variant === 'admin' ? 'Public Website' : 'Festivals & Feasts'}</h4>
+            <h3 className="utsav-footer__title">Festivals & Feasts</h3>
             <ul className="utsav-footer__links">
-              {variant === 'admin' ? (
-                <>
-                  <li><Link href="/">Public Home</Link></li>
-                  <li><Link href="/events">Events Catalog</Link></li>
-                  <li><Link href="/pass">Check Payment Status</Link></li>
-                </>
-              ) : (
-                <>
-                  <li><Link href="/events/mahalaya">Mahalaya Bhoj 2026</Link></li>
-                  <li><Link href="/events/saraswati">Saraswati Puja 2027</Link></li>
-                </>
-              )}
+              <li><Link href="/events/mahalaya">Mahalaya Bhoj 2026</Link></li>
+              <li><Link href="/events/saraswati">Saraswati Puja 2027</Link></li>
             </ul>
           </div>
 
+          {/* Col 4: Contact & Venue */}
           <div className="utsav-footer__navCol">
-            <h4 className="utsav-footer__title">{variant === 'admin' ? 'Internal Support' : 'Contact & Location'}</h4>
+            <h3 className="utsav-footer__title">Contact & Location</h3>
             <div className="utsav-footer__contact">
               <p>📍 <a href="https://maps.app.goo.gl/DJQVksxmKAVi3aRJ9">IIIT Hyderabad, Gachibowli, Hyderabad 500032</a></p>
-              <p>✉️ <a href="mailto:bangiya.samiti.iith@gmail.com">bangiya.samiti.iith@gmail.com</a></p>
+              <p>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M2 10v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V10L12 4Z" />
+                  <rect x="6" y="2" width="12" height="10" rx="1.5" />
+                  <circle cx="12" cy="7" r="1.2" />
+                  <path d="M13.2 7v0.8a1.2 1.2 0 0 0 2.4 0V7a3.6 3.6 0 1 0-3.6 3.6h0.5" />
+                  <path d="M2 12v8a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-8L12 15Z" />
+                </svg>{' '}
+                <a href="mailto:bangiya.samiti.iith@gmail.com">bangiya.samiti.iith@gmail.com</a>
+              </p>
               <p>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
@@ -85,20 +88,18 @@ export default function SiteFooter({ variant = 'public' }: SiteFooterProps) {
           </div>
         </div>
 
+        {/* Bottom Bar */}
         <div className="utsav-footer__bottom">
           <p className="utsav-footer__copyright">
-            &copy; 2026 IIIT Bongio Samiti &bull; {variant === 'admin' ? 'Protected Internal Organiser Area' : 'All Rights Reserved'}
+            &copy; 2026 IIIT Bongio Samiti &bull; {variant === 'admin' ? 'Protected Internal Organiser Area' : 'All Rights Reserved'} {variant !== 'admin' && (
+              <>
+                &bull; By <a href="https://github.com/apj21-s">arco</a> & <a href="https://github.com/sagarjha7174">sagar</a>
+              </>
+            )}
           </p>
-          {variant !== 'admin' && (
-            <p className="utsav-footer__quote">
-              বারো মাসে তেরো পার্বণ, এটাই তো খাঁটি বাঙালি জীবন   ||   বাঙালি শুধু একটা জাতি নয়, বাঙালি একটা আবেগ
-            </p>
-          )}
-          <div className="utsav-footer__bottomLinks">
-            <Link href="/#top">Back to top &uarr;</Link>
-            <span>&bull;</span>
-            <Link href={variant === 'admin' ? '/admin' : '/events'}>All Events</Link>
-          </div>
+          <p className="utsav-footer__quote">
+            বারো মাসে তেরো পার্বণ, এটাই তো খাঁটি বাঙালি জীবন   ||   বাঙালি শুধু একটা জাতি নয়, বাঙালি একটা আবেগ
+          </p>
         </div>
       </div>
     </footer>

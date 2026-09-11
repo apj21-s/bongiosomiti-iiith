@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import ScrollReveal from "@/components/scroll-reveal";
+import UtsavLoader from "@/components/utsav-loader";
 
 export const metadata: Metadata = {
   title: "UTSAVPASS",
@@ -15,6 +16,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
+        <UtsavLoader />
         <ScrollReveal />
         {children}
       </body>

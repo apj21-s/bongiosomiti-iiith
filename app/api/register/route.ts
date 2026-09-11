@@ -90,12 +90,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: ticketError?.message || 'Failed to generate tickets' }, { status: 500 })
     }
 
-    const tokens = tickets.map(t => t.token)
+    const tokens = tickets.map((t: any) => t.token)
 
     if (paymentStatus === 'APPROVED') {
-      await sendQRPassEmail(data.email, data.participantName, event.name, tokens).catch(e => console.error('Failed to send email:', e))
+      await sendQRPassEmail(data.email as string, data.participantName as string, event.name as string, tokens).catch(e => console.error('Failed to send email:', e))
     } else if (paymentStatus === 'PENDING') {
-      await sendRegistrationPendingEmail(data.email, data.participantName, event.name, data.utr || '').catch(e => console.error('Failed to send pending email:', e))
+      await sendRegistrationPendingEmail(data.email as string, data.participantName as string, event.name as string, data.utr || '').catch(e => console.error('Failed to send pending email:', e))
     }
 
     return NextResponse.json(tickets[0])

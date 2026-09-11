@@ -3,6 +3,8 @@ import { createClient } from '@/utils/supabase/server'
 import SiteHeader from '@/components/site-header'
 import SiteFooter from '@/components/site-footer'
 import PhotoAlbum from '@/components/photo-album'
+import CrossfadeVideo from '@/components/crossfade-video'
+import HeroBirdsAnimator from '@/components/hero-birds-animator'
 
 export const revalidate = 0
 
@@ -100,7 +102,7 @@ export default async function Home() {
         </div>
 
         <div className="home-hero__content scroll-reveal">
-          <h1 id="home-hero-title" className="home-hero__title">BANGIYA.SAMITI</h1>
+          <h1 id="home-hero-title" className="home-hero__title">B<span className="hero-char-a1">A</span>NGI<span className="hero-char-y">Y</span>A.<span className="hero-char-s">S</span>AMI<span className="hero-char-t">T</span>I</h1>
           <p className="home-hero__subtitle">IIIT HYDERABAD</p>
           <div className="home-hero__card">
             <p># আড্ডা হোক,
@@ -108,6 +110,7 @@ export default async function Home() {
             <Link className="home-hero__cta" href="#events">[EXPLORE EVENTS]</Link>
           </div>
         </div>
+        <HeroBirdsAnimator />
       </section>
 
       <section id="events" className="events-page" aria-labelledby="events-title">
@@ -115,6 +118,7 @@ export default async function Home() {
           <div className="events-scene__panel">
             <div className="events-scene__hero scroll-reveal scroll-reveal--delay-1" id="events-hero-player">
               <img className="events-scene__hero-image events-scene__hero-poster" src="/assets/community-puja.webp" alt="Bengali Puja Courtyard Celebration" />
+              <CrossfadeVideo />
             </div>
 
             <div className="events-scene__copy scroll-reveal">
@@ -177,6 +181,7 @@ export default async function Home() {
 
           <div className="story-card__header scroll-reveal scroll-reveal--delay-1">
             <img className="story-card__headerImage" src="/assets/amader-golpo.webp" alt="Bangiya Samiti Story Illustration" />
+            <div className="story-card__sunbeam" aria-hidden="true"></div>
             <div className="story-card__headerOverlay" aria-hidden="true"></div>
             <div className="story-card__headerCopy">
               <p className="section-label">আমাদের গল্প</p>
