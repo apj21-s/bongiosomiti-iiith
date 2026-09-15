@@ -173,12 +173,12 @@ export default async function Home() {
                   <div className="events-scene__card-body">
                     <div className="events-scene__card-meta">
                       <span className="events-scene__card-date">
-                        {new Date(event.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()}
+                        {new Date(event.event_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()}
                       </span>
                       <span className="events-scene__card-tag">{event.tag}</span>
                     </div>
                     <h3 className="events-scene__card-title">{event.name}</h3>
-                    <p className="events-scene__card-desc">{event.description}</p>
+                    <p className="events-scene__card-desc">{event.description?.replace('Shared tables, smoke, brass, and a warm autumn gathering built around authentic Bengali food, adda, and ritual warmth.', 'Bengali food • Adda • Celebration').replace('A serene campus procession with fresh yellow flowers, alpona, morning anjali, recitation, music, and student gathering.', 'Yellow blooms • Anjali • Music • Culture')}</p>
                     <div className="events-scene__card-footer">
                       <span className="events-scene__card-invitation">
                         {event.price === 0 

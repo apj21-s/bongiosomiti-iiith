@@ -1,8 +1,8 @@
 -- Seed Events
 insert into events (id, slug, name, event_date, venue, capacity, price, category, description, image_url, status)
 values
-('11111111-1111-1111-1111-111111111111', 'mahalaya', 'Mahalaya Bhoj', '2026-10-12', 'Community Courtyard', 120, 250, 'Neighbourhood bhoj', 'Shared tables, smoke, brass, and a warm autumn gathering built around authentic Bengali food, adda, and ritual warmth.', 'assets/mahalaya-bhoj.webp', 'OPEN'),
-('22222222-2222-2222-2222-222222222222', 'saraswati', 'Saraswati Puja', '2027-01-21', 'College Campus', 180, 0, 'Campus celebration', 'A serene campus procession with fresh yellow flowers, alpona, morning anjali, recitation, music, and student gathering.', 'assets/saraswati-puja.webp', 'OPEN')
+('11111111-1111-1111-1111-111111111111', 'mahalaya', 'Mahalaya Bhoj', '2026-10-12', 'Community Courtyard', 120, 250, 'Neighbourhood bhoj', 'Bengali food • Adda • Celebration', 'assets/mahalaya-bhoj.webp', 'OPEN'),
+('22222222-2222-2222-2222-222222222222', 'saraswati', 'Saraswati Puja', '2027-01-21', 'College Campus', 180, 0, 'Campus celebration', 'Yellow blooms • Anjali • Music • Culture', 'assets/saraswati-puja.webp', 'OPEN')
 ON CONFLICT (id) DO NOTHING;
 
 -- Seed Auth User (id: 33333333-3333-3333-3333-333333333333)

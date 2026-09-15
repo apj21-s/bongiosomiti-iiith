@@ -139,6 +139,7 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
 
   return (
     <div className="reg-shell">
+      {loading && <UtsavLoader inline={true} message="PROCESSING YOUR REGISTRATION..." />}
       {/* Decorative Assets - Genuine Artwork Only */}
       <img src="/mahalaya_registration_assets/03_corner_top_left.png" className="reg-corner-tl" alt="" />
       <img src="/mahalaya_registration_assets/04_corner_top_right.png" className="reg-corner-tr" alt="" />
@@ -541,8 +542,7 @@ function PaymentStep({ draft, updateDraft, prevStage, transitionTo, total, subto
 
 function PaymentCompletedStep({ prevStage, handleSubmit, draft, updateDraft, transitionTo, error, loading, setScreenshotPreview, screenshotPreview }: any) {
   return (
-    <div className="reg-payment-done" style={{ position: 'relative' }}>
-      {loading && <UtsavLoader inline={true} message="PROCESSING YOUR REGISTRATION..." />}
+    <div className="reg-payment-done">
       <TypewriterHeading lines={['VERIFYING PAYMENT']} />
       <p className="reg-p">Please provide your transaction details</p>
       
