@@ -51,7 +51,7 @@ export default async function EventsPage() {
                     <span>{event.category}</span>
                   </div>
                   <h3 className="events-scene__card-title">{event.name}</h3>
-                  <p>{event.description}</p>
+                  <p>{event.description?.replace('Shared tables, smoke, brass, and a warm autumn gathering built around authentic Bengali food, adda, and ritual warmth.', 'Bengali food • Adda • Celebration').replace('A serene campus procession with fresh yellow flowers, alpona, morning anjali, recitation, music, and student gathering.', 'Yellow blooms • Anjali • Music • Culture')}</p>
                   <span className="events-scene__card-link">REGISTER NOW</span>
                 </div>
               </Link>

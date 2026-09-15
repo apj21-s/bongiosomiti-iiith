@@ -37,6 +37,8 @@ function toBn(n: number) {
 export default function PhotoAlbum() {
   const [active, setActive] = useState<number | null>(null)
   const [changing, setChanging] = useState(false)
+  const [touchStartX, setTouchStartX] = useState<number | null>(null)
+  const [touchEndX, setTouchEndX] = useState<number | null>(null)
 
   const total = PHOTOS.length
   const moreCount = total > VISIBLE ? total - VISIBLE : 0
@@ -61,6 +63,25 @@ export default function PhotoAlbum() {
     if (active < total - 1) openLightbox(active + 1)
   }
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchEndX(null)
+    setTouchStartX(e.targetTouches[0].clientX)
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEndX(e.targetTouches[0].clientX)
+  }
+
+  const handleTouchEnd = () => {
+    if (!touchStartX || !touchEndX) return
+    const distance = touchStartX - touchEndX
+    const isLeftSwipe = distance > 50
+    const isRightSwipe = distance < -50
+
+    if (isLeftSwipe) goNext()
+    else if (isRightSwipe) goPrev()
+  }
+
   useEffect(() => {
     if (active === null) return
     const onKey = (e: KeyboardEvent) => {
@@ -70,9 +91,11 @@ export default function PhotoAlbum() {
     }
     window.addEventListener('keydown', onKey)
     document.body.style.overflow = 'hidden'
+    document.documentElement.style.overflow = 'hidden'
     return () => {
       window.removeEventListener('keydown', onKey)
       document.body.style.overflow = ''
+      document.documentElement.style.overflow = ''
     }
   }, [active])
 
@@ -181,7 +204,11 @@ export default function PhotoAlbum() {
             </header>
 
             {/* Central Media Viewport */}
-            <div className="story-lightbox__viewport">
+            <div className="story-lightbox__viewport"
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+            >
               <button type="button" className="story-lightbox__nav story-lightbox__prev" onClick={goPrev} disabled={active <= 0} aria-label="Previous photo" title="Previous photo (←)">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="15 18 9 12 15 6" />
