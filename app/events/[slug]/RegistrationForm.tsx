@@ -588,8 +588,9 @@ function PaymentCompletedStep({ prevStage, handleSubmit, draft, updateDraft, tra
 
 function ConfirmationStep({ confirmation }: any) {
   const [copied, setCopied] = useState(false)
+  const tokenDisplay = confirmation?.token?.includes('_') ? confirmation.token.split('_')[0] : (confirmation?.token || 'MBH-ID')
   const handleCopy = () => {
-    navigator.clipboard.writeText(confirmation?.token || 'MBH-ID')
+    navigator.clipboard.writeText(tokenDisplay)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
@@ -608,7 +609,7 @@ function ConfirmationStep({ confirmation }: any) {
        <div className="reg-id-box">
           <span className="id-label">Registration ID</span>
           <div className="id-val-row">
-             <strong className="id-val">{confirmation?.token || 'MBH-2026-0842'}</strong>
+             <strong className="id-val">{tokenDisplay}</strong>
              <button className="reg-btn-copy-small" onClick={handleCopy}>{copied ? '✓' : 'COPY'}</button>
           </div>
        </div>

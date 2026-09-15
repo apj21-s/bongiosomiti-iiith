@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { createServiceRoleClient } from '@/utils/supabase/server'
-import { staticEvents } from '@/utils/data/events'
 import SiteFooter from '@/components/site-footer'
 
 export const revalidate = 0
@@ -8,7 +7,6 @@ export const revalidate = 0
 export default async function AdminDashboardPage() {
   const supabase = await createServiceRoleClient()
 
-  const eventCount = staticEvents.length
   const { count: ticketCount } = await supabase.from('tickets').select('*', { count: 'exact', head: true })
 
   const { data: paidTickets } = await supabase.from('tickets').select('amount').eq('payment_status', 'APPROVED')
@@ -34,55 +32,36 @@ export default async function AdminDashboardPage() {
   }
 
   return (
-    <main className="panel container" data-admin-dashboard style={{ maxWidth: '1300px', margin: '2rem auto', padding: '0' }}>
-      <div className="panel-head" style={{ padding: '24px 28px' }}>
-        <div>
-          <p className="section-label">Organiser Operations Center</p>
-          <h1 style={{ fontSize: '2rem', margin: '4px 0 6px' }}>Event Operations Dashboard</h1>
-          <p>Real-time overview of college cultural events, registration passes, payments, and gate scanner entries.</p>
+    <main className="admin-page-content">
+      <div style={{ marginBottom: '32px' }}>
+        <p className="section-label" style={{ marginBottom: '8px' }}>Organiser Operations Center</p>
+        <h1 style={{ fontSize: '2.5rem', margin: '0 0 8px', lineHeight: 1.2, letterSpacing: '-0.03em', color: '#1a202c' }}>Event Operations Dashboard</h1>
+        <p style={{ margin: 0, color: '#718096', fontSize: '1.1rem', maxWidth: '800px' }}>Real-time overview of college cultural events, registration passes, payments, and gate scanner entries.</p>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '24px', marginBottom: '32px' }}>
+        <div className="admin-stat-card">
+          <span className="admin-stat-label">Registrations</span>
+          <div className="admin-stat-value">{ticketCount || 0}</div>
+          <div className="admin-stat-desc">Passes issued</div>
         </div>
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          <Link className="btn btn-secondary" href="/admin/scanner">📷 Launch Scanner</Link>
+        <div className="admin-stat-card">
+          <span className="admin-stat-label">Revenue Collected</span>
+          <div className="admin-stat-value">₹{revenue.toLocaleString('en-IN')}</div>
+          <div className="admin-stat-desc">Verified UPI & bookings</div>
+        </div>
+        <div className="admin-stat-card">
+          <span className="admin-stat-label">Check-ins</span>
+          <div className="admin-stat-value">{checkinCount || 0}</div>
+          <div className="admin-stat-desc">Scanned at gates</div>
         </div>
       </div>
 
-      <div className="grid" style={{ padding: '24px 28px' }}>
-        <div className="summary-bar" style={{ gridColumn: '1 / -1', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
-          <div className="stat-card">
-            <span className="stat-card__label">Active Events</span>
-            <strong className="stat-card__val">{eventCount || 0}</strong>
-            <small className="text-muted">In public catalog</small>
-          </div>
-          <div className="stat-card">
-            <span className="stat-card__label">Total Registrations</span>
-            <strong className="stat-card__val">{ticketCount || 0}</strong>
-            <small className="text-muted">Passes issued</small>
-          </div>
-          <div className="stat-card">
-            <span className="stat-card__label">Revenue Collected</span>
-            <strong className="stat-card__val">₹{revenue.toLocaleString('en-IN')}</strong>
-            <small className="text-muted">Verified UPI &amp; bookings</small>
-          </div>
-          <div className="stat-card">
-            <span className="stat-card__label">Verified Check-ins</span>
-            <strong className="stat-card__val">{checkinCount || 0}</strong>
-            <small className="text-muted">Scanned at gates</small>
-          </div>
-        </div>
-
-        <div className="admin-quick-nav" style={{ gridColumn: '1 / -1', display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '0.5rem' }}>
-          <Link className="btn btn-secondary" href="/admin/events">📅 Manage Events</Link>
-          <Link className="btn btn-secondary" href="/admin/registrations">👥 View Registrations</Link>
-          <Link className="btn btn-secondary" href="/admin/payments">💳 Review Payments</Link>
-          <Link className="btn btn-secondary" href="/admin/scanner">📱 QR Gate Scanner</Link>
-          <Link className="btn btn-secondary" href="/admin/check-ins">📋 Check-in Activity Log</Link>
-        </div>
-
-        <div style={{ gridColumn: '1 / -1', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(460px, 1fr))', gap: '24px', marginTop: '1.5rem' }}>
-          <div className="admin-card" style={{ background: 'rgba(255,255,255,0.75)', borderRadius: '20px', border: '1px solid var(--border)', padding: '20px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-              <h3 style={{ margin: 0, fontSize: '1.15rem' }}>Recent Registrations</h3>
-              <Link href="/admin/registrations" className="btn btn-sm btn-secondary">View All &rarr;</Link>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 460px), 1fr))', gap: '24px', alignItems: 'start' }}>
+        <div className="admin-section-card" style={{ marginTop: 0 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+              <h3 style={{ margin: 0, fontSize: 'clamp(1.05rem, 3vw, 1.15rem)' }}>Recent Registrations</h3>
+              <Link href="/admin/registrations" className="btn btn-sm btn-secondary" style={{ whiteSpace: 'nowrap' }}>View All &rarr;</Link>
             </div>
             <div className="table-responsive">
               <table className="data-table">
@@ -105,10 +84,10 @@ export default async function AdminDashboardPage() {
             </div>
           </div>
 
-          <div className="admin-card" style={{ background: 'rgba(255,255,255,0.75)', borderRadius: '20px', border: '1px solid var(--border)', padding: '20px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-              <h3 style={{ margin: 0, fontSize: '1.15rem' }}>Gate Check-in Activity</h3>
-              <Link href="/admin/check-ins" className="btn btn-sm btn-secondary">View All &rarr;</Link>
+          <div className="admin-section-card" style={{ marginTop: 0 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.25rem', color: '#2d3748' }}>Gate Check-in Activity</h3>
+              <Link href="/admin/check-ins" className="btn btn-sm btn-secondary" style={{ whiteSpace: 'nowrap' }}>View All &rarr;</Link>
             </div>
             <div className="table-responsive">
               <table className="data-table">
@@ -131,16 +110,8 @@ export default async function AdminDashboardPage() {
           </div>
         </div>
 
-        <div style={{ gridColumn: '1 / -1', marginTop: '2rem', padding: '18px 24px', background: 'rgba(255,255,255,0.5)', borderRadius: '18px', border: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
-          <div>
-            <strong>Organiser Backend Active</strong>
-            <p className="text-muted" style={{ margin: 0, fontSize: '0.85rem' }}>Registrations, payments, scanner logs, and events persist in the application database.</p>
-          </div>
-          <Link className="btn btn-sm btn-secondary" href="/" target="_blank">Preview Public Site &rarr;</Link>
-        </div>
-      </div>
 
-      <SiteFooter variant="admin" />
+      {/* We removed the site footer here to keep the admin interface clean and full-height */}
     </main>
   )
 }

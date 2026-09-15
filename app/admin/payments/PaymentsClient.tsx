@@ -67,22 +67,23 @@ export default function PaymentsClient() {
   }
 
   return (
-    <div className="grid" style={{ padding: '24px 28px' }}>
-      <div className="filter-bar" style={{ gridColumn: '1 / -1', display: 'flex', gap: '14px', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', background: 'rgba(255,255,255,0.7)', padding: '14px 20px', borderRadius: '16px', border: '1px solid var(--border)' }}>
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          <label htmlFor="admin-payments-filter-status" style={{ fontWeight: 700 }}>Filter by Verification Status:</label>
-          <select id="admin-payments-filter-status" style={{ padding: '8px 14px', borderRadius: '12px', border: '1px solid var(--border)', background: '#fff', fontWeight: 600 }} value={status} onChange={(e) => setStatus(e.target.value)}>
+    <div className="grid" style={{ padding: 'clamp(12px, 3vw, 24px) clamp(12px, 3vw, 28px)' }}>
+      <div className="filter-bar" style={{ display: 'flex', gap: '14px', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', background: 'rgba(255,255,255,0.7)', padding: '14px 20px', borderRadius: '16px', border: '1px solid var(--border)' }}>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <label htmlFor="admin-payments-filter-status" style={{ fontWeight: 700, whiteSpace: 'nowrap' }}>Filter by Verification Status:</label>
+          <select id="admin-payments-filter-status" style={{ flex: '1 1 min(100%, 240px)', padding: '8px 14px', borderRadius: '12px', border: '1px solid var(--border)', background: '#fff', fontWeight: 600 }} value={status} onChange={(e) => setStatus(e.target.value)}>
             <option value="">All Transactions</option>
             <option value="PENDING">PENDING (Action Required)</option>
             <option value="APPROVED">VERIFIED (Active Passes)</option>
             <option value="REJECTED">REJECTED</option>
           </select>
         </div>
-        <span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>Only authenticated organisers can verify payments &amp; issue passes.</span>
+        <span style={{ fontSize: '0.85rem', color: 'var(--muted)', display: 'block', width: '100%' }}>Only authenticated organisers can verify payments &amp; issue passes.</span>
       </div>
 
-      <div className="table-responsive" style={{ gridColumn: '1 / -1', background: 'rgba(255,255,255,0.85)', borderRadius: '20px', border: '1px solid var(--border)', padding: '16px', marginTop: '0.5rem' }}>
-        <table className="data-table">
+      <div className="table-wrapper-outer" style={{ background: 'rgba(255,255,255,0.85)', borderRadius: '20px', border: '1px solid var(--border)', padding: 'clamp(12px, 2vw, 16px)', marginTop: '0.5rem', minWidth: 0, width: '100%' }}>
+        <div className="table-responsive">
+          <table className="data-table">
           <thead>
             <tr>
               <th>Registration ID</th>
@@ -102,7 +103,7 @@ export default function PaymentsClient() {
               const displayStatus = renderStatus(pmt.payment_status)
               return (
                 <tr key={pmt.id}>
-                  <td><code>{pmt.token}</code> {pmt.num_passes > 1 && <span style={{ fontSize: '0.8rem', color: 'var(--muted)', display: 'block', marginTop: '4px' }}>+{pmt.num_passes - 1} more passes</span>}</td>
+                  <td><code>{pmt.token.includes('_') ? pmt.token.split('_')[0] : pmt.token}</code> {pmt.num_passes > 1 && <span style={{ fontSize: '0.8rem', color: 'var(--muted)', display: 'block', marginTop: '4px' }}>+{pmt.num_passes - 1} more passes</span>}</td>
                   <td><strong>{pmt.participant_name}</strong><br /><span className="text-muted">{pmt.college_id}</span></td>
                   <td>{pmt.email}</td>
                   <td><strong style={{ fontFamily: 'monospace' }}>{pmt.utr || 'FREE-PASS'}</strong></td>
@@ -110,7 +111,7 @@ export default function PaymentsClient() {
                   <td>{new Date(pmt.created_at).toLocaleString()}</td>
                   <td><span className={`badge ${displayStatus === 'VERIFIED' ? '' : 'badge--error'}`}>{displayStatus}</span></td>
                   <td>
-                    <div className="action-btn-group">
+                    <div className="action-btn-group" style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                       {pmt.payment_status !== 'APPROVED' && <button type="button" className="btn btn-sm btn-success" onClick={() => handleApprove(pmt.token)}>VERIFY</button>}
                       {pmt.payment_status !== 'REJECTED' && <button type="button" className="btn btn-sm btn-danger" onClick={() => handleReject(pmt.token)}>REJECT</button>}
                       <button type="button" className="btn btn-sm btn-secondary" onClick={() => setReviewing(pmt)}>REVIEW</button>
@@ -121,6 +122,7 @@ export default function PaymentsClient() {
             })}
           </tbody>
         </table>
+        </div>
       </div>
 
       {reviewing && (
@@ -130,10 +132,10 @@ export default function PaymentsClient() {
               <h3 id="modal-review-title">Payment Verification Review</h3>
               <button type="button" className="admin-modal-close" onClick={() => setReviewing(null)} aria-label="Close modal">&times;</button>
             </div>
-            <div className="admin-modal-body">
-              <table className="verification-meta-table" style={{ margin: 0 }}>
+            <div className="admin-modal-body" style={{ overflowX: 'auto' }}>
+              <table className="verification-meta-table" style={{ margin: 0, minWidth: 'max-content' }}>
                 <tbody>
-                  <tr><td>Registration ID</td><td><code>{reviewing.token}</code></td></tr>
+                  <tr><td>Registration ID</td><td><code>{reviewing.token.includes('_') ? reviewing.token.split('_')[0] : reviewing.token}</code></td></tr>
                   <tr><td>Participant Name</td><td><strong>{reviewing.participant_name}</strong></td></tr>
                   <tr><td>College ID / Org</td><td>{reviewing.college_id || 'N/A'}</td></tr>
                   <tr><td>Registered Email</td><td>{reviewing.email}</td></tr>
@@ -146,9 +148,9 @@ export default function PaymentsClient() {
                 </tbody>
               </table>
             </div>
-            <div className="admin-modal-footer">
-              <button type="button" className="btn btn-danger" onClick={() => { setReviewing(null); handleReject(reviewing.token) }}>✕ Reject</button>
-              <button type="button" className="btn btn-success" onClick={() => { setReviewing(null); handleApprove(reviewing.token) }}>✓ Verify Payment</button>
+            <div className="admin-modal-footer" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'flex-end' }}>
+              <button type="button" className="btn btn-danger" style={{ flex: '1 1 auto', minWidth: 'min(100%, 140px)', justifyContent: 'center' }} onClick={() => { setReviewing(null); handleReject(reviewing.token) }}>✕ Reject</button>
+              <button type="button" className="btn btn-success" style={{ flex: '1 1 auto', minWidth: 'min(100%, 140px)', justifyContent: 'center' }} onClick={() => { setReviewing(null); handleApprove(reviewing.token) }}>✓ Verify Payment</button>
             </div>
           </div>
         </div>

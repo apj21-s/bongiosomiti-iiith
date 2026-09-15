@@ -29,7 +29,8 @@ export async function sendQRPassEmail(email: string, participantName: string, ev
 
   for (let i = 0; i < tokenArray.length; i++) {
     const t = tokenArray[i]
-    const qrDataUrl = await QRCode.toDataURL(t, { 
+    const passCode = t.includes('_') ? t.split('_')[1] : t
+    const qrDataUrl = await QRCode.toDataURL(passCode, { 
       width: 350, 
       margin: 2, 
       color: { dark: '#281208', light: '#ffffff' } 
@@ -50,7 +51,7 @@ export async function sendQRPassEmail(email: string, participantName: string, ev
         <a href="cid:${cid}" target="_blank" style="display: block; text-decoration: none;">
           <img src="cid:${cid}" alt="QR Pass ${i + 1}" style="display: block; margin: 0 auto; width: 250px; height: 250px; border-radius: 12px; border: 4px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.1); cursor: zoom-in;" />
         </a>
-        <p style="margin: 12px 0 0; font-family: monospace; font-size: 16px; color: #281208; font-weight: bold; text-align: center;">Pass Code: ${t}</p>
+        <p style="margin: 12px 0 0; font-family: monospace; font-size: 16px; color: #281208; font-weight: bold; text-align: center;">Pass Code: ${passCode}</p>
       </div>
     `
   }

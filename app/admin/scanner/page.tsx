@@ -9,15 +9,23 @@ export default function ScannerPage() {
   const [result, setResult] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [isScanning, setIsScanning] = useState(false)
-  const tokenInputRef = useRef<HTMLInputElement>(null)
   
   const scannerRef = useRef<any>(null)
+  const isProcessingRef = useRef(false)
+  const autoResumeTimer = useRef<any>(null)
 
   useEffect(() => {
+    // Attempt to auto-start on mount
+    const timer = setTimeout(() => {
+      startScanner()
+    }, 500)
+    
     return () => {
+      clearTimeout(timer)
       if (scannerRef.current) {
         scannerRef.current.clear().catch(console.error)
       }
+      if (autoResumeTimer.current) clearTimeout(autoResumeTimer.current)
     }
   }, [])
 
@@ -29,16 +37,24 @@ export default function ScannerPage() {
         scannerRef.current = new Html5Qrcode("reader")
       }
 
+      if (scannerRef.current.isScanning) {
+        await scannerRef.current.stop().catch(() => {})
+      }
+
       setIsScanning(true)
       await scannerRef.current.start(
         { facingMode: "environment" },
         { fps: 10, qrbox: { width: 250, height: 250 } },
-        (decodedText: string) => {
-          if (scannerRef.current) {
+        async (decodedText: string) => {
+          if (isProcessingRef.current) return
+          isProcessingRef.current = true
+          
+          if (scannerRef.current && scannerRef.current.getState() === 2) { // 2 = SCANNING
              scannerRef.current.pause(true)
           }
+          
           setToken(decodedText)
-          handleVerify(decodedText)
+          await handleVerify(decodedText)
         },
         (errorMessage: string) => {
           // ignore background scanning errors
@@ -46,7 +62,7 @@ export default function ScannerPage() {
       )
     } catch (err) {
       console.error('Error starting scanner', err)
-      alert('Camera access failed. Please use manual token input.')
+      // We don't alert here so we don't annoy users on desktop without cameras immediately.
       setIsScanning(false)
     }
   }
@@ -62,9 +78,11 @@ export default function ScannerPage() {
   async function handleVerify(tokenToVerify = token) {
     const cleanToken = tokenToVerify.trim()
     if (!cleanToken) return
+    
     setToken(cleanToken)
     setLoading(true)
     setResult(null)
+    
     try {
       const res = await fetch('/api/scanner/lookup', {
         method: 'POST',
@@ -72,9 +90,9 @@ export default function ScannerPage() {
         body: JSON.stringify({ token: cleanToken, eventSlug: 'all' })
       })
       const data = await res.json()
-      setResult(data)
+      setResult({ ...data, isCheckinComplete: false })
     } catch (e: any) {
-      setResult({ outcome: 'ERROR', message: e.message })
+      setResult({ outcome: 'ERROR', message: e.message, isCheckinComplete: false })
     } finally {
       setLoading(false)
     }
@@ -83,6 +101,7 @@ export default function ScannerPage() {
   async function handleCheckin() {
     const cleanToken = token.trim()
     if (!cleanToken) return
+    
     setLoading(true)
     try {
       const res = await fetch('/api/scanner/checkin', {
@@ -91,9 +110,9 @@ export default function ScannerPage() {
         body: JSON.stringify({ token: cleanToken, gate })
       })
       const data = await res.json()
-      setResult(data)
+      setResult({ ...data, isCheckinComplete: true })
     } catch (e: any) {
-      setResult({ outcome: 'ERROR', message: e.message })
+      setResult({ outcome: 'ERROR', message: e.message, isCheckinComplete: true })
     } finally {
       setLoading(false)
     }
@@ -102,118 +121,250 @@ export default function ScannerPage() {
   function handleClear() {
     setToken('')
     setResult(null)
-    if (scannerRef.current && isScanning) {
+    isProcessingRef.current = false
+    if (autoResumeTimer.current) clearTimeout(autoResumeTimer.current)
+    
+    if (scannerRef.current && scannerRef.current.getState() === 3) { // 3 = PAUSED
        scannerRef.current.resume()
-    }
-    if (tokenInputRef.current) {
-      tokenInputRef.current.focus()
+    } else if (scannerRef.current && scannerRef.current.getState() !== 2) {
+       startScanner()
     }
   }
 
   let resultColor = 'var(--muted)'
-  let resultBorder = 'var(--border)'
+  let resultBg = '#ffffff'
   if (result) {
     if (result.outcome === 'VALID' || result.outcome === 'SUCCESS') {
-      resultColor = '#10b981' // green
-      resultBorder = '#10b981'
+      resultColor = '#065f46' // dark green
+      resultBg = '#d1fae5' // light green bg
     } else {
-      resultColor = '#ef4444' // red
-      resultBorder = '#ef4444'
+      resultColor = '#991b1b' // dark red
+      resultBg = '#fee2e2' // light red bg
     }
   }
 
   return (
-    <main className="panel container" data-scanner-page data-event-slug="all" style={{maxWidth: '1300px', margin: '2rem auto', padding: '0', }}>
-      <div className="panel-head" style={{padding: '24px 28px', }}>
-        <div>
-          <p className="section-label">Gate Security &amp; Admissions</p>
-          <h1 style={{fontSize: '2rem', margin: '4px 0 6px', }}>Live Gate Scanner</h1>
-          <p>Validate QR passes via device camera, manual token entry, or quick preset test tokens.</p>
-        </div>
-        <Link className="btn btn-secondary" href="/admin/check-ins">View Check-in History &rarr;</Link>
+    <main className="scanner-app-layout">
+      <div className="scanner-app-header">
+        <a className="btn-back" href="/admin">
+          &larr; Exit
+        </a>
+        <div className="scanner-app-title">Gate Scanner</div>
+        <select value={gate} onChange={(e) => setGate(e.target.value)} className="gate-select">
+          <option value="Gate 1">Gate 1</option>
+          <option value="Gate 2">Gate 2</option>
+        </select>
       </div>
 
-      <div className="screen-grid scanner-grid" style={{padding: '24px 28px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: '24px', }}>
-        
-        <div className="art-panel scanner-stage">
-          <div className="frame-tag">Live Camera Optical Scanner</div>
-          <div className="scene-scanner scanner-shell">
-            <div className="scanner-card">
-              <div className="scanner-brand">
-                <strong>BANGIYA.SAMITI GATE SCANNER</strong>
-                <span>IIIT Hyderabad Bangiya Samiti &bull; Realtime Verification</span>
-              </div>
-              <div className="scan-area" style={{position: 'relative', background: '#1a1614', borderRadius: '18px', overflow: 'hidden', minHeight: '260px', display: 'flex', alignItems: 'center', justifyContent: 'center', }}>
-                <div id="reader" style={{ width: '100%', height: '100%', display: isScanning ? 'block' : 'none' }}></div>
-                {!isScanning && <div style={{ color: '#fff', position: 'absolute' }}>Camera off</div>}
-              </div>
-              <div className="scanner-status" style={{marginTop: '12px', padding: '12px', background: 'rgba(255,255,255,0.7)', borderRadius: '12px', textAlign: 'center', }}>
-                <strong className="scanner-status__title" style={{display: 'block', color: 'var(--brand)', fontSize: '1rem', }}>
-                  {isScanning ? 'SCANNING' : 'READY'}
-                </strong>
-                <span className="scanner-status__body" style={{fontSize: '0.85rem', color: 'var(--muted)', }}>
-                  {isScanning ? 'Point camera at QR code' : 'Press start to request camera access or use manual input.'}
-                </span>
-              </div>
+      <div className="scanner-app-body">
+        <div className="scan-area-full">
+          <div id="reader" style={{ width: '100%', height: '100%', display: isScanning ? 'block' : 'none' }}></div>
+          {!isScanning && (
+            <div className="camera-off-state">
+              <div style={{ marginBottom: '16px' }}>Camera is paused or unavailable</div>
+              <button type="button" className="btn btn-primary" onClick={startScanner}>
+                Tap to Start Camera
+              </button>
             </div>
-            <div className="scanner-controls" style={{display: 'flex', gap: '8px', marginTop: '14px', }}>
-              <button type="button" className="btn btn-primary scanner-start" style={{flex: '1', }} onClick={startScanner} disabled={isScanning}>📷 Start Camera</button>
-              <button type="button" className="btn btn-secondary scanner-stop" onClick={stopScanner} disabled={!isScanning}>Stop</button>
-              <button type="button" className="btn btn-secondary scanner-reset" onClick={handleClear}>Clear</button>
+          )}
+        </div>
+      </div>
+
+      {loading && (
+        <div className="scanner-loading-overlay">
+          <div className="spinner"></div>
+          <p style={{ marginTop: '16px', color: 'white', fontWeight: 'bold' }}>Processing...</p>
+        </div>
+      )}
+
+      {result && !loading && (
+        <div className="scanner-result-overlay" onClick={handleClear}>
+          <div className="scanner-result-popup" style={{ backgroundColor: resultBg, border: `2px solid ${resultColor}` }} onClick={(e) => e.stopPropagation()}>
+            <h2 style={{ color: resultColor, fontSize: '1.8rem', margin: '0 0 8px' }}>
+              {result.outcome === 'VALID' || result.outcome === 'SUCCESS' ? '✓ VALID PASS' : '✕ DENIED'}
+            </h2>
+            <h3 style={{ margin: '0 0 12px', fontSize: '1.4rem', color: '#111' }}>
+              {result.participantName || result.outcome}
+            </h3>
+            <p style={{ margin: '0 0 16px', fontSize: '1.1rem', color: '#333' }}>
+              {result.isCheckinComplete ? '✓ Attendee successfully checked in!' : result.message}
+            </p>
+            
+            {result.ticket && (
+              <div className="scanner-meta-pills">
+                <span className="pill">{result.ticket.event?.name || result.ticket.eventName}</span>
+                <span className="pill">{result.ticket.college_id ? `ID: ${result.ticket.college_id}` : 'Guest'}</span>
+                <span className="pill">{String(result.ticket.token).slice(0, 16)}</span>
+                <span className="pill">{result.ticket.status}</span>
+              </div>
+            )}
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '24px' }}>
+              {(result.outcome === 'VALID' || result.outcome === 'SUCCESS') && !result.isCheckinComplete && (
+                <button className="btn btn-primary" style={{ width: '100%', padding: '14px', fontSize: '1.1rem' }} onClick={handleCheckin}>
+                  Confirm Check-in &rarr;
+                </button>
+              )}
+              <button className="btn btn-secondary" style={{ width: '100%', padding: '14px' }} onClick={handleClear}>
+                Continue Scanning
+              </button>
             </div>
           </div>
         </div>
+      )}
 
+      <style jsx global>{`
+        body, html {
+          overflow: hidden !important;
+          height: 100dvh !important;
+          width: 100vw !important;
+        }
+        #__next, .home-strip {
+          /* Ensure header doesn't push us off screen */
+        }
         
-        <div className="scanner-detail" style={{padding: '0', }}>
-          <div className="panel" style={{marginTop: '0', background: 'rgba(255,255,255,0.8)', borderRadius: '22px', border: '1px solid var(--border)', }}>
-            <div className="panel-head" style={{padding: '18px 22px', }}>
-              <div>
-                <p className="section-label">Manual / Preset Verification</p>
-                <h2 style={{fontSize: '1.35rem', margin: '2px 0', }}>Pass Lookup &amp; Gate Entry</h2>
-              </div>
-            </div>
+        .scanner-app-layout {
+          display: flex;
+          flex-direction: column;
+          height: calc(100dvh - 48px); /* Account for navbar */
+          background: #000;
+          position: relative;
+        }
+        
+        .scanner-app-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 12px 16px;
+          background: rgba(20, 20, 20, 0.9);
+          color: white;
+          z-index: 10;
+        }
+        
+        .scanner-app-title {
+          font-weight: bold;
+          font-size: 1.1rem;
+          letter-spacing: 0.05em;
+        }
+        
+        .btn-back {
+          color: white;
+          text-decoration: none;
+          font-weight: 500;
+          background: rgba(255,255,255,0.1);
+          padding: 6px 12px;
+          border-radius: 6px;
+        }
+        
+        .gate-select {
+          background: rgba(255,255,255,0.1);
+          color: white;
+          border: 1px solid rgba(255,255,255,0.3);
+          padding: 6px 12px;
+          border-radius: 6px;
+          font-size: 0.9rem;
+        }
+        
+        .scanner-app-body {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          position: relative;
+          background: #111;
+        }
+        
+        .scan-area-full {
+          position: absolute;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        
+        #reader {
+          width: 100% !important;
+          height: 100% !important;
+        }
+        
+        #reader video {
+          object-fit: cover !important;
+          width: 100% !important;
+          height: 100% !important;
+        }
+        
+        .camera-off-state {
+          color: white;
+          text-align: center;
+          padding: 24px;
+        }
+        
+        .scanner-result-overlay {
+          position: absolute;
+          inset: 0;
+          background: rgba(0,0,0,0.7);
+          backdrop-filter: blur(4px);
+          z-index: 100;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 24px;
+          animation: fadeIn 0.2s ease-out forwards;
+        }
+        
+        .scanner-result-popup {
+          background: white;
+          border-radius: 24px;
+          padding: 32px 24px;
+          width: 100%;
+          max-width: 400px;
+          text-align: center;
+          box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+          animation: scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        
+        .scanner-meta-pills {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+          justify-content: center;
+          margin-top: 16px;
+        }
+        
+        .scanner-loading-overlay {
+          position: absolute;
+          inset: 0;
+          background: rgba(0,0,0,0.85);
+          backdrop-filter: blur(6px);
+          z-index: 200;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+        }
+        
+        .spinner {
+          width: 50px;
+          height: 50px;
+          border: 4px solid rgba(255,255,255,0.3);
+          border-radius: 50%;
+          border-top-color: white;
+          animation: spin 1s ease-in-out infinite;
+        }
 
-            <div className="section" style={{padding: '18px 22px', }}>
-              <div className="field-grid" style={{gridTemplateColumns: '2fr 1fr', gap: '12px', }}>
-                <div className="field">
-                  <label htmlFor="scanner-token">Pass Token</label>
-                  <input ref={tokenInputRef} id="scanner-token" value={token} onChange={(e) => setToken(e.target.value)} placeholder="Paste or type token (e.g. MBH-DEMO-001)" />
-                </div>
-                <div className="field">
-                  <label htmlFor="scanner-gate">Gate Number</label>
-                  <input id="scanner-gate" value={gate} onChange={(e) => setGate(e.target.value)} placeholder="Gate 1" />
-                </div>
-              </div>
-
-              <div className="row-actions" style={{display: 'flex', gap: '10px', marginTop: '14px', }}>
-                <button className="btn btn-secondary scanner-lookup" type="button" style={{flex: '1', }} onClick={() => handleVerify()} disabled={loading || !token}>Verify Pass</button>
-                <button className="btn btn-primary scanner-checkin" type="button" style={{flex: '1.4', }} onClick={handleCheckin} disabled={loading || !token}>✓ Check In Attendee</button>
-              </div>
-
-              
-              <div className="result-card scanner-detailCard" style={{marginTop: '18px', padding: '18px', borderRadius: '18px', border: `2px solid ${resultBorder}`, background: '#fff', transition: 'all 0.25s ease', }}>
-                <h3 className="result-title scanner-resultName" style={{margin: '0 0 6px', fontSize: '1.25rem', color: resultColor }}>
-                  {result ? (result.participantName || result.outcome) : 'Participant'}
-                </h3>
-                <p className="result-copy scanner-message" style={{margin: '0 0 14px', color: 'var(--muted)', fontSize: '0.95rem', }}>
-                  {result ? result.message : 'Enter or scan a pass token above to inspect validity.'}
-                </p>
-                {result && result.ticket && (
-                  <div className="meta-row" style={{display: 'flex', gap: '8px', flexWrap: 'wrap', }}>
-                    <span className="pill scanner-resultPill">{result.ticket.event?.name || result.ticket.eventName}</span>
-                    <span className="pill scanner-resultPill">{result.ticket.college_id ? `ID: ${result.ticket.college_id}` : 'Guest'}</span>
-                    <span className="pill scanner-resultPill">{String(result.ticket.token).slice(0, 16)}</span>
-                    <span className="pill scanner-resultPill">{result.ticket.status}</span>
-                    <span className="pill scanner-resultPill">{result.ticket.venue || result.ticket.event?.venue}</span>
-                    <span className="pill scanner-resultPill">{gate}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+        
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        
+        @keyframes scaleUp {
+          from { transform: scale(0.9); opacity: 0; }
+          to { transform: scale(1); opacity: 1; }
+        }
+      `}</style>
     </main>
   )
 }

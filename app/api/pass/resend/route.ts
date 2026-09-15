@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     let { data: tickets, error } = await supabase
       .from('tickets')
       .select('*')
-      .or(`token.eq."${cleanQuery}",college_id.eq."${cleanQuery}",email.ilike."${cleanQuery}",phone.eq."${cleanQuery}"`)
+      .or(`token.eq."${cleanQuery}",college_id.eq."${cleanQuery}",email.ilike."${cleanQuery}",phone.ilike."%${cleanQuery}%"`)
       .order('created_at', { ascending: false })
 
     if (error || !tickets || tickets.length === 0) {

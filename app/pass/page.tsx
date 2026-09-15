@@ -18,6 +18,8 @@ type Ticket = {
   status: string
   createdAt: string
   verificationSubmittedAt: string
+  numPasses?: number
+  allTokens?: string[]
 }
 
 function formatDate(iso: string) {
@@ -102,7 +104,7 @@ export default function PassVerifyPage() {
             <div className="verification-body">
               <form className="verification-form" onSubmit={handleSubmit} noValidate>
                 <div className="verification-field">
-                  <label htmlFor="verification-query"><span>Phone Number or Pass Token <span className="required-star">*</span></span></label>
+                  <label htmlFor="verification-query"><span>Phone Number or Reference Number <span className="required-star">*</span></span></label>
                   <input type="text" id="verification-query" name="query" className="verification-input" placeholder="e.g. 9876543210 or UTSAV-XYZ-123" required autoComplete="off" value={query} onChange={(e) => setQuery(e.target.value)} />
                   <span className="verification-hint">Enter the information you provided during your event pass registration.</span>
                 </div>
@@ -159,12 +161,12 @@ export default function PassVerifyPage() {
 
                       <table className="verification-meta-table">
                         <tbody>
-                          <tr><td>Registration ID</td><td><code>{ticket.token}</code></td></tr>
+                          <tr><td>Registration ID</td><td><code>{ticket.token}</code> {ticket.numPasses && ticket.numPasses > 1 && <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>(+{ticket.numPasses - 1} more passes)</span>}</td></tr>
                           <tr><td>Attendee Name</td><td><strong>{ticket.participantName}</strong></td></tr>
                           <tr><td>Registered Email</td><td>{ticket.email}</td></tr>
                           <tr><td>Event &amp; Venue</td><td>{ticket.eventName} ({ticket.venue})</td></tr>
                           <tr><td>Submitted UTR / Ref</td><td><strong>{ticket.utr}</strong></td></tr>
-                          <tr><td>Expected Amount</td><td>{formatCurrency(ticket.amount)}</td></tr>
+                          <tr><td>Expected Amount</td><td>{formatCurrency(ticket.amount)} {ticket.numPasses && ticket.numPasses > 1 && <span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>(for {ticket.numPasses} passes)</span>}</td></tr>
                           <tr><td>Submission Timestamp</td><td>{formatDate(ticket.verificationSubmittedAt || ticket.createdAt)}</td></tr>
                         </tbody>
                       </table>

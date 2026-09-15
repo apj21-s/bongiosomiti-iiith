@@ -5,16 +5,14 @@ export const revalidate = 0
 
 export default function AdminCheckinsPage() {
   return (
-    <main className="panel container" data-admin-checkins style={{ maxWidth: '1300px', margin: '2rem auto', padding: '0' }}>
-      <div className="panel-head" style={{ padding: '24px 28px' }}>
+    <main className="admin-page-content" data-admin-checkins>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
         <div>
-          <p className="section-label">Security &amp; Gate Audit</p>
-          <h1 style={{ fontSize: '2rem', margin: '4px 0 6px' }}>Gate Check-in Logs</h1>
-          <p>Real-time audit log of all passes redeemed at college entry gates and celebration courtyards.</p>
+          <h1 style={{ fontSize: '2rem', margin: 0, lineHeight: 1.2, letterSpacing: '-0.03em', color: '#1a202c' }}>Check-in Logs</h1>
         </div>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <Link className="btn btn-primary" href="/admin/scanner">Open Scanner &rarr;</Link>
-          <Link className="btn btn-secondary" href="/admin">Dashboard &rarr;</Link>
+        <div style={{ flexShrink: 0, display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+          <Link className="btn btn-primary" style={{ whiteSpace: 'nowrap' }} href="/admin/scanner">Open Scanner &rarr;</Link>
+          <Link className="btn btn-secondary" style={{ whiteSpace: 'nowrap' }} href="/admin">Dashboard &rarr;</Link>
         </div>
       </div>
 
