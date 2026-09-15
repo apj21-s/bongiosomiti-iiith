@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 
 type Photo = {
   src: string
@@ -131,7 +132,7 @@ export default function PhotoAlbum() {
         </div>
       </div>
 
-      {active !== null && (
+      {active !== null && typeof document !== 'undefined' && createPortal(
         <div className="story-lightbox is-open" role="dialog" aria-modal="true" aria-label="Photo album viewer">
           <div className="story-lightbox__container" role="document">
             {/* Top Smart Bar */}
@@ -151,14 +152,6 @@ export default function PhotoAlbum() {
 
               <div className="story-lightbox__actions">
                 <span className="story-lightbox__counter">{toBn(active + 1)} / {toBn(total)}</span>
-
-                <a className="story-lightbox__action-btn story-lightbox__download" href={PHOTOS[active].src} download aria-label="Download high resolution photo" title="Download Photo">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="7 10 12 15 17 10" />
-                    <line x1="12" y1="15" x2="12" y2="3" />
-                  </svg>
-                </a>
 
                 <button
                   type="button"
@@ -215,7 +208,7 @@ export default function PhotoAlbum() {
                     type="button"
                     role="tab"
                     aria-selected={active === index}
-                    className={`story-lightbox__film-thumb ${active === index ? 'is-active' : ''}`}
+                    className={`story-lightbox__thumb ${active === index ? 'is-active' : ''}`}
                     onClick={() => openLightbox(index)}
                   >
                     <img src={photo.src} alt={photo.title} loading="lazy" />
@@ -224,7 +217,8 @@ export default function PhotoAlbum() {
               </div>
             </footer>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   )

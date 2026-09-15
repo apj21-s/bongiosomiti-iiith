@@ -98,7 +98,9 @@ export default function SiteFooter({ variant = 'public' }: SiteFooterProps) {
             )}
           </p>
           <p className="utsav-footer__quote">
-            বারো মাসে তেরো পার্বণ, এটাই তো খাঁটি বাঙালি জীবন   ||   বাঙালি শুধু একটা জাতি নয়, বাঙালি একটা আবেগ
+            <span className="utsav-footer__quote-part">বারো মাসে তেরো পার্বণ, এটাই তো খাঁটি বাঙালি জীবন</span>
+            <span className="utsav-footer__quote-separator" aria-hidden="true">||</span>
+            <span className="utsav-footer__quote-part">বাঙালি শুধু একটা জাতি নয়, বাঙালি একটা আবেগ</span>
           </p>
         </div>
       </div>

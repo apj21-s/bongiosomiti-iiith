@@ -15,6 +15,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Noto+Serif+Bengali:wght@500;700&family=Tiro+Bangla:ital@0;1&display=swap"
+          rel="stylesheet"
+        />
+        <link rel="preload" as="image" href="/assets/autumn-landscape.webp" fetchPriority="high" />
+      </head>
       <body>
         <UtsavLoader />
         <ScrollReveal />

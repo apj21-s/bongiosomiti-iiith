@@ -27,16 +27,6 @@ export default function CrossfadeVideo() {
       entries.forEach(entry => {
         if (entry.isIntersecting && !isLoaded) {
           setIsLoaded(true)
-          const onReady = () => {
-            video1.play().catch(() => {})
-          }
-          video1.addEventListener("canplay", onReady, { once: true })
-          
-          if (!video1.src) video1.src = "/assets/Animate_Bengali_Puja_courtyard_opt_small.mp4"
-          if (!video2.src) video2.src = "/assets/Animate_Bengali_Puja_courtyard_opt_small.mp4"
-          
-          video1.load()
-          video2.load()
         }
       })
     }, { rootMargin: "200px" })
@@ -44,6 +34,22 @@ export default function CrossfadeVideo() {
     observer.observe(video1)
     
     return () => observer.disconnect()
+  }, [isLoaded])
+
+  // Call load() and play() only AFTER isLoaded is true and the DOM has updated
+  useEffect(() => {
+    if (!isLoaded) return
+    const video1 = video1Ref.current
+    const video2 = video2Ref.current
+    if (!video1 || !video2) return
+
+    const onReady = () => {
+      video1.play().catch(() => {})
+    }
+    video1.addEventListener("canplay", onReady, { once: true })
+    
+    video1.load()
+    video2.load()
   }, [isLoaded])
   
   const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
@@ -86,7 +92,16 @@ export default function CrossfadeVideo() {
         muted
         playsInline
         onTimeUpdate={handleTimeUpdate}
-      />
+        aria-label="Bengali Puja Courtyard Celebration"
+      >
+        {isLoaded && (
+          <>
+            <source src="/assets/Animate_Bengali_Puja_courtyard_opt.webm" type="video/webm" />
+            <source src="/assets/Animate_Bengali_Puja_courtyard_opt_small.mp4" type="video/mp4" />
+            <track kind="captions" src="/assets/captions.vtt" srcLang="en" label="English Captions" />
+          </>
+        )}
+      </video>
       <video
         ref={video2Ref}
         className={`events-scene__hero-video events-scene__hero-video--2 ${
@@ -98,7 +113,16 @@ export default function CrossfadeVideo() {
         muted
         playsInline
         onTimeUpdate={handleTimeUpdate}
-      />
+        aria-hidden="true"
+      >
+        {isLoaded && (
+          <>
+            <source src="/assets/Animate_Bengali_Puja_courtyard_opt.webm" type="video/webm" />
+            <source src="/assets/Animate_Bengali_Puja_courtyard_opt_small.mp4" type="video/mp4" />
+            <track kind="captions" src="/assets/captions.vtt" srcLang="en" label="English Captions" />
+          </>
+        )}
+      </video>
     </>
   )
 }

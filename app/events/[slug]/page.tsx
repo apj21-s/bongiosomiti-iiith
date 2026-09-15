@@ -1,9 +1,21 @@
 import { notFound } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
+import Image from 'next/image'
 import SiteHeader from '@/components/site-header'
 import SiteFooter from '@/components/site-footer'
 import MenuCardModal from '@/components/menu-card-modal'
 import RegistrationForm from './RegistrationForm'
+import fs from 'fs'
+import path from 'path'
+
+// Force copy assets
+try {
+  const src = path.join(process.cwd(), 'Mahalaya_Registration_Assets_CLEAN_FINAL (2)');
+  const dest = path.join(process.cwd(), 'public', 'mahalaya_registration_assets');
+  if (fs.existsSync(src)) {
+    fs.cpSync(src, dest, { recursive: true, force: true });
+  }
+} catch (e) {}
 
 export default async function EventDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
@@ -43,7 +55,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
                   { img: '/assets/saraswati-card-adda.png', variant: 'adda', time: '05:30 PM — 08:00 PM', title: 'Sandhya Aarti & Adda', desc: 'Dhunuchi Aarti, sitar & flute recitals, Rabindra Sangeet & campus cultural adda.', loc: 'Amphitheatre & Open Stage' },
                 ].map((panel) => (
                   <article key={panel.title} className={`saraswati-programme-panel saraswati-programme-panel--${panel.variant}`}>
-                    <img className="saraswati-programme-panel__artwork" src={panel.img} alt={panel.title} loading="lazy" decoding="async" />
+                    <img className="saraswati-programme-panel__artwork" src={panel.img} alt={panel.title} width={panel.variant === 'adda' ? 342 : 341} height={136} loading="lazy" decoding="async" />
                     <div className="saraswati-programme-panel__scrim" aria-hidden="true"></div>
                     <div className="saraswati-programme-panel__content">
                       <time className="saraswati-programme-panel__time">{panel.time}</time>
@@ -68,6 +80,11 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
               className={isMahalaya ? 'mahalaya-card__heroImage' : 'saraswati-card__heroImage'}
               src={heroImage}
               alt={event.name}
+              width={isMahalaya ? 1264 : 544}
+              height={isMahalaya ? 848 : 880}
+              loading="eager"
+              fetchPriority="high"
+              decoding="async"
             />
             <div className={isMahalaya ? 'mahalaya-card__heroBlend' : 'saraswati-card__heroBlend'} aria-hidden="true"></div>
             <div className={isMahalaya ? 'mahalaya-card__heroRibbon' : 'saraswati-card__heroRibbon'} aria-hidden="true">
@@ -103,34 +120,35 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
                 )}
               </div>
 
-              <div className={isMahalaya ? 'mahalaya-payment-box' : 'saraswati-payment-box mahalaya-payment-box'}>
-                <div className={isMahalaya ? 'mahalaya-payment-box__header' : 'saraswati-payment-box__header mahalaya-payment-box__header'}>
-                  <span className={isMahalaya ? 'mahalaya-payment-box__icon' : 'saraswati-payment-box__icon mahalaya-payment-box__icon'}>💳</span>
-                  <strong className={isMahalaya ? 'mahalaya-payment-box__title' : 'saraswati-payment-box__title mahalaya-payment-box__title'}>Payment Instructions</strong>
-                </div>
-                <div className={isMahalaya ? 'mahalaya-payment-box__content' : 'saraswati-payment-box__content mahalaya-payment-box__content'}>
-                  {isFree ? (
-                    <p>This event is <strong>free entry</strong>. Complete the registration form to receive your digital pass.</p>
-                  ) : (
-                    <>
-                      <p><strong>Step 1:</strong> Pay <strong>₹250 / pass</strong> via UPI to: <code className={isMahalaya ? 'mahalaya-payment-box__upi' : 'saraswati-payment-box__upi mahalaya-payment-box__upi'}>bangiya.samiti.iith@okhdfcbank</code></p>
-                      <p><strong>Step 2:</strong> Copy your 12-digit UPI UTR / Transaction ID.</p>
-                      <p><strong>Step 3:</strong> Fill in the registration form on the right and submit. Your verified QR Pass will be dispatched to your email.</p>
-                    </>
-                  )}
-                </div>
-              </div>
+              <div className="events-extras-row">
 
-              <MenuCardModal slug={event.slug} />
+                <MenuCardModal slug={event.slug} />
+              </div>
             </div>
 
-            <div className={isMahalaya ? 'mahalaya-card__formPane' : 'saraswati-card__formPane'} id="registration-form-container">
-              <div className={isMahalaya ? 'mahalaya-card__formHeader' : 'saraswati-card__formHeader'}>
-                <h2 className={isMahalaya ? 'mahalaya-card__registerLabel' : 'saraswati-card__registerLabel'}>Register for {event.name}</h2>
-                <p className={isMahalaya ? 'mahalaya-card__registerSub' : 'saraswati-card__registerSub'}>Quick 1-Minute Registration &bull; Instant QR Pass Dispatched</p>
-              </div>
+            <div className={`${isMahalaya ? 'mahalaya-card__formPane' : 'saraswati-card__formPane saraswati-card__formPane--locked'}`} id="registration-form-container">
+              {!isMahalaya && (
+                <div className="saraswati-card__formLockedBg" style={{ backgroundImage: "url('/assets/saraswati-puja.webp')" }}></div>
+              )}
+              
+
 
               <RegistrationForm event={event} />
+
+              {!isMahalaya && (
+                <div className="saraswati-form-lock-overlay">
+                  <div className="saraswati-form-lock-content">
+                    <div className="saraswati-form-lock-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                      </svg>
+                    </div>
+                    <h4 className="saraswati-form-lock-title">Registrations Opening Soon</h4>
+                    <p className="saraswati-form-lock-desc">Stay tuned!</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </section>

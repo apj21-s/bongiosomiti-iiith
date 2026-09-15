@@ -1,0 +1,11 @@
+01-06  Header / progress / ornamentation
+07-12  Association artwork
+13-18  Buttons
+19-22  Pass / payment controls
+23-29  Form / upload / verification
+30-34  QR / UPI / confirmation
+35-36  Bottom decoration
+37-39  Individual UPI provider icons
+
+All PNGs are RGBA with transparent outer background.
+No filename labels, reference annotations, or screen-sequence thumbnails are included.

@@ -1,0 +1,165 @@
+.reg-shell {
+  position: relative;
+  width: 100%;
+  max-width: 1000px; /* Greatly expanded desktop width as requested */
+  aspect-ratio: 1/1;
+  margin: 0 auto;
+  box-sizing: border-box;
+  container-type: inline-size;
+  font-family: 'Inter', sans-serif;
+  color: #3e2723;
+  background: #fdfaf3; /* Solid background prevents orange container bleed */
+  overflow: hidden; 
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+  border: 2px solid #dcb796;
+}
+
+/* Corner Ornaments */
+.reg-corner-tl { position: absolute; top: 3cqw; left: 3cqw; width: 6cqw; z-index: 2; pointer-events: none; }
+.reg-corner-tr { position: absolute; top: 3cqw; right: 3cqw; width: 6cqw; z-index: 2; pointer-events: none; }
+
+/* Bottom Landscape Layer */
+.reg-bottom-decor {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.reg-landscape-img { width: 100%; height: auto; object-fit: contain; }
+.reg-bengali-footer { position: absolute; bottom: 3cqw; width: 25cqw; height: auto; object-fit: contain; }
+
+.reg-content-wrapper {
+  position: relative;
+  z-index: 10;
+  padding: 8cqw 10cqw 15cqw 10cqw; /* Extra bottom padding for landscape */
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.reg-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 4cqw;
+}
+
+.reg-header-titles {
+  display: flex;
+  flex-direction: column;
+}
+
+.reg-title-main { height: 5cqw; object-fit: contain; transform-origin: left; }
+.reg-title-bengali { height: 8cqw; object-fit: contain; transform-origin: right; }
+.reg-subtitle { font-size: 2.2cqw; color: #8b3a2b; margin-top: 1cqw; line-height: 1.2; font-weight: 500; }
+
+.reg-stepper { display: flex; justify-content: space-between; position: relative; margin-bottom: 2cqw; }
+.reg-stepper-line { position: absolute; top: 2cqw; left: 0; right: 0; height: 1px; background: #dcb796; z-index: -1; }
+.reg-step { display: flex; flex-direction: column; align-items: center; gap: 0.5cqw; }
+.reg-step-circle { width: 4cqw; height: 4cqw; border-radius: 50%; background: #fdfaf3; border: 1px solid #dcb796; display: flex; align-items: center; justify-content: center; font-size: 1.8cqw; font-weight: bold; }
+.reg-step.active .reg-step-circle { background: #8b3a2b; color: white; border-color: #8b3a2b; }
+.reg-step.past .reg-step-circle { background: #d48806; color: white; border-color: #d48806; }
+.reg-step-label { font-size: 1.6cqw; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; color: #8b3a2b; }
+
+.reg-floral-divider { width: 100%; height: auto; margin-bottom: 4cqw; }
+
+.reg-step-container {
+  flex-grow: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.reg-h3 { font-size: 4cqw; font-weight: 800; color: #3e2723; text-align: center; margin-bottom: 1cqw; letter-spacing: 0.05em; }
+.reg-p { font-size: 2.5cqw; color: #6d4c41; text-align: center; margin-bottom: 4cqw; font-weight: 500; }
+
+.reg-radio-cards { display: flex; flex-direction: column; gap: 3cqw; width: 100%; padding: 0 2cqw; box-sizing: border-box; }
+.reg-radio-card { position: relative; width: 100%; height: 12cqw; cursor: pointer; display: flex; align-items: center; transition: transform 0.2s; background: url('/mahalaya_registration_assets/08_option_guest.png') center/100% 100% no-repeat; }
+.reg-radio-card:hover { transform: translateY(-2px); }
+.reg-radio-card.selected { background-image: url('/mahalaya_registration_assets/07_option_community_selected.png'); }
+.reg-radio-card input { position: absolute; opacity: 0; }
+.reg-radio-content { position: absolute; left: 4cqw; font-size: 2.8cqw; font-weight: 700; display: flex; align-items: center; gap: 2cqw; color: #3e2723; z-index: 2; }
+.reg-radio-dot { width: 3cqw; height: 3cqw; border: 2px solid #8b3a2b; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #fdfaf3; }
+.reg-radio-card.selected .reg-radio-dot::after { content: ""; display: block; width: 1.6cqw; height: 1.6cqw; background: #8b3a2b; border-radius: 50%; }
+
+.reg-radio-illustration { position: absolute; right: 4cqw; height: 60%; width: 25cqw; pointer-events: none; }
+.building-illus { height: 90%; right: 5cqw; background: url('/mahalaya_registration_assets/09_illustration_iit_building.png') right center/contain no-repeat; }
+.guest-illus { background: url('/mahalaya_registration_assets/10_illustration_guest_icon.png') right center/contain no-repeat; }
+
+.reg-actions { position: absolute; bottom: 0; left: 0; right: 0; display: flex; justify-content: flex-end; align-items: flex-end; }
+.reg-actions.dual { justify-content: space-between; }
+.reg-btn-continue { background: url('/mahalaya_registration_assets/13_button_continue.png') center/contain no-repeat; border: none; width: 28cqw; height: 8cqw; color: transparent; cursor: pointer; }
+.reg-btn-back { background: url('/mahalaya_registration_assets/14_button_back.png') center/contain no-repeat; border: none; width: 12cqw; height: 6cqw; color: transparent; cursor: pointer; }
+
+/* 2-Column Grid & Inputs */
+.reg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3cqw 5cqw; }
+.reg-field { display: flex; flex-direction: column; gap: 0.5cqw; }
+.reg-field.full { grid-column: 1 / -1; }
+.reg-field label { font-size: 2cqw; font-weight: 700; color: #8b3a2b; text-transform: uppercase; letter-spacing: 0.05em; }
+
+.reg-input-wrapper { position: relative; width: 100%; height: 6cqw; }
+.reg-input-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+.reg-input-wrapper input, .reg-input-wrapper select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 0 3cqw;
+  font-family: inherit;
+  font-size: 2.2cqw;
+  color: #3e2723;
+  box-sizing: border-box;
+}
+
+.reg-counter-inner { position: absolute; inset: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 2cqw; }
+.reg-counter-inner button { background: transparent; border: none; cursor: pointer; font-size: 3cqw; color: #8b3a2b; font-weight: bold; width: 4cqw; height: 4cqw; }
+.reg-counter-inner input { position: static; width: 6cqw; height: 4cqw; text-align: center; font-weight: bold; padding: 0; }
+
+.reg-error { color: #d32f2f; font-size: 2.2cqw; text-align: center; font-weight: bold; margin-top: 2cqw; }
+
+/* Payment specific */
+.reg-pay-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4cqw; margin-bottom: 4cqw; }
+.reg-pay-box { position: relative; width: 100%; aspect-ratio: 3/1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.reg-pay-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; z-index: -1; }
+.reg-pay-inner { display: flex; flex-direction: column; align-items: center; z-index: 2; }
+.reg-pay-inner .label { font-size: 2cqw; color: #fff; text-transform: uppercase; font-weight: 700; }
+.reg-pay-inner .val { font-size: 4cqw; color: #fff; font-weight: 800; }
+
+.reg-coupon { position: relative; display: flex; align-items: center; padding: 1cqw 3cqw; box-sizing: border-box; }
+.reg-coupon input { position: relative; z-index: 2; border: none; background: transparent; outline: none; font-size: 2.2cqw; flex-grow: 1; color: #3e2723; font-weight: 600; }
+.reg-coupon button { position: relative; z-index: 2; border: none; background: transparent; color: #8b3a2b; font-weight: 800; font-size: 2.2cqw; cursor: pointer; }
+
+.reg-upi-section { display: flex; gap: 4cqw; align-items: center; justify-content: center; }
+.reg-qr img { width: 18cqw; height: 18cqw; }
+.reg-upi-details { position: relative; width: 30cqw; aspect-ratio: 4/1; display: flex; align-items: center; justify-content: center; }
+.reg-upi-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.reg-upi-inner { position: relative; z-index: 2; display: flex; align-items: center; gap: 2cqw; }
+.reg-upi-inner strong { font-size: 2.2cqw; color: #3e2723; }
+.reg-upi-inner button { background: #8b3a2b; color: white; border: none; border-radius: 4px; padding: 0.5cqw 1cqw; font-size: 1.8cqw; font-weight: bold; cursor: pointer; }
+
+.reg-upload-area { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 15cqw; box-sizing: border-box; margin-top: 2cqw; }
+.reg-upload-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+.reg-upload-area input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; z-index: 3; }
+.reg-upload-preview-img { position: relative; z-index: 2; height: 10cqw; border-radius: 4px; object-fit: cover; }
+
+.reg-confirm { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; height: 100%; z-index: 10; }
+.reg-confirm img { width: 15cqw; margin-bottom: 2cqw; }
+.reg-confirm p { font-size: 3cqw; font-weight: bold; color: #8b3a2b; margin-bottom: 4cqw; }
+.reg-confirm button { background: url('/mahalaya_registration_assets/18_button_go_home.png') center/contain no-repeat; width: 28cqw; height: 8cqw; color: transparent; border: none; cursor: pointer; }
+
+/* Responsive reflow for mobile */
+@container (max-width: 600px) {
+  .reg-grid { grid-template-columns: 1fr; gap: 4cqw; }
+  .reg-input-wrapper { height: 10cqw; }
+  .reg-pay-grid { grid-template-columns: 1fr; gap: 4cqw; }
+}
