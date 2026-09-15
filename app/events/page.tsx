@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { createClient } from '@/utils/supabase/server'
+import { staticEvents } from '@/utils/data/events'
 import SiteHeader from '@/components/site-header'
 import SiteFooter from '@/components/site-footer'
 import PujaVideo from '@/components/puja-video'
@@ -7,14 +7,7 @@ import PujaVideo from '@/components/puja-video'
 export const revalidate = 0
 
 export default async function EventsPage() {
-  const supabase = await createClient()
-  const { data: events } = await supabase
-    .from('events')
-    .select('*')
-    .eq('status', 'OPEN')
-    .order('event_date', { ascending: true })
-
-  const activeEvents: any[] = events || []
+  const activeEvents = staticEvents.filter(e => e.status === 'OPEN').sort((a, b) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime())
 
   return (
     <main className="events-page" style={{ paddingTop: '1.5rem' }}>

@@ -1,12 +1,11 @@
 import Link from 'next/link'
-import { createServiceRoleClient } from '@/utils/supabase/server'
+import { staticEvents } from '@/utils/data/events'
 import RegistrationsClient from './RegistrationsClient'
 
 export const revalidate = 0
 
 export default async function AdminRegistrationsPage() {
-  const supabase = await createServiceRoleClient()
-  const { data: events } = await supabase.from('events').select('slug, name')
+  const events = staticEvents.map(e => ({ slug: e.slug, name: e.name }))
 
   return (
     <main className="panel container" data-admin-registrations style={{ maxWidth: '1300px', margin: '2rem auto', padding: '0' }}>

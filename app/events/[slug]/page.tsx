@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { createClient } from '@/utils/supabase/server'
+import { getEventBySlug } from '@/utils/data/events'
 import Image from 'next/image'
 import SiteHeader from '@/components/site-header'
 import SiteFooter from '@/components/site-footer'
@@ -19,12 +19,7 @@ try {
 
 export default async function EventDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const supabase = await createClient()
-  const { data: event } = await supabase
-    .from('events')
-    .select('*')
-    .eq('slug', slug)
-    .single()
+  const event = getEventBySlug(slug)
 
   if (!event) {
     notFound()

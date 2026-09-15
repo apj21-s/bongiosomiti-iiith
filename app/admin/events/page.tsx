@@ -1,15 +1,11 @@
 import Link from 'next/link'
-import { createServiceRoleClient } from '@/utils/supabase/server'
+import { staticEvents } from '@/utils/data/events'
 import EventsTable from './EventsTable'
 
 export const revalidate = 0
 
 export default async function AdminEventsPage() {
-  const supabase = await createServiceRoleClient()
-  const { data: events } = await supabase
-    .from('events')
-    .select('*')
-    .order('created_at', { ascending: false })
+  const events = staticEvents
 
   return (
     <main className="panel container" data-admin-events style={{ maxWidth: '1300px', margin: '2rem auto', padding: '0' }}>
@@ -20,7 +16,6 @@ export default async function AdminEventsPage() {
           <p>Configure event listings, monitor booking capacity, manage ticket pricing, and open public pages.</p>
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
-          <Link className="btn btn-primary" href="/admin/events/new">+ Create New Event</Link>
           <Link className="btn btn-secondary" href="/admin">Dashboard &rarr;</Link>
         </div>
       </div>

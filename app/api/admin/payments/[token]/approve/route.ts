@@ -2,6 +2,7 @@ import { getCurrentUser } from '@/utils/auth/server'
 import { NextResponse } from 'next/server'
 import { createServiceRoleClient, createClient } from '@/utils/supabase/server'
 import { sendQRPassEmail } from '@/utils/email'
+import { getEventById } from '@/utils/data/events'
 
 export async function POST(
   request: Request,
@@ -42,7 +43,7 @@ export async function POST(
   const tokens = updatedTickets.map((t: any) => t.token)
   const primaryTicket = updatedTickets[0]
 
-  const { data: event } = await supabase.from('events').select('name').eq('id', primaryTicket.event_id).single()
+  const event = getEventById(primaryTicket.event_id)
   if (event) {
     await sendQRPassEmail(primaryTicket.email, primaryTicket.participant_name, event.name, tokens).catch(e => console.error('Failed to send email:', e))
   }

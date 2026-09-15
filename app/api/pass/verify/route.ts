@@ -11,7 +11,7 @@ export async function POST(request: Request) {
     const json = await request.json()
     const result = passVerifySchema.safeParse(json)
     if (!result.success) {
-      return NextResponse.json({ error: 'Please provide a valid College ID, Email, Phone, or Pass Token.' }, { status: 400 })
+      return NextResponse.json({ error: 'Please provide a valid Phone Number or Pass Token.' }, { status: 400 })
     }
 
     const query = result.data.query.trim()
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
           venue
         )
       `)
-      .or(`token.eq."${query}",college_id.eq."${query}",email.ilike."${query}",phone.eq."${query}"`)
+      .or(`token.eq."${query}",phone.eq."${query}"`)
       .order('created_at', { ascending: false })
       .limit(1)
 

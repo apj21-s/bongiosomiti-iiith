@@ -1,20 +1,15 @@
 import { NextResponse } from 'next/server'
-import { createServiceRoleClient } from '@/utils/supabase/server'
+import { getEventBySlug } from '@/utils/data/events'
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params;
-  const supabase = await createServiceRoleClient()
-  const { data: event, error } = await supabase
-    .from('events')
-    .select('*')
-    .eq('slug', slug)
-    .single()
+  const event = getEventBySlug(slug)
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 404 })
+  if (!event) {
+    return NextResponse.json({ error: 'Not Found' }, { status: 404 })
   }
 
   return NextResponse.json(event)

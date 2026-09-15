@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/utils/supabase/server'
 import { registerSchema } from '@/utils/schemas'
 import { sendQRPassEmail, sendRegistrationPendingEmail } from '@/utils/email'
+import { getEventBySlug } from '@/utils/data/events'
 
 function generateToken(prefix: string) {
   const p = (prefix || 'UTSAV').toUpperCase().replace(/[^A-Z0-9]/g, '')
@@ -22,13 +23,9 @@ export async function POST(request: Request) {
     const data = result.data
     const supabase = await createServiceRoleClient()
 
-    const { data: event, error: eventError } = await supabase
-      .from('events')
-      .select('*')
-      .eq('slug', data.eventSlug)
-      .single()
-
-    if (eventError || !event) {
+    const event = getEventBySlug(data.eventSlug)
+    
+    if (!event) {
       return NextResponse.json({ error: 'Event not found' }, { status: 404 })
     }
 
@@ -95,7 +92,7 @@ export async function POST(request: Request) {
     if (paymentStatus === 'APPROVED') {
       await sendQRPassEmail(data.email as string, data.participantName as string, event.name as string, tokens).catch(e => console.error('Failed to send email:', e))
     } else if (paymentStatus === 'PENDING') {
-      await sendRegistrationPendingEmail(data.email as string, data.participantName as string, event.name as string, data.utr || '').catch(e => console.error('Failed to send pending email:', e))
+      await sendRegistrationPendingEmail(data.email as string, data.participantName as string, event.name as string, data.utr || '', tokens[0]).catch(e => console.error('Failed to send pending email:', e))
     }
 
     return NextResponse.json(tickets[0])

@@ -47,6 +47,19 @@ export default function PaymentsClient() {
 
   const filteredPayments = status ? payments.filter((p) => p.payment_status === status) : payments
 
+  const groupedPayments = filteredPayments.reduce((acc: any[], pmt: any) => {
+    const key = (pmt.utr && pmt.utr !== 'FREE-PASS') ? pmt.utr : pmt.token
+    const existing = acc.find((p: any) => p._groupKey === key)
+    if (existing) {
+      existing.amount += pmt.amount
+      existing.num_passes = (existing.num_passes || 1) + 1
+      existing._tokens.push(pmt.token)
+    } else {
+      acc.push({ ...pmt, _groupKey: key, num_passes: 1, _tokens: [pmt.token] })
+    }
+    return acc
+  }, [])
+
   function renderStatus(raw: string) {
     if (raw === 'APPROVED' || raw === 'VERIFIED') return 'VERIFIED'
     if (raw === 'REJECTED') return 'REJECTED'
@@ -84,12 +97,12 @@ export default function PaymentsClient() {
           </thead>
           <tbody>
             {loading && <tr><td colSpan={8} className="text-muted">Loading payments...</td></tr>}
-            {!loading && filteredPayments.length === 0 && <tr><td colSpan={8} className="text-muted">No payments found.</td></tr>}
-            {!loading && filteredPayments.map((pmt) => {
+            {!loading && groupedPayments.length === 0 && <tr><td colSpan={8} className="text-muted">No payments found.</td></tr>}
+            {!loading && groupedPayments.map((pmt: any) => {
               const displayStatus = renderStatus(pmt.payment_status)
               return (
                 <tr key={pmt.id}>
-                  <td><code>{pmt.token}</code></td>
+                  <td><code>{pmt.token}</code> {pmt.num_passes > 1 && <span style={{ fontSize: '0.8rem', color: 'var(--muted)', display: 'block', marginTop: '4px' }}>+{pmt.num_passes - 1} more passes</span>}</td>
                   <td><strong>{pmt.participant_name}</strong><br /><span className="text-muted">{pmt.college_id}</span></td>
                   <td>{pmt.email}</td>
                   <td><strong style={{ fontFamily: 'monospace' }}>{pmt.utr || 'FREE-PASS'}</strong></td>

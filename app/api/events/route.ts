@@ -1,17 +1,7 @@
 import { NextResponse } from 'next/server'
-import { createServiceRoleClient } from '@/utils/supabase/server'
+import { staticEvents } from '@/utils/data/events'
 
 export async function GET() {
-  const supabase = await createServiceRoleClient()
-  const { data: events, error } = await supabase
-    .from('events')
-    .select('*')
-    .eq('status', 'OPEN')
-    .order('event_date', { ascending: true })
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
-
+  const events = staticEvents.filter(e => e.status === 'OPEN').sort((a, b) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime())
   return NextResponse.json(events)
 }

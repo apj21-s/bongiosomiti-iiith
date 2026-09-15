@@ -50,6 +50,7 @@ export async function sendQRPassEmail(email: string, participantName: string, ev
         <a href="cid:${cid}" target="_blank" style="display: block; text-decoration: none;">
           <img src="cid:${cid}" alt="QR Pass ${i + 1}" style="display: block; margin: 0 auto; width: 250px; height: 250px; border-radius: 12px; border: 4px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.1); cursor: zoom-in;" />
         </a>
+        <p style="margin: 12px 0 0; font-family: monospace; font-size: 16px; color: #281208; font-weight: bold; text-align: center;">Pass Code: ${t}</p>
       </div>
     `
   }
@@ -87,7 +88,7 @@ export async function sendQRPassEmail(email: string, participantName: string, ev
   })
 }
 
-export async function sendRegistrationPendingEmail(email: string, participantName: string, eventName: string, utr: string) {
+export async function sendRegistrationPendingEmail(email: string, participantName: string, eventName: string, utr: string, referenceNo: string) {
   if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
     console.warn('SMTP credentials missing. Skipping pending email send to:', email)
     return
@@ -104,6 +105,7 @@ export async function sendRegistrationPendingEmail(email: string, participantNam
         <p style="color: #555; font-size: 16px; line-height: 1.5; margin-bottom: 24px;">
           Dear <strong>${participantName}</strong>,<br/><br/>
           We have received your registration and the UPI transaction reference (<strong>${utr}</strong>).<br/><br/>
+          Your registration reference number is <strong>${referenceNo}</strong>. Please use this reference number along with your phone number to track your payment status on our portal.<br/><br/>
           Our team is currently verifying the payment. <strong>Once your payment is confirmed, you will receive another email containing your digital QR pass.</strong>
         </p>
         

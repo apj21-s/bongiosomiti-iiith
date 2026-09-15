@@ -102,8 +102,8 @@ export default function PassVerifyPage() {
             <div className="verification-body">
               <form className="verification-form" onSubmit={handleSubmit} noValidate>
                 <div className="verification-field">
-                  <label htmlFor="verification-query"><span>College ID, Email, Phone, or Pass Token <span className="required-star">*</span></span></label>
-                  <input type="text" id="verification-query" name="query" className="verification-input" placeholder="e.g. 202401042 or MBH-DEMO-001" required autoComplete="off" value={query} onChange={(e) => setQuery(e.target.value)} />
+                  <label htmlFor="verification-query"><span>Phone Number or Pass Token <span className="required-star">*</span></span></label>
+                  <input type="text" id="verification-query" name="query" className="verification-input" placeholder="e.g. 9876543210 or UTSAV-XYZ-123" required autoComplete="off" value={query} onChange={(e) => setQuery(e.target.value)} />
                   <span className="verification-hint">Enter the information you provided during your event pass registration.</span>
                 </div>
 
@@ -169,37 +169,7 @@ export default function PassVerifyPage() {
                         </tbody>
                       </table>
 
-                      {isVerified && (
-                        <div className="verified-pass-showcase">
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', borderBottom: '1.5px solid rgba(223,200,174,0.5)', paddingBottom: '14px', marginBottom: '18px' }}>
-                            <div>
-                              <span style={{ fontSize: '0.72rem', fontWeight: 800, letterSpacing: '0.12em', color: '#8f3c1d', textTransform: 'uppercase' }}>OFFICIAL ENTRY PASS</span>
-                              <h3 style={{ margin: '2px 0 0', fontSize: '1.35rem' }}>{ticket.eventName}</h3>
-                            </div>
-                            <span className="badge badge--verified">VERIFIED • READY FOR ENTRY</span>
-                          </div>
 
-                          <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center' }}>
-                            <div style={{ flex: 1, minWidth: '260px' }}>
-                              <table className="verification-meta-table" style={{ margin: 0 }}>
-                                <tbody>
-                                  <tr><td>Event Name</td><td><strong>{ticket.eventName}</strong></td></tr>
-                                  <tr><td>Participant Name</td><td><strong>{ticket.participantName}</strong></td></tr>
-                                  <tr><td>Registration ID</td><td><code>{ticket.token}</code></td></tr>
-                                  <tr><td>Venue</td><td>{ticket.venue}</td></tr>
-                                  <tr><td>Status</td><td><strong style={{ color: '#2e7d32' }}>Verified &amp; Active</strong></td></tr>
-                                </tbody>
-                              </table>
-                            </div>
-                          </div>
-
-                          <div style={{ marginTop: '1.25rem', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                            <button type="button" className="btn btn-primary" onClick={handleResend} disabled={loading} style={{ padding: '12px 24px', fontWeight: 'bold' }}>
-                              {loading ? 'SENDING...' : '✉️ SEND QR PASS TO EMAIL'}
-                            </button>
-                          </div>
-                        </div>
-                      )}
                     </div>
                   )}
 

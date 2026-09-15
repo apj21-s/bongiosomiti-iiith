@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { createServiceRoleClient } from '@/utils/supabase/server'
+import { staticEvents } from '@/utils/data/events'
 import SiteFooter from '@/components/site-footer'
 
 export const revalidate = 0
@@ -7,7 +8,7 @@ export const revalidate = 0
 export default async function AdminDashboardPage() {
   const supabase = await createServiceRoleClient()
 
-  const { count: eventCount } = await supabase.from('events').select('*', { count: 'exact', head: true })
+  const eventCount = staticEvents.length
   const { count: ticketCount } = await supabase.from('tickets').select('*', { count: 'exact', head: true })
 
   const { data: paidTickets } = await supabase.from('tickets').select('amount').eq('payment_status', 'APPROVED')
@@ -41,7 +42,6 @@ export default async function AdminDashboardPage() {
           <p>Real-time overview of college cultural events, registration passes, payments, and gate scanner entries.</p>
         </div>
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          <Link className="btn btn-primary" href="/admin/events/new">+ Create New Event</Link>
           <Link className="btn btn-secondary" href="/admin/scanner">📷 Launch Scanner</Link>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/utils/supabase/server'
 import { sendQRPassEmail } from '@/utils/email'
+import { getEventById } from '@/utils/data/events'
 
 export async function POST(request: Request) {
   try {
@@ -41,7 +42,7 @@ export async function POST(request: Request) {
     }
 
     // Pass found, dispatch email
-    const { data: event } = await supabase.from('events').select('name').eq('id', primaryTicket.event_id).single()
+    const event = getEventById(primaryTicket.event_id)
     
     const tokens = allApprovedTickets.map((t: any) => t.token)
     await sendQRPassEmail(primaryTicket.email, primaryTicket.participant_name, event?.name || 'Utsav Event', tokens)
