@@ -45,7 +45,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
               <div className="saraswati-invitation-header">
                 <span className="saraswati-invitation-tag">বসন্ত পঞ্চমী ২০২৭</span>
                 <h1 id="invitation-heading" className="saraswati-invitation-title">Saraswati Puja Programme &amp; Schedule</h1>
-                <p className="saraswati-invitation-sub">You are cordially invited to celebrate the divine worship of Devi Saraswati &bull; 21 January 2027 &bull; IIIT Hyderabad</p>
+                <p className="saraswati-invitation-sub">You are cordially invited to celebrate the divine worship of Devi Saraswati &bull; 11 February 2027 &bull; IIIT Hyderabad</p>
               </div>
 
               <div className="saraswati-programme-grid">
@@ -106,13 +106,13 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
               <div className={isMahalaya ? 'mahalaya-timeline' : 'saraswati-timeline'}>
                 {isMahalaya ? (
                   <>
-                    <div className="mahalaya-timeline__item"><div className="mahalaya-timeline__dot"></div><strong className="mahalaya-timeline__title">Event date</strong><span className="mahalaya-timeline__desc">Celebrate autumn puja season (12 Oct 2026)</span></div>
+                    <div className="mahalaya-timeline__item"><div className="mahalaya-timeline__dot"></div><strong className="mahalaya-timeline__title">Event date</strong><span className="mahalaya-timeline__desc">Celebrate autumn puja season (10 Oct 2026)</span></div>
                     <div className="mahalaya-timeline__item"><div className="mahalaya-timeline__dot"></div><strong className="mahalaya-timeline__title">Time/Slot</strong><span className="mahalaya-timeline__desc">Shared community feast (1:00 PM – 4:30 PM)</span></div>
                     <div className="mahalaya-timeline__item"><div className="mahalaya-timeline__dot"></div><strong className="mahalaya-timeline__title">Tradition</strong><span className="mahalaya-timeline__desc">Tradition &amp; cultural community dinner</span></div>
                   </>
                 ) : (
                   <>
-                    <div className="saraswati-timeline__item"><div className="saraswati-timeline__dot"></div><strong className="saraswati-timeline__title">Event Date</strong><span className="saraswati-timeline__desc">Auspicious Basant Panchami (21 Jan 2027)</span></div>
+                    <div className="saraswati-timeline__item"><div className="saraswati-timeline__dot"></div><strong className="saraswati-timeline__title">Event Date</strong><span className="saraswati-timeline__desc">Auspicious Basant Panchami (11 Feb 2027)</span></div>
                     <div className="saraswati-timeline__item"><div className="saraswati-timeline__dot"></div><strong className="saraswati-timeline__title">Morning Pushpanjali</strong><span className="saraswati-timeline__desc">Morning Anjali &amp; Vedic chanting (9:30 AM – 11:30 AM)</span></div>
                     <div className="saraswati-timeline__item"><div className="saraswati-timeline__dot"></div><strong className="saraswati-timeline__title">Khichuri Prosad Lunch Feast</strong><span className="saraswati-timeline__desc">Grand sit-down community lunch (12:30 PM – 3:30 PM)</span></div>
                     <div className="saraswati-timeline__item"><div className="saraswati-timeline__dot"></div><strong className="saraswati-timeline__title">Sandhya Aarti &amp; Adda</strong><span className="saraswati-timeline__desc">Cultural evening, music &amp; Dhunuchi Naach (5:30 PM – 8:00 PM)</span></div>

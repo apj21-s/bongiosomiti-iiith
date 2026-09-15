@@ -32,7 +32,7 @@ const INITIAL_DATA: DummyDB = {
       slug: "saraswati-puja",
       name: "Saraswati Puja 2027",
       description: "Spring festival of learning and arts.",
-      event_date: "2027-02-14T09:00:00Z",
+      event_date: "2027-02-11T09:00:00Z",
       venue: "Main Auditorium",
       capacity: 500,
       price: 0,

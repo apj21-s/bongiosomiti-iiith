@@ -180,7 +180,7 @@ export default async function Home() {
                   <div className="events-scene__card-body">
                     <div className="events-scene__card-meta">
                       <span className="events-scene__card-date">
-                        {new Date(event.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()}
+                        {new Date(event.event_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()}
                       </span>
                       <span className="events-scene__card-tag">{event.tag}</span>
                     </div>
