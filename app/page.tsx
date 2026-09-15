@@ -146,9 +146,11 @@ export default async function Home() {
               <CrossfadeVideo />
             </div>
 
-            <div className="events-scene__copy scroll-reveal">
-              <h2 className="events-scene__eyebrow" id="events-title">Courtyard &amp; Community</h2>
-              <p className="events-scene__lede">Community events, one world.</p>
+            <div className="story-card__intro scroll-reveal" style={{ padding: '0 clamp(16px, 4vw, 48px)' }}>
+              <div className="story-card__introMeta">
+                <p className="section-label">আমাদের উৎসব</p>
+              </div>
+              <h2 id="events-title">Our Community, Our Festivities</h2>
             </div>
 
             <div className="events-scene__cards">
@@ -210,7 +212,6 @@ export default async function Home() {
               <p className="section-label">আমাদের গল্প</p>
             </div>
             <h2 id="story-title">A curated memory archive</h2>
-            <p>Real event photographs, kept small and editorial so the images stay in focus.</p>
           </div>
 
           <div className="story-card__header scroll-reveal scroll-reveal--delay-1">

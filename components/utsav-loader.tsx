@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react"
 
-export default function UtsavLoader() {
+export default function UtsavLoader({ message, inline = false }: { message?: string, inline?: boolean }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (inline) return;
     const timer = setTimeout(() => {
       setLoading(false)
     }, 900)
@@ -17,12 +18,12 @@ export default function UtsavLoader() {
     }
 
     return () => clearTimeout(timer)
-  }, [])
+  }, [inline])
 
-  if (!loading) return null
+  if (!inline && !loading) return null
 
   return (
-    <div id="utsav-loader" className="utsav-loader" aria-hidden="false" role="status">
+    <div id="utsav-loader" className={`utsav-loader ${inline ? 'utsav-loader--inline' : ''}`} aria-hidden="false" role="status">
       {/* We wrap the original HTML in a fragment */}
       
         <div className="utsav-loader__backdrop"></div>
@@ -229,7 +230,7 @@ export default function UtsavLoader() {
           <div className="utsav-loader__text-wrap">
             <img src="/assets/logo.png" alt="বঙ্গীয়.SAMITI Emblem" className="utsav-loader__emblem" />
             <h3 className="utsav-loader__brand">বঙ্গীয়.SAMITI</h3>
-            <p className="utsav-loader__sub">IIIT HYDERABAD &bull; উৎসব পোর্টাল</p>
+            <p className="utsav-loader__sub">{message || 'IIIT HYDERABAD • উৎসব পোর্টাল'}</p>
           </div>
         </div>
       

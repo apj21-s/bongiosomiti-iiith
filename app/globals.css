@@ -1859,10 +1859,12 @@ button {
 }
 
 .events-page {
-  width: 100%;
-  max-width: 100%;
-  margin: 12px auto 4px;
-  padding: 0 clamp(16px, 4vw, 48px) 6px;
+  width: 100vw;
+  max-width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-top: 8px;
+  margin-bottom: 0;
+  padding: 0;
   box-sizing: border-box;
 }
 
@@ -1889,6 +1891,11 @@ button {
   background: transparent;
   box-shadow: none;
 }
+.events-scene__copy, .events-scene__cards {
+  padding: 0 clamp(16px, 4vw, 48px);
+  max-width: 1400px;
+  margin: 0 auto;
+}
 
 .events-scene__hero {
   position: relative;
@@ -1897,8 +1904,8 @@ button {
   min-height: 280px;
   max-height: 760px;
   overflow: hidden;
-  border-radius: 2px;
-  border: 1px solid rgba(71, 50, 33, 0.18);
+  border-radius: 0;
+  border: none;
   background: linear-gradient(180deg, #f4e4be, #d9b47d);
   isolation: isolate;
 }
@@ -2223,10 +2230,12 @@ video::cue {
 }
 
 .story-page {
-  width: 100%;
-  max-width: 100%;
-  margin: 12px auto 4px;
-  padding: 0 clamp(16px, 4vw, 48px) 6px;
+  width: 100vw;
+  max-width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-top: 8px;
+  margin-bottom: 0;
+  padding: 0;
   box-sizing: border-box;
 }
 
@@ -2247,8 +2256,11 @@ video::cue {
 .story-card__intro {
   display: grid;
   gap: 6px;
-  max-width: 48rem;
-  padding: 0 4px;
+  max-width: 1400px;
+  padding: 32px clamp(16px, 4vw, 48px) 16px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .story-card__introMeta {
@@ -2300,7 +2312,8 @@ video::cue {
   min-height: 260px;
   max-height: 600px;
   overflow: hidden;
-  border: 1px solid rgba(71, 50, 33, 0.18);
+  border: none;
+  border-radius: 0;
   background: linear-gradient(180deg, #f4e4be, #d9b47d);
 }
 
@@ -2347,7 +2360,11 @@ video::cue {
 }
 
 .story-card__body {
-  padding: 8px 0 16px;
+  padding: 8px clamp(16px, 4vw, 48px) 16px;
+  margin: 0 auto;
+  max-width: 1400px;
+  width: 100%;
+  box-sizing: border-box;
   background: transparent;
 }
 
@@ -9594,6 +9611,12 @@ div[id] {
     visibility 0.5s ease,
     backdrop-filter 0.5s ease,
     -webkit-backdrop-filter 0.5s ease;
+}
+
+.utsav-loader--inline {
+  position: absolute;
+  border-radius: inherit;
+  z-index: 50;
 }
 
 .utsav-loader--hidden {
