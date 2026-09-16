@@ -30,10 +30,18 @@ export async function sendQRPassEmail(email: string, participantName: string, ev
 
   for (let i = 0; i < tokenArray.length; i++) {
     const t = tokenArray[i]
+<<<<<<< HEAD
     const qrDataUrl = await QRCode.toDataURL(t, {
       width: 350,
       margin: 2,
       color: { dark: '#281208', light: '#ffffff' }
+=======
+    const passCode = t.includes('_') ? t.split('_')[1] : t
+    const qrDataUrl = await QRCode.toDataURL(passCode, {
+      width: 350,
+      margin: 2,
+      color: { dark: '#281208', light: '#ffffff' }
+>>>>>>> 260040b3f30497e19ebba25ed68916c92adae7ee
     })
     const base64Data = qrDataUrl.split(',')[1]
     const cid = `qr-code-${i}`
@@ -49,6 +57,7 @@ export async function sendQRPassEmail(email: string, participantName: string, ev
     const showDivider = i > 0
 
     qrImagesHtml += `
+<<<<<<< HEAD
       ${showDivider ? `<img src="https://cdn.jsdelivr.net/gh/bangiyasamiti/mahalaya-email-assets/decorative/divider-lotus.png" alt="" style="width: 32px; display: block; margin: 20px auto; opacity: 0.5;" />` : ''}
       <table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
         <tr>
@@ -71,6 +80,15 @@ export async function sendQRPassEmail(email: string, participantName: string, ev
           </td>
         </tr>
       </table>
+=======
+      <div style="margin-bottom: 24px;">
+        ${tokenArray.length > 1 ? `<p style="margin: 0 0 8px; font-weight: bold; color: #555;">Pass ${i + 1}</p>` : ''}
+        <a href="cid:${cid}" target="_blank" style="display: block; text-decoration: none;">
+          <img src="cid:${cid}" alt="QR Pass ${i + 1}" style="display: block; margin: 0 auto; width: 250px; height: 250px; border-radius: 12px; border: 4px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.1); cursor: zoom-in;" />
+        </a>
+        <p style="margin: 12px 0 0; font-family: monospace; font-size: 16px; color: #281208; font-weight: bold; text-align: center;">Pass Code: ${passCode}</p>
+      </div>
+>>>>>>> 260040b3f30497e19ebba25ed68916c92adae7ee
     `
   }
 

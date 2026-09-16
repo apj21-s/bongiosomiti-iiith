@@ -35,9 +35,10 @@ export default function CheckinsClient() {
   }
 
   return (
-    <div className="grid" style={{ padding: '24px 28px' }}>
-      <div className="table-responsive" style={{ gridColumn: '1 / -1', background: 'rgba(255,255,255,0.7)', borderRadius: '20px', border: '1px solid var(--border)', padding: '14px' }}>
-        <table className="data-table">
+    <div className="grid" style={{ padding: 'clamp(16px, 4vw, 24px) 0' }}>
+      <div className="table-wrapper-outer" style={{ background: 'rgba(255,255,255,0.7)', borderRadius: '20px', border: '1px solid var(--border)', padding: 'clamp(12px, 2vw, 16px)', minWidth: 0, width: '100%' }}>
+        <div className="table-responsive">
+          <table className="data-table">
           <thead>
             <tr>
               <th>Check-in Timestamp</th>
@@ -63,6 +64,7 @@ export default function CheckinsClient() {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   )

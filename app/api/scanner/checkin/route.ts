@@ -31,7 +31,7 @@ export async function POST(request: Request) {
         redeemed_gate: gate,
         redeemed_by: user.id
       })
-      .eq('token', token.toUpperCase())
+      .ilike('token', `%_${token.toUpperCase()}`)
       .eq('status', 'UNUSED')
       .select(`
         *,
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
     if (!updatedTickets || updatedTickets.length === 0) {
       // The update affected 0 rows. It was either not UNUSED, or doesn't exist.
       // To give a better error message, we check the actual state.
-      const { data: ticket } = await supabase.from('tickets').select('*').eq('token', token.toUpperCase()).single()
+      const { data: ticket } = await supabase.from('tickets').select('*').ilike('token', `%_${token.toUpperCase()}`).single()
       if (!ticket) {
         return NextResponse.json({ outcome: 'INVALID', message: 'Pass not found' }, { status: 404 })
       }

@@ -10620,7 +10620,7 @@ div[id] {
    ========================================================================= */
 
 .status-result-panel {
-  display: none;
+  display: block;
   animation: fadeIn 0.4s ease forwards;
 }
 
@@ -10830,4 +10830,219 @@ div[id] {
   gap: 10px;
   justify-content: flex-end;
   align-items: center;
+}
+
+/* ========================================================= */
+/* PREMIUM ADMIN LAYOUT STYLES                               */
+/* ========================================================= */
+
+.admin-layout-wrapper {
+  display: flex;
+  min-height: 100dvh;
+  width: 100%;
+  background: #f4f6f8;
+  position: relative;
+  overflow: hidden; /* prevents layout shift */
+}
+
+/* Sidebar (Desktop) */
+.admin-sidebar {
+  width: 260px;
+  background: #ffffff;
+  border-right: 1px solid rgba(0,0,0,0.06);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 10;
+  box-shadow: 4px 0 24px rgba(0,0,0,0.02);
+  flex-shrink: 0;
+}
+
+.admin-sidebar-header {
+  padding: 24px 20px;
+  border-bottom: 1px solid rgba(0,0,0,0.04);
+}
+
+.admin-sidebar-brand {
+  font-weight: 800;
+  font-size: 1.1rem;
+  letter-spacing: 0.05em;
+  color: var(--brand);
+  text-decoration: none;
+}
+
+.admin-sidebar-nav {
+  flex: 1;
+  padding: 24px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+}
+
+.admin-nav-link {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  border-radius: 12px;
+  color: #4a5568;
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.admin-nav-link:hover {
+  background: #f7fafc;
+  color: #2d3748;
+}
+
+.admin-nav-link.active {
+  background: rgba(182, 90, 60, 0.08);
+  color: var(--brand);
+}
+
+.admin-sidebar-footer {
+  padding: 20px;
+  border-top: 1px solid rgba(0,0,0,0.04);
+  background: #fafafb;
+}
+
+/* Main Content Area */
+.admin-main-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  overflow-y: auto;
+  position: relative;
+  min-width: 0; /* Important to prevent horizontal overflow in flex children */
+}
+
+/* Top Header (Mobile Only) */
+.admin-top-header {
+  display: none; /* hidden on desktop */
+}
+
+/* Page Container */
+.admin-page-content {
+  padding: 32px;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Premium Stat Cards */
+.admin-stat-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 24px;
+  border: 1px solid rgba(0,0,0,0.04);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.admin-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.04);
+}
+
+.admin-stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 4px;
+  background: linear-gradient(90deg, var(--brand), var(--accent));
+  opacity: 0.8;
+}
+
+.admin-stat-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #718096;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.admin-stat-value {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #2d3748;
+  line-height: 1.1;
+  margin-bottom: 4px;
+}
+
+.admin-stat-desc {
+  font-size: 0.85rem;
+  color: #a0aec0;
+}
+
+/* Section Cards */
+.admin-section-card {
+  background: #ffffff;
+  border-radius: 24px;
+  border: 1px solid rgba(0,0,0,0.04);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.02);
+  padding: 24px;
+  margin-top: 24px;
+}
+
+/* Mobile Adjustments */
+@media (max-width: 900px) {
+  .admin-layout-wrapper {
+    flex-direction: column;
+  }
+  
+  .admin-sidebar {
+    display: none !important;
+  }
+  
+  .admin-top-header {
+    background: #ffffff;
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(0,0,0,0.04);
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    min-height: 60px;
+  }
+  
+  .admin-top-header-mobile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    justify-content: space-between;
+    position: relative;
+  }
+  
+  .admin-mobile-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    padding: 8px 0;
+    z-index: 100;
+  }
+  
+  .dropdown-divider {
+    height: 1px;
+    background: rgba(0,0,0,0.04);
+    margin: 8px 0;
+  }
+  
+  .admin-page-content {
+    padding: 20px 16px;
+  }
 }

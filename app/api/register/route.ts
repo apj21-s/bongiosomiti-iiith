@@ -4,11 +4,14 @@ import { registerSchema } from '@/utils/schemas'
 import { sendQRPassEmail, sendRegistrationPendingEmail } from '@/utils/email'
 import { getEventBySlug } from '@/utils/data/events'
 
-function generateToken(prefix: string) {
-  const p = (prefix || 'UTSAV').toUpperCase().replace(/[^A-Z0-9]/g, '')
-  const time = Date.now().toString(36).toUpperCase()
-  const rand = Math.random().toString(36).slice(2, 6).toUpperCase()
-  return `${p}-${time}-${rand}`
+function generateRegistrationId() {
+  return Math.floor(10000 + Math.random() * 90000).toString() // 5 digits
+}
+
+function generatePassCode(prefix: string) {
+  const p = (prefix || 'UTS').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 3)
+  const rand = Math.random().toString(36).substring(2, 8).toUpperCase() // 6 chars
+  return `${p}${rand}`.slice(0, 9).padEnd(9, 'X') // 9 chars total
 }
 
 export async function POST(request: Request) {
@@ -48,7 +51,7 @@ export async function POST(request: Request) {
     }
 
     const prefix = event.slug.slice(0, 3).toUpperCase()
-    const token = generateToken(prefix)
+    const registrationId = generateRegistrationId()
 
     const isFree = event.price === 0
     const numPasses = data.numPasses || 1
@@ -61,7 +64,7 @@ export async function POST(request: Request) {
     const status = isFree ? 'UNUSED' : 'PENDING_PAYMENT'
 
     const ticketsData = Array.from({ length: numPasses }).map((_, i) => ({
-      token: generateToken(prefix),
+      token: `${registrationId}_${generatePassCode(prefix)}`,
       event_id: event.id,
       participant_name: data.participantName + (numPasses > 1 && i > 0 ? ` (Pass ${i + 1})` : ''),
       college_id: data.collegeId,
@@ -92,7 +95,7 @@ export async function POST(request: Request) {
     if (paymentStatus === 'APPROVED') {
       await sendQRPassEmail(data.email as string, data.participantName as string, event.name as string, tokens).catch(e => console.error('Failed to send email:', e))
     } else if (paymentStatus === 'PENDING') {
-      await sendRegistrationPendingEmail(data.email as string, data.participantName as string, event.name as string, data.utr || '', tokens[0]).catch(e => console.error('Failed to send pending email:', e))
+      await sendRegistrationPendingEmail(data.email as string, data.participantName as string, event.name as string, data.utr || '', registrationId).catch(e => console.error('Failed to send pending email:', e))
     }
 
     return NextResponse.json(tickets[0])
