@@ -5,10 +5,12 @@ import Link from 'next/link'
 
 export default function ScannerPage() {
   const [token, setToken] = useState('')
+  const [manualToken, setManualToken] = useState('')
   const [gate, setGate] = useState('Gate 1')
   const [result, setResult] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [isScanning, setIsScanning] = useState(false)
+  const [scannerError, setScannerError] = useState('')
   
   const scannerRef = useRef<any>(null)
   const isProcessingRef = useRef(false)
@@ -41,6 +43,7 @@ export default function ScannerPage() {
         await scannerRef.current.stop().catch(() => {})
       }
 
+      setScannerError('')
       setIsScanning(true)
       await scannerRef.current.start(
         { facingMode: "environment" },
@@ -60,10 +63,14 @@ export default function ScannerPage() {
           // ignore background scanning errors
         }
       )
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error starting scanner', err)
-      // We don't alert here so we don't annoy users on desktop without cameras immediately.
       setIsScanning(false)
+      if (err?.message?.includes('supported') || err?.name === 'NotSupportedError' || typeof err === 'string' && err.includes('supported')) {
+        setScannerError('Camera not supported over HTTP. Please use HTTPS or enter code manually.')
+      } else {
+        setScannerError(err?.message || String(err))
+      }
     }
   }
 
@@ -160,11 +167,33 @@ export default function ScannerPage() {
         <div className="scan-area-full">
           <div id="reader" style={{ width: '100%', height: '100%', display: isScanning ? 'block' : 'none' }}></div>
           {!isScanning && (
-            <div className="camera-off-state">
-              <div style={{ marginBottom: '16px' }}>Camera is paused or unavailable</div>
-              <button type="button" className="btn btn-primary" onClick={startScanner}>
-                Tap to Start Camera
+            <div className="camera-off-state" style={{ width: '100%', maxWidth: '300px' }}>
+              <div style={{ marginBottom: '16px', color: '#ff6b6b' }}>{scannerError || 'Camera is paused or unavailable'}</div>
+              <button type="button" className="btn btn-primary" style={{ width: '100%', marginBottom: '24px' }} onClick={startScanner}>
+                Retry Camera
               </button>
+              
+              <div style={{ borderTop: '1px solid #333', paddingTop: '24px', textAlign: 'left' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: '#ccc' }}>Manual Entry</label>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input 
+                    type="text" 
+                    placeholder="Enter pass code..." 
+                    value={manualToken}
+                    onChange={e => setManualToken(e.target.value)}
+                    style={{ flex: 1, padding: '10px', borderRadius: '6px', border: '1px solid #444', background: '#222', color: 'white' }}
+                  />
+                  <button 
+                    type="button" 
+                    className="btn btn-secondary" 
+                    onClick={() => {
+                      if (manualToken) handleVerify(manualToken);
+                    }}
+                  >
+                    Verify
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>

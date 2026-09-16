@@ -31,7 +31,7 @@ export async function POST(request: Request) {
           venue
         )
       `)
-      .ilike('token', `%_${token.toUpperCase()}`)
+      .ilike('token', `%${token.toUpperCase()}`)
       .single()
 
     if (error || !ticket) {
