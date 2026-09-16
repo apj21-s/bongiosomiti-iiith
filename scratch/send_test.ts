@@ -1,26 +1,34 @@
-import * as dotenv from 'dotenv';
-import path from 'path';
+import { config } from 'dotenv'
+config({ path: ['.env.local', '.env'] })
 
-// Load environment variables from .env.local first!
-dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+const { sendQRPassEmail, sendRegistrationPendingEmail } = require('../utils/email')
 
-async function main() {
-  // Dynamically import AFTER dotenv has run
-  const { sendRegistrationPendingEmail } = await import('../utils/email.js');
+async function test() {
+  const testEmail = 'arka24apj@gmail.com'
+  const name = 'John Doe'
+  const eventName = 'Mahalaya 2026'
+  const utr = '987654321012'
+  const referenceNo = '54321'
+  const tokens = ['token_test_1', 'token_test_2']
 
-  const email = 'sagarjha7174@gmail.com';
-  const participantName = 'Arka';
-  const eventName = 'Mahalaya Event 2026';
-  const utr = 'UTR1234567890';
-  const referenceNo = 'MAH-REF-999';
-
-  console.log(`Sending test email to ${email}...`);
+  console.log(`Sending pending test email to ${testEmail}...`)
   try {
-    await sendRegistrationPendingEmail(email, participantName, eventName, utr, referenceNo);
-    console.log('Successfully sent Registration Pending Verification email!');
+    await sendRegistrationPendingEmail(testEmail, name, eventName, utr, referenceNo)
+    console.log('Successfully sent pending email!')
   } catch (error) {
-    console.error('Failed to send email:', error);
+    console.error('Error sending pending email:', error)
+  }
+
+  // Brief pause between sends
+  await new Promise(resolve => setTimeout(resolve, 2000))
+
+  console.log(`Sending QR pass test email to ${testEmail}...`)
+  try {
+    await sendQRPassEmail(testEmail, name, eventName, tokens)
+    console.log('Successfully sent QR Pass email!')
+  } catch (error) {
+    console.error('Error sending QR Pass email:', error)
   }
 }
 
-main();
+test()

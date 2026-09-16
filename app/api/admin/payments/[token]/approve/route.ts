@@ -45,7 +45,13 @@ export async function POST(
 
   const event = getEventById(primaryTicket.event_id)
   if (event) {
-    await sendQRPassEmail(primaryTicket.email, primaryTicket.participant_name, event.name, tokens).catch(e => console.error('Failed to send email:', e))
+    require('fs').appendFileSync('scratch/api_debug.log', `Sending email to ${primaryTicket.email} for event ${event.name} with tokens ${JSON.stringify(tokens)}\n`);
+    await sendQRPassEmail(primaryTicket.email, primaryTicket.participant_name, event.name, tokens).catch(e => {
+      require('fs').appendFileSync('scratch/api_debug.log', `Error sending email: ${e}\n`);
+      console.error('Failed to send email:', e)
+    })
+  } else {
+    require('fs').appendFileSync('scratch/api_debug.log', `Event not found for event_id: ${primaryTicket.event_id}\n`);
   }
 
   return NextResponse.json(primaryTicket)

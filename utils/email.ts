@@ -13,35 +13,25 @@ const transporter = nodemailer.createTransport({
 })
 
 export async function sendQRPassEmail(email: string, participantName: string, eventName: string, tokens: string | string[]) {
+  require('fs').appendFileSync('scratch/api_debug.log', `[Email] sendQRPassEmail called for ${email}\n`);
   if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    require('fs').appendFileSync('scratch/api_debug.log', `[Email] SMTP credentials missing. Process env: ${Object.keys(process.env).join(',')}\n`);
     console.warn('SMTP credentials missing. Skipping email send to:', email)
     return
   }
+  require('fs').appendFileSync('scratch/api_debug.log', `[Email] SMTP credentials present. Generating QR codes...\n`);
 
   const tokenArray = Array.isArray(tokens) ? tokens : [tokens]
-
-  // Pass URL (pointing to the first pass if multiple, or just the portal)
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-  const passUrl = `${appUrl}/pass`
-
-  // Generate QR Code base64s
   const attachments = []
   let qrImagesHtml = ''
 
   for (let i = 0; i < tokenArray.length; i++) {
     const t = tokenArray[i]
-<<<<<<< HEAD
+    const passCode = t.includes('_') ? t.split('_')[1] : t
     const qrDataUrl = await QRCode.toDataURL(t, {
       width: 350,
       margin: 2,
       color: { dark: '#281208', light: '#ffffff' }
-=======
-    const passCode = t.includes('_') ? t.split('_')[1] : t
-    const qrDataUrl = await QRCode.toDataURL(passCode, {
-      width: 350,
-      margin: 2,
-      color: { dark: '#281208', light: '#ffffff' }
->>>>>>> 260040b3f30497e19ebba25ed68916c92adae7ee
     })
     const base64Data = qrDataUrl.split(',')[1]
     const cid = `qr-code-${i}`
@@ -54,43 +44,39 @@ export async function sendQRPassEmail(email: string, participantName: string, ev
     })
 
     const passNumber = (i + 1).toString().padStart(2, '0')
-    const showDivider = i > 0
 
     qrImagesHtml += `
-<<<<<<< HEAD
-      ${showDivider ? `<img src="https://cdn.jsdelivr.net/gh/bangiyasamiti/mahalaya-email-assets/decorative/divider-lotus.png" alt="" style="width: 32px; display: block; margin: 20px auto; opacity: 0.5;" />` : ''}
-      <table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
-        <tr>
-          <td align="center">
-            <table width="100%" border="0" cellpadding="0" cellspacing="0" style="max-width: 300px; background-color: #f4ebd8; border-radius: 12px; margin: 0 auto; border: 1px solid #eaddcc;">
-              <tr>
-                <td align="center" style="padding: 20px;">
-                  <p style="font-family: Arial, sans-serif; font-size: 14px; font-weight: bold; color: #7a1f1f; letter-spacing: 2px; margin: 0 0 15px;">PASS ${passNumber}</p>
-                  <table border="0" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; padding: 10px;">
-                    <tr>
-                      <td align="center">
-                        <img src="cid:${cid}" alt="QR Pass ${i + 1}" style="display: block; margin: 0 auto; width: 220px; height: 220px;" />
-                      </td>
-                    </tr>
-                  </table>
-                  <p style="font-family: Arial, sans-serif; font-size: 12px; font-weight: bold; color: #6b6352; letter-spacing: 1px; margin: 15px 0 0;">SINGLE ENTRY</p>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-      </table>
-=======
-      <div style="margin-bottom: 24px;">
-        ${tokenArray.length > 1 ? `<p style="margin: 0 0 8px; font-weight: bold; color: #555;">Pass ${i + 1}</p>` : ''}
-        <a href="cid:${cid}" target="_blank" style="display: block; text-decoration: none;">
-          <img src="cid:${cid}" alt="QR Pass ${i + 1}" style="display: block; margin: 0 auto; width: 250px; height: 250px; border-radius: 12px; border: 4px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.1); cursor: zoom-in;" />
-        </a>
-        <p style="margin: 12px 0 0; font-family: monospace; font-size: 16px; color: #281208; font-weight: bold; text-align: center;">Pass Code: ${passCode}</p>
+      <div style="display: inline-block; vertical-align: top; margin: 0 10px; white-space: normal;">
+        <table border="0" cellpadding="0" cellspacing="0" style="max-width: 280px; width: 280px; background-color: #f4ebd8; border-radius: 12px; margin: 0 auto; border: 1px solid #eaddcc; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+          <tr>
+            <td align="center" style="padding: 5px;">
+              <p style="font-family: Arial, sans-serif; font-size: 13px; font-weight: bold; color: #7a1f1f; letter-spacing: 2px; margin: 0 0 5px;">PASS ${passNumber}</p>
+              <table border="0" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; padding: 10px; margin: 0 auto;">
+                <tr>
+                  <td align="center">
+                    <a href="cid:${cid}" target="_blank" download="QR_Pass_${passNumber}.png" style="display: block; text-decoration: none;">
+                      <img src="cid:${cid}" alt="QR Pass ${i + 1}" style="display: block; margin: 0 auto; width: 220px; height: 220px; cursor: zoom-in;" />
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin: 4px 0 0; font-family: monospace; font-size: 14px; color: #281208; font-weight: bold; text-align: center;">Code: ${passCode}</p>
+              <p style="font-family: Arial, sans-serif; font-size: 11px; font-weight: bold; color: #6b6352; letter-spacing: 1px; margin: 4px 0 0;">SINGLE ENTRY</p>
+              <p style="font-family: Arial, sans-serif; font-size: 11px; color: #7a1f1f; margin: 5px 0 0;"><a href="cid:${cid}" download="QR_Pass_${passNumber}.png" style="color: #7a1f1f; text-decoration: underline;">Click QR to view/download</a></p>
+            </td>
+          </tr>
+        </table>
       </div>
->>>>>>> 260040b3f30497e19ebba25ed68916c92adae7ee
     `
   }
+
+  
+  const carouselHtml = `
+    ${tokenArray.length > 1 ? '<p style="font-family: Arial, sans-serif; font-size: 12px; color: #6b6352; font-style: italic; margin: 0 0 8px 0;">&#8592; Swipe left/right to view all passes &#8594;</p>' : ''}
+    <div style="width: 100%; max-width: 100%; margin: 0 auto; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; white-space: nowrap; text-align: center; padding-bottom: 8px;">
+      ${qrImagesHtml}
+    </div>
+  `
 
   const html = `
     <!DOCTYPE html>
@@ -101,74 +87,126 @@ export async function sendQRPassEmail(email: string, participantName: string, ev
       <meta name="color-scheme" content="light">
       <meta name="supported-color-schemes" content="light">
       <title>Your Digital Pass is Ready</title>
+      <link href="https://cdn.hugeicons.com/font/hgi-stroke-rounded.css" rel="stylesheet">
       <style>
         :root {
           color-scheme: light;
           supported-color-schemes: light;
         }
-        body { margin: 0; padding: 0; background-color: #f3ece1; }
+        body { margin: 0; padding: 0; background-color: #ebdccc; }
         table { border-collapse: collapse; }
         img { -ms-interpolation-mode: bicubic; }
+        
+        
+        .qr-carousel::-webkit-scrollbar {
+          height: 6px;
+        }
+        .qr-carousel::-webkit-scrollbar-track {
+          background: #fdfbf7;
+          border-radius: 4px;
+        }
+        .qr-carousel::-webkit-scrollbar-thumb {
+          background-color: #eaddcc;
+          border-radius: 4px;
+        }
+
         @media only screen and (max-width: 680px) {
           .mobile-padding { padding: 15px !important; }
           .hide-mobile { display: none !important; }
         }
       </style>
     </head>
-    <body style="margin: 0; padding: 0; background-color: #f3ece1;">
-      <table width="100%" border="0" cellpadding="0" cellspacing="0" style="background-color: #f3ece1; background-image: url('https://cdn.jsdelivr.net/gh/bangiyasamiti/mahalaya-email-assets/backgrounds/texture-bg.png'); margin: 0; padding: 0;">
+    <body style="margin: 0; padding: 0; background-color: #ebdccc;">
+      <table width="100%" border="0" cellpadding="0" cellspacing="0" style="table-layout: fixed; width: 100%; background-color: #ebdccc; margin: 0; padding: 0;">
         <tr>
-          <td align="center" style="padding: 10px;">
-            <table width="100%" border="0" cellpadding="0" cellspacing="0" style="max-width: 640px; margin: 0 auto;">
-               <tr>
-                 <td width="30%" align="left" valign="top">
-                   <img src="https://cdn.jsdelivr.net/gh/bangiyasamiti/mahalaya-email-assets/decorative/kash-left.png" alt="" style="max-width: 80px; display: block;" />
-                 </td>
-                 <td width="40%" align="center" valign="top" style="padding-top: 15px;">
-                   <img src="https://cdn.jsdelivr.net/gh/bangiyasamiti/mahalaya-email-assets/logo/logo.png" alt="Mahalaya Logo" style="max-width: 120px; display: block;" />
-                   <p style="font-family: Arial, sans-serif; font-size: 9px; letter-spacing: 1.5px; color: #6b6352; text-transform: uppercase; margin: 10px 0 5px;">IIIT Hyderabad Bangiya Samiti</p>
-                   <h1 style="font-family: Georgia, serif; color: #7a1f1f; font-size: 28px; font-weight: normal; margin: 0 0 10px;">${eventName}</h1>
-                   <p style="font-family: Arial, sans-serif; font-size: 14px; font-weight: bold; color: #2c4233; margin: 0 0 5px;">&#10003; VERIFIED</p>
-                   <p style="font-family: Georgia, serif; font-size: 18px; color: #4a4a4a; margin: 0 0 15px;">Your Digital Pass is Ready</p>
-                 </td>
-                 <td width="30%" align="right" valign="top">
-                 </td>
-               </tr>
+          <td align="center" style="padding: 5px;">
+            <table width="100%" border="0" cellpadding="0" cellspacing="0" class="master-canvas" style="table-layout: fixed; width: 100%; max-width: 680px; margin: 0 auto; background-color: #ebdccc; background-image: radial-gradient(ellipse at 20% 20%, rgba(255,253,247,0.8) 0%, rgba(226,211,195,0) 70%), radial-gradient(ellipse at 80% 80%, rgba(255,253,247,0.7) 0%, rgba(226,211,195,0) 70%), radial-gradient(ellipse at 50% 120%, rgba(219,199,178,0.5) 0%, transparent 60%), radial-gradient(ellipse at -20% 50%, rgba(219,199,178,0.4) 0%, transparent 50%), repeating-radial-gradient(circle at 50% 50%, rgba(219,199,178,0.05) 0px, rgba(219,199,178,0.05) 2px, transparent 2px, transparent 4px); background-position: center; background-repeat: no-repeat;">
+              <tr>
+                <td align="center">
+                  <table width="100%" border="0" cellpadding="0" cellspacing="0" style="max-width: 640px; margin: 0 auto;">
+                     <tr>
+                       <td width="10%" align="left" valign="top"></td>
+                       <td width="80%" align="center" valign="top" style="padding-top: 8px;">
+                         <a href="#_" style="text-decoration:none; color:inherit; cursor:default; pointer-events:none; display:inline-block;"><img src="https://cdn.jsdelivr.net/gh/bangiyasamiti/mahalaya-email-assets/logo/logo.png" alt="Mahalaya Logo" style="max-width: 120px; display: block; pointer-events:none;" /></a>
+                         <p style="font-family: Arial, sans-serif; font-size: 9px; letter-spacing: 1.5px; color: #6b6352; text-transform: uppercase; margin: 5px 0 3px;">IIIT Hyderabad Bangiya Samiti</p>
+                         <h1 style="font-family: Georgia, serif; color: #7a1f1f; font-size: 28px; font-weight: normal; margin: 0 0 5px;">${eventName}</h1>
+                       </td>
+                       <td width="10%" align="right" valign="top"></td>
+                     </tr>
+                  </table>
+      
+                  <table width="100%" border="0" cellpadding="0" cellspacing="0" style="table-layout: fixed; width: 100%; max-width: 580px; margin: 5px auto; background-color: #fdfbf7; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                     <tr>
+                       <td align="center" style="padding: 12px 15px;" class="mobile-padding">
+                          
+                          <table border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
+                            <tr><td align="center" valign="middle">
+                              <a href="#_" style="text-decoration:none; color:inherit; cursor:default; pointer-events:none; display:inline-block;"><img 
+                                src="https://cdn.jsdelivr.net/gh/bangiyasamiti/mahalaya-email-assets/icons/tick.png" 
+                                alt="Verified" 
+                                width="70" 
+                                height="70" 
+                                style="display: block; border: none; width: 70px; height: 70px; pointer-events:none;"
+                              ></a>
+                            </td></tr>
+                          </table>
+                          
+                          <h2 style="font-family: Georgia, serif; color: #2c4233; font-size: 24px; font-weight: normal; margin: 8px 0 5px; line-height: 1.25;">Registration Confirmed</h2>
+                          
+                          <table border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto 8px auto;">
+                            <tr><td align="center" valign="middle">
+                              <div style="width: 40px; height: 1px; background-color: #eaddcc; display: inline-block; vertical-align: middle;"></div>
+                              <div style="display: inline-block; vertical-align: middle; margin: 0 8px; font-size: 0; line-height: 0;">
+                                <div style="display: inline-block; width: 10px; height: 10px; background-color: #7a1f1f; border-radius: 50% 0 50% 0; transform: rotate(45deg);"></div>
+                              </div>
+                              <div style="width: 40px; height: 1px; background-color: #eaddcc; display: inline-block; vertical-align: middle;"></div>
+                            </td></tr>
+                          </table>
+      
+                          <p style="font-family: Arial, sans-serif; font-size: 14px; color: #4a4a4a; line-height: 1.5; margin: 0 0 8px;">Dear <strong>${participantName}</strong>, your QR ${tokenArray.length > 1 ? 'passes are' : 'pass is'} ready. Please present ${tokenArray.length > 1 ? 'these' : 'this'} at the gate.</p>
+                          
+                          
+                          <div class="qr-carousel">
+                            ${carouselHtml}
+                          </div>
+      
+                          <p style="margin: 8px 0 10px; font-family: Arial, sans-serif; font-size: 12px; color: #7a1f1f; font-weight: bold;">IMPORTANT: ${tokenArray.length > 1 ? 'These are' : 'This is'} strictly single-entry. Do not share.</p>
+      
+                          
+                          <a href="mailto:bangiya.samiti.iiith@gmail.com" style="text-decoration: none; cursor: pointer; display: inline-block;">
+                            <table border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
+                              <tr>
+                                <td width="36" valign="middle" align="center">
+                                  <div style="background-color: #f4ebd8; background-image: linear-gradient(#f4ebd8, #f4ebd8); border-radius: 50%; width: 32px; height: 32px; text-align: center; line-height: 32px; display: inline-block;">
+                                    <div style="width: 14px; height: 9px; border: 1.5px solid #8e806c; border-radius: 2px; position: relative; overflow: hidden; margin: 11px auto 0; box-sizing: border-box;">
+                                     <div style="position: absolute; top: 0; left: -1px; width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-top: 5px solid #8e806c;"></div>
+                                     <div style="position: absolute; top: 0; left: 1px; width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 4px solid #f4ebd8;"></div>
+                                   </div>
+                                  </div>
+                                </td>
+                                <td align="left" valign="middle" style="padding-left: 10px;">
+                                  <p class="body-copy" style="font-family: Arial, sans-serif; font-size: 12px; color: #6b6352; line-height: 1.4; margin: 0;">For any queries, click here to<br/><span style="text-decoration: underline;">reach out to us .</span></p>
+                                </td>
+                              </tr>
+                            </table>
+                          </a>
+      
+                       </td>
+                     </tr>
+                  </table>
+      
+                  <table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin-top: 8px;">
+                     <tr>
+                       <td align="center" valign="middle">
+                          <p style="font-family: Arial, sans-serif; font-size: 13px; font-weight: bold; color: #2c4233; margin: 0 0 3px 0;">IIIT Hyderabad Bangiya Samiti</p>
+                          <p style="font-family: Arial, sans-serif; font-size: 9px; color: #8e806c; letter-spacing: 2px; text-transform: uppercase; margin: 0 0 8px;">CULTURE | COMMUNITY | TOGETHER</p>
+                       </td>
+                     </tr>
+                  </table>
+                  
+                </td>
+              </tr>
             </table>
-
-            <table width="100%" border="0" cellpadding="0" cellspacing="0" style="max-width: 580px; margin: 0 auto; background-color: #2c332e; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-               <tr>
-                 <td align="center" style="padding: 30px 20px;" class="mobile-padding">
-                   ${qrImagesHtml}
-                   
-                   <div style="text-align: left; font-family: Arial, sans-serif; font-size: 15px; color: #f4ebd8; line-height: 1.6; margin-top: 20px;">
-                     <p style="margin: 0 0 10px;">Dear <strong>${participantName}</strong>,</p>
-                     <p style="margin: 0 0 20px;">Your registration has been verified and your digital QR pass has been generated.</p>
-                     
-                     <table width="100%" border="0" cellpadding="0" cellspacing="0" style="background-color: #3b423c; border-left: 4px solid #d1bfae; border-radius: 4px; margin-bottom: 10px;">
-                       <tr>
-                         <td style="padding: 15px;">
-                           <p style="font-family: Arial, sans-serif; font-size: 12px; font-weight: bold; color: #d1bfae; letter-spacing: 1px; margin: 0 0 10px;">ENTRY INFORMATION</p>
-                           <p style="margin: 0 0 10px; font-size: 14px;">Please present ${tokenArray.length > 1 ? 'these passes' : 'this pass'} at the entry gate.</p>
-                           <p style="margin: 0 0 10px; font-size: 14px;">Each QR pass is valid for a single entry.</p>
-                           <p style="margin: 0; font-size: 14px; color: #e8a2a2; font-weight: bold;">IMPORTANT: Do not share or forward ${tokenArray.length > 1 ? 'these QR codes' : 'this QR code'}. ${tokenArray.length > 1 ? 'They are strictly single-entry' : 'It is strictly single-entry'}.</p>
-                         </td>
-                       </tr>
-                     </table>
-                   </div>
-                 </td>
-               </tr>
-            </table>
-
-            <table width="100%" border="0" cellpadding="0" cellspacing="0" style="max-width: 640px; margin: 20px auto 0 auto;">
-               <tr>
-                 <td align="center" valign="middle" style="background-color: #2c4233; padding: 25px 10px; border-radius: 8px;">
-                    <p style="font-family: Arial, sans-serif; font-size: 14px; color: #f4ebd8; font-weight: bold; margin: 0 0 8px;">IIIT Hyderabad Bangiya Samiti</p>
-                    <p style="font-family: Arial, sans-serif; font-size: 11px; color: #b5c7ba; letter-spacing: 2px; text-transform: uppercase; margin: 0;">CULTURE | COMMUNITY | TOGETHER</p>
-                 </td>
-               </tr>
-            </table>
-            
           </td>
         </tr>
       </table>
@@ -176,13 +214,20 @@ export async function sendQRPassEmail(email: string, participantName: string, ev
     </html>
   `
 
-  await transporter.sendMail({
-    from: `"Utsav Pass" <${process.env.FROM_EMAIL || process.env.SMTP_USER}>`,
-    to: email,
-    subject: `Your Digital Pass for ${eventName}`,
-    html,
-    attachments
-  })
+  require('fs').appendFileSync('scratch/api_debug.log', `[Email] Calling transporter.sendMail for ${email}...\n`);
+  try {
+    const info = await transporter.sendMail({
+      from: `"Utsav Pass" <${process.env.FROM_EMAIL || process.env.SMTP_USER}>`,
+      to: email,
+      subject: `Your Digital Pass for ${eventName}`,
+      html,
+      attachments
+    });
+    require('fs').appendFileSync('scratch/api_debug.log', `[Email] Successfully sent email to ${email}. MessageId: ${info.messageId}\n`);
+  } catch (error: any) {
+    require('fs').appendFileSync('scratch/api_debug.log', `[Email] Transporter error: ${error.message}\n`);
+    throw error;
+  }
 }
 
 export async function sendRegistrationPendingEmail(
@@ -411,7 +456,7 @@ export async function sendRegistrationPendingEmail(
 <body style="margin:0; padding:0; background-color:#ffffff;" class="outer-table">
 <table width="100%" border="0" cellpadding="0" cellspacing="0" class="outer-table" style="background-color:#ffffff;">
 <tr><td align="center">
-  <!-- START MASTER CANVAS -->
+  
   <table border="0" cellpadding="0" cellspacing="0" class="master-canvas"
          style="background-color: #f3ece1; background-image: url('https://cdn.jsdelivr.net/gh/bangiyasamiti/mahalaya-email-assets/backgrounds/texture-bg.png'); background-position: 0 0; background-repeat: repeat; background-size: 680px auto;">
     <tr><td valign="top">
@@ -421,40 +466,40 @@ export async function sendRegistrationPendingEmail(
     <table width="100%" border="0" cellpadding="0" cellspacing="0" class="canvas-hide" style="background-image: url('https://cdn.jsdelivr.net/gh/bangiyasamiti/mahalaya-email-assets/decorative/sun.png'); background-position: 70px 17px; background-repeat: no-repeat; background-size: 110px 110px;"><tr><td valign="top" class="canvas-hide" style="background-image: linear-gradient(to bottom, rgba(243,236,225,0) 75%, rgba(243,236,225,1) 100%), url('https://cdn.jsdelivr.net/gh/bangiyasamiti/mahalaya-email-assets/decorative/kash-left.png'); background-position: -30px 17px, -30px 17px; background-repeat: no-repeat, no-repeat; background-size: 173px 315px, 173px 315px;">
     <table width="100%" border="0" cellpadding="0" cellspacing="0" class="canvas-hide" style="background-image: url('https://cdn.jsdelivr.net/gh/bangiyasamiti/mahalaya-email-assets/decorative/cloud-motif.png'); background-position: 20px 66px; background-repeat: no-repeat; background-size: 179px 86px;"><tr><td valign="top">
       
-      <!-- CONTENT -->
+      
       <table border="0" cellpadding="0" cellspacing="0" class="main-layout">
         <tr>
-          <!-- LEFT COLUMN (Empty Spacer for Card Margin) -->
+          
           <td width="82" valign="top" class="desktop-spacer" style="width: 82px;"></td>
 
-          <!-- CENTER COLUMN (Hero, Card, Footer) -->
+          
           <td width="516" valign="top" class="center-column" style="width: 516px;">
             
-            <!-- HERO REGION -->
+            
             <table width="100%" border="0" cellpadding="0" cellspacing="0" class="mobile-auto-height" style="table-layout: fixed;">
               <tr>
                 <td valign="top" class="mobile-auto-height">
-                  <!-- Spacer to Logo (Y=0 to 13) -->
-                  <table width="100%" border="0" cellpadding="0" cellspacing="0" class="mobile-auto-height"><tr><td height="13" style="line-height:0; font-size:0;">&nbsp;</td></tr></table>
-                  <!-- Logo (Y=13 to 109, Height=96) -->
+                  
+                  <table width="100%" border="0" cellpadding="0" cellspacing="0" class="mobile-auto-height"><tr><td height="6" style="line-height:0; font-size:0;">&nbsp;</td></tr></table>
+                  
                   <table width="100%" border="0" cellpadding="0" cellspacing="0" class="mobile-auto-height"><tr><td height="96" align="center" valign="middle">
                     <a href="#_" style="text-decoration:none; color:inherit; cursor:default; pointer-events:none; display:inline-block;"><img src="cid:mahalaya-logo" width="126" height="96" class="hero-logo" style="display:block; border:none; pointer-events:none;" alt="Logo"></a>
                   </td></tr></table>
-                  <!-- Spacer to Org (Y=109 to 112) -->
+                  
                   <table width="100%" border="0" cellpadding="0" cellspacing="0" class="mobile-auto-height"><tr><td height="3" style="line-height:0; font-size:0;">&nbsp;</td></tr></table>
-                  <!-- Org Text (Y=112 to 129, Height=17) -->
+                  
                   <table width="100%" border="0" cellpadding="0" cellspacing="0" class="mobile-auto-height"><tr><td height="17" align="center" valign="middle">
                     <p style="font-family: Arial, sans-serif; font-size: 10px; letter-spacing: 2px; color: #6b6352; text-transform: uppercase; margin: 0; line-height: 1;">IIIT Hyderabad<br/>Bangiya Samiti</p>
                   </td></tr></table>
-                  <!-- Spacer to Title (Y=129 to 136) -->
-                  <table width="100%" border="0" cellpadding="0" cellspacing="0" class="mobile-auto-height"><tr><td height="7" style="line-height:0; font-size:0;">&nbsp;</td></tr></table>
-                  <!-- Title (Y=136 to 186, Height=50) -->
+                  
+                  <table width="100%" border="0" cellpadding="0" cellspacing="0" class="mobile-auto-height"><tr><td height="4" style="line-height:0; font-size:0;">&nbsp;</td></tr></table>
+                  
                   <table width="100%" border="0" cellpadding="0" cellspacing="0" class="mobile-auto-height"><tr><td height="50" align="center" valign="middle">
-                    <h1 class="event-title" style="font-family: Georgia, serif; color: #7a1f1f; font-size: 44px; font-weight: bold; margin: 0; line-height: 1;">\${eventName}</h1>
+                    <h1 class="event-title" style="font-family: Georgia, serif; color: #7a1f1f; font-size: 44px; font-weight: bold; margin: 0; line-height: 1;">${eventName}</h1>
                   </td></tr></table>
-                  <!-- Spacer to Tagline (Y=186 to 191) -->
+                  
                   <table width="100%" border="0" cellpadding="0" cellspacing="0" class="mobile-auto-height"><tr><td height="5" style="line-height:0; font-size:0;">&nbsp;</td></tr></table>
-                  <!-- Tagline (Y=191 to 211, Height=20) -->
+                  
                   <table width="100%" border="0" cellpadding="0" cellspacing="0" class="mobile-auto-height"><tr><td height="20" align="center" valign="middle">
                     <table width="282" border="0" cellpadding="0" cellspacing="0" class="mobile-fluid">
                         <tr>
@@ -466,34 +511,34 @@ export async function sendRegistrationPendingEmail(
                         </tr>
                     </table>
                   </td></tr></table>
-                  <!-- Spacer to Card (Y=211 to 222) -->
-                  <table width="100%" border="0" cellpadding="0" cellspacing="0" class="mobile-auto-height"><tr><td height="11" class="mobile-gap-small" style="line-height:0; font-size:0;">&nbsp;</td></tr></table>
+                  
+                  <table width="100%" border="0" cellpadding="0" cellspacing="0" class="mobile-auto-height"><tr><td height="5" class="mobile-gap-small" style="line-height:0; font-size:0;">&nbsp;</td></tr></table>
                 </td>
               </tr>
             </table>
 
-            <!-- MAIN CARD REGION -->
+            
             <table border="0" cellpadding="0" cellspacing="0" class="main-card" style="background-color: #fdfbf7; background-image: linear-gradient(#fdfbf7, #fdfbf7); box-shadow: 0 4px 15px rgba(0,0,0,0.03);" bgcolor="#fdfbf7">
               <tr><td valign="top" class="mobile-auto-height" style="padding: 0; overflow: hidden; border-radius: 16px;">
                 
-                <!-- INNER DECORATIVE LAYERS (Stamping foreground overlaps) -->
-                <!-- Alpona -->
+                
+                
                 <table width="100%" border="0" cellpadding="0" cellspacing="0" class="alpona-layer mobile-auto-height" style="border-radius: 16px; overflow: hidden; background-image: url('https://cdn.jsdelivr.net/gh/bangiyasamiti/mahalaya-email-assets/decorative/alpona-corner.png'); background-position: -122px calc(100% + 46px); background-repeat: no-repeat; background-size: 280px 292px;"><tr><td valign="top" style="border-radius: 16px; overflow: hidden;" class="mobile-auto-height">
-                <!-- Banana Leaf -->
+                
                 <table width="100%" border="0" cellpadding="0" cellspacing="0" class="banana-layer mobile-auto-height" style="border-radius: 16px; overflow: hidden; background-image: url('https://cdn.jsdelivr.net/gh/bangiyasamiti/mahalaya-email-assets/decorative/banana-leaf.png'); background-position: 378px calc(100% + 46px); background-repeat: no-repeat; background-size: 320px auto;"><tr><td valign="top" style="border-radius: 16px; overflow: hidden;" class="mobile-auto-height">
 
-                <!-- Food Bowl -->
+                
                 <table width="100%" border="0" cellpadding="0" cellspacing="0" class="food-layer mobile-auto-height" style="border-radius: 16px; overflow: hidden; background-image: url('https://cdn.jsdelivr.net/gh/bangiyasamiti/mahalaya-email-assets/decorative/food-bowl.png'); background-position: 408px calc(100% + 46px); background-repeat: no-repeat; background-size: 220px auto;"><tr><td valign="top" style="border-radius: 16px; overflow: hidden;" class="mobile-auto-height">
-                <!-- Kash -->
+                
                 <table width="100%" border="0" cellpadding="0" cellspacing="0" class="kash-layer mobile-auto-height" style="border-radius: 16px; overflow: hidden; background-image: linear-gradient(to bottom, rgba(253,251,247,0) 75%, rgba(253,251,247,1) 100%), url('https://cdn.jsdelivr.net/gh/bangiyasamiti/mahalaya-email-assets/decorative/kash-left.png'); background-position: -112px -205px, -112px -205px; background-repeat: no-repeat, no-repeat; background-size: 173px 315px, 173px 315px;"><tr><td valign="top" style="border-radius: 16px; overflow: hidden;" class="mobile-auto-height">
                 
-                <!-- CARD INTERNAL GEOMETRY -->
+                
                 <table width="100%" border="0" cellpadding="0" cellspacing="0">
                   
-                  <!-- Spacer: Y=0 to 16 -->
-                  <tr><td height="16" class="mobile-auto-height mobile-gap-medium" style="height: 16px; max-height: 16px; overflow: hidden; line-height: 0; font-size: 0;">&nbsp;</td></tr>
+                  
+                  <tr><td height="8" class="mobile-auto-height mobile-gap-medium" style="height: 8px; max-height: 8px; overflow: hidden; line-height: 0; font-size: 0;">&nbsp;</td></tr>
 
-                  <!-- Hourglass: Y=16 to 109, Height=93 -->
+                  
                   <tr><td align="center" valign="middle" class="mobile-auto-height">
                     <table border="0" cellpadding="0" cellspacing="0">
                       <tr><td align="center" valign="middle" class="hourglass-circle" style="background-color: #f4ebd8; background-image: linear-gradient(#f4ebd8, #f4ebd8); border-radius: 50%; width: 120px; height: 120px;" bgcolor="#f4ebd8">
@@ -502,39 +547,39 @@ export async function sendRegistrationPendingEmail(
                     </table>
                   </td></tr>
                   
-                  <!-- Heading: Y=109 to 175, Height=66 -->
+                  
                   <tr><td align="center" valign="middle" class="mobile-auto-height">
                     <h2 class="card-heading" style="font-family: Georgia, serif; color: #2c4233; font-size: 26px; font-weight: normal; margin: 0; line-height: 1.25; width: 322px;">Registration Pending<br/>Verification</h2>
                   </td></tr>
 
-                  <!-- Spacer: Y=175 to 186 -->
-                  <tr><td height="11" class="mobile-auto-height mobile-gap-small" style="height: 11px; max-height: 11px; overflow: hidden; line-height: 0; font-size: 0;">&nbsp;</td></tr>
+                  
+                  <tr><td height="6" class="mobile-auto-height mobile-gap-small" style="height: 6px; max-height: 6px; overflow: hidden; line-height: 0; font-size: 0;">&nbsp;</td></tr>
 
-                  <!-- Lotus: Y=186 to 206, Height=20 -->
+                  
                   <tr><td align="center" valign="middle" class="mobile-auto-height">
                     <a href="#_" style="text-decoration:none; color:inherit; cursor:default; pointer-events:none; display:inline-block;"><img src="https://cdn.jsdelivr.net/gh/bangiyasamiti/mahalaya-email-assets/decorative/divider-lotus.png" style="width: 169px; height: auto; display:block; pointer-events:none;"></a>
                   </td></tr>
 
-                  <!-- Spacer: Y=206 to 222 -->
-                  <tr><td height="16" class="mobile-auto-height mobile-gap-medium" style="height: 16px; max-height: 16px; overflow: hidden; line-height: 0; font-size: 0;">&nbsp;</td></tr>
+                  
+                  <tr><td height="8" class="mobile-auto-height mobile-gap-medium" style="height: 8px; max-height: 8px; overflow: hidden; line-height: 0; font-size: 0;">&nbsp;</td></tr>
 
-                  <!-- Greeting: Y=222 to 249, Height=27 -->
+                  
                   <tr><td align="left" valign="middle" class="content-padding mobile-auto-height" style="padding-left: 44px; padding-right: 44px;">
-                    <p class="body-copy" style="font-family: Arial, sans-serif; font-size: 15px; color: #4a4a4a; line-height: 1.6; margin: 0;">Dear <strong>\${participantName}</strong>,</p>
+                    <p class="body-copy" style="font-family: Arial, sans-serif; font-size: 15px; color: #4a4a4a; line-height: 1.6; margin: 0;">Dear <strong>${participantName}</strong>,</p>
                   </td></tr>
 
-                  <!-- Spacer: Y=249 to 255 -->
-                  <tr><td height="6" class="mobile-auto-height" style="height: 6px; max-height: 6px; overflow: hidden; line-height: 0; font-size: 0;">&nbsp;</td></tr>
+                  
+                  <tr><td height="4" class="mobile-auto-height" style="height: 4px; max-height: 4px; overflow: hidden; line-height: 0; font-size: 0;">&nbsp;</td></tr>
 
-                  <!-- UPI: Y=255 to 301, Height=46 -->
+                  
                   <tr><td align="left" valign="middle" class="content-padding mobile-auto-height" style="padding-left: 44px; padding-right: 44px;">
-                    <p class="body-copy" style="font-family: Arial, sans-serif; font-size: 15px; color: #4a4a4a; line-height: 1.6; margin: 0;">We have received your registration and the UPI transaction reference (<strong>\${utr}</strong>).</p>
+                    <p class="body-copy" style="font-family: Arial, sans-serif; font-size: 15px; color: #4a4a4a; line-height: 1.6; margin: 0;">We have received your registration and the UPI transaction reference (<strong>${utr}</strong>).</p>
                   </td></tr>
 
-                  <!-- Spacer: Y=301 to 315 -->
-                  <tr><td height="14" class="mobile-auto-height" style="height: 14px; max-height: 14px; overflow: hidden; line-height: 0; font-size: 0;">&nbsp;</td></tr>
+                  
+                  <tr><td height="7" class="mobile-auto-height" style="height: 7px; max-height: 7px; overflow: hidden; line-height: 0; font-size: 0;">&nbsp;</td></tr>
 
-                  <!-- Ref Box: Y=315 to 395, Height=80 -->
+                  
                   <tr><td align="center" valign="middle" class="content-padding mobile-auto-height" style="padding-left: 35px; padding-right: 35px;">
                     <table border="0" cellpadding="0" cellspacing="0" class="reference-box" style="width: 100%; background-color: #f4ebd8; background-image: linear-gradient(#f4ebd8, #f4ebd8); border-radius: 8px;" bgcolor="#f4ebd8">
                       <tr>
@@ -547,50 +592,50 @@ export async function sendRegistrationPendingEmail(
                         </td>
                         <td align="left" valign="middle" class="reference-box-content" style="padding-left: 20px; padding-right: 10px; padding-top: 15px; padding-bottom: 15px;">
                           <p class="reference-label" style="font-family: Arial, sans-serif; font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: #8e806c; margin: 0 0 5px;">Registration Ref.</p>
-                          <p class="reference-number" style="font-family: monospace; font-size: 21px; font-weight: bold; color: #7a1f1f; margin: 0; letter-spacing: 1px;"><span style="-webkit-user-select: all; user-select: all; cursor: pointer;" title="Click to select all">\${referenceNo}</span></p>
+                          <p class="reference-number" style="font-family: monospace; font-size: 21px; font-weight: bold; color: #7a1f1f; margin: 0; letter-spacing: 1px;"><span style="-webkit-user-select: all; user-select: all; cursor: pointer;" title="Click to select all">${referenceNo}</span></p>
                         </td>
                       </tr>
                     </table>
                   </td></tr>
 
-                  <!-- Spacer: Y=395 to 406 -->
-                  <tr><td height="11" class="mobile-auto-height" style="height: 11px; max-height: 11px; overflow: hidden; line-height: 0; font-size: 0;">&nbsp;</td></tr>
+                  
+                  <tr><td height="6" class="mobile-auto-height" style="height: 6px; max-height: 6px; overflow: hidden; line-height: 0; font-size: 0;">&nbsp;</td></tr>
 
-                  <!-- Tracking: Y=406 to 449, Height=43 -->
+                  
                   <tr><td align="left" valign="middle" class="content-padding mobile-auto-height" style="padding-left: 44px; padding-right: 44px;">
-                    <p class="body-copy" style="font-family: Arial, sans-serif; font-size: 15px; color: #4a4a4a; line-height: 1.6; margin: 0;">Please use this reference number along with your phone number to track your payment status on <a href="\${appUrl}" style="color: #7a1f1f; text-decoration: none; font-weight: bold;">our portal</a>.</p>
+                    <p class="body-copy" style="font-family: Arial, sans-serif; font-size: 15px; color: #4a4a4a; line-height: 1.6; margin: 0;">Please use this reference number along with your phone number to track your payment status on <a href="${appUrl}" style="color: #7a1f1f; text-decoration: none; font-weight: bold;">our portal</a>.</p>
                   </td></tr>
 
-                  <!-- Spacer: Y=449 to 469 -->
-                  <tr><td height="20" class="mobile-auto-height" style="height: 20px; max-height: 20px; overflow: hidden; line-height: 0; font-size: 0;">&nbsp;</td></tr>
+                  
+                  <tr><td height="10" class="mobile-auto-height" style="height: 10px; max-height: 10px; overflow: hidden; line-height: 0; font-size: 0;">&nbsp;</td></tr>
 
-                  <!-- Verification: Y=469 to 535, Height=66 -->
+                  
                   <tr><td align="left" valign="middle" class="content-padding mobile-auto-height" style="padding-left: 44px; padding-right: 44px;">
                     <p class="body-copy" style="font-family: Arial, sans-serif; font-size: 15px; color: #4a4a4a; line-height: 1.6; margin: 0;">Our team is currently verifying the payment.<br/><strong>Once your payment is confirmed, you will receive another email containing your digital QR pass.</strong></p>
                   </td></tr>
 
-                  <!-- Spacer: Y=535 to 558 -->
+                  
                   <tr><td height="23" class="mobile-auto-height" style="height: 23px; max-height: 23px; overflow: hidden; line-height: 0; font-size: 0;">&nbsp;</td></tr>
 
-                  <!-- ContactS: Y=558 to 581, Height=23 -->
+                  
                   <tr><td align="left" valign="middle" class="content-padding mobile-auto-height" style="padding-left: 44px; padding-right: 44px;">
                     <p class="body-copy" style="font-family: Arial, sans-serif; font-size: 15px; color: #4a4a4a; line-height: 1.6; margin: 0;">If you have any questions, please contact the organizers.</p>
                   </td></tr>
 
-                  <!-- Spacer: Y=581 to 593 -->
-                  <tr><td height="12" class="mobile-auto-height mobile-gap-medium" style="height: 12px; max-height: 12px; overflow: hidden; line-height: 0; font-size: 0;">&nbsp;</td></tr>
+                  
+                  <tr><td height="6" class="mobile-auto-height mobile-gap-medium" style="height: 6px; max-height: 6px; overflow: hidden; line-height: 0; font-size: 0;">&nbsp;</td></tr>
 
-                  <!-- Cont.Div: Y=593 to 600, Height=7 -->
+                  
                   <tr><td align="center" valign="middle" class="mobile-auto-height">
                     <div style="width: 40px; border-top: 1px solid #c4b5a3;"></div>
                   </td></tr>
 
-                  <!-- Spacer: Y=600 to 617 -->
-                  <tr><td height="17" class="mobile-auto-height mobile-gap-small" style="height: 17px; max-height: 17px; overflow: hidden; line-height: 0; font-size: 0;">&nbsp;</td></tr>
+                  
+                  <tr><td height="8" class="mobile-auto-height mobile-gap-small" style="height: 8px; max-height: 8px; overflow: hidden; line-height: 0; font-size: 0;">&nbsp;</td></tr>
 
-                  <!-- ContactR: Y=617 to 647, Height=30 -->
+                  
                   <tr><td align="center" valign="middle" class="mobile-auto-height">
-                    <a href="mailto:bangiya.samiti.iith@gmail.com" style="text-decoration: none; cursor: pointer;">
+                    <a href="mailto:bangiya.samiti.iiith@gmail.com" style="text-decoration: none; cursor: pointer;">
                     <table border="0" cellpadding="0" cellspacing="0">
                       <tr>
                          <td class="contact-icon" style="padding-right: 15px;" valign="middle">
@@ -606,35 +651,35 @@ export async function sendRegistrationPendingEmail(
                             </table>
                          </td>
                          <td align="left" valign="middle">
-                            <p class="body-copy contact-text" style="font-family: Arial, sans-serif; font-size: 13px; color: #6b6352; margin: 0; line-height: 1.5;">For any queries, reach out to us at<br/>the official contacts.</p>
+                            <p class="body-copy contact-text" style="font-family: Arial, sans-serif; font-size: 13px; color: #6b6352; margin: 0; line-height: 1.5;">For any queries, click here to<br/><span style="text-decoration: underline;">reach out to us .</span></p>
                          </td>
                       </tr>
                    </table>
                     </a>
                   </td></tr>
 
-                  <!-- Spacer to Footer Title: Y=647 to 692 -->
-                  <tr><td height="45" class="mobile-auto-height mobile-gap-large" style="height: 45px; max-height: 45px; overflow: hidden; line-height: 0; font-size: 0;">&nbsp;</td></tr>
+                  
+                  <tr><td height="20" class="mobile-auto-height mobile-gap-large" style="height: 20px; max-height: 20px; overflow: hidden; line-height: 0; font-size: 0;">&nbsp;</td></tr>
 
-                  <!-- Footer Title: Y=692 to 709, Height=17 -->
+                  
                   <tr><td align="center" valign="middle" class="mobile-auto-height">
                     <p class="footer-title" style="font-family: Arial, sans-serif; font-size: 11px; letter-spacing: 2px; color: #6b6352; text-transform: uppercase; margin: 0; line-height: 1;">IIIT Hyderabad Bangiya Samiti</p>
                   </td></tr>
 
-                  <!-- Spacer to Footer Sub: Y=709 to 718 -->
-                  <tr><td height="9" class="mobile-auto-height mobile-gap-small" style="height: 9px; max-height: 9px; overflow: hidden; line-height: 0; font-size: 0;">&nbsp;</td></tr>
+                  
+                  <tr><td height="5" class="mobile-auto-height mobile-gap-small" style="height: 5px; max-height: 5px; overflow: hidden; line-height: 0; font-size: 0;">&nbsp;</td></tr>
 
-                  <!-- Footer Sub: Y=718 to 735, Height=17 -->
+                  
                   <tr><td align="center" valign="middle" class="mobile-auto-height">
                     <p class="footer-tagline" style="font-family: Arial, sans-serif; font-size: 9px; letter-spacing: 3px; color: #8e806c; text-transform: uppercase; margin: 0; line-height: 1;">CULTURE | COMMUNITY | TOGETHER</p>
                   </td></tr>
 
-                  <!-- Bottom Edge Padding: Y=735 to 752 -->
-                  <tr><td height="17" class="mobile-auto-height mobile-gap-large" style="height: 17px; max-height: 17px; overflow: hidden; line-height: 0; font-size: 0;">&nbsp;</td></tr>
+                  
+                  <tr><td height="8" class="mobile-auto-height mobile-gap-large" style="height: 8px; max-height: 8px; overflow: hidden; line-height: 0; font-size: 0;">&nbsp;</td></tr>
 
                 </table>
                 
-                <!-- Close Decorative Wrappers -->
+                
                 </td></tr></table>
                 </td></tr></table>
                 </td></tr></table>
@@ -642,14 +687,14 @@ export async function sendRegistrationPendingEmail(
               </td></tr>
             </table>
 
-            <!-- BOTTOM CANVAS EDGE -->
+            
             <table width="100%" border="0" cellpadding="0" cellspacing="0" class="mobile-auto-height">
               <tr><td class="mobile-auto-height" style="height: 46px; max-height: 46px; overflow: hidden; line-height: 0; font-size: 0;">&nbsp;</td></tr>
             </table>
 
           </td>
 
-          <!-- RIGHT COLUMN (Empty Spacer) -->
+          
           <td width="82" valign="top" class="desktop-spacer" style="width: 82px;"></td>
         </tr>
       </table>
@@ -665,7 +710,7 @@ export async function sendRegistrationPendingEmail(
     </td></tr></table>
 
   </table>
-  <!-- END MASTER CANVAS -->
+  
 
 </td></tr>
 </table>
