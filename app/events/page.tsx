@@ -29,7 +29,7 @@ export default async function EventsPage() {
           </div>
 
           <div id="public-events-catalog" className="events-scene__cards">
-            {activeEvents.map((event) => (
+            {activeEvents.map((event: any) => (
               <Link href={`/events/${event.slug}`} className="events-scene__card" key={event.id}>
                 <div className="events-scene__card-media">
                   <img
