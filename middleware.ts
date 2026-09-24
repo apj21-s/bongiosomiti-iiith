@@ -1,6 +1,5 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
-import { getDummyUser } from '@/utils/auth/dummy-auth'
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -8,11 +7,29 @@ export async function middleware(request: NextRequest) {
   })
 
   let user = null;
+  
+  // Check for tier-based admin session cookie first
+  const tierSession = request.cookies.get('bangiya.samiti.iiith_dummy_session')
+  if (tierSession && tierSession.value.startsWith('admin-tier-')) {
+    user = {
+      id: tierSession.value,
+      email: 'admin',
+      user_metadata: { role: 'organiser' }
+    }
+  }
 
-  if (process.env.DUMMY_DB === 'True') {
-    const { data } = await getDummyUser()
-    user = data.user
-  } else {
+  if (!user && process.env.DUMMY_DB === 'True') {
+    const dummySession = request.cookies.get('bangiya.samiti.iiith_dummy_session')
+    if (dummySession && dummySession.value === 'dummy-admin-session') {
+      user = {
+        id: 'dummy-admin',
+        email: process.env.DUMMY_ADMIN_EMAIL || 'admin@bangiya.samiti.iiith.local',
+        user_metadata: { role: 'organiser' }
+      }
+    }
+  }
+  
+  if (!user) {
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,

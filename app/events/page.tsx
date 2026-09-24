@@ -7,7 +7,7 @@ import PujaVideo from '@/components/puja-video'
 export const revalidate = 0
 
 export default async function EventsPage() {
-  const activeEvents = getEvents().filter((e: any) => e.status === 'OPEN').sort((a: any, b: any) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime())
+  const activeEvents = getEvents().sort((a: any, b: any) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime())
 
   return (
     <main className="events-page" style={{ paddingTop: '1.5rem' }}>
@@ -45,7 +45,7 @@ export default async function EventsPage() {
                   </div>
                   <h3 className="events-scene__card-title">{event.name}</h3>
                   <p>{event.description?.replace('Shared tables, smoke, brass, and a warm autumn gathering built around authentic Bengali food, adda, and ritual warmth.', 'Bengali food • Adda • Celebration').replace('A serene campus procession with fresh yellow flowers, alpona, morning anjali, recitation, music, and student gathering.', 'Yellow blooms • Anjali • Music • Culture')}</p>
-                  <span className="events-scene__card-link">REGISTER NOW</span>
+                  <span className="events-scene__card-link">{event.status === 'OPEN' ? 'REGISTER NOW' : 'COMING SOON'}</span>
                 </div>
               </Link>
             ))}

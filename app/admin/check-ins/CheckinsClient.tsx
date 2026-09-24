@@ -6,6 +6,7 @@ import Link from 'next/link'
 export default function CheckinsClient() {
   const [checkins, setCheckins] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [tier, setTier] = useState<number>(1)
 
   async function fetchCheckins() {
     setLoading(true)
@@ -22,7 +23,13 @@ export default function CheckinsClient() {
 
   useEffect(() => {
     fetchCheckins()
+    fetch('/api/admin/tier')
+      .then(r => r.json())
+      .then(d => setTier(d.tier || 3))
+      .catch(() => setTier(3))
   }, [])
+
+  const canUseActions = tier >= 3
 
   async function handleUndo(id: string) {
     if (!confirm('Undo this checkin? The pass will become valid for entry again.')) return
@@ -46,12 +53,12 @@ export default function CheckinsClient() {
               <th>Event</th>
               <th>Pass Token</th>
               <th>Entry Gate</th>
-              <th>Actions</th>
+              {canUseActions && <th>Actions</th>}
             </tr>
           </thead>
           <tbody>
-            {loading && <tr><td colSpan={6} className="text-muted">Loading check-ins...</td></tr>}
-            {!loading && checkins.length === 0 && <tr><td colSpan={6} className="text-muted">No check-in history found.</td></tr>}
+            {loading && <tr><td colSpan={canUseActions ? 6 : 5} className="text-muted">Loading check-ins...</td></tr>}
+            {!loading && checkins.length === 0 && <tr><td colSpan={canUseActions ? 6 : 5} className="text-muted">No check-in history found.</td></tr>}
             {!loading && checkins.map((c) => (
               <tr key={c.id}>
                 <td>{new Date(c.timestamp).toLocaleString()}</td>
@@ -59,7 +66,7 @@ export default function CheckinsClient() {
                 <td>{c.eventName}</td>
                 <td><Link href={`/pass/${c.token}`} target="_blank"><code>{c.token}</code></Link></td>
                 <td><span className="pill">{c.gate || 'Gate 1'}</span></td>
-                <td><button type="button" className="btn btn-sm btn-secondary" onClick={() => handleUndo(c.id)}>Undo Entry</button></td>
+                {canUseActions && <td><button type="button" className="btn btn-sm btn-secondary" onClick={() => handleUndo(c.id)}>Undo Entry</button></td>}
               </tr>
             ))}
           </tbody>

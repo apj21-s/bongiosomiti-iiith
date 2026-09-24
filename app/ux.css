@@ -176,10 +176,12 @@
 .reg-phone-prefix { padding: 0 8px; font-size: 12px; font-weight: bold; color: #8F321F; background: rgba(213, 177, 138, 0.2); height: 100%; display: flex; align-items: center; border-right: 1px solid #D5B18A; }
 .reg-phone-wrapper .reg-input { border: none; border-radius: 0; box-shadow: none; height: 100%; }
 
-.reg-counter { display: flex; align-items: center; justify-content: space-between; width: 100%; height: 32px; background: rgba(255, 255, 255, 0.6); border: 1px solid #D5B18A; border-radius: 4px; padding: 0 4px; box-sizing: border-box; }
-.reg-counter button { background: transparent; border: none; cursor: pointer; font-size: 16px; color: #8F321F; font-weight: bold; width: 24px; height: 100%; display: flex; align-items: center; justify-content: center; }
+.reg-counter { display: flex; align-items: center; justify-content: space-between; width: 140px; height: 32px; background: rgba(255, 255, 255, 0.6); border: 1px solid #D5B18A; border-radius: 4px; padding: 0 4px; box-sizing: border-box; box-shadow: inset 0 1px 2px rgba(0,0,0,0.03); transition: border-color 0.2s; }
+.reg-counter:focus-within { border-color: #8F321F; background: #fff; }
+.reg-counter button { background: transparent; border: none; cursor: pointer; font-size: 16px; color: #8F321F; font-weight: bold; width: 28px; height: 100%; display: flex; align-items: center; justify-content: center; }
 .reg-counter button:hover { background: rgba(143, 50, 31, 0.1); border-radius: 2px; }
-.reg-counter-val { font-size: 13px; font-weight: bold; color: #4A2921; }
+.reg-counter-val { font-size: 13px; font-weight: 700; color: #4A2921; width: 32px; text-align: center; }
+.reg-counter-label { font-size: 13px; font-weight: 600; color: #4A2921; flex-grow: 1; }
 
 .reg-error { color: #8F321F; font-size: 11px; text-align: center; font-weight: bold; margin-top: 10px; }
 

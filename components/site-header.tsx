@@ -135,10 +135,8 @@ export default function SiteHeader({ variant = 'public' }: SiteHeaderProps) {
         {/* Desktop Nav */}
         <nav className="home-strip__nav" aria-label="Primary">
           <Link className="home-strip__link" href="/#home" aria-current={pathname === '/' ? "page" : undefined}>HOME</Link>
-          <Link className="home-strip__link" href="/durga-puja" aria-current={pathname.startsWith('/durga-puja') ? "page" : undefined}>DURGA PUJA</Link>
-          <Link className="home-strip__link" href="/#events">EVENTS</Link>
-          <Link className="home-strip__link" href="/#story">STORY</Link>
-          <Link className="home-strip__link" href="/pass" aria-current={pathname.startsWith('/pass') ? "page" : undefined}>PAYMENT STATUS</Link>
+          {pathname !== '/' && <Link className="home-strip__link" href="/#events">EVENTS</Link>}
+          {pathname !== '/' && <Link className="home-strip__link" href="/#story">STORY</Link>}
         </nav>
         
         {/* Mobile Nav Morph Container */}
@@ -146,10 +144,8 @@ export default function SiteHeader({ variant = 'public' }: SiteHeaderProps) {
           <div className="t-morph" data-open={isMobileMenuOpen}>
             <div className="t-morph-menu">
               <Link className="home-strip__link" href="/#home" aria-current={pathname === '/' ? "page" : undefined}>HOME</Link>
-              <Link className="home-strip__link" href="/durga-puja" aria-current={pathname.startsWith('/durga-puja') ? "page" : undefined}>DURGA PUJA</Link>
-              <Link className="home-strip__link" href="/#events">EVENTS</Link>
-              <Link className="home-strip__link" href="/#story">STORY</Link>
-              <Link className="home-strip__link" href="/pass" aria-current={pathname.startsWith('/pass') ? "page" : undefined}>PAYMENT STATUS</Link>
+              {pathname !== '/' && <Link className="home-strip__link" href="/#events">EVENTS</Link>}
+              {pathname !== '/' && <Link className="home-strip__link" href="/#story">STORY</Link>}
             </div>
             
             <button 

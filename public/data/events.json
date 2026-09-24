@@ -10,8 +10,36 @@
     "category": "Neighbourhood bhoj",
     "description": "Shared tables, smoke, brass, and a warm autumn gathering built around authentic Bengali food, adda, and ritual warmth.",
     "image_url": "assets/mahalaya-bhoj.webp",
-    "status": "OPEN",
-    "created_at": "2026-08-23T22:00:00.043761+00:00"
+    "status": "LOCKED",
+    "created_at": "2026-08-23T22:00:00.043761+00:00",
+    "config": {
+      "food_preferences": [
+        "Veg",
+        "Non-Veg"
+      ],
+      "pass_types": [
+        {
+          "name": "Veg (Special Veg Thali)",
+          "price": 250
+        },
+        {
+          "name": "Non-Veg (Authentic Bhoj)",
+          "price": 350
+        }
+      ],
+      "upi_id": "p2arco@ptaxis",
+      "upi_qr_url": "/assets/pay_qr.jpg",
+      "coupons": [
+        {
+          "code": "EARLYBIRD",
+          "discount": 50
+        }
+      ],
+      "upi_ids": [
+        "p2arco@ptaxis",
+        "saswatabose16032005@ybl"
+      ]
+    }
   },
   {
     "id": "22222222-2222-2222-2222-222222222222",
@@ -24,7 +52,13 @@
     "category": "Campus celebration",
     "description": "A serene campus procession with fresh yellow flowers, alpona, morning anjali, recitation, music, and student gathering.",
     "image_url": "assets/saraswati-puja.webp",
-    "status": "OPEN",
-    "created_at": "2026-08-23T22:00:00.043761+00:00"
+    "status": "LOCKED",
+    "created_at": "2026-08-23T22:00:00.043761+00:00",
+    "config": {
+      "food_preferences": [],
+      "upi_id": "8957816008@ybl",
+      "upi_qr_url": "/assets/pay_qr.jpg",
+      "coupons": []
+    }
   }
 ]

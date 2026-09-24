@@ -1,9 +1,13 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
+import { getAdminTier } from '@/utils/auth/server'
 import CheckinsClient from './CheckinsClient'
 
 export const revalidate = 0
 
-export default function AdminCheckinsPage() {
+export default async function AdminCheckinsPage() {
+  const tier = await getAdminTier()
+  if (tier < 2) redirect('/admin')
   return (
     <main className="admin-page-content" data-admin-checkins>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>

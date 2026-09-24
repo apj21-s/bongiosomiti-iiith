@@ -59,6 +59,7 @@ export default function EventsTable({ events }: { events: any[] }) {
                 <button type="button" className={`btn btn-sm ${evt.status === 'OPEN' ? 'btn-danger' : 'btn-secondary'}`} onClick={() => handleToggleStatus(evt.slug)}>
                   {evt.status === 'OPEN' ? 'Lock' : 'Unlock'}
                 </button>
+                <Link href={`/admin/events/${evt.slug}/edit`} className="btn btn-sm btn-primary">Edit</Link>
                 <Link href={`/events/${evt.slug}`} target="_blank" className="btn btn-sm btn-secondary">View Page</Link>
                 <button type="button" className="btn btn-sm btn-danger" onClick={() => handleDelete(evt.slug)}>Delete</button>
               </div>

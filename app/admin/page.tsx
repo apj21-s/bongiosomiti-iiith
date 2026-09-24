@@ -1,11 +1,12 @@
 import Link from 'next/link'
 import { createServiceRoleClient } from '@/utils/supabase/server'
-import SiteFooter from '@/components/site-footer'
+import { getAdminTier } from '@/utils/auth/server'
 
 export const revalidate = 0
 
 export default async function AdminDashboardPage() {
   const supabase = await createServiceRoleClient()
+  const tier = await getAdminTier()
 
   const { count: ticketCount } = await supabase.from('tickets').select('*', { count: 'exact', head: true })
 
@@ -14,11 +15,11 @@ export default async function AdminDashboardPage() {
 
   const { count: checkinCount } = await supabase.from('tickets').select('*', { count: 'exact', head: true }).eq('status', 'USED')
 
-  const { data: recentRegistrations } = await supabase
+  const { data: recentRegistrations } = tier >= 3 ? await supabase
     .from('tickets')
     .select(`*, event:events(name)`)
     .order('created_at', { ascending: false })
-    .limit(5)
+    .limit(5) : { data: [] }
 
   const { data: recentCheckins } = await supabase
     .from('checkins')
@@ -31,34 +32,62 @@ export default async function AdminDashboardPage() {
     return new Date(iso).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
   }
 
+  const tierLabel = tier === 1 ? 'Gate Staff' : tier === 2 ? 'Manager' : 'Super Admin'
+
   return (
     <main className="admin-page-content">
       <div style={{ marginBottom: '32px' }}>
-        <p className="section-label" style={{ marginBottom: '8px' }}>Organiser Operations Center</p>
-        <h1 style={{ fontSize: '2.5rem', margin: '0 0 8px', lineHeight: 1.2, letterSpacing: '-0.03em', color: '#1a202c' }}>Event Operations Dashboard</h1>
-        <p style={{ margin: 0, color: '#718096', fontSize: '1.1rem', maxWidth: '800px' }}>Real-time overview of college cultural events, registration passes, payments, and gate scanner entries.</p>
+        <p className="section-label" style={{ marginBottom: '8px' }}>
+          {tier === 1 ? 'Gate Operations' : tier === 2 ? 'Manager Dashboard' : 'Organiser Operations Center'}
+        </p>
+        <h1 style={{ fontSize: '2.5rem', margin: '0 0 8px', lineHeight: 1.2, letterSpacing: '-0.03em', color: '#1a202c' }}>
+          {tier === 1 ? 'Gate Check-in Monitor' : 'Event Operations Dashboard'}
+        </h1>
+        <p style={{ margin: 0, color: '#718096', fontSize: '1.1rem', maxWidth: '800px' }}>
+          {tier === 1 
+            ? 'Monitor real-time gate check-in activity. Use the Gate Scanner to verify passes.'
+            : tier === 2
+            ? 'Overview of gate activity, payments, and check-in logs.'
+            : 'Real-time overview of college cultural events, registration passes, payments, and gate scanner entries.'}
+        </p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '24px', marginBottom: '32px' }}>
-        <div className="admin-stat-card">
-          <span className="admin-stat-label">Registrations</span>
-          <div className="admin-stat-value">{ticketCount || 0}</div>
-          <div className="admin-stat-desc">Passes issued</div>
+      {/* Stats cards - only for tier 3 */}
+      {tier >= 3 && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '24px', marginBottom: '32px' }}>
+          <div className="admin-stat-card">
+            <span className="admin-stat-label">Registrations</span>
+            <div className="admin-stat-value">{ticketCount || 0}</div>
+            <div className="admin-stat-desc">Passes issued</div>
+          </div>
+          <div className="admin-stat-card">
+            <span className="admin-stat-label">Revenue Collected</span>
+            <div className="admin-stat-value">₹{revenue.toLocaleString('en-IN')}</div>
+            <div className="admin-stat-desc">Verified UPI &amp; bookings</div>
+          </div>
+          <div className="admin-stat-card">
+            <span className="admin-stat-label">Check-ins</span>
+            <div className="admin-stat-value">{checkinCount || 0}</div>
+            <div className="admin-stat-desc">Scanned at gates</div>
+          </div>
         </div>
-        <div className="admin-stat-card">
-          <span className="admin-stat-label">Revenue Collected</span>
-          <div className="admin-stat-value">₹{revenue.toLocaleString('en-IN')}</div>
-          <div className="admin-stat-desc">Verified UPI & bookings</div>
-        </div>
-        <div className="admin-stat-card">
-          <span className="admin-stat-label">Check-ins</span>
-          <div className="admin-stat-value">{checkinCount || 0}</div>
-          <div className="admin-stat-desc">Scanned at gates</div>
-        </div>
-      </div>
+      )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 460px), 1fr))', gap: '24px', alignItems: 'start' }}>
-        <div className="admin-section-card" style={{ marginTop: 0 }}>
+      {/* Tier 1 & 2: show a simple check-in count card */}
+      {tier < 3 && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '24px', marginBottom: '32px' }}>
+          <div className="admin-stat-card">
+            <span className="admin-stat-label">Gate Check-ins</span>
+            <div className="admin-stat-value">{checkinCount || 0}</div>
+            <div className="admin-stat-desc">Scanned at gates today</div>
+          </div>
+        </div>
+      )}
+
+      <div style={{ display: 'grid', gridTemplateColumns: tier >= 3 ? 'repeat(auto-fit, minmax(min(100%, 460px), 1fr))' : '1fr', gap: '24px', alignItems: 'start' }}>
+        {/* Recent Registrations - Only tier 3 */}
+        {tier >= 3 && (
+          <div className="admin-section-card" style={{ marginTop: 0 }}>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
               <h3 style={{ margin: 0, fontSize: 'clamp(1.05rem, 3vw, 1.15rem)' }}>Recent Registrations</h3>
               <Link href="/admin/registrations" className="btn btn-sm btn-secondary" style={{ whiteSpace: 'nowrap' }}>View All &rarr;</Link>
@@ -83,33 +112,36 @@ export default async function AdminDashboardPage() {
               </table>
             </div>
           </div>
+        )}
 
-          <div className="admin-section-card" style={{ marginTop: 0 }}>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h3 style={{ margin: 0, fontSize: '1.25rem', color: '#2d3748' }}>Gate Check-in Activity</h3>
+        {/* Gate Check-in Activity - All tiers */}
+        <div className="admin-section-card" style={{ marginTop: 0 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <h3 style={{ margin: 0, fontSize: '1.25rem', color: '#2d3748' }}>Gate Check-in Activity</h3>
+            {tier >= 2 && (
               <Link href="/admin/check-ins" className="btn btn-sm btn-secondary" style={{ whiteSpace: 'nowrap' }}>View All &rarr;</Link>
-            </div>
-            <div className="table-responsive">
-              <table className="data-table">
-                <thead>
-                  <tr><th>Attendee</th><th>Event</th><th>Gate</th><th>Timestamp</th></tr>
-                </thead>
-                <tbody>
-                  {(recentCheckins || []).length === 0 && <tr><td colSpan={4} className="text-muted">No check-in entries yet.</td></tr>}
-                  {(recentCheckins || []).map((c: any) => (
-                    <tr key={c.id}>
-                      <td><strong>{c.ticket?.participant_name}</strong></td>
-                      <td>{c.ticket?.event?.name}</td>
-                      <td><span className="pill">{c.gate}</span></td>
-                      <td>{formatDate(c.created_at)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            )}
+          </div>
+          <div className="table-responsive">
+            <table className="data-table">
+              <thead>
+                <tr><th>Attendee</th><th>Event</th><th>Gate</th><th>Timestamp</th></tr>
+              </thead>
+              <tbody>
+                {(recentCheckins || []).length === 0 && <tr><td colSpan={4} className="text-muted">No check-in entries yet.</td></tr>}
+                {(recentCheckins || []).map((c: any) => (
+                  <tr key={c.id}>
+                    <td><strong>{c.ticket?.participant_name}</strong></td>
+                    <td>{c.ticket?.event?.name}</td>
+                    <td><span className="pill">{c.gate}</span></td>
+                    <td>{formatDate(c.created_at)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
-
+      </div>
 
       {/* We removed the site footer here to keep the admin interface clean and full-height */}
     </main>

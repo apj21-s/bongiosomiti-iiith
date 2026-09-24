@@ -1,10 +1,15 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { getEvents } from '@/utils/data/events'
+import { getAdminTier } from '@/utils/auth/server'
 import RegistrationsClient from './RegistrationsClient'
 
 export const revalidate = 0
 
 export default async function AdminRegistrationsPage() {
+  const tier = await getAdminTier()
+  if (tier < 3) redirect('/admin')
+
   const events = getEvents().map((e: any) => ({ slug: e.slug, name: e.name }))
 
   return (

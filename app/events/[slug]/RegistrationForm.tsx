@@ -22,8 +22,10 @@ type DraftState = {
   foodPref: string
   vegCount: number
   nonVegCount: number
+  passSelections: Record<string, number>
   couponInput: string
   appliedCoupon: { code: string; discount: number } | null
+  selectedUpiId: string
   utr: string
   screenshot: string | null
   stage: number
@@ -32,8 +34,8 @@ type DraftState = {
 
 const DEFAULT_DRAFT: DraftState = {
   isIiit: null, fullName: '', email: '', phone: '', collegeId: '', city: '',
-  numPasses: 1, foodPref: '', vegCount: 0, nonVegCount: 1, couponInput: '', appliedCoupon: null,
-  utr: '', screenshot: null, stage: 1, paymentState: 'READY'
+  numPasses: 1, foodPref: '', vegCount: 0, nonVegCount: 1, passSelections: {}, couponInput: '', appliedCoupon: null,
+  selectedUpiId: '', utr: '', screenshot: null, stage: 1, paymentState: 'READY'
 }
 
 export default function RegistrationForm({ event }: RegistrationFormProps) {
@@ -68,6 +70,9 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
     }, 300)
   }
 
+  const passTypes = event.config?.pass_types || null
+  const calculatedNumPasses = passTypes ? Object.values(draft.passSelections).reduce((a, b) => a + b, 0) : draft.numPasses
+
   const nextStage = () => {
     setError(null)
     if (draft.stage === 1 && !draft.isIiit) return setError('Select an association.')
@@ -78,27 +83,39 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
       if (draft.isIiit === 'yes' && !draft.collegeId.trim()) return setError('Enter IIIT Roll No.')
       if (draft.isIiit === 'no' && !draft.city.trim()) return setError('Enter City.')
     }
-    if (draft.stage === 3 && draft.numPasses === 1 && !draft.foodPref) return setError('Select food preference.')
-    if (draft.stage === 3 && draft.numPasses > 1 && (draft.vegCount + draft.nonVegCount !== draft.numPasses)) return setError(`Please distribute your ${draft.numPasses} passes among Veg and Non-Veg.`)
+    if (draft.stage === 3) {
+      if (passTypes) {
+        if (calculatedNumPasses === 0) return setError('Select at least one pass.')
+      } else {
+        if (draft.numPasses === 1 && !draft.foodPref) return setError('Select food preference.')
+        if (draft.numPasses > 1 && (draft.vegCount + draft.nonVegCount !== draft.numPasses)) return setError(`Please distribute your ${draft.numPasses} passes among Veg and Non-Veg.`)
+      }
+    }
     if (draft.stage === 4 && draft.paymentState === 'COMPLETED') {
-      if (passPrice > 0 && draft.utr.length < 6) return setError('Enter valid UTR.')
-      if (passPrice > 0 && !draft.screenshot) return setError('Upload receipt.')
+      if (total > 0 && draft.utr.length < 6) return setError('Enter valid UTR.')
+      if (total > 0 && !draft.screenshot) return setError('Upload receipt.')
     }
     transitionTo({ stage: draft.stage + 1 })
   }
   const prevStage = () => { setError(null); transitionTo({ stage: draft.stage - 1 }) }
 
-  const isFree = event.price === 0
-  const passPrice = isFree ? 0 : draft.isIiit === 'yes' ? 250 : 350
-  const subtotal = draft.numPasses * passPrice
+  const subtotal = useMemo(() => {
+    if (passTypes) return passTypes.reduce((sum: number, pt: any) => sum + (draft.passSelections[pt.name] || 0) * pt.price, 0)
+    const isFree = event.price === 0
+    const passPrice = isFree ? 0 : draft.isIiit === 'yes' ? 250 : 350
+    return draft.numPasses * passPrice
+  }, [passTypes, draft.passSelections, draft.isIiit, event.price, draft.numPasses])
   const discount = draft.appliedCoupon ? draft.appliedCoupon.discount : 0
   const total = Math.max(0, subtotal - discount)
 
   const applyCoupon = () => {
-    const code = draft.couponInput.trim().toLowerCase()
-    if (['mahalaya26'].includes(code)) {
-      updateDraft({ appliedCoupon: { code, discount: 50 } })
-      setCouponMsg({ type: 'success', text: '✓ Coupon applied' })
+    const code = draft.couponInput.trim().toUpperCase()
+    const coupons = event.config?.coupons || []
+    const foundCoupon = coupons.find((c: any) => c.code.toUpperCase() === code)
+    
+    if (foundCoupon) {
+      updateDraft({ appliedCoupon: { code, discount: foundCoupon.discount } })
+      setCouponMsg({ type: 'success', text: `✓ Coupon applied (-₹${foundCoupon.discount})` })
     } else {
       updateDraft({ appliedCoupon: null })
       setCouponMsg({ type: 'error', text: 'Invalid coupon' })
@@ -123,11 +140,13 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
           phone: draft.phone,
           email: draft.email,
           utr: draft.utr || 'FREE',
-          numPasses: draft.numPasses,
-          foodPref: draft.numPasses === 1 ? draft.foodPref : `${draft.vegCount} Veg, ${draft.nonVegCount} Non-Veg`,
-          vegCount: draft.numPasses === 1 ? (draft.foodPref === 'Veg' ? 1 : 0) : draft.vegCount,
-          nonVegCount: draft.numPasses === 1 ? (draft.foodPref === 'Non-Veg' ? 1 : 0) : draft.nonVegCount,
+          numPasses: calculatedNumPasses,
+          foodPref: passTypes ? Object.entries(draft.passSelections).filter(([_, v]) => v > 0).map(([k, v]) => `${v} ${k}`).join(', ') : (draft.numPasses === 1 ? draft.foodPref : `${draft.vegCount} Veg, ${draft.nonVegCount} Non-Veg`),
+          vegCount: passTypes ? undefined : (draft.numPasses === 1 ? (draft.foodPref === 'Veg' ? 1 : 0) : draft.vegCount),
+          nonVegCount: passTypes ? undefined : (draft.numPasses === 1 ? (draft.foodPref === 'Non-Veg' ? 1 : 0) : draft.nonVegCount),
           isIiit: draft.isIiit === 'yes',
+          couponCode: draft.appliedCoupon?.code || undefined,
+          discountAmount: draft.appliedCoupon?.discount || 0
         }),
       })
       const data = await res.json()
@@ -140,7 +159,38 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
 
   if (!isLoaded) return <div>Loading...</div>
 
-  const stepProps = { draft, updateDraft, nextStage, prevStage, error, setError, total, subtotal, discount, applyCoupon, couponMsg, handleSubmit, loading, confirmation, setScreenshotPreview, screenshotPreview, transitionTo }
+  const stepProps = { event, draft, updateDraft, nextStage, prevStage, error, setError, total, subtotal, discount, applyCoupon, couponMsg, handleSubmit, loading, confirmation, setScreenshotPreview, screenshotPreview, transitionTo }
+
+  if (event?.status !== 'OPEN') {
+    return (
+      <div className="reg-shell is-locked">
+        {/* Decorative Assets */}
+        <img src="/mahalaya_registration_assets/03_corner_top_left.png" className="reg-corner-tl" alt="" />
+        <img src="/mahalaya_registration_assets/04_corner_top_right.png" className="reg-corner-tr" alt="" />
+        <div className="reg-bottom-decor">
+          <img src="/mahalaya_registration_assets/11_decor_left_grass.png" className="reg-decor-grass-left" alt="" />
+          <img src="/mahalaya_registration_assets/12_decor_right_grass.png" className="reg-decor-grass-right" alt="" />
+          <img src="/mahalaya_registration_assets/35_decor_bottom_landscape.png" className="reg-landscape-img" alt="" />
+          <img src="/mahalaya_registration_assets/36_bottom_bengali_text.png" className="reg-bengali-footer" alt="" />
+        </div>
+        <div className="reg-content-wrapper">
+          <RegistrationHeader />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, minHeight: '280px' }}>
+            <div className="form-lock-content" style={{ position: 'relative' }}>
+              <div className="form-lock-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+              </div>
+              <h4 className="form-lock-title">Registrations Opening Soon</h4>
+              <p className="form-lock-desc">Stay tuned for updates!</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="reg-shell">
@@ -313,68 +363,107 @@ function DetailsStep({ draft, updateDraft, nextStage, prevStage, transitionTo, e
   )
 }
 
-function PassDetailsStep({ draft, updateDraft, nextStage, prevStage, error }: any) {
+function PassDetailsStep({ event, draft, updateDraft, nextStage, prevStage, error }: any) {
+  const passTypes = event.config?.pass_types || null
+
   return (
     <div className="reg-pass">
       <TypewriterHeading lines={['CHOOSE YOUR PASS']} />
-      <p className="reg-p">Select your meal preference</p>
+      <p className="reg-p">Select your pass and meal preference</p>
       
       <div className="reg-grid">
-        <div className="reg-field">
-          <label>Number of Passes *</label>
-          <div className="reg-counter">
-             <button type="button" onClick={() => {
-               const newNum = Math.max(1, draft.numPasses - 1)
-               updateDraft({ numPasses: newNum, vegCount: 0, nonVegCount: newNum })
-             }}>&minus;</button>
-             <span className="reg-counter-val">{draft.numPasses}</span>
-             <button type="button" onClick={() => {
-               const newNum = Math.min(10, draft.numPasses + 1)
-               updateDraft({ numPasses: newNum, vegCount: 0, nonVegCount: newNum })
-             }}>+</button>
+        {passTypes ? (
+          <div className="reg-field" style={{ gridColumn: '1 / -1' }}>
+            <label>Select Passes *</label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '8px' }}>
+              {passTypes.map((pt: any) => {
+                const count = draft.passSelections[pt.name] || 0
+                return (
+                  <div className="reg-counter-row" key={pt.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span className="reg-counter-label">{pt.name} (₹{pt.price})</span>
+                    <div className="reg-counter">
+                       <button type="button" onClick={() => {
+                         updateDraft({ passSelections: { ...draft.passSelections, [pt.name]: Math.max(0, count - 1) } })
+                       }}>&minus;</button>
+                       <span className="reg-counter-val">{count}</span>
+                       <button type="button" onClick={() => {
+                         const currentTotal = Object.values(draft.passSelections).reduce((a: any, b: any) => a + b, 0) as number
+                         if (currentTotal >= 10) return // Max 10 passes total
+                         updateDraft({ passSelections: { ...draft.passSelections, [pt.name]: count + 1 } })
+                       }}>+</button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
           </div>
-        </div>
-        <div className="reg-field">
-          <label>Food Preference *</label>
-          {draft.numPasses === 1 ? (
-            <select className="reg-input" value={draft.foodPref} onChange={e => updateDraft({ foodPref: e.target.value })}>
-              <option value="" disabled>Select option...</option>
-              <option value="Non-Veg">Non-Veg (Authentic Bhoj)</option>
-              <option value="Veg">Veg (Special Veg Thali)</option>
-            </select>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <div className="reg-counter-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>Veg Passes</span>
-                <div className="reg-counter">
-                   <button type="button" onClick={() => {
-                     const newVeg = Math.max(0, draft.vegCount - 1)
-                     updateDraft({ vegCount: newVeg, nonVegCount: draft.numPasses - newVeg })
-                   }}>&minus;</button>
-                   <span className="reg-counter-val">{draft.vegCount}</span>
-                   <button type="button" onClick={() => {
-                     const newVeg = Math.min(draft.numPasses, draft.vegCount + 1)
-                     updateDraft({ vegCount: newVeg, nonVegCount: draft.numPasses - newVeg })
-                   }}>+</button>
-                </div>
-              </div>
-              <div className="reg-counter-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>Non-Veg Passes</span>
-                <div className="reg-counter">
-                   <button type="button" onClick={() => {
-                     const newNon = Math.max(0, draft.nonVegCount - 1)
-                     updateDraft({ nonVegCount: newNon, vegCount: draft.numPasses - newNon })
-                   }}>&minus;</button>
-                   <span className="reg-counter-val">{draft.nonVegCount}</span>
-                   <button type="button" onClick={() => {
-                     const newNon = Math.min(draft.numPasses, draft.nonVegCount + 1)
-                     updateDraft({ nonVegCount: newNon, vegCount: draft.numPasses - newNon })
-                   }}>+</button>
-                </div>
+        ) : (
+          <>
+            <div className="reg-field">
+              <label>Number of Passes *</label>
+              <div className="reg-counter">
+                 <button type="button" onClick={() => {
+                   const newNum = Math.max(1, draft.numPasses - 1)
+                   updateDraft({ numPasses: newNum, vegCount: 0, nonVegCount: newNum })
+                 }}>&minus;</button>
+                 <span className="reg-counter-val">{draft.numPasses}</span>
+                 <button type="button" onClick={() => {
+                   const newNum = Math.min(10, draft.numPasses + 1)
+                   updateDraft({ numPasses: newNum, vegCount: 0, nonVegCount: newNum })
+                 }}>+</button>
               </div>
             </div>
-          )}
-        </div>
+            <div className="reg-field">
+              <label>Food Preference *</label>
+              {draft.numPasses === 1 ? (
+                <select className="reg-input" value={draft.foodPref} onChange={e => updateDraft({ foodPref: e.target.value })}>
+                  <option value="" disabled>Select option...</option>
+                  {event?.config?.food_preferences?.length > 0 ? (
+                    event.config.food_preferences.map((pref: string) => (
+                      <option key={pref} value={pref}>{pref}</option>
+                    ))
+                  ) : (
+                    <>
+                      <option value="Non-Veg">Non-Veg (Authentic Bhoj)</option>
+                      <option value="Veg">Veg (Special Veg Thali)</option>
+                    </>
+                  )}
+                </select>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <div className="reg-counter-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <span className="reg-counter-label">Veg Passes</span>
+                    <div className="reg-counter">
+                       <button type="button" onClick={() => {
+                         const newVeg = Math.max(0, draft.vegCount - 1)
+                         updateDraft({ vegCount: newVeg, nonVegCount: draft.numPasses - newVeg })
+                       }}>&minus;</button>
+                       <span className="reg-counter-val">{draft.vegCount}</span>
+                       <button type="button" onClick={() => {
+                         const newVeg = Math.min(draft.numPasses, draft.vegCount + 1)
+                         updateDraft({ vegCount: newVeg, nonVegCount: draft.numPasses - newVeg })
+                       }}>+</button>
+                    </div>
+                  </div>
+                  <div className="reg-counter-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span className="reg-counter-label">Non-Veg Passes</span>
+                    <div className="reg-counter">
+                       <button type="button" onClick={() => {
+                         const newNon = Math.max(0, draft.nonVegCount - 1)
+                         updateDraft({ nonVegCount: newNon, vegCount: draft.numPasses - newNon })
+                       }}>&minus;</button>
+                       <span className="reg-counter-val">{draft.nonVegCount}</span>
+                       <button type="button" onClick={() => {
+                         const newNon = Math.min(draft.numPasses, draft.nonVegCount + 1)
+                         updateDraft({ nonVegCount: newNon, vegCount: draft.numPasses - newNon })
+                       }}>+</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </div>
       
       {error && <div className="reg-error">{error}</div>}
@@ -497,13 +586,14 @@ function SpinningCounter({ value }: { value: number }) {
   )
 }
 
-function PaymentStep({ draft, updateDraft, prevStage, transitionTo, total, subtotal, discount, applyCoupon, couponMsg }: any) {
+function PaymentStep({ event, draft, updateDraft, prevStage, transitionTo, total, subtotal, discount, applyCoupon, couponMsg }: any) {
   const [copied, setCopied] = useState(false)
-  const UPI_ID = "bangiya.samiti.iiith@oksbi"
-  const deepLink = `upi://pay?pa=${UPI_ID}&pn=BangiyaSomiti&am=${total}&cu=INR`
+  const upiIds = event?.config?.upi_ids || (event?.config?.upi_id ? [event.config.upi_id] : ["bangiya.samiti.iiith@oksbi"])
+  const activeUpiId = draft.selectedUpiId || upiIds[0]
+  const deepLink = `upi://pay?pa=${activeUpiId}&pn=BangiyaSomiti&am=${total}&cu=INR`
   
   const handleCopy = () => {
-    navigator.clipboard.writeText(UPI_ID)
+    navigator.clipboard.writeText(activeUpiId)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
@@ -550,7 +640,13 @@ function PaymentStep({ draft, updateDraft, prevStage, transitionTo, total, subto
              <div className="upi-details-col">
                <span className="scan-label">Scan the QR code or use the UPI ID below</span>
                <div className="upi-copy-row">
-                 <input className="reg-input readonly" value={UPI_ID} readOnly />
+                 {upiIds.length > 1 ? (
+                   <select className="reg-input" style={{ padding: '0 8px' }} value={activeUpiId} onChange={e => updateDraft({ selectedUpiId: e.target.value })}>
+                     {upiIds.map((id: string) => <option key={id} value={id}>{id}</option>)}
+                   </select>
+                 ) : (
+                   <input className="reg-input readonly" value={activeUpiId} readOnly />
+                 )}
                  <button className="reg-btn-copy" onClick={handleCopy}>{copied ? 'COPIED' : 'COPY'}</button>
                </div>
                <a href={deepLink} className="upi-deeplink-btn">

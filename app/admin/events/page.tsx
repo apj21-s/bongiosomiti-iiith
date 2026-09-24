@@ -1,10 +1,15 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { getEvents } from '@/utils/data/events'
+import { getAdminTier } from '@/utils/auth/server'
 import EventsTable from './EventsTable'
 
 export const revalidate = 0
 
 export default async function AdminEventsPage() {
+  const tier = await getAdminTier()
+  if (tier < 3) redirect('/admin')
+
   const events = getEvents()
 
   return (

@@ -79,7 +79,7 @@ const SARASWATI_COURSES = [
   },
 ]
 
-export default function MenuCardModal({ slug }: { slug: string }) {
+export default function MenuCardModal({ slug, status = 'OPEN' }: { slug: string, status?: string }) {
   const [open, setOpen] = useState(false)
   const [activeMeal, setActiveMeal] = useState<'breakfast' | 'lunch'>('lunch')
   const [expandedDiet, setExpandedDiet] = useState<'veg' | 'nonveg' | null>(null)
@@ -204,6 +204,14 @@ export default function MenuCardModal({ slug }: { slug: string }) {
                 transition={{ duration: 0.3, delay: 0.1 }}
                 className={isMahalaya ? 'mahalaya-menu-modal__body' : 'saraswati-menu-modal__body'}
               >
+              {status !== 'OPEN' ? (
+                <div style={{ padding: '60px 20px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '48px', marginBottom: '16px' }}>🧑‍🍳</div>
+                  <h3 className={isMahalaya ? 'mahalaya-menu-modal__title' : 'saraswati-menu-modal__title'}>Menu is Cooking...</h3>
+                  <p className={isMahalaya ? 'mahalaya-menu-modal__subtitle' : 'saraswati-menu-modal__subtitle'}>The official menu is currently being prepared and will be revealed soon! Stay tuned.</p>
+                </div>
+              ) : (
+                <>
               <div className={isMahalaya ? 'mahalaya-menu-modal__header' : 'saraswati-menu-modal__header'}>
                 <span className={isMahalaya ? 'mahalaya-menu-modal__tag' : 'saraswati-menu-modal__tag'}>
                   {isMahalaya ? <><span className="tag-flourish">❖</span> IIIT HYDERABAD BANGIYA SAMITI <span className="tag-flourish">❖</span></> : '🌼 BASANT PANCHAMI 2027 🌼'}
@@ -345,6 +353,8 @@ export default function MenuCardModal({ slug }: { slug: string }) {
                   <p>✨ Sit-down lunch timings: <strong>12:30 PM – 3:30 PM</strong> &bull; Free community feast for all attendees with pass</p>
                 )}
               </div>
+              </>
+              )}
             </motion.div>
           </motion.div>
         </div>

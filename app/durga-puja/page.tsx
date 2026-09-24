@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import { notFound } from 'next/navigation'
 import SiteHeader from '@/components/site-header'
 import SiteFooter from '@/components/site-footer'
 import './durga-puja.css'
@@ -9,6 +10,8 @@ import './durga-puja.css'
 import pujasRawData from '../../public/data/pujas-raw-65.json'
 
 export default function DurgaPujaPage() {
+  notFound()
+  
   const [activeRegion, setActiveRegion] = useState('ALL')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedPuja, setSelectedPuja] = useState<any>(null)

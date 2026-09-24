@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { notFound } from 'next/navigation'
 import SiteHeader from '@/components/site-header'
 import SiteFooter from '@/components/site-footer'
 import { QRCodeSVG } from 'qrcode.react'
@@ -34,16 +35,18 @@ function formatCurrency(n: number) {
 }
 
 export default function PassVerifyPage() {
+  notFound()
+  
   const [query, setQuery] = useState('')
   const [loading, setLoading] = useState(false)
   const [ticket, setTicket] = useState<Ticket | null>(null)
-  const [notFound, setNotFound] = useState<string | null>(null)
+  const [isNotFound, setIsNotFound] = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setLoading(true)
     setTicket(null)
-    setNotFound(null)
+    setIsNotFound(null)
     try {
       const res = await fetch('/api/pass/verify', {
         method: 'POST',
@@ -54,10 +57,10 @@ export default function PassVerifyPage() {
       if (res.ok) {
         setTicket(data)
       } else {
-        setNotFound(data.error || 'No registration found')
+        setIsNotFound(data.error || 'No registration found')
       }
     } catch (err: any) {
-      setNotFound(err.message)
+      setIsNotFound(err.message)
     } finally {
       setLoading(false)
     }
@@ -115,7 +118,7 @@ export default function PassVerifyPage() {
                 </button>
               </form>
 
-              {(ticket || notFound) && (
+              {(ticket || isNotFound) && (
                 <div style={{ display: 'block', marginTop: '2rem' }}>
                   {ticket && (
                     <div className="status-result-panel">
@@ -177,11 +180,11 @@ export default function PassVerifyPage() {
                     </div>
                   )}
 
-                  {notFound && (
+                  {isNotFound && (
                     <div className="status-result-panel">
                       <div className="status-banner status-banner--rejected" role="status" aria-live="polite">
                         <span className="status-banner__icon">✕</span>
-                        <div><h2 className="status-banner__title">NO REGISTRATION FOUND</h2><p className="status-banner__desc">{notFound}</p></div>
+                        <div><h2 className="status-banner__title">NO REGISTRATION FOUND</h2><p className="status-banner__desc">{isNotFound}</p></div>
                       </div>
                       <div style={{ textAlign: 'center', marginTop: '1rem' }}>
                         <Link href="/events" className="btn btn-primary">Browse Events &amp; Register →</Link>
