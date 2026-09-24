@@ -1,0 +1,1 @@
+High-resolution separated transparent PNG assets. Brown/colored sheet background removed. Use hero and wide scenes as section artwork; use decorative assets sparingly. All text should be HTML, not baked into images.

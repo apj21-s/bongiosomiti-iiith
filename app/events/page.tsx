@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { staticEvents } from '@/utils/data/events'
+import { getEvents } from '@/utils/data/events'
 import SiteHeader from '@/components/site-header'
 import SiteFooter from '@/components/site-footer'
 import PujaVideo from '@/components/puja-video'
@@ -7,7 +7,7 @@ import PujaVideo from '@/components/puja-video'
 export const revalidate = 0
 
 export default async function EventsPage() {
-  const activeEvents = staticEvents.filter(e => e.status === 'OPEN').sort((a, b) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime())
+  const activeEvents = getEvents().filter((e: any) => e.status === 'OPEN').sort((a: any, b: any) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime())
 
   return (
     <main className="events-page" style={{ paddingTop: '1.5rem' }}>
@@ -52,7 +52,7 @@ export default async function EventsPage() {
           </div>
 
           <p className="events-scene__caption">
-            IIIT BONGIO SAMITI &bull; CULTURAL HERITAGE IN DIGITAL FORM
+            IIIT BANGIYA SAMITI &bull; CULTURAL HERITAGE IN DIGITAL FORM
           </p>
         </div>
       </section>

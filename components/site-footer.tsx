@@ -29,8 +29,8 @@ export default function SiteFooter({ variant = 'public' }: SiteFooterProps) {
             </div>
             <p className="utsav-footer__about">
               {variant === 'admin'
-                ? 'IIIT Hyderabad Bongio Samiti Internal Organiser & Verification Suite.'
-                : "IIIT Hyderabad Bongio Samiti's digital pass & cultural festivity portal."}
+                ? 'IIIT Hyderabad Bangiya Samiti Internal Organiser & Verification Suite.'
+                : "IIIT Hyderabad Bangiya Samiti's digital pass & cultural festivity portal."}
             </p>
           </div>
 
@@ -91,7 +91,7 @@ export default function SiteFooter({ variant = 'public' }: SiteFooterProps) {
         {/* Bottom Bar */}
         <div className="utsav-footer__bottom">
           <p className="utsav-footer__copyright">
-            &copy; 2026 IIIT Bongio Samiti &bull; {variant === 'admin' ? 'Protected Internal Organiser Area' : 'All Rights Reserved'} {variant !== 'admin' && (
+            &copy; 2026 IIIT Bangiya Samiti &bull; {variant === 'admin' ? 'Protected Internal Organiser Area' : 'All Rights Reserved'} {variant !== 'admin' && (
               <>
                 &bull; By <a href="https://github.com/apj21-s">arco</a> & <a href="https://github.com/sagarjha7174">sagar</a>
               </>

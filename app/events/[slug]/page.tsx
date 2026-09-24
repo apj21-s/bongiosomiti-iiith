@@ -121,26 +121,24 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
               </div>
             </div>
 
-            <div className={`${isMahalaya ? 'mahalaya-card__formPane' : 'saraswati-card__formPane saraswati-card__formPane--locked'}`} id="registration-form-container">
-              {!isMahalaya && (
-                <div className="saraswati-card__formLockedBg" style={{ backgroundImage: "url('/assets/saraswati-puja.webp')" }}></div>
+            <div className={`${isMahalaya ? 'mahalaya-card__formPane' : 'saraswati-card__formPane'} ${event.status !== 'OPEN' ? 'is-locked' : ''}`} id="registration-form-container">
+              {event.status !== 'OPEN' && (
+                <div className={isMahalaya ? "" : "saraswati-card__formLockedBg"} style={!isMahalaya ? { backgroundImage: "url('/assets/saraswati-puja.webp')" } : {}}></div>
               )}
               
-
-
               <RegistrationForm event={event} />
 
-              {!isMahalaya && (
-                <div className="saraswati-form-lock-overlay">
-                  <div className="saraswati-form-lock-content">
-                    <div className="saraswati-form-lock-icon">
+              {event.status !== 'OPEN' && (
+                <div className="form-lock-overlay">
+                  <div className="form-lock-content">
+                    <div className="form-lock-icon">
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                         <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                         <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                       </svg>
                     </div>
-                    <h4 className="saraswati-form-lock-title">Registrations Opening Soon</h4>
-                    <p className="saraswati-form-lock-desc">Stay tuned!</p>
+                    <h4 className="form-lock-title">Registrations Opening Soon</h4>
+                    <p className="form-lock-desc">Stay tuned for updates!</p>
                   </div>
                 </div>
               )}

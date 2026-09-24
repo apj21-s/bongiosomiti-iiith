@@ -11,7 +11,7 @@ type Photo = {
   pos: string
 }
 
-const PHOTOS: Photo[] = [
+const DEFAULT_PHOTOS: Photo[] = [
   { src: '/assets/photo_1.webp', alt: 'সরস্বতী পূজা', title: 'সরস্বতী পূজা', date: '১৪ অক্টোবর ২০২৬', pos: 'center 32%' },
   { src: '/assets/photo_2026-08-11_21-42-50.webp', alt: 'হাতের আলপনা', title: 'হাতের আলপনা', date: '১৮ অক্টোবর ২০২৬', pos: 'center 28%' },
   { src: '/assets/photo_2026-08-11_21-42-48.webp', alt: 'সরস্বতী প্রাঙ্গণ', title: 'সরস্বতী প্রাঙ্গণ', date: '২১ জানুয়ারি ২০২৭', pos: 'center 42%' },
@@ -35,12 +35,22 @@ function toBn(n: number) {
 }
 
 export default function PhotoAlbum() {
+  const [photos, setPhotos] = useState<Photo[]>(DEFAULT_PHOTOS)
   const [active, setActive] = useState<number | null>(null)
   const [changing, setChanging] = useState(false)
   const [touchStartX, setTouchStartX] = useState<number | null>(null)
   const [touchEndX, setTouchEndX] = useState<number | null>(null)
 
-  const total = PHOTOS.length
+  useEffect(() => {
+    fetch(`/data/album.json?t=${Date.now()}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.length > 0) setPhotos(data)
+      })
+      .catch(console.error)
+  }, [])
+
+  const total = photos.length
   const moreCount = total > VISIBLE ? total - VISIBLE : 0
 
   function openLightbox(index: number) {
@@ -115,16 +125,16 @@ export default function PhotoAlbum() {
 
       <div className="photo-album" aria-label="আমাদের গল্প photo album" role="group">
         <div className="photo-album__grid">
-          <button type="button" className="photo-album__card photo-album__card--hero scroll-reveal scroll-reveal--delay-1" onClick={() => openLightbox(0)} aria-label={PHOTOS[0].title}>
-            <img className="photo-album__img" src={PHOTOS[0].src} alt={PHOTOS[0].alt} loading="lazy" decoding="async" style={{ objectPosition: PHOTOS[0].pos }} />
+          <button type="button" className="photo-album__card photo-album__card--hero scroll-reveal scroll-reveal--delay-1" onClick={() => openLightbox(0)} aria-label={photos[0].title}>
+            <img className="photo-album__img" src={photos[0].src} alt={photos[0].alt} loading="lazy" decoding="async" style={{ objectPosition: photos[0].pos }} />
             <div className="photo-album__scrim"></div>
             <div className="photo-album__label" aria-hidden="true">
-              <span className="photo-album__label-title">{PHOTOS[0].title}</span>
-              <span className="photo-album__label-date">{PHOTOS[0].date}</span>
+              <span className="photo-album__label-title">{photos[0].title}</span>
+              <span className="photo-album__label-date">{photos[0].date}</span>
             </div>
           </button>
 
-          {PHOTOS.slice(1, 4).map((photo, i) => {
+          {photos.slice(1, 4).map((photo, i) => {
             const idx = i + 1
             const isLast = idx === Math.min(3, total - 1)
             const showMore = isLast && moreCount > 0
@@ -169,8 +179,8 @@ export default function PhotoAlbum() {
                   </svg>
                   আমাদের ছবির অ্যালবাম
                 </span>
-                <h3 className="story-lightbox__title">{PHOTOS[active].title}</h3>
-                <span className="story-lightbox__date">{PHOTOS[active].date}</span>
+                <h3 className="story-lightbox__title">{photos[active].title}</h3>
+                <span className="story-lightbox__date">{photos[active].date}</span>
               </div>
 
               <div className="story-lightbox__actions">
@@ -216,7 +226,7 @@ export default function PhotoAlbum() {
               </button>
 
               <div className="story-lightbox__media" onClick={(e) => e.stopPropagation()}>
-                <img className={`story-lightbox__image ${changing ? 'is-changing' : ''}`} src={PHOTOS[active].src} alt={PHOTOS[active].alt} />
+                <img className={`story-lightbox__image ${changing ? 'is-changing' : ''}`} src={photos[active].src} alt={photos[active].alt} />
               </div>
 
               <button type="button" className="story-lightbox__nav story-lightbox__next" onClick={goNext} disabled={active >= total - 1} aria-label="Next photo" title="Next photo (→)">
@@ -229,7 +239,7 @@ export default function PhotoAlbum() {
             {/* Google Photos Smart Filmstrip Preview Bar */}
             <footer className="story-lightbox__filmstrip-bar" aria-label="Photo thumbnails scrubber">
               <div className="story-lightbox__filmstrip" role="tablist" aria-label="All album photos">
-                {PHOTOS.map((photo, index) => (
+                {photos.map((photo, index) => (
                   <button
                     key={index}
                     type="button"

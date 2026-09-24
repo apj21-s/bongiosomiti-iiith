@@ -55,7 +55,7 @@ export default function NewEventPage() {
         <div>
           <p className="section-label">Organiser Event Creator</p>
           <h1 style={{ fontSize: '2rem', margin: '4px 0 6px' }}>Create New Cultural Event</h1>
-          <p>Publish a new event to the BONGIO.SOMITI public catalog with custom pricing, venue, and pass capacity.</p>
+          <p>Publish a new event to the BANGIYA.SOMITI public catalog with custom pricing, venue, and pass capacity.</p>
         </div>
         <Link className="btn btn-secondary" href="/admin/events">&larr; Back to Events</Link>
       </div>

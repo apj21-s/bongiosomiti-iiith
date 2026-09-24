@@ -7,7 +7,7 @@ import UtsavLoader from '@/components/utsav-loader'
 type RegistrationFormProps = { event: any }
 
 const UPI_ID = 'utsav.iiit@okhdfcbank'
-const DRAFT_KEY = 'utsavpass_registration_draft_v4'
+const DRAFT_KEY = 'bangiya.samiti.iiith_registration_draft_v4'
 
 function formatCurrency(n: number) { return n === 0 ? 'Free' : `₹${n.toLocaleString('en-IN')}` }
 
@@ -455,8 +455,8 @@ function SpinningCounter({ value }: { value: number }) {
 
 function PaymentStep({ draft, updateDraft, prevStage, transitionTo, total, subtotal, discount, applyCoupon, couponMsg }: any) {
   const [copied, setCopied] = useState(false)
-  const UPI_ID = "utsavpass@oksbi"
-  const deepLink = `upi://pay?pa=${UPI_ID}&pn=BongioSomiti&am=${total}&cu=INR`
+  const UPI_ID = "bangiya.samiti.iiith@oksbi"
+  const deepLink = `upi://pay?pa=${UPI_ID}&pn=BangiyaSomiti&am=${total}&cu=INR`
   
   const handleCopy = () => {
     navigator.clipboard.writeText(UPI_ID)

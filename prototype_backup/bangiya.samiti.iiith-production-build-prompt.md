@@ -1,4 +1,4 @@
-# UTSAVPASS — Production Build Prompt (Next.js + Supabase)
+# bangiya.samiti.iiith — Production Build Prompt (Next.js + Supabase)
 
 ## How to use this prompt
 
@@ -10,9 +10,9 @@ Tell the agent explicitly: *"The attached files are a finished theme/UX prototyp
 
 ## 1. What this app is
 
-UTSAVPASS is a digital event-pass platform. The current instance is branded for **BONGIO.SOMITI** (a Bengali cultural community group at IIIT Hyderabad) running events like Mahalaya Bhoj and Saraswati Puja. Attendees register, get a QR pass, and show it at the gate; organisers manage events, approve payments, and scan passes for entry.
+bangiya.samiti.iiith is a digital event-pass platform. The current instance is branded for **BONGIO.SOMITI** (a Bengali cultural community group at IIIT Hyderabad) running events like Mahalaya Bhoj and Saraswati Puja. Attendees register, get a QR pass, and show it at the gate; organisers manage events, approve payments, and scan passes for entry.
 
-Keep the dual branding exactly as in the prototype: the home page is `BONGIO.SOMITI`-branded; login, pass, and admin pages are `UTSAVPASS`-branded. Don't merge or rename them.
+Keep the dual branding exactly as in the prototype: the home page is `BONGIO.SOMITI`-branded; login, pass, and admin pages are `bangiya.samiti.iiith`-branded. Don't merge or rename them.
 
 ## 2. Non-negotiables — reproduce exactly
 

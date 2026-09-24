@@ -85,10 +85,10 @@
   // UTSAV DATABASE (Client-Side LocalStorage Engine)
   // =========================================================================
   const STORAGE_KEYS = {
-    EVENTS: "utsavpass:events",
-    TICKETS: "utsavpass:tickets",
-    CHECKINS: "utsavpass:checkins",
-    AUTH: "utsavpass:auth"
+    EVENTS: "bangiya.samiti.iiith:events",
+    TICKETS: "bangiya.samiti.iiith:tickets",
+    CHECKINS: "bangiya.samiti.iiith:checkins",
+    AUTH: "bangiya.samiti.iiith:auth"
   };
 
   const SEED_EVENTS = [
@@ -96,7 +96,7 @@
       slug: "mahalaya",
       name: "Mahalaya Bhoj",
       date: "2026-10-12",
-      dateFormatted: "12 Oct 2026",
+      dateFormatted: "10 Oct 2026",
       venue: "Community Courtyard",
       capacity: 120,
       price: 250,
@@ -200,7 +200,7 @@
   ];
 
   const SEED_AUTH = {
-    email: "admin@utsavpass.local",
+    email: "admin@bangiya.samiti.iiith.local",
     name: "IIIT Bongio Samiti Admin",
     role: "Organiser",
     loggedIn: true
@@ -323,7 +323,7 @@
         id: "chk-" + Date.now(),
         token: ticket.token,
         participantName: ticket.participantName || "Guest",
-        eventName: ticket.eventName || "UTSAVPASS",
+        eventName: ticket.eventName || "bangiya.samiti.iiith",
         gate: gate,
         timestamp: new Date().toISOString()
       };
@@ -546,7 +546,7 @@
       ticket = {
         token: token,
         eventSlug: "general",
-        eventName: "UTSAVPASS",
+        eventName: "bangiya.samiti.iiith",
         venue: "Campus Venue",
         participantName: "Guest Attendee",
         collegeId: "2026-GUEST",
@@ -557,7 +557,7 @@
     }
 
     // Populate Pass Metadata
-    $all(".pass-world__event", root).forEach((el) => (el.textContent = ticket.eventName || "UTSAVPASS"));
+    $all(".pass-world__event", root).forEach((el) => (el.textContent = ticket.eventName || "bangiya.samiti.iiith"));
     $all(".pass-world__venue", root).forEach((el) => (el.textContent = ticket.venue || "Campus Venue"));
     $all(".pass-world__attendee", root).forEach((el) => (el.textContent = ticket.participantName || "Guest"));
     $all(".pass-world__token", root).forEach((el) => (el.textContent = ticket.token));
@@ -917,7 +917,7 @@
     // Reset Demo Data Button
     const resetBtn = $("#admin-reset-db", root);
     resetBtn?.addEventListener("click", () => {
-      if (confirm("Reset all UTSAVPASS local data back to initial sample state?")) {
+      if (confirm("Reset all bangiya.samiti.iiith local data back to initial sample state?")) {
         UtsavDB.resetDatabase();
         showToast("Database reset to sample state.", "success");
         setTimeout(() => window.location.reload(), 600);
@@ -1137,7 +1137,7 @@
       const encodedUri = encodeURI(csvContent);
       const link = document.createElement("a");
       link.setAttribute("href", encodedUri);
-      link.setAttribute("download", `utsavpass_registrations_${new Date().toISOString().slice(0, 10)}.csv`);
+      link.setAttribute("download", `bangiya.samiti.iiith_registrations_${new Date().toISOString().slice(0, 10)}.csv`);
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -1298,7 +1298,7 @@
     form.addEventListener("submit", (event) => {
       event.preventDefault();
       const emailInput = $("#email", form);
-      const email = (emailInput?.value || "admin@utsavpass.local").trim();
+      const email = (emailInput?.value || "admin@bangiya.samiti.iiith.local").trim();
       doLogin(email, email.split("@")[0]);
     });
 

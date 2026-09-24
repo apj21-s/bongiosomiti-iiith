@@ -1,11 +1,11 @@
 import Link from 'next/link'
-import { staticEvents } from '@/utils/data/events'
+import { getEvents } from '@/utils/data/events'
 import EventsTable from './EventsTable'
 
 export const revalidate = 0
 
 export default async function AdminEventsPage() {
-  const events = staticEvents
+  const events = getEvents()
 
   return (
     <main className="panel container admin-dashboard-main" data-admin-events style={{ maxWidth: '1300px', margin: '2rem auto', padding: '0 clamp(12px, 3vw, 24px)', overflowX: 'hidden' }}>

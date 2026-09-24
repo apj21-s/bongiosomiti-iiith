@@ -1,9 +1,9 @@
 import { cookies } from 'next/headers'
 
-const DUMMY_SESSION_COOKIE = 'utsavpass_dummy_session'
+const DUMMY_SESSION_COOKIE = 'bangiya.samiti.iiith_dummy_session'
 
 export async function dummyLogin(email: string, password: string) {
-  const adminEmail = process.env.DUMMY_ADMIN_EMAIL || 'admin@utsavpass.local'
+  const adminEmail = process.env.ADMIN_EMAIL || 'admin@bangiya.samiti.iiith.local'
   const adminPassword = process.env.DUMMY_ADMIN_PASSWORD || 'admin123'
 
   if (email === adminEmail && password === adminPassword) {
@@ -35,7 +35,7 @@ export async function getDummyUser() {
       data: {
         user: {
           id: 'dummy-admin',
-          email: process.env.DUMMY_ADMIN_EMAIL || 'admin@utsavpass.local',
+          email: process.env.DUMMY_ADMIN_EMAIL || 'admin@bangiya.samiti.iiith.local',
           user_metadata: { role: 'organiser' }
         }
       },

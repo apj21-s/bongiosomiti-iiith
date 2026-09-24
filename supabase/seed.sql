@@ -9,17 +9,17 @@ ON CONFLICT (id) DO NOTHING;
 -- Password is 'password123'
 insert into auth.users (id, instance_id, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, role, aud)
 select
-'33333333-3333-3333-3333-333333333333', '00000000-0000-0000-0000-000000000000', 'admin@utsavpass.local', crypt('password123', gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{"name":"IIIT Bongio Samiti Admin"}', now(), now(), 'authenticated', 'authenticated'
+'33333333-3333-3333-3333-333333333333', '00000000-0000-0000-0000-000000000000', 'admin@bangiya.samiti.iiith.local', crypt('password123', gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{"name":"IIIT Bongio Samiti Admin"}', now(), now(), 'authenticated', 'authenticated'
 where not exists (select 1 from auth.users where id = '33333333-3333-3333-3333-333333333333');
 
 insert into auth.identities (id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
 select
-'33333333-3333-3333-3333-333333333333', '33333333-3333-3333-3333-333333333333', '33333333-3333-3333-3333-333333333333', '{"sub":"33333333-3333-3333-3333-333333333333","email":"admin@utsavpass.local","email_verified":true}', 'email', now(), now(), now()
+'33333333-3333-3333-3333-333333333333', '33333333-3333-3333-3333-333333333333', '33333333-3333-3333-3333-333333333333', '{"sub":"33333333-3333-3333-3333-333333333333","email":"admin@bangiya.samiti.iiith.local","email_verified":true}', 'email', now(), now(), now()
 where not exists (select 1 from auth.identities where id = '33333333-3333-3333-3333-333333333333');
 
 insert into admin_profiles (id, name, email, role)
 values
-('33333333-3333-3333-3333-333333333333', 'IIIT Bongio Samiti Admin', 'admin@utsavpass.local', 'organiser')
+('33333333-3333-3333-3333-333333333333', 'IIIT Bongio Samiti Admin', 'admin@bangiya.samiti.iiith.local', 'organiser')
 ON CONFLICT (id) DO NOTHING;
 
 -- Seed Tickets

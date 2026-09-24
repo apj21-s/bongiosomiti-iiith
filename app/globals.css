@@ -5300,7 +5300,9 @@ video::cue {
 }
 
 .saraswati-card__formPane--locked .saraswati-card__formHeader,
-.saraswati-card__formPane--locked form {
+.saraswati-card__formPane--locked form,
+.is-locked .mahalaya-card__formHeader,
+.is-locked form {
   position: relative;
   z-index: 2;
   filter: blur(5px);
@@ -5309,7 +5311,7 @@ video::cue {
   user-select: none;
 }
 
-.saraswati-form-lock-overlay {
+.saraswati-form-lock-overlay, .form-lock-overlay {
   position: absolute;
   inset: 0;
   z-index: 10;
@@ -5320,7 +5322,7 @@ video::cue {
   background: rgba(36, 20, 2, 0.55);
 }
 
-.saraswati-form-lock-content {
+.saraswati-form-lock-content, .form-lock-content {
   background: rgba(255, 255, 255, 0.96);
   border: 2px solid #d48806;
   border-radius: 16px;
@@ -5344,7 +5346,7 @@ video::cue {
   }
 }
 
-.saraswati-form-lock-icon {
+.saraswati-form-lock-icon, .form-lock-icon {
   width: 56px;
   height: 56px;
   margin: 0 auto 16px;
@@ -5359,12 +5361,12 @@ video::cue {
   animation: lockPulse 2s infinite ease-in-out;
 }
 
-.saraswati-form-lock-icon svg {
+.saraswati-form-lock-icon svg, .form-lock-icon svg {
   width: 26px;
   height: 26px;
 }
 
-.saraswati-form-lock-title {
+.saraswati-form-lock-title, .form-lock-title {
   margin: 0 0 10px;
   font-family: "Cinzel", "Times New Roman", Georgia, serif;
   font-size: clamp(1.15rem, 2vw, 1.35rem);
@@ -5373,7 +5375,7 @@ video::cue {
   letter-spacing: 0.02em;
 }
 
-.saraswati-form-lock-desc {
+.saraswati-form-lock-desc, .form-lock-desc {
   margin: 0;
   font-size: clamp(0.78rem, 1.5vw, 0.84rem);
   line-height: 1.55;
@@ -6626,9 +6628,9 @@ video::cue {
 }
 
 .home-strip {
-  position: sticky;
+  position: fixed;
   top: 0;
-  z-index: 100;
+  z-index: 1000;
   display: flex;
   justify-content: center;
   width: 100%;
@@ -6725,11 +6727,11 @@ video::cue {
 
 .home-strip__action {
   flex-shrink: 0;
-  padding: 6px clamp(10px, 1.5vw, 16px);
-  border-radius: 3px;
+  padding: 8px clamp(12px, 2vw, 20px);
+  border-radius: 4px;
   background: #bf5d34;
   color: #fff7eb !important;
-  font-size: clamp(0.5rem, 0.85vw, 0.6rem);
+  font-size: clamp(0.7rem, 1vw, 0.9rem);
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -7691,9 +7693,9 @@ video::cue {
   }
 
   .home-strip__action {
-    padding: 4px clamp(6px, 1.5vw, 10px);
-    font-size: clamp(0.48rem, 1.8vw, 0.54rem);
-    letter-spacing: 0.04em;
+    padding: 6px clamp(10px, 2vw, 14px);
+    font-size: clamp(0.6rem, 2.2vw, 0.75rem);
+    letter-spacing: 0.08em;
     flex-shrink: 0;
     justify-self: auto;
   }
@@ -7993,7 +7995,7 @@ video::cue {
 }
 
 /* ==========================================================================
-   BONGIO.SOMITI PREMIUM ADMIN & COMPONENT ENHANCEMENTS
+   BANGIYA.SOMITI PREMIUM ADMIN & COMPONENT ENHANCEMENTS
    ========================================================================== */
 
 /* Buttons */
@@ -8352,7 +8354,7 @@ video::cue {
 }
 
 /* =========================================================================
-   BONGIO.SOMITI SIGNATURE CULTURAL FOOTER (FULL DESIGN BANNER + NARROW HEIGHT)
+   BANGIYA.SOMITI SIGNATURE CULTURAL FOOTER (FULL DESIGN BANNER + NARROW HEIGHT)
    ========================================================================= */
 .utsav-footer,
 .home-footer {
@@ -8688,7 +8690,7 @@ video::cue {
 }
 
 /* =========================================================================
-   UTSAVPASS RESTRAINED ANIMATION & INTERACTION SYSTEM
+   bangiya.samiti.iiith RESTRAINED ANIMATION & INTERACTION SYSTEM
    ========================================================================= */
 
 /* 1. Smooth Section Scrolling & Sticky Navigation Offset */
@@ -8810,9 +8812,9 @@ div[id] {
   inset: 0;
   z-index: 9999;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
-  padding: 64px 16px 16px;
+  padding: 16px;
   box-sizing: border-box;
   opacity: 0;
   pointer-events: none;
@@ -8837,8 +8839,7 @@ div[id] {
   z-index: 2;
   width: 100%;
   max-width: 800px;
-  height: 95vh;
-  max-height: 95vh;
+  max-height: 90vh;
   overflow-y: auto;
   overflow-x: hidden;
   background: #fffdf9;
@@ -8846,7 +8847,6 @@ div[id] {
   border: 2px solid #d48806;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35), 0 0 35px rgba(212, 136, 6, 0.25);
   box-sizing: border-box;
-  animation: modalPopIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
   scrollbar-width: thin;
   scrollbar-color: rgba(180, 115, 30, 0.3) transparent;
 }
@@ -9209,6 +9209,36 @@ div[id] {
   border-bottom: 1px dashed rgba(180, 115, 30, 0.2);
 }
 
+button.mahalaya-menu-diet-section__header--collapsible {
+  width: 100%;
+  background: none;
+  border: none;
+  border-bottom: 1px dashed rgba(180, 115, 30, 0.2);
+  cursor: pointer;
+  justify-content: space-between;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+button.mahalaya-menu-diet-section__header--collapsible:hover,
+button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
+  background-color: rgba(180, 115, 30, 0.05);
+  border-color: rgba(180, 115, 30, 0.4);
+}
+
+.mahalaya-menu-diet-section__chevron {
+  color: #b4731e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mahalaya-menu-diet-section__collapse {
+  padding-top: 4px;
+}
+
 /* FSSAI-style Veg / Non-Veg Dietary Symbols (not emoji) */
 .mahalaya-menu-diet-symbol {
   display: inline-flex;
@@ -9513,7 +9543,6 @@ div[id] {
   border: 2.5px solid #d48806;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35), 0 0 35px rgba(212, 136, 6, 0.25);
   box-sizing: border-box;
-  animation: modalPopIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .saraswati-menu-modal__close {
@@ -11045,4 +11074,163 @@ div[id] {
   .admin-page-content {
     padding: 20px 16px;
   }
+}
+
+/* --------------------------------------
+   Mobile Navbar Responsive Styles (Transitions.dev Morph)
+-------------------------------------- */
+:root {
+  --morph-open-dur: 350ms;
+  --morph-close-dur: 250ms;
+  --morph-ease: cubic-bezier(0.34, 1.25, 0.64, 1);
+  --morph-close-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --morph-r-closed: 40px;
+  --morph-r-open: 16px;
+  --morph-fade-dur: 200ms;
+  --morph-slide: 40px;
+  --morph-rotate: 45deg;
+  --morph-scale: 0.97;
+  --morph-blur: 2px;
+}
+
+@media (max-width: 850px) {
+  /* Hide desktop nav */
+  .home-strip__nav {
+    display: none;
+  }
+  
+  /* Wrapper acts as the fixed anchor footprint */
+  .home-strip__mobile-nav {
+    display: block;
+    position: relative;
+    width: 32px;
+    height: 32px;
+    order: 3; /* Swap position to be last */
+    margin-left: 12px;
+    z-index: 1000;
+  }
+
+  .t-morph {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--morph-r-closed);
+    overflow: hidden;
+    background: transparent;
+    transition:
+      width var(--morph-close-dur) var(--morph-close-ease),
+      height var(--morph-close-dur) var(--morph-close-ease),
+      border-radius var(--morph-close-dur) var(--morph-close-ease),
+      background-color var(--morph-close-dur) ease,
+      box-shadow var(--morph-close-dur) ease;
+  }
+
+  .t-morph[data-open="true"] {
+    width: 240px;
+    height: 280px;
+    border-radius: var(--morph-r-open);
+    background: rgba(247, 235, 208, 0.98);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(109, 80, 53, 0.14);
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.2);
+    transition:
+      width var(--morph-open-dur) var(--morph-ease),
+      height var(--morph-open-dur) var(--morph-ease),
+      border-radius var(--morph-open-dur) var(--morph-ease),
+      background-color var(--morph-open-dur) ease,
+      box-shadow var(--morph-open-dur) ease;
+  }
+
+  /* Morph plus (Hamburger lines) */
+  .t-morph-plus {
+    position: absolute;
+    inset: 0 0 auto auto;
+    width: 32px; height: 32px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+    border: 0; background: transparent; cursor: pointer;
+    transition:
+      opacity var(--morph-fade-dur) var(--morph-close-ease),
+      transform var(--morph-open-dur) var(--morph-close-ease),
+      filter var(--morph-fade-dur) var(--morph-close-ease);
+  }
+  
+  .t-morph-plus span {
+    width: 16px;
+    height: 2px;
+    background: #1f1814;
+    border-radius: 2px;
+    transition: transform var(--morph-open-dur) var(--morph-close-ease), opacity var(--morph-open-dur) var(--morph-close-ease);
+  }
+
+  .t-morph[data-open="true"] .t-morph-plus {
+    /* Keep visible so user can click to close */
+    transform: translateX(0); 
+    filter: blur(0);
+    pointer-events: auto;
+  }
+
+  /* Menu Content inside Morph */
+  .t-morph-menu {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transform: translateX(var(--morph-slide)) scale(var(--morph-scale));
+    filter: blur(var(--morph-blur));
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    padding: 24px 16px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition:
+      opacity var(--morph-fade-dur) var(--morph-close-ease),
+      transform var(--morph-open-dur) var(--morph-close-ease),
+      filter var(--morph-fade-dur) var(--morph-close-ease);
+  }
+  
+  .t-morph[data-open="true"] .t-morph-menu {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+    filter: blur(0);
+    pointer-events: auto;
+  }
+
+  .t-morph-menu .home-strip__link {
+    width: 100%;
+    padding: 12px;
+    font-size: 0.75rem;
+    color: #28180e;
+    text-align: center;
+  }
+  
+  /* Layout ordering */
+  .home-strip__inner {
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .home-strip__brand {
+    order: 1;
+    margin-right: auto;
+  }
+  .home-strip__action {
+    order: 2; /* Put register button before hamburger */
+    margin-left: auto;
+  }
+}
+
+@media (min-width: 851px) {
+  .home-strip__mobile-nav {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .t-morph, .t-morph-plus, .t-morph-menu, .t-morph-plus span { transition: none !important; }
 }

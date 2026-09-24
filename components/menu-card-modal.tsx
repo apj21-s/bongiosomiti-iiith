@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 
 type Dish = {
   nameBn: string
@@ -17,27 +18,32 @@ const MAHALAYA_MENU: Dish[] = [
   { nameBn: 'গরম ফুলকো লুচি', nameEn: 'Garam Luchi / Radhaballabhi', description: 'Puffed golden deep-fried puris served piping hot.', type: 'veg', meal: 'breakfast', image: '/assets/menu-luchi.jpg', searchQuery: 'Bengali Luchi puri' },
   { nameBn: 'হিং দিয়ে আলুর দম', nameEn: 'Classic Hing-Aloor Dom', description: 'Slow-simmered baby potatoes in asafoetida & cumin gravy.', type: 'veg', meal: 'breakfast', image: '/assets/menu-jhuri-aloo.jpg', searchQuery: 'Hing Aloor Dom Bengali dish' },
   { nameBn: 'নারকেল দিয়ে ছোলার ডাল', nameEn: 'Narkel diye Chholar Dal', description: 'Bengal gram with fried coconut crisps and warm aromatic spices.', type: 'veg', meal: 'breakfast', image: '/assets/menu-chholar-dal.jpg', searchQuery: 'Chholar Dal Bengali dish' },
-  { nameBn: 'মুচমুচে কড়াইশুঁটির কচুরি', nameEn: 'Crispy Koraishutir Kochuri', description: 'Delicate puris stuffed with seasoned green pea filling.', type: 'veg', meal: 'breakfast', image: '/assets/menu-luchi.jpg', searchQuery: 'Koraishutir Kochuri Bengali dish' },
-  { nameBn: 'গরম জিলিপি ও মিহিদান', nameEn: 'Hot Jalebi & Mihidana', description: 'Crispy saffron syrup jalebis & authentic Burdwan Mihidana.', type: 'veg', meal: 'breakfast', image: '/assets/menu-rosogolla.jpg', searchQuery: 'Burdwan Mihidana Jalebi sweet' },
-  { nameBn: 'দার্জিলিং কড়াক চা ও কফি', nameEn: 'Darjeeling Tea & Filter Coffee', description: 'Fragrant spiced milk tea & freshly brewed coffee.', type: 'veg', meal: 'breakfast', image: '/assets/menu-papad.jpg', searchQuery: 'Darjeeling Chai Bengali' },
+  { nameBn: 'রসগোল্লা', nameEn: 'Classic Rosogolla', description: 'Soft, spongy cottage cheese balls soaked in light sugar syrup.', type: 'veg', meal: 'breakfast', image: '/assets/menu-rosogolla.jpg', searchQuery: 'Bengali Rosogolla sweet' },
+  // LUNCH FEAST (NON-VEG)
+  { nameBn: 'লেবু, লবণ ও স্যালাড', nameEn: 'Lemon, Salt & Green Salad', description: 'Fresh cucumber, tomato, onion slices, lemon wedge and sea salt.', type: 'nonveg', meal: 'lunch', image: '/assets/menu-salad.jpg', searchQuery: 'Bengali green salad with lemon' },
+  { nameBn: 'ভাত', nameEn: 'Bhaat', description: 'Steaming white rice.', type: 'nonveg', meal: 'lunch', image: '/assets/menu-bhaat.jpg', searchQuery: 'Bengali steamed rice' },
+  { nameBn: 'আলুভাজা', nameEn: 'Aloo Bhaja', description: 'Crispy fried julienned potatoes.', type: 'nonveg', meal: 'lunch', image: '/assets/menu-jhuri-aloo.jpg', searchQuery: 'Jhuri Aloo Bhaja Bengali dish' },
+  { nameBn: 'কড়াইশুঁটি দিয়ে মুগ ডাল', nameEn: 'Moong Dal with Green Peas', description: 'Comforting yellow lentils with fresh green peas.', type: 'nonveg', meal: 'lunch', image: '/assets/menu-moong-dal.jpg', searchQuery: 'Koraishutir Moong Dal Bengali' },
+  { nameBn: 'ফুলকপির রসা', nameEn: 'Fulkopir Rosa', description: 'Rich traditional cauliflower and potato curry.', type: 'nonveg', meal: 'lunch', image: '/assets/menu-fulkopi.jpg', searchQuery: 'Fulkopir Rosa Bengali dish' },
+  { nameBn: 'দই কাতলা', nameEn: 'Doi Katla', description: 'River carp gently simmered in a creamy yogurt gravy.', type: 'nonveg', meal: 'lunch', image: '/assets/menu-doi-katla.jpg', searchQuery: 'Doi Katla Bengali fish curry' },
+  { nameBn: 'পাবদা ঝাল', nameEn: 'Pabda Jhal', description: 'Whole Pabda fish in a spicy mustard and tomato gravy.', type: 'nonveg', meal: 'lunch', image: '/assets/menu-pabda.jpg', searchQuery: 'Pabda Macher Jhal Bengali' },
+  { nameBn: 'চাটনি', nameEn: 'Chutney', description: 'Traditional sweet tomato and date relish.', type: 'nonveg', meal: 'lunch', image: '/assets/menu-chutney.jpg', searchQuery: 'Tomato Khejur Chutney Bengali' },
+  { nameBn: 'পাঁপড়', nameEn: 'Papad', description: 'Crispy lentil wafers.', type: 'nonveg', meal: 'lunch', image: '/assets/menu-papad.jpg', searchQuery: 'Bengali Papad' },
+  { nameBn: 'পায়েস', nameEn: 'Payesh', description: 'Creamy slow-cooked rice pudding.', type: 'nonveg', meal: 'lunch', image: '/assets/menu-payesh.jpg', searchQuery: 'Payesh Bengali rice pudding' },
+  { nameBn: 'জোয়ান', nameEn: 'Jowan', description: 'Traditional digestive carom seeds.', type: 'nonveg', meal: 'lunch', image: '/assets/menu-papad.jpg', searchQuery: 'Mukhwas Jowan' },
 
-  // LUNCH FEAST MENU ITEMS
-  { nameBn: 'বাসন্তী পোলাও', nameEn: 'Fragrant Basanti Pulao', description: 'Slow-cooked Gobindobhog rice with ghee, cashews and raisins.', type: 'veg', meal: 'lunch', image: '/assets/menu-basanti-pulao.jpg', searchQuery: 'Basanti Pulao Bengali dish' },
-  { nameBn: 'ঝুরি আলু ভাজা', nameEn: 'Crispy Jhuri Aloo Bhaja', description: 'Golden shredded potato crispies, seasoned with salt and a touch of chilli.', type: 'veg', meal: 'lunch', image: '/assets/menu-jhuri-aloo.jpg', searchQuery: 'Jhuri Aloo Bhaja Bengali dish' },
-  { nameBn: 'মুচমুচে বেগুনী', nameEn: 'Crispy Beguni', description: 'Traditional batter-fried spiced eggplant slices.', type: 'veg', meal: 'lunch', image: '/assets/menu-beguni.jpg', searchQuery: 'Beguni Bengali dish' },
-  { nameBn: 'দুধ শুক্তো', nameEn: 'Traditional Dudh Shukto', description: 'Classic Bengali bittersweet vegetable medley in milk gravy.', type: 'veg', meal: 'lunch', image: '/assets/menu-shukto.jpg', searchQuery: 'Dudh Shukto Bengali dish' },
-  { nameBn: 'ছানার ডালনা', nameEn: 'Traditional Chhanar Dalna', description: 'Fresh cottage cheese koftas in rich cumin gravy.', type: 'veg', meal: 'lunch', image: '/assets/menu-chhanar-dalna.jpg', searchQuery: 'Chhanar Dalna Bengali dish' },
-  { nameBn: 'ধোঁকার ডালনা', nameEn: 'Dhokar Dalna', description: 'Spiced lentil cakes simmered in aromatic gravy.', type: 'veg', meal: 'lunch', image: '/assets/menu-dhokar-dalna.jpg', searchQuery: 'Dhokar Dalna Bengali dish' },
-  { nameBn: 'নারকেল দিয়ে ছোলার ডাল', nameEn: 'Narkel diye Chholar Dal', description: 'Bengal gram with coconut crisps and warm spices.', type: 'veg', meal: 'lunch', image: '/assets/menu-chholar-dal.jpg', searchQuery: 'Chholar Dal Bengali dish' },
-  { nameBn: 'গরম ফুলকো লুচি', nameEn: 'Garam Luchi / Radhaballabhi', description: 'Puffed golden deep-fried puris served piping hot.', type: 'veg', meal: 'lunch', image: '/assets/menu-luchi.jpg', searchQuery: 'Bengali Luchi puri' },
-  { nameBn: 'টমেটো খেজুর চাটনি', nameEn: 'Tomato-Khejur Sweet Chutney', description: 'Rich spiced dates and tomato relish.', type: 'veg', meal: 'lunch', image: '/assets/menu-chutney.jpg', searchQuery: 'Tomato Khejur Chutney Bengali' },
-  { nameBn: 'মুচমুচে পাপড় ভাজা', nameEn: 'Crispy Roasted Papad', description: 'Traditional crispy lentil wafers, flame-roasted.', type: 'veg', meal: 'lunch', image: '/assets/menu-papad.jpg', searchQuery: 'Papad Indian crispy wafer' },
-  { nameBn: 'নলেন গুড়ের রসগোল্লা', nameEn: 'Spongy Nolen Gur Rosogolla', description: 'Soft cottage cheese balls in date palm jaggery syrup.', type: 'veg', meal: 'lunch', image: '/assets/menu-rosogolla.jpg', searchQuery: 'Nolen Gur Rosogolla Bengali sweet' },
-  { nameBn: 'কলকাতার খাঁটি মিষ্টি দই', nameEn: 'Authentic Kolkata Mishti Doi', description: 'Caramelised sweetened yoghurt set in earthen pots.', type: 'veg', meal: 'lunch', image: '/assets/menu-rosogolla.jpg', searchQuery: 'Mishti Doi Kolkata Bengali sweet' },
-  { nameBn: 'গোবিন্দভোগ চালের পায়েস', nameEn: 'Gobindobhog Chaler Payesh', description: 'Creamy slow-cooked rice pudding with aromatic Gobindobhog rice.', type: 'veg', meal: 'lunch', image: '/assets/menu-rosogolla.jpg', searchQuery: 'Payesh Bengali rice pudding' },
-  { nameBn: 'নরোম পাকের সন্দেশ', nameEn: 'Traditional Bengali Sandesh', description: 'Delicate fresh cottage cheese confection with cardamom.', type: 'veg', meal: 'lunch', image: '/assets/menu-rosogolla.jpg', searchQuery: 'Bengali Sandesh sweet' },
-  { nameBn: 'কাতলা / রুই মাছের কালিয়া', nameEn: 'Katla Machher Kalia', description: 'Rich river carp in spiced onion-ginger gravy.', type: 'nonveg', meal: 'lunch', image: '/assets/menu-katla-kalia.jpg', searchQuery: 'Katla Machher Kalia Bengali fish curry' },
-  { nameBn: 'কষা মাংস', nameEn: 'Traditional Bengali Kosha Mangsho', description: 'Slow-cooked rich spiced mutton curry with potatoes.', type: 'nonveg', meal: 'lunch', image: '/assets/menu-kosha-mangsho.jpg', searchQuery: 'Kosha Mangsho Bengali mutton curry' },
+  // LUNCH FEAST (VEG)
+  { nameBn: 'লেবু, লবণ ও স্যালাড', nameEn: 'Lemon, Salt & Green Salad', description: 'Fresh cucumber, tomato, onion slices, lemon wedge and sea salt.', type: 'veg', meal: 'lunch', image: '/assets/menu-salad.jpg', searchQuery: 'Bengali green salad with lemon' },
+  { nameBn: 'ভাত', nameEn: 'Bhaat', description: 'Steaming white rice.', type: 'veg', meal: 'lunch', image: '/assets/menu-bhaat.jpg', searchQuery: 'Bengali steamed rice' },
+  { nameBn: 'আলুভাজা', nameEn: 'Aloo Bhaja', description: 'Crispy fried julienned potatoes.', type: 'veg', meal: 'lunch', image: '/assets/menu-jhuri-aloo.jpg', searchQuery: 'Jhuri Aloo Bhaja Bengali dish' },
+  { nameBn: 'কড়াইশুঁটি দিয়ে মুগ ডাল', nameEn: 'Moong Dal with Green Peas', description: 'Comforting yellow lentils with fresh green peas.', type: 'veg', meal: 'lunch', image: '/assets/menu-moong-dal.jpg', searchQuery: 'Koraishutir Moong Dal Bengali' },
+  { nameBn: 'ফুলকপির রসা', nameEn: 'Fulkopir Rosa', description: 'Rich traditional cauliflower and potato curry.', type: 'veg', meal: 'lunch', image: '/assets/menu-fulkopi.jpg', searchQuery: 'Fulkopir Rosa Bengali dish' },
+  { nameBn: 'মিক্স ভেজ (নবরত্ন)', nameEn: 'Mix Veg (Navratna)', description: 'Rich mixed vegetable korma with cashew and paneer.', type: 'veg', meal: 'lunch', image: '/assets/menu-mix-veg.jpg', searchQuery: 'Bengali Mix Veg Navratna' },
+  { nameBn: 'ধোকার ডালনা', nameEn: 'Dhokar Dalna', description: 'Spiced lentil cakes simmered in aromatic cumin gravy.', type: 'veg', meal: 'lunch', image: '/assets/menu-dhokar-dalna.jpg', searchQuery: 'Dhokar Dalna Bengali dish' },
+  { nameBn: 'চাটনি', nameEn: 'Chutney', description: 'Traditional sweet tomato and date relish.', type: 'veg', meal: 'lunch', image: '/assets/menu-chutney.jpg', searchQuery: 'Tomato Khejur Chutney Bengali' },
+  { nameBn: 'পাঁপড়', nameEn: 'Papad', description: 'Crispy lentil wafers.', type: 'veg', meal: 'lunch', image: '/assets/menu-papad.jpg', searchQuery: 'Bengali Papad' },
+  { nameBn: 'পায়েস', nameEn: 'Payesh', description: 'Creamy slow-cooked rice pudding.', type: 'veg', meal: 'lunch', image: '/assets/menu-payesh.jpg', searchQuery: 'Payesh Bengali rice pudding' },
+  { nameBn: 'জোয়ান', nameEn: 'Jowan', description: 'Traditional digestive carom seeds.', type: 'veg', meal: 'lunch', image: '/assets/menu-papad.jpg', searchQuery: 'Mukhwas Jowan' },
 ]
 
 const SARASWATI_COURSES = [
@@ -76,9 +82,13 @@ const SARASWATI_COURSES = [
 export default function MenuCardModal({ slug }: { slug: string }) {
   const [open, setOpen] = useState(false)
   const [activeMeal, setActiveMeal] = useState<'breakfast' | 'lunch'>('lunch')
+  const [expandedDiet, setExpandedDiet] = useState<'veg' | 'nonveg' | null>(null)
 
   useEffect(() => {
-    if (!open) return
+    if (!open) {
+      setExpandedDiet(null)
+      return
+    }
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setOpen(false)
     }
@@ -128,16 +138,19 @@ export default function MenuCardModal({ slug }: { slug: string }) {
   return (
     <>
       <div className={isMahalaya ? 'mahalaya-menu-card-showcase' : 'saraswati-menu-card-showcase'}>
-        <button
+        <motion.button
+          layoutId={`menu-card-modal-wrapper-${slug}`}
           type="button"
           className={isMahalaya ? 'mahalaya-menu-card-btn' : 'saraswati-menu-card-btn'}
           onClick={() => setOpen(true)}
           aria-haspopup="dialog"
           aria-expanded={open}
           aria-label={isMahalaya ? 'Open Mahalaya Bhoj Menu Card' : 'Open Saraswati Puja Menu Card'}
+          style={{ borderRadius: 8 }}
         >
           <div className={isMahalaya ? 'mahalaya-menu-card-frame' : 'saraswati-menu-card-frame'}>
-            <img
+            <motion.img
+              layoutId={`menu-card-modal-img-${slug}`}
               src="/assets/mahalaya-menu-envelope.png"
               alt={isMahalaya ? 'Official Mahalaya Bhoj Menu Card Envelope with Golden Seal' : 'Official Saraswati Puja Khichuri Bhog Menu Card Envelope with Golden Seal'}
               loading="lazy"
@@ -145,43 +158,62 @@ export default function MenuCardModal({ slug }: { slug: string }) {
               className={isMahalaya ? 'mahalaya-menu-card-img' : 'saraswati-menu-card-img'}
             />
           </div>
-        </button>
+        </motion.button>
       </div>
 
-      {open && (
-        <div className={isMahalaya ? 'mahalaya-menu-modal' : 'saraswati-menu-modal'} role="dialog" aria-modal="true" aria-labelledby={isMahalaya ? 'menu-modal-title' : 'saraswati-menu-modal-title'}>
-          <div className="mahalaya-menu-modal__backdrop" onClick={() => setOpen(false)}></div>
-          <div className={isMahalaya ? 'mahalaya-menu-modal__dialog' : 'saraswati-menu-modal__dialog'}>
-            <button
-              type="button"
-              className={isMahalaya ? 'mahalaya-menu-modal__close' : 'saraswati-menu-modal__close'}
+      <AnimatePresence>
+        {open && (
+          <div className={isMahalaya ? 'mahalaya-menu-modal' : 'saraswati-menu-modal'} role="dialog" aria-modal="true" aria-labelledby={isMahalaya ? 'menu-modal-title' : 'saraswati-menu-modal-title'}>
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }} 
+              transition={{ duration: 0.2 }}
+              className="mahalaya-menu-modal__backdrop" 
               onClick={() => setOpen(false)}
-              aria-label="Close Menu Card"
+            />
+            <motion.div
+              layoutId={`menu-card-modal-wrapper-${slug}`}
+              className={isMahalaya ? 'mahalaya-menu-modal__dialog' : 'saraswati-menu-modal__dialog'}
+              style={{ borderRadius: 14 }}
             >
-              &times;
-            </button>
+              <button
+                type="button"
+                className={isMahalaya ? 'mahalaya-menu-modal__close' : 'saraswati-menu-modal__close'}
+                onClick={() => setOpen(false)}
+                aria-label="Close Menu Card"
+              >
+                &times;
+              </button>
 
-            <div className={isMahalaya ? 'mahalaya-menu-modal__envelope-banner' : 'saraswati-menu-modal__envelope-banner'}>
-              <img
-                src="/assets/mahalaya-menu-envelope.png"
-                alt={isMahalaya ? 'Mahalaya Bhoj Royal Menu Envelope with IIIT Hyderabad Golden Seal' : 'Saraswati Puja Royal Menu Envelope with IIIT Hyderabad Golden Seal'}
-                loading="lazy"
-                decoding="async"
-                className={isMahalaya ? 'mahalaya-menu-modal__envelope-img' : 'saraswati-menu-modal__envelope-img'}
-              />
-            </div>
+              <div className={isMahalaya ? 'mahalaya-menu-modal__envelope-banner' : 'saraswati-menu-modal__envelope-banner'}>
+                <motion.img
+                  layoutId={`menu-card-modal-img-${slug}`}
+                  src="/assets/mahalaya-menu-envelope.png"
+                  alt={isMahalaya ? 'Mahalaya Bhoj Royal Menu Envelope with IIIT Hyderabad Golden Seal' : 'Saraswati Puja Royal Menu Envelope with IIIT Hyderabad Golden Seal'}
+                  loading="lazy"
+                  decoding="async"
+                  className={isMahalaya ? 'mahalaya-menu-modal__envelope-img' : 'saraswati-menu-modal__envelope-img'}
+                />
+              </div>
 
-            <div className={isMahalaya ? 'mahalaya-menu-modal__body' : 'saraswati-menu-modal__body'}>
+              <motion.div 
+                initial={{ opacity: 0, filter: 'blur(4px)' }} 
+                animate={{ opacity: 1, filter: 'blur(0px)' }} 
+                exit={{ opacity: 0, filter: 'blur(4px)' }} 
+                transition={{ duration: 0.3, delay: 0.1 }}
+                className={isMahalaya ? 'mahalaya-menu-modal__body' : 'saraswati-menu-modal__body'}
+              >
               <div className={isMahalaya ? 'mahalaya-menu-modal__header' : 'saraswati-menu-modal__header'}>
                 <span className={isMahalaya ? 'mahalaya-menu-modal__tag' : 'saraswati-menu-modal__tag'}>
-                  {isMahalaya ? <><span className="tag-flourish">❖</span> IIIT HYDERABAD BONGIO SAMITI <span className="tag-flourish">❖</span></> : '🌼 BASANT PANCHAMI 2027 🌼'}
+                  {isMahalaya ? <><span className="tag-flourish">❖</span> IIIT HYDERABAD BANGIYA SAMITI <span className="tag-flourish">❖</span></> : '🌼 BASANT PANCHAMI 2027 🌼'}
                 </span>
                 <h3 id={isMahalaya ? 'menu-modal-title' : 'saraswati-menu-modal-title'} className={isMahalaya ? 'mahalaya-menu-modal__title' : 'saraswati-menu-modal__title'}>
                   {isMahalaya ? 'মহালয়া ভোজ মেনু কার্ড' : 'সরস্বতী পূজা ও খিচুড়ি ভোগ মেনু কার্ড'}
                 </h3>
                 <p className={isMahalaya ? 'mahalaya-menu-modal__subtitle' : 'saraswati-menu-modal__subtitle'}>
                   {isMahalaya
-                    ? 'Grand Traditional Autumn Feast • 12 October 2026 • Community Courtyard'
+                    ? 'Mahalaya Bhoj Menu Card • 10 October 2026 • Community Courtyard'
                     : 'Grand Sacred Feast • 21 January 2027 • Campus Courtyard & Dining Hall'}
                 </p>
 
@@ -232,24 +264,50 @@ export default function MenuCardModal({ slug }: { slug: string }) {
                 <div className="mahalaya-menu-modal__sections" id="mahalaya-menu-sections">
                   {vegDishes.length > 0 && (
                     <div className="mahalaya-menu-diet-section">
-                      <div className="mahalaya-menu-diet-section__header">
-                        <span className="mahalaya-menu-diet-symbol mahalaya-menu-diet-symbol--veg"></span>
-                        <span className="mahalaya-menu-diet-section__label">
-                          <span className="mahalaya-menu-diet-section__label-bn">নিরামিষ</span> · VEGETARIAN
+                      <button 
+                        className="mahalaya-menu-diet-section__header mahalaya-menu-diet-section__header--collapsible"
+                        onClick={() => setExpandedDiet(expandedDiet === 'veg' ? null : 'veg')}
+                        aria-expanded={expandedDiet === 'veg'}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <span className="mahalaya-menu-diet-symbol mahalaya-menu-diet-symbol--veg"></span>
+                          <span className="mahalaya-menu-diet-section__label">
+                            <span className="mahalaya-menu-diet-section__label-bn">নিরামিষ</span> · VEGETARIAN
+                          </span>
+                        </div>
+                        <span className="mahalaya-menu-diet-section__chevron">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: expandedDiet === 'veg' ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s ease' }}>
+                            <path d="m6 9 6 6 6-6"/>
+                          </svg>
                         </span>
+                      </button>
+                      <div className="mahalaya-menu-diet-section__collapse" style={{ display: expandedDiet === 'veg' ? 'block' : 'none' }}>
+                        <div className="mahalaya-menu-dish-grid">{renderMahalayaDishes(vegDishes)}</div>
                       </div>
-                      <div className="mahalaya-menu-dish-grid">{renderMahalayaDishes(vegDishes)}</div>
                     </div>
                   )}
                   {nonvegDishes.length > 0 && (
                     <div className="mahalaya-menu-diet-section">
-                      <div className="mahalaya-menu-diet-section__header">
-                        <span className="mahalaya-menu-diet-symbol mahalaya-menu-diet-symbol--nonveg"></span>
-                        <span className="mahalaya-menu-diet-section__label">
-                          <span className="mahalaya-menu-diet-section__label-bn">আমিষ</span> · NON-VEGETARIAN
+                      <button 
+                        className="mahalaya-menu-diet-section__header mahalaya-menu-diet-section__header--collapsible"
+                        onClick={() => setExpandedDiet(expandedDiet === 'nonveg' ? null : 'nonveg')}
+                        aria-expanded={expandedDiet === 'nonveg'}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <span className="mahalaya-menu-diet-symbol mahalaya-menu-diet-symbol--nonveg"></span>
+                          <span className="mahalaya-menu-diet-section__label">
+                            <span className="mahalaya-menu-diet-section__label-bn">আমিষ</span> · NON-VEGETARIAN
+                          </span>
+                        </div>
+                        <span className="mahalaya-menu-diet-section__chevron">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: expandedDiet === 'nonveg' ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s ease' }}>
+                            <path d="m6 9 6 6 6-6"/>
+                          </svg>
                         </span>
+                      </button>
+                      <div className="mahalaya-menu-diet-section__collapse" style={{ display: expandedDiet === 'nonveg' ? 'block' : 'none' }}>
+                        <div className="mahalaya-menu-dish-grid">{renderMahalayaDishes(nonvegDishes)}</div>
                       </div>
-                      <div className="mahalaya-menu-dish-grid">{renderMahalayaDishes(nonvegDishes)}</div>
                     </div>
                   )}
                 </div>
@@ -279,7 +337,7 @@ export default function MenuCardModal({ slug }: { slug: string }) {
                     <p className="mahalaya-menu-modal__footer-timing">
                       {activeMeal === 'breakfast'
                         ? <>Feast timings: <strong>8:30 AM – 11:00 AM</strong> &bull; Fresh hot breakfast & morning adda</>
-                        : <>Feast timings: <strong>1:00 PM – 4:30 PM</strong> &bull; Unlimited traditional sit-down banana leaf service</>}
+                        : <>Feast timings: <strong>1:00 PM – 4:30 PM</strong></>}
                     </p>
                     <p className="mahalaya-menu-modal__footer-closing">পরম্পরার স্বাদে, একসাথে বসে।</p>
                   </>
@@ -287,10 +345,11 @@ export default function MenuCardModal({ slug }: { slug: string }) {
                   <p>✨ Sit-down lunch timings: <strong>12:30 PM – 3:30 PM</strong> &bull; Free community feast for all attendees with pass</p>
                 )}
               </div>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
       )}
+      </AnimatePresence>
     </>
   )
 }

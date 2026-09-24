@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#f4efe4" />
+  <title>Durga Puja Hyderabad 2026 | Bangiya Samiti IIITH</title>
+  <link rel="preconnect" href="https://unpkg.com" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <link rel="stylesheet" href="durga-puja.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="#">BANGIYA SAMITI <span>IIITH</span></a>
+    <nav>
+      <a href="#home">HOME</a>
+      <a href="#mahalaya">MAHALAYA</a>
+      <a class="active" href="#puja">DURGA PUJA</a>
+    </nav>
+    <a class="menu-pill" href="https://maps.app.goo.gl/a6x62s2dvXVXKy1Y8" target="_blank" rel="noopener">SOURCE MAP ↗</a>
+  </header>
+
+  <main>
+    <section class="hero" id="puja">
+      <div class="hero-pattern" aria-hidden="true"></div>
+      <p class="eyebrow">HYDERABAD · SHARODOTSAV 2026</p>
+      <h1>Durga Puja<br><em>in Hyderabad</em></h1>
+      <p class="intro">A city-wide guide to the Durga Puja celebrations, pandals and community spaces across Hyderabad.</p>
+      <div class="hero-meta">
+        <span><strong id="countHero">0</strong> locations</span>
+        <span class="dot">•</span>
+        <span>2026</span>
+      </div>
+    </section>
+
+    <section class="explorer">
+      <div class="toolbar">
+        <div class="search-wrap">
+          <span class="search-icon">⌕</span>
+          <input id="search" type="search" placeholder="Search a puja or locality..." autocomplete="off" />
+        </div>
+        <div class="filters" id="filters">
+          <button class="filter active" data-region="all">ALL</button>
+          <button class="filter" data-region="west">WEST</button>
+          <button class="filter" data-region="central">CENTRAL</button>
+          <button class="filter" data-region="north">NORTH</button>
+          <button class="filter" data-region="east">EAST</button>
+        </div>
+      </div>
+
+      <div class="map-layout">
+        <section class="map-frame" aria-label="Interactive Hyderabad Durga Puja map">
+          <div id="map"></div>
+          <div class="map-note">DRAG · ZOOM · SELECT A MARKER</div>
+        </section>
+
+        <aside class="directory">
+          <div class="directory-head">
+            <div>
+              <p class="eyebrow">PUJA DIRECTORY</p>
+              <h2><span id="countList">0</span> locations</h2>
+            </div>
+            <button id="reset" class="reset">RESET</button>
+          </div>
+          <div id="cards" class="cards"></div>
+          <div id="empty" class="empty hidden">
+            <div class="empty-mark">◌</div>
+            <h3>No puja found</h3>
+            <p>Try another name or locality.</p>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="source-section">
+      <div>
+        <p class="eyebrow">THE CITY OF PUJAS</p>
+        <h2>One map.<br><em>Many homes.</em></h2>
+      </div>
+      <div class="source-copy">
+        <p>This directory is designed as a community guide. Location and schedule information should be kept updated as organisers publish their 2026 details.</p>
+        <a class="outline-btn" href="https://maps.app.goo.gl/a6x62s2dvXVXKy1Y8" target="_blank" rel="noopener">OPEN THE ORIGINAL MAP ↗</a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <span>BANGIYA SAMITI · IIIT HYDERABAD</span>
+    <span>SHARODOTSAV 2026</span>
+  </footer>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="durga-puja.js"></script>
+</body>
+</html>

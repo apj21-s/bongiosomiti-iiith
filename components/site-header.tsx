@@ -64,6 +64,7 @@ interface SiteHeaderProps {
 export default function SiteHeader({ variant = 'public' }: SiteHeaderProps) {
   const pathname = usePathname()
   const [isVisible, setIsVisible] = useState(true)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   useEffect(() => {
     let lastScrollY = window.scrollY
@@ -71,10 +72,9 @@ export default function SiteHeader({ variant = 'public' }: SiteHeaderProps) {
     const handleScroll = () => {
       const currentScrollY = window.scrollY
       if (currentScrollY > lastScrollY && currentScrollY > 80) {
-        // Scrolling down past threshold
         setIsVisible(false)
+        setIsMobileMenuOpen(false) // Close menu on scroll down
       } else {
-        // Scrolling up
         setIsVisible(true)
       }
       lastScrollY = currentScrollY
@@ -94,6 +94,11 @@ export default function SiteHeader({ variant = 'public' }: SiteHeaderProps) {
       window.removeEventListener('mousemove', handleMouseMove)
     }
   }, [])
+  
+  // Close menu when route changes
+  useEffect(() => {
+    setIsMobileMenuOpen(false)
+  }, [pathname])
 
   if (variant === 'admin') {
     return (
@@ -127,14 +132,42 @@ export default function SiteHeader({ variant = 'public' }: SiteHeaderProps) {
           )}
           <TypewriterBrand />
         </Link>
+        {/* Desktop Nav */}
         <nav className="home-strip__nav" aria-label="Primary">
-          <Link className="home-strip__link" href="/#home" aria-current="page">HOME</Link>
+          <Link className="home-strip__link" href="/#home" aria-current={pathname === '/' ? "page" : undefined}>HOME</Link>
+          <Link className="home-strip__link" href="/durga-puja" aria-current={pathname.startsWith('/durga-puja') ? "page" : undefined}>DURGA PUJA</Link>
           <Link className="home-strip__link" href="/#events">EVENTS</Link>
           <Link className="home-strip__link" href="/#story">STORY</Link>
-          <Link className="home-strip__link" href="/pass">PAYMENT STATUS</Link>
+          <Link className="home-strip__link" href="/pass" aria-current={pathname.startsWith('/pass') ? "page" : undefined}>PAYMENT STATUS</Link>
         </nav>
+        
+        {/* Mobile Nav Morph Container */}
+        <div className="home-strip__mobile-nav">
+          <div className="t-morph" data-open={isMobileMenuOpen}>
+            <div className="t-morph-menu">
+              <Link className="home-strip__link" href="/#home" aria-current={pathname === '/' ? "page" : undefined}>HOME</Link>
+              <Link className="home-strip__link" href="/durga-puja" aria-current={pathname.startsWith('/durga-puja') ? "page" : undefined}>DURGA PUJA</Link>
+              <Link className="home-strip__link" href="/#events">EVENTS</Link>
+              <Link className="home-strip__link" href="/#story">STORY</Link>
+              <Link className="home-strip__link" href="/pass" aria-current={pathname.startsWith('/pass') ? "page" : undefined}>PAYMENT STATUS</Link>
+            </div>
+            
+            <button 
+              className="t-morph-plus home-strip__hamburger" 
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              aria-label="Toggle menu"
+              aria-expanded={isMobileMenuOpen}
+            >
+              <span style={{ transform: isMobileMenuOpen ? 'rotate(45deg) translate(2px, 2px)' : 'rotate(0)' }} />
+              <span style={{ opacity: isMobileMenuOpen ? '0' : '1' }} />
+              <span style={{ transform: isMobileMenuOpen ? 'rotate(-45deg) translate(2px, -2px)' : 'rotate(0)' }} />
+            </button>
+          </div>
+        </div>
+
         <Link className="home-strip__action" href="/events/mahalaya#registration-form-container">REGISTER</Link>
       </div>
     </header>
   )
 }
+

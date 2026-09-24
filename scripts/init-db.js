@@ -41,7 +41,7 @@ const INITIAL_DATA = {
       participant_name: "Demo User",
       college_id: "202401042",
       phone: "9876543210",
-      email: "demo@utsavpass.local",
+      email: "demo@bangiya.samiti.iiith.local",
       amount: 150,
       utr: "UPI123456789",
       payment_status: "APPROVED",
@@ -60,7 +60,7 @@ const INITIAL_DATA = {
     {
       id: "dummy-admin",
       name: "Demo Admin",
-      email: "admin@utsavpass.local",
+      email: "admin@bangiya.samiti.iiith.local",
       role: "organiser",
       created_at: new Date().toISOString()
     }

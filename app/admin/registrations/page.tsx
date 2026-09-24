@@ -1,11 +1,11 @@
 import Link from 'next/link'
-import { staticEvents } from '@/utils/data/events'
+import { getEvents } from '@/utils/data/events'
 import RegistrationsClient from './RegistrationsClient'
 
 export const revalidate = 0
 
 export default async function AdminRegistrationsPage() {
-  const events = staticEvents.map(e => ({ slug: e.slug, name: e.name }))
+  const events = getEvents().map((e: any) => ({ slug: e.slug, name: e.name }))
 
   return (
     <main className="admin-page-content" data-admin-registrations>

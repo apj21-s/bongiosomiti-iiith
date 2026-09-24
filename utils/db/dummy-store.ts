@@ -49,7 +49,7 @@ const INITIAL_DATA: DummyDB = {
       participant_name: "Demo User",
       college_id: "202401042",
       phone: "9876543210",
-      email: "demo@utsavpass.local",
+      email: "demo@bangiya.samiti.iiith.local",
       amount: 150,
       utr: "UPI123456789",
       payment_status: "APPROVED",
@@ -68,7 +68,7 @@ const INITIAL_DATA: DummyDB = {
     {
       id: "dummy-admin",
       name: "Demo Admin",
-      email: process.env.DUMMY_ADMIN_EMAIL || "admin@utsavpass.local",
+      email: process.env.ADMIN_EMAIL || "admin@bangiya.samiti.iiith.local",
       role: "organiser",
       created_at: new Date().toISOString()
     }

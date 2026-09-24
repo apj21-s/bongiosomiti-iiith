@@ -1,7 +1,7 @@
 import { getCurrentUser } from '@/utils/auth/server'
 import { NextResponse } from 'next/server'
 import { createServiceRoleClient, createClient } from '@/utils/supabase/server'
-import { staticEvents } from '@/utils/data/events'
+import { getEvents } from '@/utils/data/events'
 
 export async function GET() {
   const { data: authData } = await getCurrentUser()
@@ -10,7 +10,7 @@ export async function GET() {
 
   const supabase = await createServiceRoleClient()
 
-  const eventCount = staticEvents.length
+  const eventCount = getEvents().length
 
   // Get total tickets
   const { count: ticketCount } = await supabase.from('tickets').select('*', { count: 'exact', head: true })

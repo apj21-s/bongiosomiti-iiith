@@ -1,6 +1,6 @@
-# UTSAVPASS Static Site
+# bangiya.samiti.iiith Static Site
 
-This folder is a standalone plain HTML, CSS, and vanilla JavaScript version of the current UTSAVPASS site.
+This folder is a standalone plain HTML, CSS, and vanilla JavaScript version of the current bangiya.samiti.iiith site.
 
 ## Contents
 

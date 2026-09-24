@@ -230,7 +230,7 @@ export default function UtsavLoader({ message, inline = false }: { message?: str
           <div className="utsav-loader__text-wrap">
             <img src="/assets/logo.png" alt="বঙ্গীয়.SAMITI Emblem" className="utsav-loader__emblem" />
             <h3 className="utsav-loader__brand">বঙ্গীয়.SAMITI</h3>
-            <p className="utsav-loader__sub">{message || 'IIIT HYDERABAD • উৎসব পোর্টাল'}</p>
+            <p className="utsav-loader__sub">{message || 'IIIT HYDERABAD • বঙ্গীয় সমিতি'}</p>
           </div>
         </div>
       

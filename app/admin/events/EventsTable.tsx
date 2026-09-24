@@ -16,6 +16,16 @@ export default function EventsTable({ events }: { events: any[] }) {
     }
   }
 
+  async function handleToggleStatus(slug: string) {
+    try {
+      const res = await fetch(`/api/admin/events/${slug}/toggle`, { method: 'POST' })
+      if (!res.ok) throw new Error('Failed to toggle status')
+      router.refresh()
+    } catch (e: any) {
+      alert(e.message)
+    }
+  }
+
   return (
     <table className="data-table">
       <thead>
@@ -46,6 +56,9 @@ export default function EventsTable({ events }: { events: any[] }) {
             <td><span className={`badge ${evt.status === 'OPEN' ? '' : 'badge--error'}`}>{evt.status}</span></td>
             <td>
               <div className="action-btn-group">
+                <button type="button" className={`btn btn-sm ${evt.status === 'OPEN' ? 'btn-danger' : 'btn-secondary'}`} onClick={() => handleToggleStatus(evt.slug)}>
+                  {evt.status === 'OPEN' ? 'Lock' : 'Unlock'}
+                </button>
                 <Link href={`/events/${evt.slug}`} target="_blank" className="btn btn-sm btn-secondary">View Page</Link>
                 <button type="button" className="btn btn-sm btn-danger" onClick={() => handleDelete(evt.slug)}>Delete</button>
               </div>

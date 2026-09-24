@@ -12,8 +12,8 @@ if (!supabaseUrl || !supabaseKey) {
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function createAdmin() {
-  const email = 'admin@gmail.com';
-  const password = 'admin@123';
+  const email = process.env.ADMIN_EMAIL || 'admin@gmail.com';
+  const password = process.env.ADMIN_PASSWORD || 'Admin@123';
 
   // Check if user already exists
   const { data: { users }, error: listError } = await supabase.auth.admin.listUsers();
@@ -21,7 +21,7 @@ async function createAdmin() {
     console.error("Error listing users:", listError);
     return;
   }
-  
+
   let user = users.find(u => u.email === email);
 
   if (user) {
@@ -60,7 +60,7 @@ async function createAdmin() {
         name: 'Super Admin',
         role: 'admin'
       }, { onConflict: 'id' });
-    
+
     if (profileError) {
       console.error("Error upserting profile:", profileError);
     } else {

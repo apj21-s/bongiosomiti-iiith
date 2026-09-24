@@ -1,0 +1,761 @@
+.dp-page {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans, "Outfit", sans-serif);
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.dp-page .decorative-art {
+  position: absolute;
+  pointer-events: none;
+  user-select: none;
+  display: block;
+  object-fit: contain;
+}
+
+.dp-section {
+  position: relative;
+  overflow: hidden;
+  padding: 40px 5%;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* Typography */
+.dp-eyebrow {
+  font-family: var(--font-sans, "Outfit", sans-serif);
+  font-size: 0.85rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--brand);
+  margin-bottom: 1rem;
+}
+
+.dp-hero-title {
+  font-family: var(--font-serif, "Cinzel", Georgia, serif);
+  font-size: clamp(3rem, 6vw, 5.5rem);
+  line-height: 1.05;
+  color: var(--brand);
+  margin: 0 0 0.5rem 0;
+}
+
+.dp-section-title {
+  font-family: var(--font-serif, "Cinzel", Georgia, serif);
+  font-size: clamp(2.5rem, 4.5vw, 4rem);
+  line-height: 1.1;
+  color: var(--brand);
+  margin-bottom: 1rem;
+}
+
+.dp-body-text {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  max-width: 480px;
+}
+
+/* Animations */
+.dp-animate-fade-up {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: dpFadeUp 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.dp-animate-fade {
+  opacity: 0;
+  animation: dpFade 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.dp-delay-1 { animation-delay: 0.2s; }
+.dp-delay-2 { animation-delay: 0.4s; }
+.dp-delay-3 { animation-delay: 0.6s; }
+
+@keyframes dpFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes dpFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Hero Section */
+.dp-hero {
+  display: flex;
+  flex-direction: column;
+  padding-top: 140px;
+}
+
+@media (min-width: 900px) {
+  .dp-hero {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.dp-hero__content {
+  flex: 1;
+  padding-right: 2rem;
+  z-index: 2;
+  margin-bottom: 3rem;
+}
+
+@media (min-width: 900px) {
+  .dp-hero__content {
+    margin-bottom: 0;
+  }
+}
+
+.dp-hero__art {
+  width: 100%;
+  max-width: 800px;
+  position: relative;
+}
+
+@media (min-width: 900px) {
+  .dp-hero__art {
+    width: 55%;
+  }
+}
+
+.dp-hero__img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Cultural Intro Section */
+.dp-intro {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: 3rem;
+}
+
+@media (min-width: 900px) {
+  .dp-intro {
+    flex-direction: row;
+  }
+}
+
+.dp-intro__content {
+  flex: 1;
+  max-width: 45%;
+}
+
+.dp-intro__art-container {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  min-height: 300px;
+}
+
+.dp-intro__shiuli {
+  width: 200px;
+  max-width: 100%;
+}
+
+.dp-intro__alpona {
+  width: 120px;
+  position: absolute;
+  top: 50%;
+  left: 60%;
+  transform: translateY(-50%);
+}
+
+/* Bengal to Hyderabad Typography Section */
+.dp-travel-typography {
+  position: relative;
+  min-height: 40vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 5%;
+  background-color: var(--bg);
+  overflow: hidden;
+  max-width: none;
+
+  border-top: 1px solid rgba(139, 69, 19, 0.1);
+  border-bottom: 1px solid rgba(139, 69, 19, 0.1);
+}
+
+.dp-travel-bg-left, .dp-travel-bg-right {
+  position: absolute;
+  top: 0;
+  width: 40%;
+  height: 100%;
+  background-image: url('/assets/dp/01_hero_landscape_2d_21x9.png');
+  background-size: cover;
+  background-repeat: no-repeat;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.7;
+  mix-blend-mode: multiply;
+}
+
+.dp-travel-bg-left {
+  left: 0;
+  background-position: left center;
+  -webkit-mask-image: linear-gradient(to right, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%);
+  mask-image: linear-gradient(to right, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%);
+}
+
+.dp-travel-bg-right {
+  right: 0;
+  background-position: right center;
+  -webkit-mask-image: linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%);
+  mask-image: linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%);
+}
+
+.dp-travel-grid {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 1000px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.dp-travel-word {
+  font-family: var(--font-serif, "Cinzel", Georgia, serif);
+  color: var(--brand);
+  line-height: 1;
+  font-weight: 700;
+  text-shadow: 2px 2px 0px var(--bg), -2px -2px 0px var(--bg); /* To cut out the dashed line behind it */
+}
+
+.dp-travel-word--from, .dp-travel-word--to {
+  font-family: var(--font-sans, "Outfit", sans-serif);
+  font-size: clamp(0.9rem, 2vw, 1.2rem);
+  letter-spacing: 0.4em;
+  color: var(--text);
+  opacity: 0.6;
+  margin: 1.5rem 0;
+  text-shadow: none;
+}
+
+.dp-travel-word--bengal {
+  font-size: clamp(3.5rem, 10vw, 8rem);
+  transform: translateX(-5%);
+}
+
+.dp-travel-word--hyd {
+  font-size: clamp(3rem, 8vw, 6.5rem);
+  transform: translateX(5%);
+}
+
+.dp-travel-sub {
+  margin-top: 1.5rem;
+  font-size: 1.1rem;
+  color: var(--text);
+  max-width: 400px;
+  text-align: center;
+}
+
+.dp-travel-svg {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  min-width: 800px;
+  pointer-events: none;
+  z-index: 1; /* path behind text */
+}
+
+.dp-travel-plane-container {
+  z-index: 3; /* Plane flies in front of text */
+}
+
+/* Transition Section */
+.dp-map-intro {
+  text-align: center;
+  padding: 60px 5% 40px;
+}
+
+.dp-map-intro .dp-section-title {
+  margin: 0 auto 1rem;
+}
+
+.dp-map-intro .dp-body-text {
+  margin: 0 auto;
+}
+
+/* Map Section */
+.dp-map-container {
+  width: 100%;
+  max-width: none;
+  margin: 0 auto;
+  padding: 0 5% 40px;
+  box-sizing: border-box;
+}
+
+.dp-map-header {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+@media (min-width: 768px) {
+  .dp-map-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+}
+
+.dp-map-filters {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.dp-filter-btn {
+  background: transparent;
+  border: 1px solid rgba(139, 69, 19, 0.15);
+  padding: 0.5rem 1.2rem;
+  font-family: var(--font-sans, "Outfit", sans-serif);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--brand);
+  cursor: pointer;
+  border-radius: 30px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dp-filter-btn:hover, .dp-filter-btn.active {
+  background: var(--brand);
+  color: #fff;
+  border-color: var(--brand);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(212, 136, 6, 0.2);
+}
+
+.dp-map-layout {
+  display: flex;
+  flex-direction: column;
+  background: #fdfaf6;
+  border: 1px solid rgba(139, 69, 19, 0.15);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+  border-radius: 8px;
+  overflow: hidden;
+  height: 85vh; /* Mobile height ensures it fits on screen */
+  max-height: 850px;
+}
+
+@media (min-width: 900px) {
+  .dp-map-layout {
+    flex-direction: row;
+    height: 75vh;
+    max-height: 750px;
+  }
+}
+
+.dp-map-view {
+  flex: none;
+  height: 35vh; /* Mobile map height */
+  background: #e9e5dc;
+  position: relative;
+}
+
+@media (min-width: 900px) {
+  .dp-map-view {
+    flex: 1;
+    height: 100%;
+    width: 68%;
+  }
+}
+
+/* MapLibre Canvas Filter for warm vintage aesthetic */
+.dp-real-map .maplibregl-canvas {
+  filter: sepia(0.6) hue-rotate(-15deg) saturate(0.6) contrast(0.9) brightness(1.05);
+}
+
+/* Custom Popup Styling */
+.dp-custom-popup .maplibregl-popup-content {
+  background: var(--bg);
+  border: 1px solid rgba(139, 69, 19, 0.2);
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  padding: 16px;
+  min-width: 200px;
+}
+.dp-custom-popup .maplibregl-popup-tip {
+  border-top-color: var(--bg) !important;
+  border-bottom-color: var(--bg) !important;
+}
+
+.dp-map-sidebar {
+  width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #fffdf9;
+  border-top: 1px solid rgba(139, 69, 19, 0.1);
+  overflow: hidden; /* Ensures child list can scroll */
+}
+
+@media (min-width: 900px) {
+  .dp-map-sidebar {
+    width: 32%;
+    border-top: none;
+    border-left: 1px solid rgba(139, 69, 19, 0.1);
+  }
+}
+
+.dp-map-search {
+  padding: 1.5rem;
+  border-bottom: 1px solid rgba(139, 69, 19, 0.1);
+}
+
+.dp-search-input {
+  width: 100%;
+  padding: 0.85rem 1.2rem;
+  border: 1px solid rgba(139, 69, 19, 0.15);
+  border-radius: 30px;
+  background: #fdfaf6;
+  font-family: var(--font-sans, "Outfit", sans-serif);
+  font-size: 0.95rem;
+  color: var(--text);
+  transition: all 0.3s ease;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.dp-search-input:focus {
+  outline: none;
+  border-color: var(--brand);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(212, 136, 6, 0.1);
+}
+
+.dp-puja-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.dp-puja-item {
+  padding: 1.5rem 1.5rem;
+  border-bottom: 1px solid rgba(139, 69, 19, 0.08);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  gap: 1.25rem;
+  align-items: flex-start;
+}
+
+.dp-puja-item:hover {
+  background: rgba(212, 136, 6, 0.03);
+  transform: translateX(4px);
+}
+
+.dp-puja-item-num {
+  font-family: var(--font-serif, "Cinzel", Georgia, serif);
+  font-size: 1.5rem;
+  color: var(--brand);
+  opacity: 0.7;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.dp-puja-item-content h4 {
+  font-family: var(--font-serif, "Cinzel", Georgia, serif);
+  margin: 0 0 0.5rem 0;
+  font-size: 1.2rem;
+  color: var(--text);
+  letter-spacing: 0.02em;
+}
+
+.dp-puja-item-content p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: rgba(60, 42, 33, 0.7);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* Map Decoration */
+.dp-map-border {
+  width: 100%;
+  padding: 2rem 5% 0;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+}
+
+.dp-map-border img {
+  width: 100%;
+  max-width: 800px;
+  height: auto;
+  opacity: 0.8;
+}
+
+/* Dhak / Pandal Section */
+.dp-editorial {
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+  padding-top: 60px;
+  padding-bottom: 60px;
+}
+
+@media (min-width: 900px) {
+  .dp-editorial {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.dp-editorial__dhak {
+  width: 100%;
+  max-width: 350px;
+  margin: 0 auto;
+}
+
+@media (min-width: 900px) {
+  .dp-editorial__dhak {
+    width: 30%;
+    margin: 0;
+  }
+}
+
+.dp-editorial__text {
+  width: 100%;
+  text-align: center;
+  padding: 2rem;
+  box-sizing: border-box;
+}
+
+@media (min-width: 900px) {
+  .dp-editorial__text {
+    width: 30%;
+  }
+}
+
+.dp-editorial__pandal {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  position: relative;
+}
+
+@media (min-width: 900px) {
+  .dp-editorial__pandal {
+    width: 45%;
+    margin: 0;
+  }
+}
+
+.dp-editorial__lotus {
+  width: 80px;
+  position: absolute;
+  bottom: -30px;
+  left: -20px;
+}
+
+/* Night Puja Cinematic Section */
+.dp-cinematic {
+  position: relative;
+  width: 100%;
+  margin: 0;
+  background: #000;
+  overflow: hidden;
+}
+
+.dp-hero-cinematic {
+  /* No top spacing needed; header handles document flow */
+}
+
+.dp-cinematic__img {
+  width: 100%;
+  height: auto;
+  min-height: 500px;
+  object-fit: cover;
+  object-position: center right;
+  display: block;
+  opacity: 0.9;
+}
+
+.dp-cinematic__overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 5%;
+  box-sizing: border-box;
+  background: linear-gradient(90deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0) 100%);
+}
+
+.dp-cinematic__overlay h2 {
+  color: #fff;
+  font-family: var(--font-serif, "Cinzel", Georgia, serif);
+  font-size: clamp(3rem, 5vw, 4.5rem);
+  line-height: 1.1;
+  margin: 0 0 1rem;
+  max-width: 600px;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+}
+
+.dp-cinematic__overlay p {
+  color: #fff;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  max-width: 400px;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+}
+
+/* Dhunuchi Section */
+.dp-dhunuchi-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 2rem;
+  padding: 60px 5%;
+}
+
+@media (min-width: 768px) {
+  .dp-dhunuchi-section {
+    flex-direction: row;
+    text-align: left;
+    justify-content: center;
+    gap: 4rem;
+  }
+}
+
+.dp-dhunuchi__art {
+  width: 100%;
+  max-width: 250px;
+  position: relative;
+}
+
+@media (min-width: 768px) {
+  .dp-dhunuchi__art {
+    width: 25%;
+  }
+}
+
+.dp-dhunuchi__diya {
+  width: 60px;
+  position: absolute;
+  bottom: 0;
+  right: -20px;
+}
+
+.dp-dhunuchi__text {
+  max-width: 400px;
+}
+
+/* Final CTA Section */
+.dp-final-cta {
+  text-align: center;
+  padding: 60px 5% 80px;
+  position: relative;
+}
+
+.dp-final-cta__buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 2.5rem;
+  flex-wrap: wrap;
+}
+
+.dp-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--brand);
+  color: white;
+  padding: 0.8rem 1.5rem;
+  text-decoration: none;
+  font-family: var(--font-sans, "Outfit", sans-serif);
+  font-size: 0.9rem;
+  letter-spacing: 0.05em;
+  border-radius: 30px;
+  transition: transform 0.2s ease, background 0.2s;
+}
+
+.dp-cta-btn:hover {
+  transform: translateY(-2px);
+  background: #a02820;
+}
+
+.dp-cta-btn--outline {
+  background: linear-gradient(to right, var(--brand) 50%, transparent 50%);
+  background-size: 200% 100%;
+  background-position: 100% 0;
+  color: var(--brand);
+  border: 1px solid var(--brand);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dp-cta-btn--outline:hover {
+  background-position: 0 0;
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(200, 59, 34, 0.2);
+}
+
+/* CTA Decorative Elements */
+.dp-cta-decor {
+  position: absolute;
+  pointer-events: none;
+}
+
+.dp-cta-shiuli {
+  top: 20%;
+  left: 10%;
+  width: 120px;
+  opacity: 0.8;
+}
+
+.dp-cta-diya {
+  bottom: 20%;
+  right: 15%;
+  width: 70px;
+  opacity: 0.9;
+}
+
+.dp-cta-ribbon {
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 300px;
+  opacity: 0.6;
+}
+
+.dp-cta-flag {
+  top: 10%;
+  right: 10%;
+  width: 90px;
+  opacity: 0.8;
+}
+
+@media (max-width: 768px) {
+  .dp-cta-decor { display: none; }
+}
