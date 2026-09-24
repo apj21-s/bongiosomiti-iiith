@@ -734,3 +734,56 @@ export async function sendRegistrationPendingEmail(
     attachments
   })
 }
+
+export async function sendPaymentRejectedEmail(
+  email: string,
+  participantName: string,
+  eventName: string,
+) {
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    console.warn('SMTP credentials missing. Skipping rejection email send to:', email)
+    return
+  }
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+
+  const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Rejected</title>
+  <style>
+    body { font-family: Arial, sans-serif; background-color: #ffffff; color: #333; margin: 0; padding: 20px; }
+    .container { max-width: 600px; margin: 0 auto; background-color: #fcfcfc; padding: 30px; border-radius: 8px; border: 1px solid #eee; }
+    h1 { color: #d32f2f; margin-bottom: 20px; }
+    p { line-height: 1.6; margin-bottom: 15px; }
+    .footer { margin-top: 30px; font-size: 12px; color: #777; border-top: 1px solid #eee; padding-top: 15px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Payment Verification Failed</h1>
+    <p>Dear <strong>${participantName}</strong>,</p>
+    <p>We regret to inform you that we could not verify your payment for <strong>${eventName}</strong>.</p>
+    <p>This typically happens if the UTR / transaction reference number is incorrect, or the payment did not successfully reach our account.</p>
+    <p>If you believe this is an error, or if you have any questions, please contact the organizers immediately.</p>
+    <p><a href="mailto:bangiya.samiti.iiith@gmail.com" style="color: #d32f2f; font-weight: bold; text-decoration: none;">Click here to email our support team</a></p>
+    <p>You can also check your status on our portal: <a href="${appUrl}/pass" style="color: #1976d2;">Verify Status</a></p>
+    <div class="footer">
+      IIIT Hyderabad Bangiya Samiti<br/>
+      Culture | Community | Together
+    </div>
+  </div>
+</body>
+</html>
+  `;
+
+  await transporter.sendMail({
+    from: `"Utsav Admin" <${process.env.FROM_EMAIL || process.env.SMTP_USER}>`,
+    to: email,
+    subject: `Action Required: Payment Verification Failed for ${eventName}`,
+    html,
+  })
+}

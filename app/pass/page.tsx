@@ -19,6 +19,7 @@ type Ticket = {
   createdAt: string
   verificationSubmittedAt: string
   numPasses?: number
+  redeemedCount?: number
   allTokens?: string[]
 }
 
@@ -162,6 +163,7 @@ export default function PassVerifyPage() {
                       <table className="verification-meta-table">
                         <tbody>
                           <tr><td>Registration ID</td><td><code>{ticket.token}</code> {ticket.numPasses && ticket.numPasses > 1 && <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>(+{ticket.numPasses - 1} more passes)</span>}</td></tr>
+                          <tr><td>Check-in Status</td><td>{ticket.numPasses === 1 ? (ticket.redeemedCount === 1 ? <strong className="compact-status-item__value--success">✓ Availed</strong> : 'Not Availed') : <strong>{ticket.redeemedCount} / {ticket.numPasses} Availed</strong>}</td></tr>
                           <tr><td>Attendee Name</td><td><strong>{ticket.participantName}</strong></td></tr>
                           <tr><td>Registered Email</td><td>{ticket.email}</td></tr>
                           <tr><td>Event &amp; Venue</td><td>{ticket.eventName} ({ticket.venue})</td></tr>

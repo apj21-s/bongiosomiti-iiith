@@ -28,7 +28,11 @@ export default function PaymentsClient() {
   async function handleApprove(token: string) {
     if (!confirm(`Approve payment for pass ${token}?`)) return
     try {
-      await fetch(`/api/admin/payments/${token}/approve`, { method: 'POST' })
+      const res = await fetch(`/api/admin/payments/${token}/approve`, { method: 'POST' })
+      if (!res.ok) {
+        const d = await res.json()
+        throw new Error(d.error || 'Failed to approve payment')
+      }
       fetchPayments()
     } catch (e: any) {
       alert(e.message)
@@ -38,7 +42,11 @@ export default function PaymentsClient() {
   async function handleReject(token: string) {
     if (!confirm(`Reject payment for pass ${token}?`)) return
     try {
-      await fetch(`/api/admin/payments/${token}/reject`, { method: 'POST' })
+      const res = await fetch(`/api/admin/payments/${token}/reject`, { method: 'POST' })
+      if (!res.ok) {
+        const d = await res.json()
+        throw new Error(d.error || 'Failed to reject payment')
+      }
       fetchPayments()
     } catch (e: any) {
       alert(e.message)

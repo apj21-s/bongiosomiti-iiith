@@ -1,6 +1,8 @@
 import { getCurrentUser } from '@/utils/auth/server'
 import { NextResponse } from 'next/server'
-import { createServiceRoleClient, createClient } from '@/utils/supabase/server'
+import { createServiceRoleClient } from '@/utils/supabase/server'
+import { getEventById } from '@/utils/data/events'
+import { sendPaymentRejectedEmail } from '@/utils/email'
 
 export async function POST(
   request: Request,
@@ -13,20 +15,30 @@ export async function POST(
 
   const supabase = await createServiceRoleClient()
 
-  // Reject payment
-  // payment_status -> REJECTED
-  // status -> PAYMENT_REJECTED
-  
-  const { data: updated, error } = await supabase
-    .from('tickets')
-    .update({ payment_status: 'REJECTED', status: 'PAYMENT_REJECTED' })
-    .eq('token', token.toUpperCase())
-    .select()
-    .single()
+  const { data: ticket } = await supabase.from('tickets').select('*').eq('token', token.toUpperCase()).single()
+  if (!ticket) return NextResponse.json({ error: 'Ticket not found' }, { status: 404 })
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  let updateQuery = supabase.from('tickets').update({ payment_status: 'REJECTED', status: 'PAYMENT_REJECTED' })
+  if (ticket.utr && ticket.utr !== 'FREE-PASS') {
+    updateQuery = updateQuery.eq('utr', ticket.utr)
+  } else {
+    updateQuery = updateQuery.eq('token', ticket.token)
   }
 
-  return NextResponse.json(updated)
+  const { data: updatedTickets, error } = await updateQuery.select()
+
+  if (error || !updatedTickets || updatedTickets.length === 0) {
+    return NextResponse.json({ error: error?.message || 'Failed to update tickets' }, { status: 500 })
+  }
+
+  const primaryTicket = updatedTickets[0]
+  const event = getEventById(primaryTicket.event_id)
+
+  if (event) {
+    await sendPaymentRejectedEmail(primaryTicket.email, primaryTicket.participant_name, event.name).catch(e => {
+      console.error('Failed to send rejection email:', e)
+    })
+  }
+
+  return NextResponse.json(primaryTicket)
 }
