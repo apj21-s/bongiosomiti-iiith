@@ -183,7 +183,7 @@ export default async function Home() {
                       <span className="events-scene__card-invitation">
                         {event.price === 0
                           ? '✨ Join the celebration • Free Entry'
-                          : `⚡ Registration opens soon • ₹120+ onwards / pass`}
+                          : `• ⚡ Registration opens soon • `}
                       </span>
                       <span className="events-scene__card-btn">
                         <span>{event.status === 'OPEN' ? 'REGISTER NOW' : 'COMING SOON'}</span>
