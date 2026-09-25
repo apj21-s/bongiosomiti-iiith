@@ -4,13 +4,13 @@
     "slug": "mahalaya",
     "name": "Mahalaya Bhoj",
     "event_date": "2026-10-10",
-    "venue": "Community Courtyard",
+    "venue": "Alumni Lounge,KRB ",
     "capacity": 120,
     "price": 250,
     "category": "Neighbourhood bhoj",
     "description": "Shared tables, smoke, brass, and a warm autumn gathering built around authentic Bengali food, adda, and ritual warmth.",
     "image_url": "assets/mahalaya-bhoj.webp",
-    "status": "OPEN",
+    "status": "LOCKED",
     "created_at": "2026-08-23T22:00:00.043761+00:00",
     "config": {
       "food_preferences": [

@@ -165,14 +165,14 @@ export default function PassVerifyPage() {
 
                       <table className="verification-meta-table">
                         <tbody>
-                          <tr><td>Registration ID</td><td><code>{ticket.token}</code> {ticket.numPasses && ticket.numPasses > 1 && <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>(+{ticket.numPasses - 1} more passes)</span>}</td></tr>
-                          <tr><td>Check-in Status</td><td>{ticket.numPasses === 1 ? (ticket.redeemedCount === 1 ? <strong className="compact-status-item__value--success">✓ Availed</strong> : 'Not Availed') : <strong>{ticket.redeemedCount} / {ticket.numPasses} Availed</strong>}</td></tr>
-                          <tr><td>Attendee Name</td><td><strong>{ticket.participantName}</strong></td></tr>
-                          <tr><td>Registered Email</td><td>{ticket.email}</td></tr>
-                          <tr><td>Event &amp; Venue</td><td>{ticket.eventName} ({ticket.venue})</td></tr>
-                          <tr><td>Submitted UTR / Ref</td><td><strong>{ticket.utr}</strong></td></tr>
-                          <tr><td>Expected Amount</td><td>{formatCurrency(ticket.amount)} {ticket.numPasses && ticket.numPasses > 1 && <span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>(for {ticket.numPasses} passes)</span>}</td></tr>
-                          <tr><td>Submission Timestamp</td><td>{formatDate(ticket.verificationSubmittedAt || ticket.createdAt)}</td></tr>
+                          <tr><td>Registration ID</td><td><code>{ticket?.token}</code> {(ticket?.numPasses || 0) > 1 && <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>(+{(ticket?.numPasses || 1) - 1} more passes)</span>}</td></tr>
+                          <tr><td>Check-in Status</td><td>{ticket?.numPasses === 1 ? (ticket?.redeemedCount === 1 ? <strong className="compact-status-item__value--success">✓ Availed</strong> : 'Not Availed') : <strong>{ticket?.redeemedCount} / {ticket?.numPasses} Availed</strong>}</td></tr>
+                          <tr><td>Attendee Name</td><td><strong>{ticket?.participantName}</strong></td></tr>
+                          <tr><td>Registered Email</td><td>{ticket?.email}</td></tr>
+                          <tr><td>Event &amp; Venue</td><td>{ticket?.eventName} ({ticket?.venue})</td></tr>
+                          <tr><td>Submitted UTR / Ref</td><td><strong>{ticket?.utr}</strong></td></tr>
+                          <tr><td>Expected Amount</td><td>{formatCurrency(ticket?.amount || 0)} {(ticket?.numPasses || 0) > 1 && <span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>(for {ticket?.numPasses} passes)</span>}</td></tr>
+                          <tr><td>Submission Timestamp</td><td>{formatDate(ticket?.verificationSubmittedAt || ticket?.createdAt || '')}</td></tr>
                         </tbody>
                       </table>
 

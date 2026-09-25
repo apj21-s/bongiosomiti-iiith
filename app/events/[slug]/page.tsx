@@ -92,26 +92,25 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
             <div className={isMahalaya ? 'mahalaya-card__story' : 'saraswati-card__story'}>
               <div className={isMahalaya ? 'mahalaya-card__titleBlock' : 'saraswati-card__titleBlock'}>
                 <h2 id={isMahalaya ? 'mahalaya-title' : 'saraswati-title'} className={isMahalaya ? 'mahalaya-title' : 'saraswati-title'}>
-                  {isMahalaya ? 'MAHALAYA BHOJ PAGE' : 'SARASWATI PUJA 2027'}
+                  {event.name.toUpperCase()}
                 </h2>
                 <p className={isMahalaya ? 'mahalaya-subtitle' : 'saraswati-subtitle'}>
-                  {isMahalaya ? '(NEIGHBOURHOOD & BHOJ)' : '(CAMPUS PUJA & KHICHURI PROSAD)'}
+                  ({event.category.toUpperCase()})
                 </p>
               </div>
 
               <div className={isMahalaya ? 'mahalaya-timeline' : 'saraswati-timeline'}>
                 {isMahalaya ? (
                   <>
-                    <div className="mahalaya-timeline__item"><div className="mahalaya-timeline__dot"></div><strong className="mahalaya-timeline__title">Event date</strong><span className="mahalaya-timeline__desc">Celebrate autumn puja season (10 Oct 2026)</span></div>
-                    <div className="mahalaya-timeline__item"><div className="mahalaya-timeline__dot"></div><strong className="mahalaya-timeline__title">Time/Slot</strong><span className="mahalaya-timeline__desc">Shared community feast (1:00 PM – 4:30 PM)</span></div>
-                    <div className="mahalaya-timeline__item"><div className="mahalaya-timeline__dot"></div><strong className="mahalaya-timeline__title">Tradition</strong><span className="mahalaya-timeline__desc">Tradition &amp; cultural community dinner</span></div>
+                    <div className="mahalaya-timeline__item"><div className="mahalaya-timeline__dot"></div><strong className="mahalaya-timeline__title">Event Date</strong><span className="mahalaya-timeline__desc">{new Date(event.event_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</span></div>
+                    <div className="mahalaya-timeline__item"><div className="mahalaya-timeline__dot"></div><strong className="mahalaya-timeline__title">Venue & Location</strong><span className="mahalaya-timeline__desc">{event.venue}</span></div>
+                    <div className="mahalaya-timeline__item"><div className="mahalaya-timeline__dot"></div><strong className="mahalaya-timeline__title">Event Details</strong><span className="mahalaya-timeline__desc">{event.description}</span></div>
                   </>
                 ) : (
                   <>
-                    <div className="saraswati-timeline__item"><div className="saraswati-timeline__dot"></div><strong className="saraswati-timeline__title">Event Date</strong><span className="saraswati-timeline__desc">Auspicious Basant Panchami (11 Feb 2027)</span></div>
-                    <div className="saraswati-timeline__item"><div className="saraswati-timeline__dot"></div><strong className="saraswati-timeline__title">Morning Pushpanjali</strong><span className="saraswati-timeline__desc">Morning Anjali &amp; Vedic chanting (9:30 AM – 11:30 AM)</span></div>
-                    <div className="saraswati-timeline__item"><div className="saraswati-timeline__dot"></div><strong className="saraswati-timeline__title">Khichuri Prosad Lunch Feast</strong><span className="saraswati-timeline__desc">Grand sit-down community lunch (12:30 PM – 3:30 PM)</span></div>
-                    <div className="saraswati-timeline__item"><div className="saraswati-timeline__dot"></div><strong className="saraswati-timeline__title">Sandhya Aarti &amp; Adda</strong><span className="saraswati-timeline__desc">Cultural evening, music &amp; Dhunuchi Naach (5:30 PM – 8:00 PM)</span></div>
+                    <div className="saraswati-timeline__item"><div className="saraswati-timeline__dot"></div><strong className="saraswati-timeline__title">Event Date</strong><span className="saraswati-timeline__desc">{new Date(event.event_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</span></div>
+                    <div className="saraswati-timeline__item"><div className="saraswati-timeline__dot"></div><strong className="saraswati-timeline__title">Venue</strong><span className="saraswati-timeline__desc">{event.venue}</span></div>
+                    <div className="saraswati-timeline__item"><div className="saraswati-timeline__dot"></div><strong className="saraswati-timeline__title">About</strong><span className="saraswati-timeline__desc">{event.description}</span></div>
                   </>
                 )}
               </div>

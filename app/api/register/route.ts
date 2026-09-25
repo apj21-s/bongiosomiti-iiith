@@ -75,8 +75,8 @@ export async function POST(request: Request) {
       payment_status: paymentStatus,
       status,
       num_passes: 1,
-      food_pref: data.vegCount !== undefined && data.nonVegCount !== undefined 
-        ? (i < data.vegCount ? 'Veg' : 'Non-Veg')
+      food_pref: (data as any).vegCount !== undefined && (data as any).nonVegCount !== undefined 
+        ? (i < (data as any).vegCount ? 'Veg' : 'Non-Veg')
         : data.foodPref,
       is_iiit: isIiit,
       coupon_code: data.couponCode || null,

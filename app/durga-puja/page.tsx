@@ -9,8 +9,12 @@ import './durga-puja.css'
 
 import pujasRawData from '../../public/data/pujas-raw-65.json'
 
+const should404 = () => true;
+
 export default function DurgaPujaPage() {
-  notFound()
+  if (should404()) {
+    notFound()
+  }
   
   const [activeRegion, setActiveRegion] = useState('ALL')
   const [searchQuery, setSearchQuery] = useState('')

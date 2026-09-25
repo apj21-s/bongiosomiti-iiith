@@ -5,7 +5,7 @@ import path from 'path'
 
 export async function POST(request: Request) {
   const { data: authData } = await getCurrentUser()
-  if (!authData?.user || authData.user.user_metadata?.tier < 2) {
+  if (!authData?.user || (authData.user.user_metadata as any)?.tier < 2) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
