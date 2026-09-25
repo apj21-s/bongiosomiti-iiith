@@ -11,7 +11,7 @@ export async function getEvents() {
     
     // Backfill config from events.json if it's missing in Supabase
     let events = data || [];
-    const hasMissingConfig = events.some(e => !e.config || Object.keys(e.config).length === 0);
+    const hasMissingConfig = events.some((e: any) => !e.config || Object.keys(e.config).length === 0);
     
     if (hasMissingConfig) {
       try {
@@ -21,7 +21,7 @@ export async function getEvents() {
         const fileContents = fs.readFileSync(staticPath, 'utf8');
         const localEvents = JSON.parse(fileContents);
         
-        events = events.map(e => {
+        events = events.map((e: any) => {
           if (!e.config || Object.keys(e.config).length === 0) {
             const localE = localEvents.find((le: any) => le.slug === e.slug);
             if (localE && localE.config) {
