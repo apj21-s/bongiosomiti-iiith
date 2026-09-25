@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { getEvents } from '@/utils/data/events'
 import SiteHeader from '@/components/site-header'
 import SiteFooter from '@/components/site-footer'
-import PujaVideo from '@/components/puja-video'
+import CrossfadeVideo from '@/components/crossfade-video'
 
 export const revalidate = 0
 
@@ -20,7 +20,10 @@ export default async function EventsPage() {
         </div>
 
         <div className="events-scene__panel">
-          <PujaVideo />
+          <div className="events-scene__hero" id="events-hero-player">
+            <img className="events-scene__hero-image events-scene__hero-poster" src="/assets/puja-poster.webp" alt="Bengali Puja Courtyard Celebration" width={1200} height={880} loading="lazy" decoding="async" />
+            <CrossfadeVideo />
+          </div>
 
           <div className="events-scene__copy" style={{ padding: '1rem 0 0.5rem' }}>
             <p className="section-label">Campus &amp; Community Catalog</p>
