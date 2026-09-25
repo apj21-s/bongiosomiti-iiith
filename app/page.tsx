@@ -91,7 +91,7 @@ export default async function Home() {
                 <path className="bird-body" d="M13 11 C15 10, 18 10, 20 12 C17 14, 15 14, 13 11 Z" fill="#28180e" />
               </svg>
             </div>
-            
+
             {/* Landing bird animation element */}
             <div className="hero-landing-bird" aria-hidden="true">
               <svg className="bird-svg" viewBox="0 0 32 18">
@@ -100,7 +100,7 @@ export default async function Home() {
                 <path className="bird-body" d="M13 11 C15 10, 18 10, 20 12 C17 14, 15 14, 13 11 Z" fill="#28180e" />
               </svg>
             </div>
-            
+
             {/* Invisible anchor at the man's right shoulder in the autumn landscape */}
             <div className="hero-shoulder-perch" aria-hidden="true"></div>
           </div>
@@ -181,9 +181,9 @@ export default async function Home() {
                     <p className="events-scene__card-desc">{event.description?.replace('Shared tables, smoke, brass, and a warm autumn gathering built around authentic Bengali food, adda, and ritual warmth.', 'Bengali food • Adda • Celebration').replace('A serene campus procession with fresh yellow flowers, alpona, morning anjali, recitation, music, and student gathering.', 'Yellow blooms • Anjali • Music • Culture')}</p>
                     <div className="events-scene__card-footer">
                       <span className="events-scene__card-invitation">
-                        {event.price === 0 
+                        {event.price === 0
                           ? '✨ Join the celebration • Free Entry'
-                          : `⚡ Seats are limited • ₹${event.price}+ onwards / pass`}
+                          : `⚡ Seats are limited • ₹120+ onwards / pass`}
                       </span>
                       <span className="events-scene__card-btn">
                         <span>{event.status === 'OPEN' ? 'REGISTER NOW' : 'COMING SOON'}</span>
