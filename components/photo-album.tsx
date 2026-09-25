@@ -12,20 +12,20 @@ type Photo = {
 }
 
 const DEFAULT_PHOTOS: Photo[] = [
-  { src: '/assets/photo_1.webp', alt: 'সরস্বতী পূজা', title: 'সরস্বতী পূজা', date: '১৪ অক্টোবর ২০২৬', pos: 'center 32%' },
-  { src: '/assets/photo_2026-08-11_21-42-50.webp', alt: 'হাতের আলপনা', title: 'হাতের আলপনা', date: '১৮ অক্টোবর ২০২৬', pos: 'center 28%' },
-  { src: '/assets/photo_2026-08-11_21-42-48.webp', alt: 'সরস্বতী প্রাঙ্গণ', title: 'সরস্বতী প্রাঙ্গণ', date: '২১ জানুয়ারি ২০২৭', pos: 'center 42%' },
-  { src: '/assets/p10.webp', alt: 'ভোগ বিতরণ', title: 'ভোগ ও প্রসাদ বিতরণ', date: '০৬ ফেব্রুয়ারি ২০২৭', pos: 'center 36%' },
-  { src: '/assets/photo_2026-08-11_22-55-53.webp', alt: 'পূজার প্রস্তুতি', title: 'পূজার প্রস্তুতি ও সাজসজ্জা', date: '১২ অক্টোবর ২০২৬', pos: 'center 30%' },
-  { src: '/assets/photo_2026-08-11_22-56-00.webp', alt: 'সন্ধ্যা আরতি', title: 'সন্ধ্যা আরতি ও প্রার্থনা', date: '১৩ অক্টোবর ২০২৬', pos: 'center 38%' },
-  { src: '/assets/photo_2026-08-11_21-42-44.webp', alt: 'মণ্ডপ পরিক্রমা', title: 'মণ্ডপ পরিক্রমা ও উৎসব', date: '১৯ অক্টোবর ২০২৬', pos: 'center 34%' },
-  { src: '/assets/p7.webp', alt: 'ধুনুচি নাচ', title: 'ধুনুচি নাচ ও ঢাকের বোল', date: '০৪ ফেব্রুয়ারি ২০২৭', pos: 'center 36%' },
-  { src: '/assets/p8.webp', alt: 'সাংস্কৃতিক সন্ধ্যা', title: 'সাংস্কৃতিক সন্ধ্যা ও সংগীত', date: '০৫ ফেব্রুয়ারি ২০২৭', pos: 'center 36%' },
-  { src: '/assets/p9.webp', alt: 'প্রদীপ প্রজ্জ্বলন', title: 'প্রদীপ প্রজ্জ্বলন ও পুষ্পাঞ্জলি', date: '০৫ ফেব্রুয়ারি ২০২৭', pos: 'center 36%' },
-  { src: '/assets/p11.webp', alt: 'ক্যাম্পাস আড্ডা', title: 'ক্যাম্পাস আড্ডা ও আনন্দ', date: '০৬ ফেব্রুয়ারি ২০২৭', pos: 'center 36%' },
-  { src: '/assets/p12.webp', alt: 'সন্ধ্যা মিলন', title: 'সন্ধ্যা মিলন ও প্রসাদ সেবা', date: '০৬ ফেব্রুয়ারি ২০২৭', pos: 'center 36%' },
-  { src: '/assets/p13.webp', alt: 'আনন্দ উৎসব', title: 'আনন্দ উৎসব ও স্মৃতি', date: '০৭ ফেব্রুয়ারি ২০২৭', pos: 'center 36%' },
-  { src: '/assets/p14.webp', alt: 'শুভ বিজয়া', title: 'শুভ বিজয়া সম্মিলনী', date: '০৭ ফেব্রুয়ারি ২০২৭', pos: 'center 36%' },
+  { src: '/assets/photo_1.webp', alt: 'সরস্বতী পূজা', title: 'সরস্বতী পূজা', date: 'সরস্বতী পূজা • ২০২৬', pos: 'center 32%' },
+  { src: '/assets/photo_2026-08-11_21-42-50.webp', alt: 'হাতের আলপনা', title: 'হাতের আলপনা', date: 'সরস্বতী পূজা • ২০২৬', pos: 'center 28%' },
+  { src: '/assets/photo_2026-08-11_21-42-48.webp', alt: 'সরস্বতী প্রাঙ্গণ', title: 'সরস্বতী প্রাঙ্গণ', date: 'সরস্বতী পূজা • ২০২৬', pos: 'center 42%' },
+  { src: '/assets/p10.webp', alt: 'ভোগ বিতরণ', title: 'ভোগ ও প্রসাদ বিতরণ', date: 'সরস্বতী পূজা • ২০২৬', pos: 'center 36%' },
+  { src: '/assets/photo_2026-08-11_22-55-53.webp', alt: 'পূজার প্রস্তুতি', title: 'পূজার প্রস্তুতি ও সাজসজ্জা', date: 'সরস্বতী পূজা • ২০২৬', pos: 'center 30%' },
+  { src: '/assets/photo_2026-08-11_22-56-00.webp', alt: 'সন্ধ্যা আরতি', title: 'সন্ধ্যা আরতি ও প্রার্থনা', date: 'সরস্বতী পূজা • ২০২৬', pos: 'center 38%' },
+  { src: '/assets/photo_2026-08-11_21-42-44.webp', alt: 'মণ্ডপ পরিক্রমা', title: 'মণ্ডপ পরিক্রমা ও উৎসব', date: 'সরস্বতী পূজা • ২০২৬', pos: 'center 34%' },
+  { src: '/assets/p7.webp', alt: 'ধুনুচি নাচ', title: 'ধুনুচি নাচ ও ঢাকের বোল', date: 'সরস্বতী পূজা • ২০২৬', pos: 'center 36%' },
+  { src: '/assets/p8.webp', alt: 'সাংস্কৃতিক সন্ধ্যা', title: 'সাংস্কৃতিক সন্ধ্যা ও সংগীত', date: 'সরস্বতী পূজা • ২০২৬', pos: 'center 36%' },
+  { src: '/assets/p9.webp', alt: 'প্রদীপ প্রজ্জ্বলন', title: 'প্রদীপ প্রজ্জ্বলন ও পুষ্পাঞ্জলি', date: 'সরস্বতী পূজা • ২০২৬', pos: 'center 36%' },
+  { src: '/assets/p11.webp', alt: 'ক্যাম্পাস আড্ডা', title: 'ক্যাম্পাস আড্ডা ও আনন্দ', date: 'সরস্বতী পূজা • ২০২৬', pos: 'center 36%' },
+  { src: '/assets/p12.webp', alt: 'সন্ধ্যা মিলন', title: 'সন্ধ্যা মিলন ও প্রসাদ সেবা', date: 'সরস্বতী পূজা • ২০২৬', pos: 'center 36%' },
+  { src: '/assets/p13.webp', alt: 'আনন্দ উৎসব', title: 'আনন্দ উৎসব ও স্মৃতি', date: 'সরস্বতী পূজা • ২০২৬', pos: 'center 36%' },
+  { src: '/assets/p14.webp', alt: 'শুভ বিজয়া', title: 'শুভ বিজয়া সম্মিলনী', date: 'সরস্বতী পূজা • ২০২৬', pos: 'center 36%' },
 ]
 
 const VISIBLE = 4

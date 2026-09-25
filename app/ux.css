@@ -37,11 +37,11 @@
 .reg-content-wrapper { position: relative; z-index: 2; padding: 4px 24px 35px 24px; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; }
 
 /* Header */
-.reg-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
-.reg-header-titles { display: flex; flex-direction: column; }
-.reg-title-main { height: 28px; object-fit: contain; transform-origin: left; }
-.reg-title-bengali { height: 38px; object-fit: contain; transform-origin: right; }
-.reg-subtitle { font-size: 11px; color: #8F321F; margin-top: 4px; line-height: 1.2; font-weight: 500; }
+.reg-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; margin-top: 24px; flex-wrap: wrap; gap: 12px; }
+.reg-header-titles { display: flex; flex-direction: column; width: 100%; max-width: 60%; }
+.reg-title-main { height: auto; max-height: 28px; width: 100%; object-fit: contain; transform-origin: left; object-position: left; }
+.reg-title-bengali { height: auto; max-height: 38px; width: 100%; max-width: 35%; object-fit: contain; transform-origin: right; object-position: right; }
+.reg-subtitle { font-size: clamp(9px, 2.5vw, 11px); color: #8F321F; margin-top: 4px; line-height: 1.2; font-weight: 500; }
 
 /* Progress Stepper (Native HTML/CSS) */
 .reg-stepper { display: flex; justify-content: space-between; position: relative; margin-bottom: 6px; padding: 0 10px; }

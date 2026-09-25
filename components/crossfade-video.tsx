@@ -127,8 +127,7 @@ export default function CrossfadeVideo() {
       >
         {isLoaded && (
           <>
-            <source src="/assets/Animate_Bengali_Puja_courtyard_opt.webm" type="video/webm" />
-            <source src="/assets/Animate_Bengali_Puja_courtyard_opt_small.mp4" type="video/mp4" />
+            <source src="/assets/final_puja.mp4" type="video/mp4" />
             <track kind="captions" src="/assets/captions.vtt" srcLang="en" label="English Captions" />
           </>
         )}
@@ -145,8 +144,7 @@ export default function CrossfadeVideo() {
       >
         {isLoaded && (
           <>
-            <source src="/assets/Animate_Bengali_Puja_courtyard_opt.webm" type="video/webm" />
-            <source src="/assets/Animate_Bengali_Puja_courtyard_opt_small.mp4" type="video/mp4" />
+            <source src="/assets/final_puja.mp4" type="video/mp4" />
             <track kind="captions" src="/assets/captions.vtt" srcLang="en" label="English Captions" />
           </>
         )}
