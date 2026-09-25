@@ -20,7 +20,7 @@ export const dynamic = 'force-dynamic'
 
 export default async function EventDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const event = getEventBySlug(slug)
+  const event = await getEventBySlug(slug)
 
   if (!event) {
     notFound()

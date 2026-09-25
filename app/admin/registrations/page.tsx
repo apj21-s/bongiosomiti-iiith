@@ -10,7 +10,8 @@ export default async function AdminRegistrationsPage() {
   const tier = await getAdminTier()
   if (tier < 3) redirect('/admin')
 
-  const events = getEvents().map((e: any) => ({ slug: e.slug, name: e.name }))
+  const allEvents = await getEvents();
+  const events = allEvents.map((e: any) => ({ slug: e.slug, name: e.name }))
 
   return (
     <main className="admin-page-content" data-admin-registrations>

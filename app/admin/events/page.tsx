@@ -10,7 +10,7 @@ export default async function AdminEventsPage() {
   const tier = await getAdminTier()
   if (tier < 3) redirect('/admin')
 
-  const events = getEvents()
+  const events = await getEvents()
 
   return (
     <main className="panel container admin-dashboard-main" data-admin-events style={{ maxWidth: '1300px', margin: '2rem auto', padding: '0 clamp(12px, 3vw, 24px)', overflowX: 'hidden' }}>

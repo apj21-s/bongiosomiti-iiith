@@ -6,7 +6,7 @@ export async function GET(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params;
-  const event = getEventBySlug(slug)
+  const event = await getEventBySlug(slug)
 
   if (!event) {
     return NextResponse.json({ error: 'Not Found' }, { status: 404 })

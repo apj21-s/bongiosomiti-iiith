@@ -77,7 +77,17 @@ export default function EventEditorClient({ event }: { event: any }) {
         body: JSON.stringify(updates)
       })
 
-      if (!res.ok) throw new Error('Failed to save')
+      if (!res.ok) {
+        let errStr = 'Failed to save';
+        const text = await res.text();
+        try {
+          const json = JSON.parse(text);
+          errStr = json.error || errStr;
+        } catch(e) {
+          errStr = `Server Error: ${res.status}\n\n${text.substring(0, 150)}`;
+        }
+        throw new Error(errStr);
+      }
       alert('Event settings updated successfully!')
       router.refresh()
     } catch (err: any) {

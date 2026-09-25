@@ -43,7 +43,7 @@ export async function POST(
   const tokens = updatedTickets.map((t: any) => t.token)
   const primaryTicket = updatedTickets[0]
 
-  const event = getEventById(primaryTicket.event_id)
+  const event = await getEventById(primaryTicket.event_id)
   if (event) {
     require('fs').appendFileSync('scratch/api_debug.log', `Sending email to ${primaryTicket.email} for event ${event.name} with tokens ${JSON.stringify(tokens)}\n`);
     await sendQRPassEmail(primaryTicket.email, primaryTicket.participant_name, event.name, tokens).catch(e => {
