@@ -167,7 +167,7 @@ export default async function Home() {
                       style={{ objectPosition: event.slug === 'mahalaya' ? 'center 36%' : 'center 20%' }}
                     />
                     <span className="events-scene__card-badge">
-                      {event.price === 0 ? 'Campus Celebration' : 'Limited Pass Availability'}
+                      {event.price === 0 ? 'Campus Celebration' : 'Registration Opens Soon!'}
                     </span>
                   </div>
                   <div className="events-scene__card-body">
@@ -183,7 +183,7 @@ export default async function Home() {
                       <span className="events-scene__card-invitation">
                         {event.price === 0
                           ? '✨ Join the celebration • Free Entry'
-                          : `⚡ Seats are limited • ₹120+ onwards / pass`}
+                          : `⚡ Registration opens soon • ₹120+ onwards / pass`}
                       </span>
                       <span className="events-scene__card-btn">
                         <span>{event.status === 'OPEN' ? 'REGISTER NOW' : 'COMING SOON'}</span>

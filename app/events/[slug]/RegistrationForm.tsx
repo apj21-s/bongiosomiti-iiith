@@ -162,6 +162,24 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
   const stepProps = { event, draft, updateDraft, nextStage, prevStage, error, setError, total, subtotal, discount, applyCoupon, couponMsg, handleSubmit, loading, confirmation, setScreenshotPreview, screenshotPreview, transitionTo }
 
   if (event?.status !== 'OPEN') {
+    if (event?.slug !== 'mahalaya') {
+      return (
+        <div className="reg-shell is-locked" style={{ overflow: 'hidden', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '600px', backgroundColor: '#fff8f0' }}>
+          <img src="/assets/saraswati-puja.webp" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.15 }} alt="Saraswati Thakur" />
+          <div className="form-lock-content" style={{ position: 'relative', zIndex: 10, background: 'rgba(255,255,255,0.9)', padding: '3rem', borderRadius: '16px', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
+            <div className="form-lock-icon" style={{ margin: '0 auto 1.5rem', width: '64px', height: '64px', background: '#ffe4b5', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#d2691e' }}>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" width="32" height="32">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+            </div>
+            <h4 className="form-lock-title" style={{ fontSize: '1.5rem', color: '#5c4033', marginBottom: '0.5rem', textAlign: 'center' }}>Registrations Opening Soon</h4>
+            <p className="form-lock-desc" style={{ color: '#8b4513', textAlign: 'center' }}>Stay tuned for updates!</p>
+          </div>
+        </div>
+      )
+    }
+
     return (
       <div className="reg-shell is-locked">
         {/* Decorative Assets */}
