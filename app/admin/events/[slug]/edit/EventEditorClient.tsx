@@ -6,6 +6,13 @@ import { useRouter } from 'next/navigation'
 export default function EventEditorClient({ event }: { event: any }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  
+  const [name, setName] = useState(event.name || '')
+  const [category, setCategory] = useState(event.category || '')
+  const [eventDate, setEventDate] = useState(event.event_date || '')
+  const [venue, setVenue] = useState(event.venue || '')
+  const [description, setDescription] = useState(event.description || '')
+  
   const [capacity, setCapacity] = useState(event.capacity || 0)
   const [upiIds, setUpiIds] = useState<string[]>(
     event.config?.upi_ids || (event.config?.upi_id ? [event.config.upi_id] : [''])
@@ -47,6 +54,11 @@ export default function EventEditorClient({ event }: { event: any }) {
     setLoading(true)
     try {
       const updates = {
+        name,
+        category,
+        event_date: eventDate,
+        venue,
+        description,
         capacity: Number(capacity),
         // price is legacy, keep it synced to the first pass type for backwards compatibility
         price: passTypes.length > 0 ? passTypes[0].price : 0,
@@ -81,11 +93,36 @@ export default function EventEditorClient({ event }: { event: any }) {
       {/* Basics */}
       <div>
         <h3 style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '8px', marginBottom: '16px' }}>General Settings</h3>
-        <div className="form-group">
+        <div className="form-group" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+          <div>
+            <label>Event Name</label>
+            <input type="text" className="form-control" value={name} onChange={e => setName(e.target.value)} required />
+          </div>
+          <div>
+            <label>Category (e.g. Neighbourhood bhoj)</label>
+            <input type="text" className="form-control" value={category} onChange={e => setCategory(e.target.value)} required />
+          </div>
+          <div>
+            <label>Scheduled Date (YYYY-MM-DD)</label>
+            <input type="date" className="form-control" value={eventDate} onChange={e => setEventDate(e.target.value)} required />
+          </div>
+          <div>
+            <label>Venue</label>
+            <input type="text" className="form-control" value={venue} onChange={e => setVenue(e.target.value)} required />
+          </div>
+        </div>
+        
+        <div className="form-group" style={{ marginTop: '20px' }}>
+          <label>Event Description</label>
+          <textarea className="form-control" rows={3} value={description} onChange={e => setDescription(e.target.value)} required />
+        </div>
+
+        <div className="form-group" style={{ marginTop: '20px' }}>
           <label>Total Registration Capacity (Max Seats)</label>
           <input 
             type="number" 
             className="form-control" 
+            style={{ width: '200px' }}
             value={capacity} 
             onChange={e => setCapacity(e.target.value as any)} 
             min="0"
