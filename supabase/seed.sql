@@ -1,9 +1,9 @@
 -- Seed Events
-insert into events (id, slug, name, event_date, venue, capacity, price, category, description, image_url, status)
+insert into events (id, slug, name, event_date, venue, capacity, price, category, description, image_url, status, config)
 values
-('11111111-1111-1111-1111-111111111111', 'mahalaya', 'Mahalaya Bhoj', '2026-10-12', 'Community Courtyard', 120, 250, 'Neighbourhood bhoj', 'Bengali food • Adda • Celebration', 'assets/mahalaya-bhoj.webp', 'OPEN'),
-('22222222-2222-2222-2222-222222222222', 'saraswati', 'Saraswati Puja', '2027-01-21', 'College Campus', 180, 0, 'Campus celebration', 'Yellow blooms • Anjali • Music • Culture', 'assets/saraswati-puja.webp', 'OPEN')
-ON CONFLICT (id) DO NOTHING;
+('11111111-1111-1111-1111-111111111111', 'mahalaya', 'Mahalaya Bhoj', '2026-10-12', 'Community Courtyard', 120, 250, 'Neighbourhood bhoj', 'Bengali food • Adda • Celebration', 'assets/mahalaya-bhoj.webp', 'LOCKED', '{"food_preferences": ["Veg", "Non-Veg"], "pass_types": [{"name": "Veg (Special Veg Thali)", "price": 250}, {"name": "Non-Veg (Authentic Bhoj)", "price": 350}], "upi_id": "p2arco@ptaxis", "upi_qr_url": "/assets/pay_qr.jpg", "coupons": [{"code": "EARLYBIRD", "discount": 50}], "upi_ids": ["p2arco@ptaxis", "saswatabose16032005@ybl"]}'::jsonb),
+('22222222-2222-2222-2222-222222222222', 'saraswati', 'Saraswati Puja', '2027-01-21', 'College Campus', 180, 0, 'Campus celebration', 'Yellow blooms • Anjali • Music • Culture', 'assets/saraswati-puja.webp', 'LOCKED', '{"food_preferences": [], "upi_id": "8957816008@ybl", "upi_qr_url": "/assets/pay_qr.jpg", "coupons": []}'::jsonb)
+ON CONFLICT (id) DO UPDATE SET config = EXCLUDED.config, status = EXCLUDED.status;
 
 -- Seed Auth User (id: 33333333-3333-3333-3333-333333333333)
 -- Password is 'password123'

@@ -11,6 +11,7 @@ create table events (
   description text,
   image_url text,
   status text not null default 'OPEN',
+  config jsonb default '{}'::jsonb,
   created_at timestamptz default now()
 );
 
