@@ -7,8 +7,7 @@ import PujaVideo from '@/components/puja-video'
 export const revalidate = 0
 
 export default async function EventsPage() {
-  const events = await getEvents()
-  const activeEvents = events.sort((a: any, b: any) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime())
+  const activeEvents = getEvents().sort((a: any, b: any) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime())
 
   return (
     <main className="events-page" style={{ paddingTop: '1.5rem' }}>

@@ -26,7 +26,7 @@ export async function POST(request: Request) {
     const data = result.data
     const supabase = await createServiceRoleClient()
 
-    const event = await getEventBySlug(data.eventSlug)
+    const event = getEventBySlug(data.eventSlug)
     
     if (!event) {
       return NextResponse.json({ error: 'Event not found' }, { status: 404 })

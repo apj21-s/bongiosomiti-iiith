@@ -32,7 +32,7 @@ export async function POST(
   }
 
   const primaryTicket = updatedTickets[0]
-  const event = await getEventById(primaryTicket.event_id)
+  const event = getEventById(primaryTicket.event_id)
 
   if (event) {
     await sendPaymentRejectedEmail(primaryTicket.email, primaryTicket.participant_name, event.name).catch(e => {

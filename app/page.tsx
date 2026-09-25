@@ -9,8 +9,7 @@ import HeroBirdsAnimator from '@/components/hero-birds-animator'
 export const revalidate = 0
 
 export default async function Home() {
-  const events = await getEvents()
-  const activeEvents = events.sort((a: any, b: any) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime())
+  const activeEvents = getEvents().sort((a: any, b: any) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime())
 
   return (
     <main id="top" className="home-page">

@@ -5,7 +5,7 @@ import UtsavLoader from "@/components/utsav-loader";
 
 export const metadata: Metadata = {
   title: "bangiya.samiti.iiith",
-  description: "আমরা বাঙ্গালী জাতি !",
+  description: "BANGIYA.SOMITI cultural event website",
 };
 
 export default function RootLayout({

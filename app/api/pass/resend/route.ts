@@ -42,7 +42,7 @@ export async function POST(request: Request) {
     }
 
     // Pass found, dispatch email
-    const event = await getEventById(primaryTicket.event_id)
+    const event = getEventById(primaryTicket.event_id)
     
     const tokens = allApprovedTickets.map((t: any) => t.token)
     await sendQRPassEmail(primaryTicket.email, primaryTicket.participant_name, event?.name || 'Utsav Event', tokens)

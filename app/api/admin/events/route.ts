@@ -7,8 +7,7 @@ export async function GET() {
   const user = authData?.user
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const events = await getEvents()
-  return NextResponse.json(events)
+  return NextResponse.json(getEvents())
 }
 
 export async function POST(request: Request) {
