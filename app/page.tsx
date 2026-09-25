@@ -135,7 +135,7 @@ export default async function Home() {
         <div className="events-scene">
           <div className="events-scene__panel">
             <div className="events-scene__hero scroll-reveal scroll-reveal--delay-1" id="events-hero-player">
-              <img className="events-scene__hero-image events-scene__hero-poster" src="/assets/community-puja.webp" alt="Bengali Puja Courtyard Celebration" width={1200} height={880} loading="lazy" decoding="async" />
+              <img className="events-scene__hero-image events-scene__hero-poster" src="/assets/puja-poster.webp" alt="Bengali Puja Courtyard Celebration" width={1200} height={880} loading="lazy" decoding="async" />
               <CrossfadeVideo />
             </div>
 

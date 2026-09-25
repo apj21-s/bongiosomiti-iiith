@@ -132,7 +132,7 @@ export default function PujaVideo() {
 
   return (
     <div className="events-scene__hero" id="events-hero-player" ref={heroRef}>
-      <img className="events-scene__hero-image events-scene__hero-poster" src="/assets/community-puja.webp" alt="IIIT Bangiya Samiti Celebrations" />
+      <img className="events-scene__hero-image events-scene__hero-poster" src="/assets/puja-poster.webp" alt="IIIT Bangiya Samiti Celebrations" />
       <video className="events-scene__hero-video events-scene__hero-video--1 is-hidden" preload="none" muted playsInline aria-label="IIIT Bangiya Samiti Celebrations">
         <source data-src="/assets/puja_final.mp4" type="video/mp4" />
         <track kind="captions" src="/assets/captions.vtt" srcLang="en" label="English Captions" />
