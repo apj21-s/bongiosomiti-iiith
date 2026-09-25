@@ -127,7 +127,7 @@ export default function CrossfadeVideo() {
       >
         {isLoaded && (
           <>
-            <source src="/assets/final_puja.mp4" type="video/mp4" />
+            <source src="/assets/puja_final.mp4" type="video/mp4" />
             <track kind="captions" src="/assets/captions.vtt" srcLang="en" label="English Captions" />
           </>
         )}
@@ -144,7 +144,7 @@ export default function CrossfadeVideo() {
       >
         {isLoaded && (
           <>
-            <source src="/assets/final_puja.mp4" type="video/mp4" />
+            <source src="/assets/puja_final.mp4" type="video/mp4" />
             <track kind="captions" src="/assets/captions.vtt" srcLang="en" label="English Captions" />
           </>
         )}
