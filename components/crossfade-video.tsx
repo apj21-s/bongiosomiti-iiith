@@ -320,7 +320,8 @@ export default function CrossfadeVideo() {
           justify-content: center;
         }
         .mic-cd-label {
-          font-size: 6px;
+          /* 6px was not readable on anything. */
+          font-size: 9px;
           font-weight: 600;
           color: rgba(255, 220, 160, 0.5);
           text-transform: uppercase;

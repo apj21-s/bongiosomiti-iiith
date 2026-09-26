@@ -1875,7 +1875,7 @@ button {
 
 .events-scene__eyebrow {
   margin: 0;
-  font-size: 0.6rem;
+  font-size: 0.66rem;
   font-weight: 800;
   letter-spacing: 0.16em;
   color: #1f1814;
@@ -7855,7 +7855,7 @@ video::cue {
 
   .home-hero__subtitle {
     margin: clamp(0.35rem, 1.2vw, 0.8rem) 0 0;
-    font-size: clamp(0.62rem, 2.2vw, 0.82rem);
+    font-size: clamp(0.68rem, 2.2vw, 0.82rem);
     letter-spacing: clamp(0.12em, 0.8vw, 0.22em);
   }
 
@@ -8434,6 +8434,15 @@ video::cue {
   font-weight: 500;
   transition: all 0.15s ease;
   display: inline-block;
+}
+
+@media (max-width: 560px) {
+
+  /* Readable already; this is about hitting them with a thumb. */
+  .utsav-footer__links a {
+    display: inline-block;
+    padding: 5px 0;
+  }
 }
 
 .utsav-footer__links a:hover {
@@ -10017,8 +10026,13 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
 
   /* 1. Header Sticky Ribbon */
   .home-strip {
-    min-height: 36px;
-    padding: 3px 6px;
+    min-height: 44px;
+    padding: 5px 8px;
+  }
+
+  /* The hero clears the bar by this, so it grows with it. */
+  .home-page {
+    --home-strip-height: 44px;
   }
 
   .home-strip__inner {
@@ -10040,10 +10054,15 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
     padding: 2px 4px;
   }
 
+  /* 7px of text in a 15px box, from back when the desktop links still had to
+     fit beside this. The hamburger took that job at 850px; there is room. */
   .home-strip__action {
-    padding: 3px 6px;
-    font-size: clamp(0.46rem, 1.8vw, 0.52rem);
-    letter-spacing: 0.02em;
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    padding: 7px 13px;
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
   }
 
   /* 3. Hero Section */
@@ -10065,7 +10084,7 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
 
   .home-hero__subtitle {
     margin: 0.3rem 0 0;
-    font-size: clamp(0.58rem, 2vw, 0.72rem);
+    font-size: clamp(0.66rem, 2vw, 0.72rem);
     letter-spacing: 0.12em;
   }
 
@@ -10275,8 +10294,10 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
   }
 
   .home-strip__action {
-    padding: 3px 5px;
-    font-size: 0.44rem;
+    min-height: 30px;
+    padding: 6px 10px;
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
   }
 
   .home-hero__title {
@@ -11359,9 +11380,13 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
   background: var(--brand, #b65a3c);
 }
 
+/* Set against the right edge, opposite the Bengali line. The two languages
+   holding opposite margins is what makes the band read as a spread rather
+   than as a heading with a caption under it. */
 .home-interlude__subtitle {
-  margin: clamp(10px, 1.6vh, 18px) 0 0;
+  margin: clamp(10px, 1.6vh, 18px) 0 0 auto;
   max-width: 36ch;
+  text-align: right;
   color: #6b5b4c;
   font-family: "Tiro Bangla", Georgia, "Times New Roman", serif;
   font-style: italic;
