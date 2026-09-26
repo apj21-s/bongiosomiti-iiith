@@ -7,9 +7,9 @@ import SiteHeader from '@/components/site-header'
 import SiteFooter from '@/components/site-footer'
 import './durga-puja.css'
 
-import pujasRawData from '../../public/data/pujas-raw-65.json'
+import pujasRawData from '../../public/data/pujas-raw-65-finalversion-1.json'
 
-const should404 = () => true;
+const should404 = () => false;
 
 export default function DurgaPujaPage() {
   if (should404()) {
@@ -121,18 +121,6 @@ export default function DurgaPujaPage() {
 
       updateMapData(filteredPujas)
 
-      map.on('click', 'clusters', (e: any) => {
-        const features = map.queryRenderedFeatures(e.point, { layers: ['clusters'] })
-        const clusterId = features[0].properties.cluster_id
-        map.getSource('pujas').getClusterExpansionZoom(clusterId, (err: any, zoom: number) => {
-          if (err) return
-          map.easeTo({
-            center: features[0].geometry.coordinates,
-            zoom: zoom
-          })
-        })
-      })
-
       map.on('click', 'unclustered-point', (e: any) => {
         const coords = e.features[0].geometry.coordinates.slice()
         const props = e.features[0].properties
@@ -149,8 +137,6 @@ export default function DurgaPujaPage() {
         if (item) item.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
       })
 
-      map.on('mouseenter', 'clusters', () => { map.getCanvas().style.cursor = 'pointer' })
-      map.on('mouseleave', 'clusters', () => { map.getCanvas().style.cursor = '' })
       map.on('mouseenter', 'unclustered-point', () => { map.getCanvas().style.cursor = 'pointer' })
       map.on('mouseleave', 'unclustered-point', () => { map.getCanvas().style.cursor = '' })
     })
@@ -179,45 +165,13 @@ export default function DurgaPujaPage() {
     if (!map.getSource('pujas')) {
       map.addSource('pujas', {
         type: 'geojson',
-        data: geojson,
-        cluster: true,
-        clusterMaxZoom: 14,
-        clusterRadius: 50
-      })
-
-      map.addLayer({
-        id: 'clusters',
-        type: 'circle',
-        source: 'pujas',
-        filter: ['has', 'point_count'],
-        paint: {
-          'circle-color': '#c83b22',
-          'circle-radius': 18,
-          'circle-stroke-width': 2,
-          'circle-stroke-color': '#fdfaf6'
-        }
-      })
-
-      map.addLayer({
-        id: 'cluster-count',
-        type: 'symbol',
-        source: 'pujas',
-        filter: ['has', 'point_count'],
-        layout: {
-          'text-field': '{point_count_abbreviated}',
-          'text-font': ['Open Sans Regular', 'Arial Unicode MS Regular'],
-          'text-size': 12
-        },
-        paint: {
-          'text-color': '#fdfaf6'
-        }
+        data: geojson
       })
 
       map.addLayer({
         id: 'unclustered-point',
         type: 'symbol',
         source: 'pujas',
-        filter: ['!', ['has', 'point_count']],
         layout: {
           'icon-image': 'custom-marker',
           'icon-size': 1,
@@ -256,7 +210,7 @@ export default function DurgaPujaPage() {
       </div>
     `
 
-    popupRef.current = new maplibregl.Popup({ offset: 15, closeButton: false, className: 'dp-custom-popup' })
+    popupRef.current = new maplibregl.Popup({ offset: 15, closeButton: false, className: 'dp-custom-popup', focusAfterOpen: false })
       .setLngLat(coords as any)
       .setHTML(popupHtml)
       .addTo(mapRef.current)

@@ -151,7 +151,7 @@ export default async function Home() {
                 <Link
                   className="events-scene__card scroll-reveal"
                   style={{ animationDelay: `${i * 2}s` }}
-                  href={`/events/${event.slug}#registration-form-container`}
+                  href={`/events/${event.slug}`}
                   key={event.id}
                   aria-label={`Register for ${event.name}`}
                 >

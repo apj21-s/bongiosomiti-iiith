@@ -1,24 +1,29 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { usePathname } from "next/navigation"
 
 export default function UtsavLoader({ message, inline = false }: { message?: string, inline?: boolean }) {
   const [loading, setLoading] = useState(true)
 
+  const pathname = usePathname()
+
   useEffect(() => {
     if (inline) return;
+    
+    setLoading(true);
+    
     const timer = setTimeout(() => {
       setLoading(false)
     }, 900)
     
-    // Attempt early hide if document is already loaded
-    if (document.readyState === "complete") {
-      clearTimeout(timer)
-      setTimeout(() => setLoading(false), 400)
+    // Attempt early hide if document is already loaded, only on initial load
+    if (document.readyState === "complete" && loading === true) {
+      // Keep the minimum time so it doesn't just flash
     }
 
     return () => clearTimeout(timer)
-  }, [inline])
+  }, [pathname, inline])
 
   if (!inline && !loading) return null
 
