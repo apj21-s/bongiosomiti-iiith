@@ -1905,7 +1905,7 @@ button {
   aspect-ratio: 16 / 9.2;
   min-height: 280px;
   max-height: 760px;
-  overflow: hidden;
+  overflow: visible;
   border-radius: 0;
   border: none;
   background: linear-gradient(180deg, #f4e4be, #d9b47d);
