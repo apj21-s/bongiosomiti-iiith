@@ -10,6 +10,25 @@ import {
   toCustomPlaylistId,
   writeCustomPlaylistId,
 } from '@/utils/data/custom-playlist'
+import { PRESET_PLAYLISTS, presetName } from '@/utils/data/preset-playlists'
+
+/**
+ * Off, the whole playlist on a loop, or the one song on a loop - the three
+ * states of the repeat button, in the order it cycles through them.
+ */
+export type RepeatMode = 'off' | 'all' | 'one'
+
+function nextRepeat(mode: RepeatMode): RepeatMode {
+  if (mode === 'off') return 'all'
+  if (mode === 'all') return 'one'
+  return 'off'
+}
+
+const REPEAT_LABEL: Record<RepeatMode, string> = {
+  off: 'Repeat off',
+  all: 'Repeating the playlist',
+  one: 'Repeating this song',
+}
 
 /**
  * Music player overlaid on the events video on the homepage.
@@ -29,6 +48,7 @@ type YouTubePlayerInstance = {
   nextVideo(): void
   previousVideo(): void
   setShuffle(shuffle: boolean): void
+  setLoop(loop: boolean): void
   seekTo(seconds: number, allowSeekAhead: boolean): void
   getCurrentTime(): number
   getDuration(): number
@@ -114,6 +134,9 @@ type BarProps = {
   onNext: () => void
   onPrevious: () => void
   onShuffle: () => void
+  /** Cycles off -> whole playlist -> this song. */
+  repeat: RepeatMode
+  onRepeat: () => void
   onSeek: (seconds: number) => void
   /** Opens the panel for pasting your own YouTube playlist link. */
   onCustomise: () => void
@@ -136,6 +159,8 @@ function PlayerBar({
   onNext,
   onPrevious,
   onShuffle,
+  repeat,
+  onRepeat,
   onSeek,
   onCustomise,
   customActive = false,
@@ -199,6 +224,23 @@ function PlayerBar({
           </svg>
         </button>
 
+        <button
+          type="button"
+          className={`hero-playlist__btn hero-playlist__btn--repeat ${repeat === 'off' ? '' : 'is-on'}`}
+          onClick={onRepeat}
+          aria-label={REPEAT_LABEL[repeat]}
+          title={REPEAT_LABEL[repeat]}
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M4 10.5A3.5 3.5 0 0 1 7.5 7H18" />
+            <path d="m15.5 4.5 3 2.5-3 2.5" />
+            <path d="M20 13.5a3.5 3.5 0 0 1-3.5 3.5H6" />
+            <path d="m8.5 20.5-3-3.5 3-2.5" />
+            {/* The 1 that turns "repeat" into "repeat this one". */}
+            {repeat === 'one' && <path d="M10.8 11.1 12 10.4V14" />}
+          </svg>
+        </button>
+
         {/* Bringing your own music is not a hidden feature, so it gets a
             control in the bar rather than a gesture to discover. */}
         <button
@@ -221,6 +263,13 @@ function PlayerBar({
 
       <div className="hero-playlist__body">
         <div className="hero-playlist__meta">
+          {/* A visual, not an analyser: the music plays inside YouTube's iframe,
+              which is another origin, so its audio cannot be read from this
+              page. The bars move while something is playing and settle when it
+              is not, which is the part anyone actually reads them for. */}
+          <span className={`hero-playlist__eq ${isPlaying ? 'is-playing' : ''}`} aria-hidden="true">
+            <i /><i /><i /><i /><i />
+          </span>
           <span className="hero-playlist__title" title={title}>{title}</span>
           {artist && <span className="hero-playlist__artist" title={artist}>{artist}</span>}
         </div>
@@ -271,6 +320,7 @@ function AudioPlayer({
   const [index, setIndex] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [shuffle, setShuffle] = useState(false)
+  const [repeat, setRepeat] = useState<RepeatMode>('off')
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [failed, setFailed] = useState(false)
@@ -366,6 +416,8 @@ function AudioPlayer({
       onNext={next}
       onPrevious={previous}
       onShuffle={() => setShuffle((on) => !on)}
+      repeat={repeat}
+      onRepeat={() => setRepeat(nextRepeat)}
       onSeek={(value) => {
         setCurrentTime(value)
         if (audioRef.current) audioRef.current.currentTime = value
@@ -374,13 +426,22 @@ function AudioPlayer({
       customActive={customActive}
       pickerOpen={pickerOpen}
     >
+      {/* loop repeats the one track in the browser itself, seamlessly and
+          without onEnded firing at all. */}
       <audio
         ref={audioRef}
         src={track.src}
         preload="none"
+        loop={repeat === 'one'}
         onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
         onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
         onEnded={() => {
+          // Reaching the last track with repeat off is the end of the music.
+          // Shuffle has no last track, so it carries on regardless.
+          if (repeat === 'off' && !shuffle && index === tracks.length - 1) {
+            setIsPlaying(false)
+            return
+          }
           historyRef.current.push(index)
           goTo(pickNextIndex(), true)
         }}
@@ -414,11 +475,23 @@ function YouTubePlayer({
   const [ready, setReady] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
   const [shuffle, setShuffle] = useState(false)
+  const [repeat, setRepeat] = useState<RepeatMode>('off')
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [title, setTitle] = useState(name)
   const [artist, setArtist] = useState<string | undefined>(undefined)
   const [error, setError] = useState(false)
+
+  // Read inside the player's own callbacks, which are set up once per playlist
+  // and would otherwise close over whatever repeat was when the player was
+  // built.
+  const repeatRef = useRef<RepeatMode>('off')
+  useEffect(() => {
+    repeatRef.current = repeat
+    // Looping the playlist is YouTube's own; looping one song is not, and is
+    // handled when the video ends.
+    playerRef.current?.setLoop(repeat === 'all')
+  }, [repeat])
 
   useEffect(() => {
     let cancelled = false
@@ -451,6 +524,7 @@ function YouTubePlayer({
             onReady: () => {
               if (cancelled) return
               setReady(true)
+              playerRef.current?.setLoop(repeatRef.current === 'all')
               // Show the real track and length straight away, rather than the
               // playlist name until the first state change arrives.
               readMetadata()
@@ -459,7 +533,12 @@ function YouTubePlayer({
               if (cancelled) return
               if (event.data === YT.PlayerState.PLAYING) setIsPlaying(true)
               if (event.data === YT.PlayerState.PAUSED) setIsPlaying(false)
-              if (event.data === YT.PlayerState.ENDED) setIsPlaying(false)
+              if (event.data === YT.PlayerState.ENDED) {
+                // Left alone, YouTube moves on to the next video in the
+                // playlist, so repeating one song means putting it back.
+                if (repeatRef.current === 'one') playerRef.current?.seekTo(0, true)
+                else setIsPlaying(false)
+              }
 
               // A playlist advances on its own, so the title and length are
               // re-read on every transition rather than only when we ask.
@@ -527,6 +606,8 @@ function YouTubePlayer({
           return !on
         })
       }}
+      repeat={repeat}
+      onRepeat={() => setRepeat(nextRepeat)}
       onSeek={(value) => {
         setCurrentTime(value)
         playerRef.current?.seekTo(value, true)
@@ -554,12 +635,10 @@ function YouTubePlayer({
  */
 function PlaylistPicker({
   current,
-  hasSite,
   onChoose,
   onClose,
 }: {
   current: string | null
-  hasSite: boolean
   onChoose: (id: string | null) => void
   onClose: () => void
 }) {
@@ -588,8 +667,25 @@ function PlaylistPicker({
         if (e.key === 'Escape') onClose()
       }}
     >
+      <p className="hero-playlist-picker__label">Choose the music</p>
+
+      <div className="hero-playlist-picker__presets">
+        {PRESET_PLAYLISTS.map((preset) => (
+          <button
+            key={preset.id}
+            type="button"
+            className={`hero-playlist-picker__preset ${current === preset.id ? 'is-on' : ''}`}
+            title={preset.note}
+            aria-pressed={current === preset.id}
+            onClick={() => onChoose(preset.id)}
+          >
+            {preset.name}
+          </button>
+        ))}
+      </div>
+
       <label className="hero-playlist-picker__label" htmlFor={fieldId}>
-        Play your own YouTube playlist
+        Or play your own YouTube playlist
       </label>
 
       <div className="hero-playlist-picker__row">
@@ -625,11 +721,6 @@ function PlaylistPicker({
       </p>
 
       <div className="hero-playlist-picker__actions">
-        {current && (
-          <button type="button" className="hero-playlist-picker__link" onClick={() => onChoose(null)}>
-            {hasSite ? 'Back to the festival playlist' : 'Remove my playlist'}
-          </button>
-        )}
         <button type="button" className="hero-playlist-picker__link" onClick={onClose}>
           Close
         </button>
@@ -649,9 +740,16 @@ export default function HeroPlaylist({ playlists }: { playlists: Playlist[] }) {
   const customId = useSyncExternalStore(subscribeToCustomPlaylist, readCustomPlaylistId, noCustomPlaylist)
   const [picking, setPicking] = useState(false)
 
-  // The visitor's own playlist wins over the configured one while it is set.
+  // Whatever was chosen here wins. What is configured at /admin/playlist is
+  // only what plays before anyone chooses - a starting point, not a home to
+  // come back to, so there is no control for returning to it.
   const playlist: Playlist | undefined = customId
-    ? { id: 'custom', name: 'Your playlist', youtubePlaylistId: customId, tracks: [] }
+    ? {
+        id: 'custom',
+        name: presetName(customId) || 'Your playlist',
+        youtubePlaylistId: customId,
+        tracks: [],
+      }
     : sitePlaylist
 
   const togglePicker = () => setPicking((open) => !open)
@@ -659,7 +757,6 @@ export default function HeroPlaylist({ playlists }: { playlists: Playlist[] }) {
   const picker = picking ? (
     <PlaylistPicker
       current={customId}
-      hasSite={Boolean(sitePlaylist)}
       onClose={() => setPicking(false)}
       onChoose={(id) => {
         // The write notifies the store, which re-renders this with the new id.

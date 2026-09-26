@@ -130,7 +130,8 @@
   background: var(--brand-2, #8e3f2d);
 }
 
-.hero-playlist__btn--shuffle.is-on {
+.hero-playlist__btn--shuffle.is-on,
+.hero-playlist__btn--repeat.is-on {
   color: var(--brand, #b65a3c);
   background: rgba(182, 90, 60, 0.16);
 }
@@ -240,14 +241,24 @@
     bottom: 10px;
   }
 
+  /* Two rows on a phone. Six controls, the YouTube tile and the equaliser
+     left the title about fifty pixels - four characters and an ellipsis - so
+     the tile and the buttons take the first row and the song gets the second
+     to itself. */
   .hero-playlist {
+    flex-wrap: wrap;
     gap: 6px;
-    padding: 6px 10px;
+    padding: 8px 12px;
+    border-radius: 22px;
+  }
+
+  .hero-playlist__body {
+    flex-basis: 100%;
   }
 
   .hero-playlist__yt {
-    width: 60px;
-    height: 34px;
+    width: 52px;
+    height: 30px;
   }
 
   /* Position and duration are the first thing to go when space is tight. */
@@ -255,14 +266,23 @@
     display: none;
   }
 
+  .hero-playlist__controls {
+    gap: 0;
+  }
+
   .hero-playlist__btn {
-    width: 27px;
-    height: 27px;
+    width: 25px;
+    height: 25px;
+  }
+
+  .hero-playlist__btn svg {
+    width: 15px;
+    height: 15px;
   }
 
   .hero-playlist__btn--play {
-    width: 32px;
-    height: 32px;
+    width: 30px;
+    height: 30px;
   }
 }
 
@@ -431,5 +451,127 @@
 
   .hero-playlist-picker__go {
     flex: 1 1 auto;
+  }
+}
+
+/* The equaliser ---------------------------------------------------------- */
+
+/* Five bars that move while something is playing and settle flat when it
+   stops. Deliberately not wired to the audio: what plays is inside YouTube's
+   iframe, which is another origin, so the page cannot read a single sample of
+   it. Each bar gets its own duration and its own peak, because five bars on
+   one timing read as a machine rather than as music. */
+.hero-playlist__eq {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+  height: 13px;
+}
+
+.hero-playlist__eq i {
+  width: 2.5px;
+  height: 100%;
+  border-radius: 1.5px;
+  background: rgba(110, 78, 52, 0.35);
+  transform: scaleY(0.2);
+  transform-origin: bottom center;
+  transition: transform 260ms ease, background-color 260ms ease;
+}
+
+.hero-playlist__eq.is-playing i {
+  background: var(--brand, #b65a3c);
+  animation: hero-eq-bounce 640ms ease-in-out infinite alternate;
+}
+
+.hero-playlist__eq.is-playing i:nth-child(1) {
+  --eq-peak: 0.62;
+  animation-duration: 540ms;
+}
+
+.hero-playlist__eq.is-playing i:nth-child(2) {
+  --eq-peak: 1;
+  animation-duration: 760ms;
+}
+
+.hero-playlist__eq.is-playing i:nth-child(3) {
+  --eq-peak: 0.78;
+  animation-duration: 430ms;
+}
+
+.hero-playlist__eq.is-playing i:nth-child(4) {
+  --eq-peak: 0.94;
+  animation-duration: 880ms;
+}
+
+.hero-playlist__eq.is-playing i:nth-child(5) {
+  --eq-peak: 0.55;
+  animation-duration: 610ms;
+}
+
+@keyframes hero-eq-bounce {
+  from {
+    transform: scaleY(0.2);
+  }
+
+  to {
+    transform: scaleY(var(--eq-peak, 1));
+  }
+}
+
+/* The playlists on offer ------------------------------------------------- */
+
+.hero-playlist-picker__presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.hero-playlist-picker__preset {
+  padding: 5px 11px;
+  border-radius: 999px;
+  border: 1px solid rgba(110, 78, 52, 0.28);
+  background: rgba(255, 255, 255, 0.6);
+  color: #3c2c1e;
+  font: inherit;
+  font-size: 0.74rem;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease;
+}
+
+.hero-playlist-picker__preset:hover {
+  border-color: var(--brand, #b65a3c);
+  color: var(--brand-2, #8e3f2d);
+}
+
+.hero-playlist-picker__preset.is-on {
+  background: var(--brand, #b65a3c);
+  border-color: var(--brand, #b65a3c);
+  color: #fdf7ea;
+}
+
+.hero-playlist-picker__preset:focus-visible {
+  outline: 2px solid var(--brand-2, #8e3f2d);
+  outline-offset: 2px;
+}
+
+/* The heading is a <p> above the presets and a <label> above the field; both
+   are the same small bold line. */
+p.hero-playlist-picker__label {
+  margin: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  /* Still an equaliser, just not a moving one. */
+  .hero-playlist__eq.is-playing i {
+    animation: none;
+    transform: scaleY(var(--eq-peak, 0.7));
+  }
+
+  .hero-playlist__eq i,
+  .hero-playlist-picker__preset {
+    transition: none;
   }
 }
