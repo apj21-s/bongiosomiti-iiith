@@ -5,11 +5,14 @@ import PhotoAlbum from '@/components/photo-album'
 import CrossfadeVideo from '@/components/crossfade-video'
 import HeroBirdsAnimator from '@/components/hero-birds-animator'
 import EventsTabs from '@/components/events-tabs'
+import HeroPlaylist from '@/components/hero-playlist'
+import { getPlaylists } from '@/utils/data/playlists'
 
 export const revalidate = 0
 
 export default async function Home() {
   const activeEvents = getEvents().sort((a: any, b: any) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime())
+  const playlists = getPlaylists()
 
   return (
     <main id="top" className="home-page">
@@ -122,6 +125,7 @@ export default async function Home() {
             <div className="events-scene__hero scroll-reveal scroll-reveal--delay-1" id="events-hero-player">
               <img className="events-scene__hero-image events-scene__hero-poster" src="/assets/puja-poster.webp" alt="Bengali Puja Courtyard Celebration" width={1200} height={880} loading="lazy" decoding="async" />
               <CrossfadeVideo />
+              {playlists.length > 0 && <HeroPlaylist playlists={playlists} />}
             </div>
 
             <div className="story-card__intro scroll-reveal" style={{ padding: '0 clamp(16px, 4vw, 48px)' }}>

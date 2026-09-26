@@ -1,0 +1,234 @@
+/* Music player overlaid on the homepage events video.
+   Shares the translucent cream glass language of the events tablist so the two
+   overlays read as one family. The videos underneath are pointer-events: none,
+   so nothing here fights them for clicks. */
+
+.hero-playlist {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(12px, 2.2vw, 24px);
+  transform: translateX(-50%);
+  z-index: 4;
+
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 1.4vw, 14px);
+  width: min(560px, calc(100% - 24px));
+  padding: 8px clamp(10px, 1.6vw, 16px);
+
+  border-radius: 48px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: rgba(251, 245, 232, 0.82);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 6px 22px rgba(47, 33, 20, 0.3);
+
+  color: #3c2c1e;
+  font-size: 0.82rem;
+}
+
+.hero-playlist__controls {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.hero-playlist__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #6b5b4c;
+  cursor: pointer;
+  transition: color 200ms ease, background-color 200ms ease, transform 200ms ease;
+}
+
+.hero-playlist__btn svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.hero-playlist__btn:hover {
+  color: var(--brand-2, #8e3f2d);
+  background: rgba(182, 90, 60, 0.12);
+}
+
+.hero-playlist__btn:active {
+  transform: scale(0.94);
+}
+
+.hero-playlist__btn:focus-visible {
+  outline: 2px solid var(--brand-2, #8e3f2d);
+  outline-offset: 2px;
+}
+
+.hero-playlist__btn--play {
+  width: 36px;
+  height: 36px;
+  color: #fdf7ea;
+  background: var(--brand, #b65a3c);
+  box-shadow: 0 2px 10px rgba(142, 63, 45, 0.3);
+}
+
+.hero-playlist__btn--play svg {
+  width: 19px;
+  height: 19px;
+  /* The play triangle and pause bars are drawn as filled shapes. */
+  fill: currentColor;
+  stroke: currentColor;
+}
+
+.hero-playlist__btn--play:hover {
+  color: #fdf7ea;
+  background: var(--brand-2, #8e3f2d);
+}
+
+.hero-playlist__btn--shuffle.is-on {
+  color: var(--brand, #b65a3c);
+  background: rgba(182, 90, 60, 0.16);
+}
+
+.hero-playlist__body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.hero-playlist__meta {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+
+.hero-playlist__title {
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hero-playlist__artist {
+  color: #6b5b4c;
+  font-size: 0.74rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 1;
+}
+
+.hero-playlist__scrub {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hero-playlist__time {
+  color: #6b5b4c;
+  font-size: 0.68rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* The filled portion is painted with a gradient driven by the inline
+   --hero-playlist-progress custom property, which avoids re-styling the track
+   on every timeupdate. */
+.hero-playlist__range {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 4px;
+  margin: 0;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    var(--brand, #b65a3c) 0%,
+    var(--brand, #b65a3c) var(--hero-playlist-progress, 0%),
+    rgba(110, 78, 52, 0.25) var(--hero-playlist-progress, 0%),
+    rgba(110, 78, 52, 0.25) 100%
+  );
+  cursor: pointer;
+}
+
+.hero-playlist__range:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.hero-playlist__range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 11px;
+  height: 11px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--brand, #b65a3c);
+  box-shadow: 0 1px 4px rgba(47, 33, 20, 0.35);
+  cursor: pointer;
+}
+
+.hero-playlist__range::-moz-range-thumb {
+  width: 11px;
+  height: 11px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--brand, #b65a3c);
+  box-shadow: 0 1px 4px rgba(47, 33, 20, 0.35);
+  cursor: pointer;
+}
+
+.hero-playlist__range:focus-visible {
+  outline: 2px solid var(--brand-2, #8e3f2d);
+  outline-offset: 3px;
+}
+
+@media (max-width: 560px) {
+  .hero-playlist {
+    width: calc(100% - 16px);
+    bottom: 10px;
+    gap: 6px;
+    padding: 6px 10px;
+  }
+
+  /* Position and duration are the first thing to go when space is tight. */
+  .hero-playlist__time {
+    display: none;
+  }
+
+  .hero-playlist__btn {
+    width: 27px;
+    height: 27px;
+  }
+
+  .hero-playlist__btn--play {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .hero-playlist__btn {
+    transition: none;
+  }
+
+  .hero-playlist__btn:active {
+    transform: none;
+  }
+}
