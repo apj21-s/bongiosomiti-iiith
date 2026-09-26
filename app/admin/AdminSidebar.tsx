@@ -83,6 +83,9 @@ export default function AdminSidebar() {
             {tier >= 3 && (
               <Link href="/admin/events" className={`admin-nav-link ${isActive('/admin/events') ? 'active' : ''}`} onClick={closeDrawer}>🎭 Manage Cultural Events</Link>
             )}
+            {tier >= 3 && (
+              <Link href="/admin/managers" className={`admin-nav-link ${isActive('/admin/managers') ? 'active' : ''}`} onClick={closeDrawer}>👥 Manager Profiles</Link>
+            )}
             <div className="dropdown-divider"></div>
             <div style={{ padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
@@ -135,6 +138,11 @@ export default function AdminSidebar() {
           {tier >= 3 && (
             <Link href="/admin/events" className={`admin-nav-link ${isActive('/admin/events') ? 'active' : ''}`} onClick={closeDrawer}>
               <span style={{ marginRight: '10px' }}>🎭</span> Manage Cultural Events
+            </Link>
+          )}
+          {tier >= 3 && (
+            <Link href="/admin/managers" className={`admin-nav-link ${isActive('/admin/managers') ? 'active' : ''}`} onClick={closeDrawer}>
+              <span style={{ marginRight: '10px' }}>👥</span> Manager Profiles
             </Link>
           )}
 

@@ -71,6 +71,27 @@ export async function login(formData: FormData) {
     return { error: null }
   }
 
+  // Manager profiles created by a super admin. They sign in at tier 2 and the
+  // session carries which profile it is, so the payments list can be scoped to
+  // the UPI id that manager collects on.
+  const { authenticateManager } = await import('./managers')
+  const manager = await authenticateManager(email, password)
+  if (manager) {
+    const token = await createSessionToken(2, manager.id)
+    if (!token) {
+      return { error: 'Server session configuration is incomplete. Contact the administrator.' }
+    }
+
+    const { cookies } = await import('next/headers')
+    const cookieStore = await cookies()
+
+    cookieStore.set(SESSION_COOKIE, token, sessionCookieOptions())
+    // The tier now travels inside the signed session; drop the old unsigned copy.
+    cookieStore.delete(LEGACY_TIER_COOKIE)
+
+    return { error: null }
+  }
+
   if (isDummyMode()) {
     return dummyLogin(email, password)
   }
@@ -102,6 +123,18 @@ export async function logout() {
   const supabase = await createClient()
   const { error } = await supabase.auth.signOut()
   return { error: error?.message || null }
+}
+
+/**
+ * Who is signed in, beyond the tier. `managerId` is set only for manager
+ * profiles, and comes out of the signed session rather than anything the
+ * browser can set, because it decides which payments they may see.
+ */
+export async function getAdminIdentity(): Promise<{ tier: EffectiveTier; managerId: string | null }> {
+  const session = await getVerifiedTierSession()
+  if (session) return { tier: session.tier, managerId: session.subject }
+
+  return { tier: await getAdminTier(), managerId: null }
 }
 
 export async function getAdminTier(): Promise<EffectiveTier> {

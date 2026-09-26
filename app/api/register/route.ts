@@ -95,6 +95,9 @@ export async function POST(request: Request) {
     const coupon = resolveCoupon(event, data.couponCode)
     const discountAmount = coupon ? Math.min(coupon.discount, subtotal) : 0
     const amount = Math.max(0, subtotal - discountAmount)
+    // Normalised so a manager scoped to this UPI id matches it regardless of
+    // how the receipt or the visitor cased it.
+    const receiverUpi = data.receiverUpi?.trim().toLowerCase() || null
     const paymentStatus = isFree ? 'APPROVED' : 'PENDING'
     const status = isFree ? 'UNUSED' : 'PENDING_PAYMENT'
 
@@ -113,6 +116,7 @@ export async function POST(request: Request) {
       food_pref: (data as any).vegCount !== undefined && (data as any).nonVegCount !== undefined 
         ? (i < (data as any).vegCount ? 'Veg' : 'Non-Veg')
         : data.foodPref,
+      receiver_upi: receiverUpi,
       is_iiit: isIiit,
       coupon_code: coupon ? coupon.code : null,
       discount_amount: discountAmount / numPasses,

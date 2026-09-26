@@ -9,6 +9,9 @@ export const registerSchema = z.object({
   email: z.string().email().max(200).optional().or(z.literal('')),
   phone: z.string().max(20).optional().or(z.literal('')),
   utr: z.string().max(64).optional(),
+  // Which UPI id the money was sent to, read off the receipt by OCR or
+  // typed by the visitor. It routes the payment to the right manager.
+  receiverUpi: z.string().max(80).optional(),
   numPasses: z.number().int().min(1).max(6).optional(),
   foodPref: z.string().max(200).optional(),
   isIiit: z.boolean().optional(),

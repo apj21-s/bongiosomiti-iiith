@@ -11264,3 +11264,37 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
     animation: none;
   }
 }
+
+/* ============================================================
+   Receipt scan status in the registration form
+   Tells the visitor what OCR read off their payment receipt, or
+   asks them to type what it could not find.
+   ============================================================ */
+
+.reg-scan {
+  margin-top: 1.5cqw;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(139, 69, 19, 0.2);
+  background: rgba(251, 245, 232, 0.7);
+  color: #5c4033;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.reg-scan--reading {
+  border-color: rgba(139, 69, 19, 0.24);
+}
+
+.reg-scan--found {
+  border-color: rgba(58, 125, 68, 0.35);
+  background: rgba(233, 245, 232, 0.8);
+  color: #2f5d36;
+}
+
+.reg-scan--partial,
+.reg-scan--failed {
+  border-color: rgba(182, 90, 60, 0.4);
+  background: rgba(250, 235, 228, 0.85);
+  color: #8e3f2d;
+}

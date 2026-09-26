@@ -6,14 +6,19 @@ import type { AdminTier } from './admin-roles'
 // code (Node runtime), so it must stay on Web Crypto only: no node:crypto, no
 // fs, no next/headers.
 //
-// Cookie value format: v1.<tier>.<expiryMs>.<hmacSha256>
-// The signature covers "v1.<tier>.<expiryMs>", so neither the tier nor the
-// expiry can be edited by the client without invalidating the cookie.
+// Cookie value format: v2.<tier>.<subject>.<expiryMs>.<hmacSha256>
+// The signature covers everything before it, so neither the tier, the subject
+// nor the expiry can be edited by the client without invalidating the cookie.
+//
+// `subject` identifies a manager_profiles row for manager sign-ins, and is "-"
+// for the env-credential tier admins. It is what scopes a manager to the
+// payments made to their own UPI id, so it has to be signed rather than
+// re-derived from anything the browser sends.
 
 export const SESSION_COOKIE = 'bangiya.samiti.iiith_dummy_session'
 export const LEGACY_TIER_COOKIE = 'bangiya.samiti.iiith_admin_tier'
 
-const SESSION_VERSION = 'v1'
+const SESSION_VERSION = 'v2'
 export const SESSION_TTL_SECONDS = 60 * 60 * 24 // 1 day, same as the previous cookie maxAge
 const DEV_FALLBACK_SECRET = 'bangiya-samiti-local-dev-session-secret'
 
@@ -67,24 +72,38 @@ function timingSafeEqual(a: string, b: string): boolean {
   return diff === 0
 }
 
-export async function createSessionToken(tier: AdminTier): Promise<string | null> {
+const NO_SUBJECT = '-'
+
+function isSafeSubject(value: string): boolean {
+  // Ids only: keeps the dot-delimited payload unambiguous.
+  return value === NO_SUBJECT || /^[A-Za-z0-9-]{1,64}$/.test(value)
+}
+
+export async function createSessionToken(
+  tier: AdminTier,
+  subject: string = NO_SUBJECT
+): Promise<string | null> {
   const secret = getSecret()
   if (!secret) return null
+  if (!isSafeSubject(subject)) return null
 
-  const payload = `${SESSION_VERSION}.${tier}.${Date.now() + SESSION_TTL_SECONDS * 1000}`
+  const payload = `${SESSION_VERSION}.${tier}.${subject}.${Date.now() + SESSION_TTL_SECONDS * 1000}`
   return `${payload}.${await sign(payload, secret)}`
 }
 
 // Returns the tier carried by a valid, unexpired, correctly signed cookie, or
 // null for anything else. Never throws: a malformed cookie is just no session.
-export async function readSessionToken(value: string | null | undefined): Promise<{ tier: AdminTier } | null> {
+export async function readSessionToken(
+  value: string | null | undefined
+): Promise<{ tier: AdminTier; subject: string | null } | null> {
   if (!value) return null
 
   const parts = value.split('.')
-  if (parts.length !== 4) return null
+  if (parts.length !== 5) return null
 
-  const [version, tierRaw, expiryRaw, signature] = parts
+  const [version, tierRaw, subject, expiryRaw, signature] = parts
   if (version !== SESSION_VERSION) return null
+  if (!isSafeSubject(subject)) return null
 
   const tier = Number(tierRaw)
   if (tier !== 1 && tier !== 2 && tier !== 3) return null
@@ -96,13 +115,13 @@ export async function readSessionToken(value: string | null | undefined): Promis
   if (!secret) return null
 
   try {
-    const expected = await sign(`${version}.${tierRaw}.${expiryRaw}`, secret)
+    const expected = await sign(`${version}.${tierRaw}.${subject}.${expiryRaw}`, secret)
     if (!timingSafeEqual(signature, expected)) return null
   } catch {
     return null
   }
 
-  return { tier: tier as AdminTier }
+  return { tier: tier as AdminTier, subject: subject === NO_SUBJECT ? null : subject }
 }
 
 export function sessionCookieOptions() {

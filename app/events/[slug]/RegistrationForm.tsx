@@ -27,6 +27,7 @@ type DraftState = {
   appliedCoupon: { code: string; discount: number } | null
   selectedUpiId: string
   utr: string
+  receiverUpi: string
   screenshot: string | null
   stage: number
   paymentState: 'READY' | 'COMPLETED'
@@ -35,7 +36,7 @@ type DraftState = {
 const DEFAULT_DRAFT: DraftState = {
   isIiit: null, fullName: '', email: '', phone: '', collegeId: '', city: '',
   numPasses: 1, foodPref: '', vegCount: 0, nonVegCount: 1, passSelections: {}, couponInput: '', appliedCoupon: null,
-  selectedUpiId: '', utr: '', screenshot: null, stage: 1, paymentState: 'READY'
+  selectedUpiId: '', utr: '', receiverUpi: '', screenshot: null, stage: 1, paymentState: 'READY'
 }
 
 export default function RegistrationForm({ event }: RegistrationFormProps) {
@@ -94,6 +95,7 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
     if (draft.stage === 4 && draft.paymentState === 'COMPLETED') {
       if (total > 0 && draft.utr.length < 6) return setError('Enter valid UTR.')
       if (total > 0 && !draft.screenshot) return setError('Upload receipt.')
+      if (total > 0 && !draft.receiverUpi.trim()) return setError('Enter the UPI ID you paid to.')
     }
     transitionTo({ stage: draft.stage + 1 })
   }
@@ -126,6 +128,7 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
     e.preventDefault()
     if (total > 0 && draft.utr.trim().length !== 12) return setError('UTR must be exactly 12 digits.')
     if (total > 0 && !draft.screenshot) return setError('Payment screenshot is required.')
+    if (total > 0 && !draft.receiverUpi.trim()) return setError('Enter the UPI ID you paid to.')
 
     setError(null)
     setLoading(true)
@@ -140,6 +143,7 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
           phone: draft.phone,
           email: draft.email,
           utr: draft.utr || 'FREE',
+          receiverUpi: draft.receiverUpi || undefined,
           numPasses: calculatedNumPasses,
           foodPref: passTypes ? Object.entries(draft.passSelections).filter(([_, v]) => v > 0).map(([k, v]) => `${v} ${k}`).join(', ') : (draft.numPasses === 1 ? draft.foodPref : `${draft.vegCount} Veg, ${draft.nonVegCount} Non-Veg`),
           vegCount: passTypes ? undefined : (draft.numPasses === 1 ? (draft.foodPref === 'Veg' ? 1 : 0) : draft.vegCount),
@@ -698,25 +702,69 @@ function PaymentStep({ event, draft, updateDraft, prevStage, transitionTo, total
   )
 }
 
-function PaymentCompletedStep({ prevStage, handleSubmit, draft, updateDraft, transitionTo, error, loading, setScreenshotPreview, screenshotPreview }: any) {
+function PaymentCompletedStep({ event, prevStage, handleSubmit, draft, updateDraft, transitionTo, error, loading, setScreenshotPreview, screenshotPreview }: any) {
+  // 'idle' | 'reading' | 'found' | 'partial' | 'failed' - drives whether the
+  // visitor is told we read the receipt or asked to fill the gaps in.
+  const [scan, setScan] = useState<{ state: string; progress: number }>({ state: 'idle', progress: 0 })
+
+  const expectedUpiIds: string[] = event?.config?.upi_ids
+    || (event?.config?.upi_id ? [event.config.upi_id] : [])
+
+  async function handleReceipt(file: File) {
+    updateDraft({ screenshot: file.name })
+    setScreenshotPreview(URL.createObjectURL(file))
+    setScan({ state: 'reading', progress: 0 })
+
+    const { readReceipt } = await import('@/utils/ocr/read-receipt')
+    const result = await readReceipt(file, (progress) => setScan({ state: 'reading', progress }))
+
+    // Prefer a handle the event actually collects on, when the receipt shows
+    // more than one - a receipt lists the payer's handle as well as the payee's.
+    const expected = expectedUpiIds.map((id) => id.toLowerCase())
+    const matched = result.upiCandidates.find((id) => expected.includes(id))
+    const receiverUpi = matched || result.receiverUpi || ''
+
+    // Only fill a field the visitor has not already typed into.
+    const updates: Record<string, string> = {}
+    if (result.transactionId && !draft.utr.trim()) updates.utr = result.transactionId
+    if (receiverUpi && !draft.receiverUpi?.trim()) updates.receiverUpi = receiverUpi
+    if (Object.keys(updates).length > 0) updateDraft(updates)
+
+    const haveUtr = Boolean(result.transactionId || draft.utr.trim())
+    const haveUpi = Boolean(receiverUpi || draft.receiverUpi?.trim())
+    setScan({
+      state: haveUtr && haveUpi ? 'found' : (haveUtr || haveUpi ? 'partial' : 'failed'),
+      progress: 1,
+    })
+  }
+
   return (
     <div className="reg-payment-done">
       <TypewriterHeading lines={['VERIFYING PAYMENT']} />
       <p className="reg-p">Please provide your transaction details</p>
-      
+
       <div className="reg-field full">
         <label>UPI Transaction ID / UTR *</label>
         <input className="reg-input" value={draft.utr} onChange={e => updateDraft({ utr: e.target.value })} placeholder="e.g. 429810294812" />
       </div>
 
       <div className="reg-field full" style={{ marginTop: '2cqw' }}>
+        <label>Paid to (UPI ID) *</label>
+        {expectedUpiIds.length > 1 ? (
+          <select className="reg-input" value={draft.receiverUpi || ''} onChange={e => updateDraft({ receiverUpi: e.target.value })}>
+            <option value="" disabled>Select the UPI ID you paid</option>
+            {expectedUpiIds.map((id: string) => <option key={id} value={id}>{id}</option>)}
+          </select>
+        ) : (
+          <input className="reg-input" value={draft.receiverUpi || ''} onChange={e => updateDraft({ receiverUpi: e.target.value })} placeholder={expectedUpiIds[0] || 'name@bank'} />
+        )}
+      </div>
+
+      <div className="reg-field full" style={{ marginTop: '2cqw' }}>
         <label>Payment Receipt *</label>
         <div className="reg-upload-area">
           <input type="file" id="receipt-upload" className="reg-file-input" accept="image/*" onChange={e => {
-            if (e.target.files?.[0]) {
-              updateDraft({ screenshot: e.target.files[0].name })
-              setScreenshotPreview(URL.createObjectURL(e.target.files[0]))
-            }
+            if (e.target.files?.[0]) handleReceipt(e.target.files[0])
           }} />
           {!screenshotPreview ? (
             <label htmlFor="receipt-upload" className="reg-upload-label">
@@ -728,13 +776,30 @@ function PaymentCompletedStep({ prevStage, handleSubmit, draft, updateDraft, tra
                <img src={screenshotPreview} alt="preview" className="reg-upload-preview-img"/>
                <div className="reg-upload-actions">
                   <label htmlFor="receipt-upload" className="reg-btn-change">Change</label>
-                  <button type="button" className="reg-btn-remove" onClick={() => { updateDraft({ screenshot: null }); setScreenshotPreview(null) }}>Remove</button>
+                  <button type="button" className="reg-btn-remove" onClick={() => { updateDraft({ screenshot: null }); setScreenshotPreview(null); setScan({ state: 'idle', progress: 0 }) }}>Remove</button>
                </div>
             </div>
           )}
         </div>
+
+        {scan.state !== 'idle' && (
+          <div className={`reg-scan reg-scan--${scan.state}`} aria-live="polite">
+            {scan.state === 'reading' && (
+              <span>Reading your receipt… {Math.round(scan.progress * 100)}%</span>
+            )}
+            {scan.state === 'found' && (
+              <span>✓ Read the transaction ID and UPI ID from your receipt. Please check they are right.</span>
+            )}
+            {scan.state === 'partial' && (
+              <span>Part of the receipt was readable. Please fill in whatever is still blank above.</span>
+            )}
+            {scan.state === 'failed' && (
+              <span>Could not read the receipt. Please type the transaction ID and the UPI ID you paid to.</span>
+            )}
+          </div>
+        )}
       </div>
-      
+
       {error && <div className="reg-error">{error}</div>}
       <div className="reg-actions dual">
         <RegButton text="BACK" onClick={() => transitionTo({ paymentState: 'READY' })} type="back" />
