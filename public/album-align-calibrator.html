@@ -555,7 +555,7 @@
     
     async function initApp() {
       try {
-        const res = await fetch(`/data/album.json?t=${Date.now()}`);
+        const res = await fetch(`/api/album`);
         const data = await res.json();
         if (data && data.length > 0) {
           PHOTOS = data;
