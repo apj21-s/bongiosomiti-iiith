@@ -1,10 +1,26 @@
 import { NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/utils/supabase/server'
 import { z } from 'zod'
+import { escapeLikePattern, normaliseIdentifier } from '@/utils/db/filters'
 
 const passVerifySchema = z.object({
   query: z.string().min(1),
 })
+
+const TICKET_SELECT = `
+        *,
+        event:events (
+          slug,
+          name,
+          venue
+        )
+      `
+
+// Registration IDs are 5 digits and phone numbers 10, so anything shorter than
+// this cannot be a real identifier - it can only be an attempt to match broadly.
+const MIN_QUERY_LENGTH = 4
+
+const NOT_FOUND = 'No registration found matching those details.'
 
 export async function POST(request: Request) {
   try {
@@ -14,28 +30,38 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Please provide a valid Phone Number or Reference Number.' }, { status: 400 })
     }
 
-    const query = result.data.query.trim()
-
-    const supabase = await createServiceRoleClient()
-    const { data: tickets, error } = await supabase
-      .from('tickets')
-      .select(`
-        *,
-        event:events (
-          slug,
-          name,
-          venue
-        )
-      `)
-      .or(`token.ilike."${query}_%",phone.ilike."%${query}%"`)
-      .order('created_at', { ascending: false })
-      .limit(1)
-
-    if (error || !tickets || tickets.length === 0) {
-      return NextResponse.json({ error: 'No registration found matching those details.' }, { status: 404 })
+    const query = normaliseIdentifier(result.data.query)
+    if (!query || query.length < MIN_QUERY_LENGTH) {
+      return NextResponse.json({ error: NOT_FOUND }, { status: 404 })
     }
 
-    const ticket = tickets[0]
+    const supabase = await createServiceRoleClient()
+    const safeQuery = escapeLikePattern(query)
+
+    // Registration ID (the part of the token before the underscore) first, then
+    // phone number. Probed separately so no user input reaches a filter string.
+    let ticket: any = null
+    for (const probe of [
+      { column: 'token', pattern: `${safeQuery}_%` },
+      { column: 'phone', pattern: `%${safeQuery}%` },
+    ]) {
+      const { data, error } = await supabase
+        .from('tickets')
+        .select(TICKET_SELECT)
+        .ilike(probe.column, probe.pattern)
+        .order('created_at', { ascending: false })
+        .limit(1)
+
+      if (error) continue
+      if (data && data.length > 0) {
+        ticket = data[0]
+        break
+      }
+    }
+
+    if (!ticket) {
+      return NextResponse.json({ error: NOT_FOUND }, { status: 404 })
+    }
     
     // Extract registration ID (first part of the token)
     const registrationId = ticket.token.includes('_') ? ticket.token.split('_')[0] : ticket.token

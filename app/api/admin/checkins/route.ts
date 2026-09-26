@@ -1,11 +1,10 @@
-import { getCurrentUser } from '@/utils/auth/server'
+import { requireAdmin } from '@/utils/auth/require-admin'
 import { NextResponse } from 'next/server'
 import { createServiceRoleClient, createClient } from '@/utils/supabase/server'
 
 export async function GET() {
-  const { data: authData } = await getCurrentUser()
-  const user = authData?.user
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const guard = await requireAdmin(2)
+  if (!guard.ok) return guard.response
 
   const supabase = await createServiceRoleClient()
   const { data: checkins, error } = await supabase

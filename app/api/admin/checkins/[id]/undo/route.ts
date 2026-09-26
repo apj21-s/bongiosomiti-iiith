@@ -1,4 +1,4 @@
-import { getCurrentUser } from '@/utils/auth/server'
+import { requireAdmin } from '@/utils/auth/require-admin'
 import { NextResponse } from 'next/server'
 import { createServiceRoleClient, createClient } from '@/utils/supabase/server'
 
@@ -7,9 +7,8 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const { data: authData } = await getCurrentUser()
-  const user = authData?.user
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const guard = await requireAdmin(3)
+  if (!guard.ok) return guard.response
 
   const supabase = await createServiceRoleClient()
   

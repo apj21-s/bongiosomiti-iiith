@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/utils/auth/require-admin';
 import { writeFile } from 'fs/promises';
 import path from 'path';
 
 export async function POST(request: NextRequest) {
+  // This route had no authentication at all: any caller could overwrite the
+  // published album.
+  const guard = await requireAdmin(3)
+  if (!guard.ok) return guard.response
+
   try {
     const photos = await request.json();
     

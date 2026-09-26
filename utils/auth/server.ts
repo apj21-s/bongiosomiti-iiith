@@ -1,24 +1,37 @@
 import { createClient } from '@/utils/supabase/server'
 import { dummyLogin, dummyLogout, getDummyUser } from './dummy-auth'
 import { matchAdminCredentials, getTierForEmail, type AdminTier } from './admin-roles'
+import {
+  SESSION_COOKIE,
+  LEGACY_TIER_COOKIE,
+  createSessionToken,
+  readSessionToken,
+  sessionCookieOptions,
+} from './session'
+
+// 0 means "authenticated but not an authorised admin".
+export type EffectiveTier = AdminTier | 0
 
 export function isDummyMode() {
   return process.env.DUMMY_DB === 'True'
 }
 
-export async function getCurrentUser() {
-  // Check for tier-based admin session first
+async function getVerifiedTierSession() {
   const { cookies } = await import('next/headers')
   const cookieStore = await cookies()
-  const tierSession = cookieStore.get('bangiya.samiti.iiith_dummy_session')
-  if (tierSession && tierSession.value.startsWith('admin-tier-')) {
-    const tier = tierSession.value.replace('admin-tier-', '')
+  return readSessionToken(cookieStore.get(SESSION_COOKIE)?.value)
+}
+
+export async function getCurrentUser() {
+  // Signed tier session (the env-credential admins).
+  const session = await getVerifiedTierSession()
+  if (session) {
     return {
       data: {
         user: {
-          id: `admin-tier-${tier}`,
-          email: `tier${tier}@admin`,
-          user_metadata: { role: 'organiser', tier: parseInt(tier) }
+          id: `admin-tier-${session.tier}`,
+          email: `tier${session.tier}@admin`,
+          user_metadata: { role: 'organiser', tier: session.tier }
         }
       },
       error: null
@@ -43,27 +56,18 @@ export async function login(formData: FormData) {
   // Check tier-based credentials first
   const tier = matchAdminCredentials(email, password)
   if (tier) {
-    // Use the dummy auth system for env-based admins
-    // Store tier info in cookie
+    const token = await createSessionToken(tier)
+    if (!token) {
+      return { error: 'Server session configuration is incomplete. Contact the administrator.' }
+    }
+
     const { cookies } = await import('next/headers')
     const cookieStore = await cookies()
-    
-    // Set admin session
-    cookieStore.set('bangiya.samiti.iiith_dummy_session', `admin-tier-${tier}`, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 // 1 day
-    })
-    
-    // Store tier separately for easy lookup
-    cookieStore.set('bangiya.samiti.iiith_admin_tier', String(tier), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24
-    })
-    
+
+    cookieStore.set(SESSION_COOKIE, token, sessionCookieOptions())
+    // The tier now travels inside the signed session; drop the old unsigned copy.
+    cookieStore.delete(LEGACY_TIER_COOKIE)
+
     return { error: null }
   }
 
@@ -88,8 +92,8 @@ export async function logout() {
   // Always clear tier cookies
   const { cookies } = await import('next/headers')
   const cookieStore = await cookies()
-  cookieStore.delete('bangiya.samiti.iiith_dummy_session')
-  cookieStore.delete('bangiya.samiti.iiith_admin_tier')
+  cookieStore.delete(SESSION_COOKIE)
+  cookieStore.delete(LEGACY_TIER_COOKIE)
 
   if (isDummyMode()) {
     return dummyLogout()
@@ -100,16 +104,35 @@ export async function logout() {
   return { error: error?.message || null }
 }
 
-export async function getAdminTier(): Promise<AdminTier> {
-  const { cookies } = await import('next/headers')
-  const cookieStore = await cookies()
-  const tierCookie = cookieStore.get('bangiya.samiti.iiith_admin_tier')
-  
-  if (tierCookie) {
-    const tier = parseInt(tierCookie.value)
-    if (tier === 1 || tier === 2 || tier === 3) return tier
+export async function getAdminTier(): Promise<EffectiveTier> {
+  const session = await getVerifiedTierSession()
+  if (session) return session.tier
+
+  if (isDummyMode()) {
+    const { data } = await getDummyUser()
+    return data?.user ? 3 : 0
   }
-  
-  // Default: check if logged in via supabase (super admin)
-  return 3
+
+  // Supabase-auth admins: being signed in is not enough, the account must also
+  // have an admin_profiles row. Without this check any user in the Supabase
+  // project would inherit full access.
+  const supabase = await createClient()
+  const { data: authData } = await supabase.auth.getUser()
+  const user = authData?.user
+  if (!user) return 0
+
+  const { data: profile } = await supabase
+    .from('admin_profiles')
+    .select('role, email')
+    .eq('id', user.id)
+    .maybeSingle()
+
+  if (!profile) {
+    console.warn(`[auth] Supabase user ${user.id} has no admin_profiles row; denying admin access.`)
+    return 0
+  }
+
+  // An explicitly configured tier wins; otherwise a provisioned admin profile
+  // keeps the super-admin level it has always had.
+  return getTierForEmail(profile.email || user.email || '') || 3
 }

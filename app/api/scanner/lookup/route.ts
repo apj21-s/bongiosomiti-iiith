@@ -1,15 +1,16 @@
 import { NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/utils/supabase/server'
-import { getCurrentUser } from '@/utils/auth/server'
+import { requireAdmin } from '@/utils/auth/require-admin'
 import { scannerLookupSchema } from '@/utils/schemas'
+import { escapeLikePattern } from '@/utils/db/filters'
 
 export async function POST(request: Request) {
   try {
-    // Session validation (ensure it's an admin/scanner)
-    const user = await getCurrentUser()
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    // Session validation (ensure it's an admin/scanner).
+    // This previously tested the truthiness of the getCurrentUser() result
+    // object, which is always truthy, so the endpoint was effectively public.
+    const guard = await requireAdmin(1)
+    if (!guard.ok) return guard.response
 
     const json = await request.json()
     const result = scannerLookupSchema.safeParse(json)
@@ -21,6 +22,9 @@ export async function POST(request: Request) {
     const { token, eventSlug } = result.data
     const supabase = await createServiceRoleClient()
 
+    // Suffix match so a hand-typed pass code (without the registration ID
+    // prefix) still resolves. The value is escaped so that a pattern character
+    // in the scanned text cannot widen the match.
     const { data: ticket, error } = await supabase
       .from('tickets')
       .select(`
@@ -31,7 +35,7 @@ export async function POST(request: Request) {
           venue
         )
       `)
-      .ilike('token', `%${token.toUpperCase()}`)
+      .ilike('token', `%${escapeLikePattern(token.toUpperCase())}`)
       .single()
 
     if (error || !ticket) {

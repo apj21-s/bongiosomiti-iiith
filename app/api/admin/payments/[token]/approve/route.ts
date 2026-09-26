@@ -1,4 +1,4 @@
-import { getCurrentUser } from '@/utils/auth/server'
+import { requireAdmin } from '@/utils/auth/require-admin'
 import { NextResponse } from 'next/server'
 import { createServiceRoleClient, createClient } from '@/utils/supabase/server'
 import { sendQRPassEmail } from '@/utils/email'
@@ -9,9 +9,8 @@ export async function POST(
   { params }: { params: Promise<{ token: string }> }
 ) {
   const { token } = await params;
-  const { data: authData } = await getCurrentUser()
-  const user = authData?.user
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const guard = await requireAdmin(2)
+  if (!guard.ok) return guard.response
 
   const supabase = await createServiceRoleClient()
 
@@ -45,13 +44,11 @@ export async function POST(
 
   const event = getEventById(primaryTicket.event_id)
   if (event) {
-    require('fs').appendFileSync('scratch/api_debug.log', `Sending email to ${primaryTicket.email} for event ${event.name} with tokens ${JSON.stringify(tokens)}\n`);
     await sendQRPassEmail(primaryTicket.email, primaryTicket.participant_name, event.name, tokens).catch(e => {
-      require('fs').appendFileSync('scratch/api_debug.log', `Error sending email: ${e}\n`);
       console.error('Failed to send email:', e)
     })
   } else {
-    require('fs').appendFileSync('scratch/api_debug.log', `Event not found for event_id: ${primaryTicket.event_id}\n`);
+    console.error(`[payments] Event not found for event_id: ${primaryTicket.event_id}`)
   }
 
   return NextResponse.json(primaryTicket)

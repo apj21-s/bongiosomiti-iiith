@@ -1,4 +1,4 @@
-import { getCurrentUser } from '@/utils/auth/server'
+import { requireAdmin } from '@/utils/auth/require-admin'
 import { NextResponse } from 'next/server'
 import fs from 'fs'
 import path from 'path'
@@ -8,9 +8,8 @@ export async function DELETE(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params;
-  const { data: authData } = await getCurrentUser()
-  const user = authData?.user
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const guard = await requireAdmin(3)
+  if (!guard.ok) return guard.response
 
   return NextResponse.json({ error: 'Deleting events is disabled' }, { status: 403 })
 }
@@ -20,9 +19,8 @@ export async function PUT(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params;
-  const { data: authData } = await getCurrentUser()
-  const user = authData?.user
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const guard = await requireAdmin(3)
+  if (!guard.ok) return guard.response
 
   try {
     const updates = await request.json()

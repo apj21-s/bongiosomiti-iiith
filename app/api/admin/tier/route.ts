@@ -6,6 +6,7 @@ export async function GET() {
     const tier = await getAdminTier()
     return NextResponse.json({ tier })
   } catch {
-    return NextResponse.json({ tier: 3 })
+    // Fail closed: an error here must not read as "super admin".
+    return NextResponse.json({ tier: 0 })
   }
 }

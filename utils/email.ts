@@ -13,13 +13,10 @@ const transporter = nodemailer.createTransport({
 })
 
 export async function sendQRPassEmail(email: string, participantName: string, eventName: string, tokens: string | string[]) {
-  require('fs').appendFileSync('scratch/api_debug.log', `[Email] sendQRPassEmail called for ${email}\n`);
   if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-    require('fs').appendFileSync('scratch/api_debug.log', `[Email] SMTP credentials missing. Process env: ${Object.keys(process.env).join(',')}\n`);
     console.warn('SMTP credentials missing. Skipping email send to:', email)
     return
   }
-  require('fs').appendFileSync('scratch/api_debug.log', `[Email] SMTP credentials present. Generating QR codes...\n`);
 
   const tokenArray = Array.isArray(tokens) ? tokens : [tokens]
   const attachments = []
@@ -214,18 +211,16 @@ export async function sendQRPassEmail(email: string, participantName: string, ev
     </html>
   `
 
-  require('fs').appendFileSync('scratch/api_debug.log', `[Email] Calling transporter.sendMail for ${email}...\n`);
   try {
-    const info = await transporter.sendMail({
+    await transporter.sendMail({
       from: `"Utsav Pass" <${process.env.FROM_EMAIL || process.env.SMTP_USER}>`,
       to: email,
       subject: `Your Digital Pass for ${eventName}`,
       html,
       attachments
     });
-    require('fs').appendFileSync('scratch/api_debug.log', `[Email] Successfully sent email to ${email}. MessageId: ${info.messageId}\n`);
   } catch (error: any) {
-    require('fs').appendFileSync('scratch/api_debug.log', `[Email] Transporter error: ${error.message}\n`);
+    console.error(`[email] Transporter error: ${error.message}`)
     throw error;
   }
 }

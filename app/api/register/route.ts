@@ -3,6 +3,12 @@ import { createServiceRoleClient } from '@/utils/supabase/server'
 import { registerSchema } from '@/utils/schemas'
 import { sendQRPassEmail, sendRegistrationPendingEmail } from '@/utils/email'
 import { getEventBySlug } from '@/utils/data/events'
+import { rateLimit, tooManyRequests } from '@/utils/rate-limit'
+
+// Registration sends mail to the address in the request, so it is throttled per
+// address. Deliberately not per IP: an entire campus shares a handful of them.
+const REGISTER_LIMIT = 5
+const REGISTER_WINDOW_MS = 10 * 60 * 1000
 
 function generateRegistrationId() {
   return Math.floor(10000 + Math.random() * 90000).toString() // 5 digits
@@ -12,6 +18,24 @@ function generatePassCode(prefix: string) {
   const p = (prefix || 'UTS').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 3)
   const rand = Math.random().toString(36).substring(2, 8).toUpperCase() // 6 chars
   return `${p}${rand}`.slice(0, 9).padEnd(9, 'X') // 9 chars total
+}
+
+// The discount is whatever the event's own coupon list says it is. Trusting the
+// amount from the request body let a caller name their own price.
+function resolveCoupon(event: any, submittedCode: string | undefined) {
+  if (!submittedCode) return null
+
+  const code = submittedCode.trim().toUpperCase()
+  if (!code) return null
+
+  const coupons = Array.isArray(event?.config?.coupons) ? event.config.coupons : []
+  const match = coupons.find((c: any) => String(c?.code || '').trim().toUpperCase() === code)
+  if (!match) return null
+
+  const discount = Number(match.discount)
+  if (!Number.isFinite(discount) || discount <= 0) return null
+
+  return { code: String(match.code), discount: Math.floor(discount) }
 }
 
 export async function POST(request: Request) {
@@ -36,6 +60,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Event is closed for registration' }, { status: 400 })
     }
 
+    if (data.email) {
+      const limit = rateLimit(`register:${data.email.toLowerCase()}`, REGISTER_LIMIT, REGISTER_WINDOW_MS)
+      if (!limit.allowed) {
+        return tooManyRequests(
+          limit.retryAfterSeconds,
+          'Too many registration attempts for this email address. Please wait a few minutes and try again.'
+        )
+      }
+    }
+
     const { count, error: countError } = await supabase
       .from('tickets')
       .select('*', { count: 'exact', head: true })
@@ -58,7 +92,8 @@ export async function POST(request: Request) {
     const isIiit = data.isIiit !== false
     const passPrice = isFree ? 0 : isIiit ? event.price : 350
     const subtotal = numPasses * passPrice
-    const discountAmount = data.couponCode ? (data.discountAmount || 50) : 0
+    const coupon = resolveCoupon(event, data.couponCode)
+    const discountAmount = coupon ? Math.min(coupon.discount, subtotal) : 0
     const amount = Math.max(0, subtotal - discountAmount)
     const paymentStatus = isFree ? 'APPROVED' : 'PENDING'
     const status = isFree ? 'UNUSED' : 'PENDING_PAYMENT'
@@ -79,7 +114,7 @@ export async function POST(request: Request) {
         ? (i < (data as any).vegCount ? 'Veg' : 'Non-Veg')
         : data.foodPref,
       is_iiit: isIiit,
-      coupon_code: data.couponCode || null,
+      coupon_code: coupon ? coupon.code : null,
       discount_amount: discountAmount / numPasses,
     }))
 

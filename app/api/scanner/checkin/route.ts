@@ -1,16 +1,17 @@
 import { NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/utils/supabase/server'
-import { getCurrentUser } from '@/utils/auth/server'
+import { requireAdmin } from '@/utils/auth/require-admin'
 import { scannerCheckinSchema } from '@/utils/schemas'
+import { escapeLikePattern } from '@/utils/db/filters'
+import { toDbUserId } from '@/utils/auth/db-identity'
 
 export async function POST(request: Request) {
   try {
     // Session validation
-    const { data: userData, error: authError } = await getCurrentUser()
-    const user = userData?.user
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const guard = await requireAdmin(1)
+    if (!guard.ok) return guard.response
+    const user = guard.user
+    const scannedBy = toDbUserId(user.id)
 
     const json = await request.json()
     const result = scannerCheckinSchema.safeParse(json)
@@ -21,6 +22,7 @@ export async function POST(request: Request) {
 
     const { token, gate } = result.data
     const supabase = await createServiceRoleClient()
+    const tokenPattern = `%${escapeLikePattern(token.toUpperCase())}`
 
     // Atomic conditional update
     const { data: updatedTickets, error } = await supabase
@@ -29,9 +31,9 @@ export async function POST(request: Request) {
         status: 'USED',
         redeemed_at: new Date().toISOString(),
         redeemed_gate: gate,
-        redeemed_by: user.id
+        redeemed_by: scannedBy
       })
-      .ilike('token', `%${token.toUpperCase()}`)
+      .ilike('token', tokenPattern)
       .eq('status', 'UNUSED')
       .select(`
         *,
@@ -49,7 +51,7 @@ export async function POST(request: Request) {
     if (!updatedTickets || updatedTickets.length === 0) {
       // The update affected 0 rows. It was either not UNUSED, or doesn't exist.
       // To give a better error message, we check the actual state.
-      const { data: ticket } = await supabase.from('tickets').select('*').ilike('token', `%${token.toUpperCase()}`).single()
+      const { data: ticket } = await supabase.from('tickets').select('*').ilike('token', tokenPattern).single()
       if (!ticket) {
         return NextResponse.json({ outcome: 'INVALID', message: 'Pass not found' }, { status: 404 })
       }
@@ -67,7 +69,7 @@ export async function POST(request: Request) {
     await supabase.from('checkins').insert({
       ticket_id: ticket.id,
       gate: gate,
-      scanned_by: user.id
+      scanned_by: scannedBy
     })
 
     const formattedTicket = {

@@ -1,4 +1,4 @@
-import { getCurrentUser } from '@/utils/auth/server'
+import { requireAdmin } from '@/utils/auth/require-admin'
 import { NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/utils/supabase/server'
 import { getEventById } from '@/utils/data/events'
@@ -9,9 +9,8 @@ export async function POST(
   { params }: { params: Promise<{ token: string }> }
 ) {
   const { token } = await params;
-  const { data: authData } = await getCurrentUser()
-  const user = authData?.user
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const guard = await requireAdmin(2)
+  if (!guard.ok) return guard.response
 
   const supabase = await createServiceRoleClient()
 

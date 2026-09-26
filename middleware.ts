@@ -1,5 +1,6 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { SESSION_COOKIE, readSessionToken } from '@/utils/auth/session'
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -7,19 +8,20 @@ export async function middleware(request: NextRequest) {
   })
 
   let user = null;
-  
-  // Check for tier-based admin session cookie first
-  const tierSession = request.cookies.get('bangiya.samiti.iiith_dummy_session')
-  if (tierSession && tierSession.value.startsWith('admin-tier-')) {
+
+  // Signed tier-based admin session. The signature is what makes this
+  // trustworthy: the cookie value alone proves nothing.
+  const tierSession = await readSessionToken(request.cookies.get(SESSION_COOKIE)?.value)
+  if (tierSession) {
     user = {
-      id: tierSession.value,
+      id: `admin-tier-${tierSession.tier}`,
       email: 'admin',
-      user_metadata: { role: 'organiser' }
+      user_metadata: { role: 'organiser', tier: tierSession.tier }
     }
   }
 
   if (!user && process.env.DUMMY_DB === 'True') {
-    const dummySession = request.cookies.get('bangiya.samiti.iiith_dummy_session')
+    const dummySession = request.cookies.get(SESSION_COOKIE)
     if (dummySession && dummySession.value === 'dummy-admin-session') {
       user = {
         id: 'dummy-admin',
@@ -74,6 +76,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|.*\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
