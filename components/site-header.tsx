@@ -105,7 +105,7 @@ export default function SiteHeader({ variant = 'public' }: SiteHeaderProps) {
       <header className={`home-strip ${isVisible ? '' : 'is-hidden'}`}>
         <div className="home-strip__inner">
           <Link className="home-strip__brand" href="/">
-            <img src="/assets/logo.png" alt="বঙ্গীয়.SAMITI Emblem" className="brand-emblem" />
+            <img src="/favicon-96x96.png" alt="বঙ্গীয়.SAMITI Emblem" className="brand-emblem" />
             <span>বঙ্গীয়.SAMITI &bull; ADMIN</span>
           </Link>
           <nav className="home-strip__nav" aria-label="Admin Navigation">
@@ -128,7 +128,7 @@ export default function SiteHeader({ variant = 'public' }: SiteHeaderProps) {
       <div className="home-strip__inner">
         <Link className="home-strip__brand" href="/">
           {pathname !== '/' && (
-            <img src="/assets/logo.png" alt="বঙ্গীয়.SAMITI Emblem" className="brand-emblem" />
+            <img src="/favicon-96x96.png" alt="বঙ্গীয়.SAMITI Emblem" className="brand-emblem" />
           )}
           <TypewriterBrand />
         </Link>
