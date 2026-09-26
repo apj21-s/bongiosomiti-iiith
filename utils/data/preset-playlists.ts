@@ -53,6 +53,12 @@ export const PRESET_PLAYLISTS: PresetPlaylist[] = [
   },
 ]
 
+/**
+ * What plays when nobody has chosen anything: the Agomoni songs, which are the
+ * ones that actually belong to the run-up to the puja.
+ */
+export const DEFAULT_PLAYLIST = PRESET_PLAYLISTS[0]
+
 /** The name to show for a playlist id, when it is one of ours. */
 export function presetName(id: string | null): string | null {
   if (!id) return null

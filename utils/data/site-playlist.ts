@@ -1,6 +1,7 @@
 import { createServiceRoleClient } from '@/utils/supabase/server'
 import { parseYouTubePlaylistId } from './youtube'
 import { getPlaylists, type Playlist } from './playlists'
+import { DEFAULT_PLAYLIST } from './preset-playlists'
 
 /**
  * The homepage playlist, as configured from the admin UI.
@@ -115,9 +116,11 @@ export async function setSitePlaylist(input: {
 }
 
 /**
- * What the homepage renders: the configured playlist when there is one, and
- * otherwise whatever public/data/playlists.json holds, so a developer can
- * still ship hosted audio files.
+ * What the homepage renders, in order: the playlist configured from
+ * /admin/playlist, then whatever public/data/playlists.json holds so a
+ * developer can still ship hosted audio files, and failing both, the Agomoni
+ * songs. There is always music to start from, and a visitor can change it to
+ * any of the others from the player itself.
  */
 export async function getHomepagePlaylists(): Promise<Playlist[]> {
   const setting = await getSitePlaylistSetting()
@@ -133,5 +136,13 @@ export async function getHomepagePlaylists(): Promise<Playlist[]> {
 
   if (!setting.isEnabled) return []
 
-  return getPlaylists()
+  const fromFile = getPlaylists()
+  if (fromFile.length > 0) return fromFile
+
+  return [{
+    id: DEFAULT_PLAYLIST.id,
+    name: DEFAULT_PLAYLIST.name,
+    youtubePlaylistId: DEFAULT_PLAYLIST.id,
+    tracks: [],
+  }]
 }
