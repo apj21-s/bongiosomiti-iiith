@@ -119,6 +119,13 @@ export default async function Home() {
         <HeroBirdsAnimator />
       </section>
 
+      {/* A breath between the hero and the events, so the two large sections do
+          not run into each other. */}
+      <section className="home-interlude scroll-reveal" aria-label="একসাথে, এক পরিচয়ে">
+        <p className="home-interlude__title">একসাথে, এক পরিচয়ে</p>
+        <p className="home-interlude__subtitle">A little piece of Bengal, a home at IIITH.</p>
+      </section>
+
       <section id="events" className="events-page" aria-labelledby="events-title">
         <div className="events-scene">
           <div className="events-scene__panel">

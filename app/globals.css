@@ -11311,3 +11311,60 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
     --hero-seam-blur: 7px;
   }
 }
+
+/* ============================================================
+   The interlude between the hero and the events.
+
+   A quiet band whose whole job is to stop two large sections
+   running into each other. It paints no background of its own,
+   so the page's own warmth shows through and it reads as a
+   breath rather than as a third block.
+   ============================================================ */
+
+.home-interlude {
+  /* Full bleed the same way the events section does, and the same gutter, so
+     this line starts exactly where "আমাদের উৎসব" starts below it. */
+  width: 100vw;
+  max-width: 100vw;
+  margin-left: calc(50% - 50vw);
+  box-sizing: border-box;
+  /* Deeper at the bottom than the top on purpose: the chonga mic and its
+     countdown hang out of the events section above their own image, and with
+     even padding they came to rest level with the subtitle and read as one
+     stray row. The text keeps the upper half of the band; they get the lower.
+     */
+  padding: clamp(44px, 9vh, 104px) clamp(16px, 4vw, 48px) clamp(96px, 15vh, 160px);
+}
+
+.home-interlude__title {
+  margin: 0;
+  max-width: 24ch;
+  color: #1d1712;
+  font-family: "Tiro Bangla", "Noto Serif Bengali", Georgia, serif;
+  font-size: clamp(1.85rem, 4.4vw, 3.3rem);
+  /* Bengali hangs its matras above the line and its vowel signs below, so it
+     needs more room than a Latin heading at the same size. */
+  line-height: 1.34;
+}
+
+/* A short rule, because a divider that is only text reads as a stray
+   paragraph. */
+.home-interlude__title::before {
+  content: "";
+  display: block;
+  width: clamp(34px, 5vw, 58px);
+  height: 2px;
+  margin-bottom: clamp(14px, 2.4vh, 26px);
+  border-radius: 2px;
+  background: var(--brand, #b65a3c);
+}
+
+.home-interlude__subtitle {
+  margin: clamp(10px, 1.6vh, 18px) 0 0;
+  max-width: 36ch;
+  color: #6b5b4c;
+  font-family: "Tiro Bangla", Georgia, "Times New Roman", serif;
+  font-style: italic;
+  font-size: clamp(1rem, 1.9vw, 1.42rem);
+  line-height: 1.5;
+}
