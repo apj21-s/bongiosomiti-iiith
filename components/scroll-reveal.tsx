@@ -9,19 +9,21 @@ import { useEffect } from 'react'
  *
  * Mount this component once in the layout or page to activate scroll reveals.
  */
+
+const SELECTOR = '.scroll-reveal, [data-reveal]'
+const REVEALED_CLASSES = ['is-revealed', 'is-visible', 'in-view']
+
 export default function ScrollReveal() {
   useEffect(() => {
-    const reveals = document.querySelectorAll('.scroll-reveal, [data-reveal]')
-    if (!reveals.length) return
+    const reveal = (el: Element) => el.classList.add(...REVEALED_CLASSES)
+    const isRevealed = (el: Element) => el.classList.contains('is-revealed')
 
     // Respect user's motion preference
     if (
       window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
       !('IntersectionObserver' in window)
     ) {
-      reveals.forEach((el) =>
-        el.classList.add('is-revealed', 'is-visible', 'in-view')
-      )
+      document.querySelectorAll(SELECTOR).forEach(reveal)
       return
     }
 
@@ -29,7 +31,7 @@ export default function ScrollReveal() {
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            entry.target.classList.add('is-revealed', 'is-visible', 'in-view')
+            reveal(entry.target)
             observer.unobserve(entry.target)
           }
         })
@@ -37,33 +39,60 @@ export default function ScrollReveal() {
       { threshold: 0.08, rootMargin: '0px 0px -25px 0px' }
     )
 
-    reveals.forEach((el) => observer.observe(el))
+    // Re-queried on every pass rather than snapshotted once. This component
+    // lives in the layout, above {children}, so its effect can run before the
+    // page body has streamed in - in which case the first scan legitimately
+    // finds nothing. Bailing out at that point used to leave the whole page
+    // stuck at opacity 0 with no observer left to recover it.
+    const observeAll = () => {
+      document.querySelectorAll(SELECTOR).forEach((el) => {
+        if (!isRevealed(el)) observer.observe(el)
+      })
+    }
 
-    // MutationObserver to pick up dynamically-added scroll-reveal elements
+    observeAll()
+
+    // Picks up content that mounts later: streamed page bodies, and the subtree
+    // app/template.tsx remounts on every navigation.
     const mutationObs = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         mutation.addedNodes.forEach((node) => {
-          if (node instanceof HTMLElement) {
-            if (
-              node.classList?.contains('scroll-reveal') ||
-              node.hasAttribute?.('data-reveal')
-            ) {
-              observer.observe(node)
-            }
-            // Also check descendants
-            node.querySelectorAll?.('.scroll-reveal, [data-reveal]').forEach(
-              (child) => observer.observe(child)
-            )
-          }
+          if (!(node instanceof HTMLElement)) return
+          if (node.matches?.(SELECTOR) && !isRevealed(node)) observer.observe(node)
+          node.querySelectorAll?.(SELECTOR).forEach((child) => {
+            if (!isRevealed(child)) observer.observe(child)
+          })
         })
       })
     })
 
     mutationObs.observe(document.body, { childList: true, subtree: true })
 
+    // Safety net for anything already sitting in the viewport. An
+    // IntersectionObserver only delivers callbacks while the page is being
+    // rendered, so a tab that loads in the background - or any hitch in
+    // delivery - could otherwise leave above-the-fold content invisible until
+    // the visitor scrolls. Content below the fold is left to the observer.
+    const sweepVisible = () => {
+      document.querySelectorAll(SELECTOR).forEach((el) => {
+        if (isRevealed(el)) return
+        const rect = el.getBoundingClientRect()
+        if (rect.width === 0 && rect.height === 0) return
+        if (rect.top < window.innerHeight && rect.bottom > 0) reveal(el)
+      })
+    }
+
+    const sweepTimers = [
+      window.setTimeout(sweepVisible, 300),
+      window.setTimeout(sweepVisible, 1200),
+    ]
+    window.addEventListener('load', sweepVisible)
+
     return () => {
       observer.disconnect()
       mutationObs.disconnect()
+      sweepTimers.forEach((id) => window.clearTimeout(id))
+      window.removeEventListener('load', sweepVisible)
     }
   }, [])
 
