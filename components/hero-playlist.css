@@ -27,6 +27,26 @@
   font-size: 0.82rem;
 }
 
+/* YouTube's terms require their player to stay visible while it plays, so the
+   embed sits in the bar as a small tile rather than being hidden off-screen. */
+.hero-playlist__yt {
+  flex-shrink: 0;
+  width: 88px;
+  height: 50px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #1c1512;
+  box-shadow: 0 1px 6px rgba(47, 33, 20, 0.3);
+}
+
+.hero-playlist__yt iframe,
+.hero-playlist__yt > div {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+
 .hero-playlist__controls {
   display: flex;
   align-items: center;
@@ -204,6 +224,11 @@
     bottom: 10px;
     gap: 6px;
     padding: 6px 10px;
+  }
+
+  .hero-playlist__yt {
+    width: 60px;
+    height: 34px;
   }
 
   /* Position and duration are the first thing to go when space is tight. */
