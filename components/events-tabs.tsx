@@ -126,7 +126,7 @@ export default function EventsTabs({ events }: { events: EventTabItem[] }) {
       >
         <Link
           className="events-scene__card"
-          href={`/events/${event.slug}#registration-form-container`}
+          href={`/events/${event.slug}`}
           aria-label={`Register for ${event.name}`}
         >
           <div className="events-scene__card-media">
