@@ -11152,3 +11152,80 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
   background: rgba(250, 235, 228, 0.85);
   color: #8e3f2d;
 }
+
+/* ============================================================
+   Full-screen hero
+   The hero fills the viewport on load, with the landscape held
+   at the bottom and its sky continued upward as a flat fill in
+   the artwork's own sky colour (#f3e2c1, sampled from the top
+   rows of autumn-landscape.webp). The navbar uses the same
+   colour so the two read as one surface.
+   ============================================================ */
+
+:root {
+  --hero-sky: #f3e2c1;
+  /* autumn-landscape.webp is 1792x592 */
+  --hero-art-ratio: 3.0270;
+}
+
+.home-hero {
+  /* dvh matches what is actually visible at load, so the hero fills the screen
+     exactly; svh would leave a gap whenever the browser chrome is retracted.
+     vh first, as a fallback for anything without dvh. */
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--hero-sky);
+}
+
+/* Bottom-anchored and held at the artwork's aspect ratio, so the sun glow and
+   the bird's landing perch - both positioned as a percentage of this box -
+   stay registered to the painting however tall the hero becomes. */
+.home-hero__scene {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: min(calc(100vw / var(--hero-art-ratio)), 100%);
+}
+
+/* The painting's top row is not perfectly flat - it runs from #f3e0be to
+   #f8e8ce across the width, which shows as a seam against a single flat
+   colour. A short fade hides the join. The transparent stop repeats the
+   colour so the gradient does not run through grey. */
+.home-hero__scene::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: clamp(28px, 7%, 72px);
+  background: linear-gradient(180deg, var(--hero-sky) 0%, rgba(243, 226, 193, 0) 100%);
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* The title, subtitle and tagline sit in the sky above the artwork. */
+.home-hero__content {
+  top: 0;
+  bottom: min(calc(100vw / var(--hero-art-ratio)), 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  /* Clear of the fixed navbar. The extra room matters because the title's
+     line-height of 0.5 lets its glyphs overflow their own box upward, so
+     centring alone tucks the capitals under the bar. */
+  padding-top: calc(var(--home-strip-height, 46px) + 3.5rem);
+  padding-bottom: clamp(16px, 4vh, 48px);
+  z-index: 4;
+}
+
+.home-hero__title {
+  margin-top: 0;
+}
+
+/* The birds deliberately stay inside the scene rather than roaming the whole
+   sky: .hero-shoulder-perch, where the landing bird comes to rest, is a
+   percentage of this box and is aimed at the man's shoulder in the painting. */
+
+/* Same colour as the sky, so the bar and the hero read as one surface. */
+.home-strip {
+  background: var(--hero-sky);
+  border-bottom-color: rgba(109, 80, 53, 0.1);
+}
