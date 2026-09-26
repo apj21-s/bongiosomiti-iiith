@@ -10,6 +10,9 @@ email, and verifies those passes at the gate.
 - **Email:** Nodemailer over SMTP
 - **Deploy:** Vercel
 
+New to the codebase? **[HOWTO.md](./HOWTO.md)** is a guided tour: how to run it,
+what every page does, which file renders it, and how to walk each flow end to end.
+
 Operational procedures — deploying, creating accounts, running migrations, event
 day, incidents — live in [RUNBOOK.md](./RUNBOOK.md).
 
@@ -254,3 +257,12 @@ Carried deliberately, not oversights:
    public. Set the `TIER*_` variables.
 8. **`scratch/api_debug.log` is still in git history** with attendee emails and
    live pass tokens. See the incident section of the runbook.
+
+## Open question: two audio sources on the hero
+
+The home page hero now has two independent players: the chonga mic
+(`/assets/mahalaya_audio.mp3`, unlocks 10 October) added in `crossfade-video.tsx`,
+and the playlist player. They do not overlap visually - the mic sits at the top,
+the player at the bottom - but nothing stops both playing at once once the mic
+unlocks. Options: make them mutually exclusive, hide the playlist player while
+the mic is unlocked, or leave it and simply not set a playlist in October.
