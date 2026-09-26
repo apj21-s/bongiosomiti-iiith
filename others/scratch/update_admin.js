@@ -32,7 +32,7 @@ const supabase = createClient(supabaseUrl, supabaseKey, {
 
 async function setupAdmin() {
   const email = 'admin@gmail.com';
-  const password = 'admin123';
+  const password = process.env.ADMIN_PASSWORD;  // no default: this file is public
 
   // Check if user exists
   const { data: usersData, error: listError } = await supabase.auth.admin.listUsers();

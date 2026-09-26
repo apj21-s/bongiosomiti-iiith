@@ -3,6 +3,15 @@ import { cookies } from 'next/headers'
 const DUMMY_SESSION_COOKIE = 'bangiya.samiti.iiith_dummy_session'
 
 export async function dummyLogin(email: string, password: string) {
+  // DUMMY_DB is for developing without a database, and this sign-in is a
+  // convenience for that. It has a password written in a public file, so it is
+  // refused outright in a production build - DUMMY_DB left on by accident in a
+  // deploy would otherwise be an open door.
+  const isProduction = process.env.NODE_ENV === 'production'
+  if (isProduction) {
+    return { error: { message: 'Dummy sign-in is disabled in production' } }
+  }
+
   const adminEmail = process.env.ADMIN_EMAIL || 'admin@bangiya.samiti.iiith.local'
   const adminPassword = process.env.DUMMY_ADMIN_PASSWORD || 'admin123'
 
@@ -10,7 +19,7 @@ export async function dummyLogin(email: string, password: string) {
     const cookieStore = await cookies()
     cookieStore.set(DUMMY_SESSION_COOKIE, 'dummy-admin-session', {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: isProduction,
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 // 1 day
     })

@@ -13,7 +13,11 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function createAdmin() {
   const email = process.env.ADMIN_EMAIL || 'admin@gmail.com';
-  const password = process.env.ADMIN_PASSWORD || 'Admin@123';
+  const password = process.env.ADMIN_PASSWORD;
+  if (!password) {
+    console.error('Set ADMIN_PASSWORD before running this. It no longer has a default: this file is public.');
+    process.exit(1);
+  }
 
   // Check if user already exists
   const { data: { users }, error: listError } = await supabase.auth.admin.listUsers();

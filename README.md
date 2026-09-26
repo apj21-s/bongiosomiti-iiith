@@ -51,10 +51,12 @@ client in `utils/supabase/mock-client.ts`, backed by a local JSON store.
 | `NEXT_PUBLIC_APP_URL` | no | Absolute links in emails |
 | `DUMMY_DB` | no | `True` runs against the local mock store |
 
-> **The tier credentials have in-repo defaults** (`utils/auth/admin-roles.ts`).
-> If the `TIER*_` variables are unset, those defaults work — and they are public,
-> because the repository is public. Setting all six in production is not
-> optional.
+> **The tier credentials have no defaults.** `utils/auth/admin-roles.ts`
+> reads them from the environment and nowhere else. A tier without both an
+> email and a password set has no account; with none of the three set, the
+> admin area cannot be signed into, and the server log says so on the first
+> attempt. This is deliberate - the defaults that used to be here were
+> published, because the repository is.
 
 ---
 
@@ -253,8 +255,11 @@ Carried deliberately, not oversights:
    never reaches the database.
 6. **`tickets.redeemed_by` / `checkins.scanned_by` are `uuid`** but tier accounts
    have synthetic ids, so those columns are written as null for them.
-7. **Default admin credentials are in the repository** and the repository is
-   public. Set the `TIER*_` variables.
+7. **No admin can sign in until the `TIER*_` variables are set.** The defaults
+   that used to stand in for them were published in this repository, so they
+   were removed: a tier with nothing configured now has no account, and an
+   installation with none configured cannot be signed into at all. The startup
+   log says so when that is the case.
 8. **`scratch/api_debug.log` is still in git history** with attendee emails and
    live pass tokens. See the incident section of the runbook.
 
