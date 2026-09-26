@@ -1,18 +1,9 @@
 import type { NextConfig } from "next";
-import fs from 'fs';
-import path from 'path';
 
-try {
-  const src = path.join(process.cwd(), 'Mahalaya_Registration_Assets_CLEAN_FINAL (2)');
-  const dest = path.join(process.cwd(), 'public', 'mahalaya_registration_assets');
-  if (fs.existsSync(src)) {
-    fs.rmSync(dest, { recursive: true, force: true });
-    fs.cpSync(src, dest, { recursive: true });
-    console.log("Clean assets successfully copied to public folder!");
-  }
-} catch (e) {
-  console.error("Asset copy failed:", e);
-}
+// The registration artwork used to be copied here at build time from a second
+// copy in the repo root. That source was byte-identical to the committed
+// public/mahalaya_registration_assets, so it has been quarantined in others/
+// and the copy - which wrote to the filesystem during the build - is gone.
 
 // Response headers applied site-wide. No Content-Security-Policy yet: the pages
 // rely heavily on inline styles and Google Fonts, so a policy needs to be built

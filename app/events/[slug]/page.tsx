@@ -5,17 +5,7 @@ import SiteHeader from '@/components/site-header'
 import SiteFooter from '@/components/site-footer'
 import MenuCardModal from '@/components/menu-card-modal'
 import RegistrationForm from './RegistrationForm'
-import fs from 'fs'
-import path from 'path'
 
-// Force copy assets
-try {
-  const src = path.join(process.cwd(), 'Mahalaya_Registration_Assets_CLEAN_FINAL (2)');
-  const dest = path.join(process.cwd(), 'public', 'mahalaya_registration_assets');
-  if (fs.existsSync(src)) {
-    fs.cpSync(src, dest, { recursive: true, force: true });
-  }
-} catch (e) {}
 export const dynamic = 'force-dynamic'
 
 export default async function EventDetailPage({ params }: { params: Promise<{ slug: string }> }) {
