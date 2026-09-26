@@ -42,7 +42,7 @@ export default function PhotoAlbum() {
   const [touchEndX, setTouchEndX] = useState<number | null>(null)
 
   useEffect(() => {
-    fetch(`/data/album.json?t=${Date.now()}`)
+    fetch(`/api/album`)
       .then(res => res.json())
       .then(data => {
         if (data && data.length > 0) setPhotos(data)
