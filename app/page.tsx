@@ -6,13 +6,13 @@ import CrossfadeVideo from '@/components/crossfade-video'
 import HeroBirdsAnimator from '@/components/hero-birds-animator'
 import EventsTabs from '@/components/events-tabs'
 import HeroPlaylist from '@/components/hero-playlist'
-import { getPlaylists } from '@/utils/data/playlists'
+import { getHomepagePlaylists } from '@/utils/data/site-playlist'
 
 export const revalidate = 0
 
 export default async function Home() {
   const activeEvents = getEvents().sort((a: any, b: any) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime())
-  const playlists = getPlaylists()
+  const playlists = await getHomepagePlaylists()
 
   return (
     <main id="top" className="home-page">

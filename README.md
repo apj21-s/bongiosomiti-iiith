@@ -84,6 +84,7 @@ its own token, then emails either the QR passes (free events) or a
 /admin/check-ins      gate log                tier 2+
 /admin/events         edit events             tier 3
 /admin/managers       create manager profiles tier 3
+/admin/playlist       homepage music          tier 3
 /admin/scanner        QR scanner              tier 1+
 ```
 
@@ -176,10 +177,17 @@ confidence is left blank and the form asks the visitor to type it.
 ## The homepage music player
 
 `components/hero-playlist.tsx` overlays a player on the events video. It takes
-either a **YouTube playlist link** or **audio files you host**, configured in
-`public/data/playlists.json`; the format is documented in
-`utils/data/playlists.ts`. The file ships as `[]`, and with no playlist the
-player does not render at all.
+either a **YouTube playlist link** or **audio files you host**.
+
+Set the playlist from **/admin/playlist** (super admin). It is stored in
+Supabase rather than in a file, because the filesystem is read-only on Vercel.
+Only the extracted playlist id is stored, never the pasted URL, and the id is
+validated again every time the homepage renders it — so nothing that reaches
+the page can carry a scheme, a host or markup.
+
+`public/data/playlists.json` remains as the fallback when nothing is configured,
+and is the way to ship hosted audio files; that format is documented in
+`utils/data/playlists.ts`. With neither set, the player does not render at all.
 
 The YouTube embed stays visible as a small tile because YouTube's terms require
 their player to be shown while it plays.

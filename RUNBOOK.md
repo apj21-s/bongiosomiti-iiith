@@ -16,6 +16,7 @@ Run these in the Supabase SQL editor, in order:
 | `supabase/schema.sql` | `events`, `admin_profiles`, `tickets`, `checkins`, RLS |
 | `supabase/manager-profiles.sql` | `manager_profiles`, `tickets.receiver_upi` |
 | `supabase/album_migration.sql` | `album_photos` for the homepage gallery |
+| `supabase/site-playlist.sql` | `site_playlist`, the homepage music setting |
 | `supabase/seed.sql` | Demo events, tickets and an admin. **Skip in production** |
 
 All are safe to re-run. The manager feature does nothing until
@@ -87,7 +88,16 @@ the audit trail; delete it to remove it entirely.
 Passwords are stored as scrypt hashes and cannot be read back. To reset one,
 delete the profile and create it again.
 
-### 2.3 Sessions
+### 2.3 Homepage music
+
+Set at **/admin/playlist** (super admin). Paste a YouTube playlist link; it must
+be **public or unlisted**, because YouTube refuses to embed a private playlist.
+Leave the field blank, or untick "Show the player", to hide the player.
+
+Only the playlist id is stored, and only after the link has been validated as a
+genuine YouTube playlist URL. Links to any other host are rejected.
+
+### 2.4 Sessions
 
 Sessions last 24 hours. Changing `SESSION_SECRET`, rotating the Supabase
 service-role key, or deploying a change to the session format signs everyone
