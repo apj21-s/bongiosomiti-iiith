@@ -1,10 +1,10 @@
-import Link from 'next/link'
 import { getEvents } from '@/utils/data/events'
 import SiteHeader from '@/components/site-header'
 import SiteFooter from '@/components/site-footer'
 import PhotoAlbum from '@/components/photo-album'
 import CrossfadeVideo from '@/components/crossfade-video'
 import HeroBirdsAnimator from '@/components/hero-birds-animator'
+import EventsTabs from '@/components/events-tabs'
 
 export const revalidate = 0
 
@@ -14,21 +14,6 @@ export default async function Home() {
   return (
     <main id="top" className="home-page">
       <SiteHeader />
-
-      <section className="home-banner" aria-hidden="true">
-        <div className="home-banner__scene">
-          <div className="home-banner__layer home-banner__layer--left">
-            <img className="home-banner__image home-banner__image--left" src="/assets/autumn-landscape.webp" alt="" width={1792} height={592} fetchPriority="high" loading="eager" decoding="async" />
-          </div>
-          <div className="home-banner__layer home-banner__layer--center">
-            <img className="home-banner__image home-banner__image--center" src="/assets/kolkata-street.webp" alt="" width={1792} height={592} loading="lazy" decoding="async" />
-          </div>
-          <div className="home-banner__layer home-banner__layer--right">
-            <img className="home-banner__image home-banner__image--right" src="/assets/community-puja.webp" alt="" width={1200} height={880} loading="lazy" decoding="async" />
-          </div>
-        </div>
-        <div className="home-banner__blend"></div>
-      </section>
 
       <section id="home" className="home-hero" aria-labelledby="home-hero-title">
         <div className="home-hero__scene" aria-hidden="true">
@@ -135,7 +120,7 @@ export default async function Home() {
         <div className="events-scene">
           <div className="events-scene__panel">
             <div className="events-scene__hero scroll-reveal scroll-reveal--delay-1" id="events-hero-player">
-              <img className="events-scene__hero-image events-scene__hero-poster" src="/assets/community-puja.webp" alt="Bengali Puja Courtyard Celebration" width={1200} height={880} loading="lazy" decoding="async" />
+              <img className="events-scene__hero-image events-scene__hero-poster" src="/assets/puja-poster.webp" alt="Bengali Puja Courtyard Celebration" width={1200} height={880} loading="lazy" decoding="async" />
               <CrossfadeVideo />
             </div>
 
@@ -146,53 +131,20 @@ export default async function Home() {
               <h2 id="events-title">Our Community, Our Festivities</h2>
             </div>
 
-            <div className="events-scene__cards">
-              {activeEvents.map((event: any, i: number) => (
-                <Link
-                  className="events-scene__card scroll-reveal"
-                  style={{ animationDelay: `${i * 2}s` }}
-                  href={`/events/${event.slug}#registration-form-container`}
-                  key={event.id}
-                  aria-label={`Register for ${event.name}`}
-                >
-                  <div className="events-scene__card-media">
-                    <img
-                      className="events-scene__card-image"
-                      src={event.image_url || (event.slug === 'mahalaya' ? '/assets/mahalaya-bhoj.webp' : '/assets/saraswati-puja.webp')}
-                      alt={event.name}
-                      width={event.slug === 'mahalaya' ? 1264 : 544}
-                      height={event.slug === 'mahalaya' ? 848 : 880}
-                      loading="lazy"
-                      decoding="async"
-                      style={{ objectPosition: event.slug === 'mahalaya' ? 'center 36%' : 'center 20%' }}
-                    />
-                    <span className="events-scene__card-badge">
-                      {event.price === 0 ? 'Campus Celebration' : 'Registration Opens Soon!'}
-                    </span>
-                  </div>
-                  <div className="events-scene__card-body">
-                    <div className="events-scene__card-meta">
-                      <span className="events-scene__card-date">
-                        {new Date(event.event_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()}
-                      </span>
-                      <span className="events-scene__card-tag">{event.tag}</span>
-                    </div>
-                    <h3 className="events-scene__card-title">{event.name}</h3>
-                    <p className="events-scene__card-desc">{event.description?.replace('Shared tables, smoke, brass, and a warm autumn gathering built around authentic Bengali food, adda, and ritual warmth.', 'Bengali food • Adda • Celebration').replace('A serene campus procession with fresh yellow flowers, alpona, morning anjali, recitation, music, and student gathering.', 'Yellow blooms • Anjali • Music • Culture')}</p>
-                    <div className="events-scene__card-footer">
-                      <span className="events-scene__card-invitation">
-                        {event.price === 0
-                          ? '✨ Join the celebration • Free Entry'
-                          : `• ⚡ Registration opens soon • `}
-                      </span>
-                      <span className="events-scene__card-btn">
-                        <span>{event.status === 'OPEN' ? 'REGISTER NOW' : 'COMING SOON'}</span>
-                        <span className="events-scene__card-arrow">&rarr;</span>
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              ))}
+            <div className="events-scene__cards events-scene__cards--tabbed scroll-reveal">
+              <EventsTabs
+                events={activeEvents.map((event: any) => ({
+                  id: event.id,
+                  slug: event.slug,
+                  name: event.name,
+                  event_date: event.event_date,
+                  description: event.description,
+                  image_url: event.image_url,
+                  price: event.price,
+                  status: event.status,
+                  tag: event.tag,
+                }))}
+              />
             </div>
           </div>
         </div>

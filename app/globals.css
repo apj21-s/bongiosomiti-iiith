@@ -6746,93 +6746,6 @@ video::cue {
   transform: translateY(-1px);
 }
 
-.home-banner {
-  position: relative;
-  z-index: 50;
-  width: 100vw;
-  margin-left: calc(50% - 50vw);
-  overflow: hidden;
-  background: linear-gradient(180deg, #f4e4be 0%, #f1d9a9 100%);
-}
-
-.home-banner::before,
-.home-banner::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.home-banner::before {
-  background:
-    linear-gradient(180deg, rgba(255, 248, 232, 0.12), transparent 20%),
-    linear-gradient(180deg, transparent 74%, rgba(49, 31, 18, 0.08) 100%);
-  mix-blend-mode: soft-light;
-  z-index: 3;
-}
-
-.home-banner::after {
-  background:
-    linear-gradient(90deg, rgba(251, 245, 232, 0.16) 0%, transparent 15%, transparent 85%, rgba(251, 245, 232, 0.18) 100%);
-  z-index: 4;
-}
-
-.home-banner__scene {
-  position: relative;
-  height: clamp(118px, 11vw, 184px);
-}
-
-.home-banner__layer {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-}
-
-.home-banner__layer--left {
-  left: 0;
-  width: 50%;
-  z-index: 1;
-  mask-image: linear-gradient(90deg, #000 0 90%, transparent 100%);
-}
-
-.home-banner__layer--center {
-  left: 31%;
-  width: 44%;
-  z-index: 2;
-  mask-image: linear-gradient(90deg, transparent 0, #000 10%, #000 90%, transparent 100%);
-}
-
-.home-banner__layer--right {
-  left: 64%;
-  width: 36%;
-  z-index: 1;
-  mask-image: linear-gradient(90deg, transparent 0, #000 12%);
-}
-
-.home-banner__image {
-  object-fit: cover;
-}
-
-.home-banner__image--left {
-  object-position: left center;
-}
-
-.home-banner__image--center {
-  object-position: center center;
-}
-
-.home-banner__image--right {
-  object-position: right center;
-}
-
-.home-banner__blend {
-  position: absolute;
-  inset: auto 0 0;
-  height: 18px;
-  z-index: 2;
-  background: linear-gradient(180deg, rgba(251, 245, 232, 0), rgba(251, 245, 232, 0.62));
-}
-
 .home-hero {
   position: relative;
   width: 100vw;
@@ -7456,7 +7369,6 @@ video::cue {
   text-decoration: underline;
 }
 
-.home-banner__layer>img,
 .home-hero__layer>img,
 .events-scene__hero>img,
 .events-scene__hero>video,
@@ -7959,28 +7871,6 @@ video::cue {
     padding: 4px clamp(6px, 2vw, 12px);
   }
 
-  .home-banner {
-    width: 100vw;
-    margin-left: calc(50% - 50vw);
-    overflow: hidden;
-  }
-
-  .home-banner__scene {
-    height: clamp(84px, 22vw, 130px);
-  }
-
-  .home-banner__layer--left {
-    width: 54%;
-  }
-
-  .home-banner__layer--center {
-    left: 24%;
-    width: 49%;
-  }
-
-  .home-banner__layer--right {
-    left: 66%;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -10145,11 +10035,6 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
     letter-spacing: 0.02em;
   }
 
-  /* 2. Top Triptych Banner */
-  .home-banner__scene {
-    height: clamp(80px, 22vw, 110px);
-  }
-
   /* 3. Hero Section */
   .home-hero {
     min-height: clamp(320px, 86vw, 420px);
@@ -11233,4 +11118,125 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
 
 @media (prefers-reduced-motion: reduce) {
   .t-morph, .t-morph-plus, .t-morph-menu, .t-morph-plus span { transition: none !important; }
+}
+/* ============================================================
+   Events tab switcher (homepage)
+   Replaces the two-up event card grid with one panel and a
+   sliding-pill tablist. The pill's width/transform are written
+   inline by components/events-tabs.tsx from the active tab's
+   measured offsetLeft/offsetWidth, so the transition tweens
+   between real positions.
+   ============================================================ */
+
+.events-scene__cards--tabbed {
+  display: block;
+}
+
+.events-tabs {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(12px, 2vw, 18px);
+}
+
+.t-tabs {
+  --tabs-dur: 250ms;
+  --tabs-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --tabs-text-muted: var(--muted);
+  --tabs-text-active: #fdf7ea;
+  --tabs-bar-bg: rgba(243, 231, 207, 0.95);
+  --tabs-pill-bg: var(--brand);
+
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px;
+  max-width: 100%;
+  border-radius: 48px;
+  border: 1px solid rgba(139, 69, 19, 0.2);
+  background: var(--tabs-bar-bg);
+  box-shadow: inset 0 1px 3px rgba(47, 33, 20, 0.08);
+}
+
+.t-tab {
+  position: relative;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  height: 34px;
+  padding: 4px 18px;
+  color: var(--tabs-text-muted);
+  cursor: pointer;
+  border-radius: 48px;
+  z-index: 1;
+  font: inherit;
+  font-size: clamp(0.82rem, 1.6vw, 0.95rem);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  transition: color var(--tabs-dur) var(--tabs-ease);
+}
+
+.t-tab:not([aria-selected="true"]):hover,
+.t-tab[aria-selected="true"] {
+  color: var(--tabs-text-active);
+}
+
+.t-tab:not([aria-selected="true"]):hover {
+  color: var(--brand-2);
+}
+
+.t-tab:focus-visible {
+  outline: 2px solid var(--brand-2);
+  outline-offset: 2px;
+}
+
+.t-tabs-pill {
+  position: absolute;
+  top: 3px;
+  left: 0;
+  height: 34px;
+  width: 0;
+  background: var(--tabs-pill-bg);
+  border-radius: 48px;
+  transform: translateX(0);
+  box-shadow: 0 2px 10px rgba(142, 63, 45, 0.3);
+  transition:
+    transform var(--tabs-dur) var(--tabs-ease),
+    width var(--tabs-dur) var(--tabs-ease);
+  will-change: transform, width;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.events-tabs__panel {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  animation: eventsTabPanelIn 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes eventsTabPanelIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .t-tabs-pill,
+  .t-tab {
+    transition: none !important;
+  }
+
+  .events-tabs__panel {
+    animation: none;
+  }
 }
