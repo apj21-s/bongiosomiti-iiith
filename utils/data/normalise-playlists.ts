@@ -38,6 +38,11 @@ function isFilledString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0
 }
 
+// Numbered, so unnamed playlists can still be told apart from one another.
+function defaultName(index: number) {
+  return `Playlist ${index + 1}`
+}
+
 function toTrack(value: unknown, index: number): PlaylistTrack | null {
   if (typeof value !== 'object' || value === null) return null
 
@@ -58,7 +63,7 @@ export function toPlaylist(value: unknown, index: number): Playlist | null {
   if (typeof value === 'string') {
     const id = parseYouTubePlaylistId(value)
     if (!id) return null
-    return { id: `playlist-${index}`, name: 'Playlist', youtubePlaylistId: id, tracks: [] }
+    return { id: `playlist-${index}`, name: defaultName(index), youtubePlaylistId: id, tracks: [] }
   }
 
   if (typeof value !== 'object' || value === null) return null
@@ -79,7 +84,7 @@ export function toPlaylist(value: unknown, index: number): Playlist | null {
 
   return {
     id: isFilledString(playlist.id) ? playlist.id.trim() : `playlist-${index}`,
-    name: isFilledString(playlist.name) ? playlist.name.trim() : 'Playlist',
+    name: isFilledString(playlist.name) ? playlist.name.trim() : defaultName(index),
     youtubePlaylistId,
     tracks,
   }
@@ -94,7 +99,13 @@ export function normalisePlaylists(raw: unknown): Playlist[] {
 
   if (!Array.isArray(raw)) return []
 
+  // The id identifies a playlist, so a repeated id keeps only the first.
+  const seen = new Set<string>()
   return raw
     .map((playlist, index) => toPlaylist(playlist, index))
-    .filter((playlist): playlist is Playlist => playlist !== null)
+    .filter((playlist): playlist is Playlist => {
+      if (!playlist || seen.has(playlist.id)) return false
+      seen.add(playlist.id)
+      return true
+    })
 }
