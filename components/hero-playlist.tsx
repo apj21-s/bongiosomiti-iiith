@@ -11,6 +11,7 @@ import {
   writeCustomPlaylistId,
 } from '@/utils/data/custom-playlist'
 import { PRESET_PLAYLISTS, presetName } from '@/utils/data/preset-playlists'
+import Equaliser from './hero-equaliser'
 
 /**
  * Off, the whole playlist on a loop, or the one song on a loop - the three
@@ -138,6 +139,10 @@ type BarProps = {
   repeat: RepeatMode
   onRepeat: () => void
   onSeek: (seconds: number) => void
+  /** Takes the video and the player to the whole screen, and back. */
+  onFullscreen: () => void
+  isFullscreen: boolean
+  canFullscreen: boolean
   /** Opens the panel for pasting your own YouTube playlist link. */
   onCustomise: () => void
   /** Whether what is playing is the visitor's own playlist. */
@@ -162,6 +167,9 @@ function PlayerBar({
   repeat,
   onRepeat,
   onSeek,
+  onFullscreen,
+  isFullscreen,
+  canFullscreen,
   onCustomise,
   customActive = false,
   pickerOpen = false,
@@ -241,6 +249,33 @@ function PlayerBar({
           </svg>
         </button>
 
+        {canFullscreen && (
+          <button
+            type="button"
+            className={`hero-playlist__btn hero-playlist__btn--full ${isFullscreen ? 'is-on' : ''}`}
+            onClick={onFullscreen}
+            aria-label={isFullscreen ? 'Leave fullscreen' : 'Play fullscreen'}
+            title={isFullscreen ? 'Leave fullscreen' : 'Play fullscreen'}
+            aria-pressed={isFullscreen}
+          >
+            {isFullscreen ? (
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M9 4v5H4" />
+                <path d="M15 4v5h5" />
+                <path d="M9 20v-5H4" />
+                <path d="M15 20v-5h5" />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M4 9V4h5" />
+                <path d="M20 9V4h-5" />
+                <path d="M4 15v5h5" />
+                <path d="M20 15v5h-5" />
+              </svg>
+            )}
+          </button>
+        )}
+
         {/* Bringing your own music is not a hidden feature, so it gets a
             control in the bar rather than a gesture to discover. */}
         <button
@@ -261,15 +296,24 @@ function PlayerBar({
         </button>
       </div>
 
+      {/* Fullscreen: the video keeps its own shape, so there is screen left
+          over around it. This fills the band under it, rising out of the bar.
+          Hidden while the panel is open, which occupies the same space. */}
+      {isFullscreen && !pickerOpen && (
+        <Equaliser
+          playing={isPlaying}
+          position={currentTime}
+          seed={title}
+          bars={36}
+          className="hero-playlist__eq--wide"
+        />
+      )}
+
       <div className="hero-playlist__body">
         <div className="hero-playlist__meta">
-          {/* A visual, not an analyser: the music plays inside YouTube's iframe,
-              which is another origin, so its audio cannot be read from this
-              page. The bars move while something is playing and settle when it
-              is not, which is the part anyone actually reads them for. */}
-          <span className={`hero-playlist__eq ${isPlaying ? 'is-playing' : ''}`} aria-hidden="true">
-            <i /><i /><i /><i /><i />
-          </span>
+          {/* Driven by the playback clock and seeded from the song title;
+              see hero-equaliser for why it cannot be a real analyser. */}
+          <Equaliser playing={isPlaying} position={currentTime} seed={title} bars={5} />
           <span className="hero-playlist__title" title={title}>{title}</span>
           {artist && <span className="hero-playlist__artist" title={artist}>{artist}</span>}
         </div>
@@ -299,11 +343,17 @@ function PlayerBar({
 /** Plays audio files hosted by the site. */
 function AudioPlayer({
   playlist,
+  onFullscreen,
+  isFullscreen,
+  canFullscreen,
   onCustomise,
   customActive,
   pickerOpen,
 }: {
   playlist: Playlist
+  onFullscreen: () => void
+  isFullscreen: boolean
+  canFullscreen: boolean
   onCustomise: () => void
   customActive: boolean
   pickerOpen: boolean
@@ -422,6 +472,9 @@ function AudioPlayer({
         setCurrentTime(value)
         if (audioRef.current) audioRef.current.currentTime = value
       }}
+      onFullscreen={onFullscreen}
+      isFullscreen={isFullscreen}
+      canFullscreen={canFullscreen}
       onCustomise={onCustomise}
       customActive={customActive}
       pickerOpen={pickerOpen}
@@ -458,12 +511,18 @@ function AudioPlayer({
 function YouTubePlayer({
   playlistId,
   name,
+  onFullscreen,
+  isFullscreen,
+  canFullscreen,
   onCustomise,
   customActive,
   pickerOpen,
 }: {
   playlistId: string
   name: string
+  onFullscreen: () => void
+  isFullscreen: boolean
+  canFullscreen: boolean
   onCustomise: () => void
   customActive: boolean
   pickerOpen: boolean
@@ -612,6 +671,9 @@ function YouTubePlayer({
         setCurrentTime(value)
         playerRef.current?.seekTo(value, true)
       }}
+      onFullscreen={onFullscreen}
+      isFullscreen={isFullscreen}
+      canFullscreen={canFullscreen}
       onCustomise={onCustomise}
       customActive={customActive}
       pickerOpen={pickerOpen}
@@ -729,6 +791,16 @@ function PlaylistPicker({
   )
 }
 
+/**
+ * Whether this browser will put an element fullscreen at all - iOS Safari will
+ * not - read as an external store, because the answer does not exist while
+ * this renders on the server and a button that does nothing is worse than no
+ * button.
+ */
+const subscribeToNothing = () => () => {}
+const readFullscreenSupport = () => typeof document !== 'undefined' && Boolean(document.fullscreenEnabled)
+const noFullscreenOnTheServer = () => false
+
 export default function HeroPlaylist({ playlists }: { playlists: Playlist[] }) {
   // One playlist drives the hero. Extra playlists stay in the data file for a
   // future selector rather than being silently concatenated.
@@ -739,6 +811,42 @@ export default function HeroPlaylist({ playlists }: { playlists: Playlist[] }) {
   // after hydration, without a setState in an effect to cascade a render.
   const customId = useSyncExternalStore(subscribeToCustomPlaylist, readCustomPlaylistId, noCustomPlaylist)
   const [picking, setPicking] = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const dockRef = useRef<HTMLDivElement>(null)
+
+  const canFullscreen = useSyncExternalStore(
+    subscribeToNothing,
+    readFullscreenSupport,
+    noFullscreenOnTheServer
+  )
+
+  // What goes fullscreen is the video and the player together, not the bar on
+  // its own, so the element asked for is the one the page wraps them both in.
+  const fullscreenHost = () => dockRef.current?.closest('.events-scene__hero') as HTMLElement | null
+
+  useEffect(() => {
+    const onChange = () => {
+      const host = fullscreenHost()
+      const on = Boolean(host && document.fullscreenElement === host)
+      setIsFullscreen(on)
+      // That element is rendered by the page rather than by this component, and
+      // nothing re-renders it, so its class is set directly.
+      host?.classList.toggle('is-fullscreen', on)
+    }
+
+    document.addEventListener('fullscreenchange', onChange)
+    return () => document.removeEventListener('fullscreenchange', onChange)
+  }, [])
+
+  const toggleFullscreen = () => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {})
+      return
+    }
+
+    const host = fullscreenHost() || dockRef.current
+    host?.requestFullscreen?.().catch(() => {})
+  }
 
   // Whatever was chosen here wins. What is configured at /admin/playlist is
   // only what plays before anyone chooses - a starting point, not a home to
@@ -772,7 +880,7 @@ export default function HeroPlaylist({ playlists }: { playlists: Playlist[] }) {
   // playlist to hand it.
   if (!playlist) {
     return (
-      <div className="hero-playlist-dock">
+      <div className="hero-playlist-dock" ref={dockRef}>
         {picker}
         <button
           type="button"
@@ -794,7 +902,7 @@ export default function HeroPlaylist({ playlists }: { playlists: Playlist[] }) {
   }
 
   return (
-    <div className="hero-playlist-dock">
+    <div className="hero-playlist-dock" ref={dockRef}>
       {picker}
       {playlist.youtubePlaylistId ? (
         // Keyed by the playlist, so switching to your own starts a fresh
@@ -804,6 +912,9 @@ export default function HeroPlaylist({ playlists }: { playlists: Playlist[] }) {
           key={playlist.youtubePlaylistId}
           playlistId={playlist.youtubePlaylistId}
           name={playlist.name}
+          onFullscreen={toggleFullscreen}
+          isFullscreen={isFullscreen}
+          canFullscreen={canFullscreen}
           onCustomise={togglePicker}
           customActive={Boolean(customId)}
           pickerOpen={picking}
@@ -811,6 +922,9 @@ export default function HeroPlaylist({ playlists }: { playlists: Playlist[] }) {
       ) : (
         <AudioPlayer
           playlist={playlist}
+          onFullscreen={toggleFullscreen}
+          isFullscreen={isFullscreen}
+          canFullscreen={canFullscreen}
           onCustomise={togglePicker}
           customActive={false}
           pickerOpen={picking}

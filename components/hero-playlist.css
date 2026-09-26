@@ -456,11 +456,10 @@
 
 /* The equaliser ---------------------------------------------------------- */
 
-/* Five bars that move while something is playing and settle flat when it
-   stops. Deliberately not wired to the audio: what plays is inside YouTube's
-   iframe, which is another origin, so the page cannot read a single sample of
-   it. Each bar gets its own duration and its own peak, because five bars on
-   one timing read as a machine rather than as music. */
+/* The levels themselves are written per frame by components/hero-equaliser,
+   which follows the playback clock; see that file for why this cannot be a
+   real analyser. Nothing here animates the bars - a transition on transform
+   would smear against sixty writes a second - so this is only their shape. */
 .hero-playlist__eq {
   display: inline-flex;
   align-items: flex-end;
@@ -474,49 +473,105 @@
   height: 100%;
   border-radius: 1.5px;
   background: rgba(110, 78, 52, 0.35);
-  transform: scaleY(0.2);
+  transform: scaleY(0.12);
   transform-origin: bottom center;
-  transition: transform 260ms ease, background-color 260ms ease;
+  transition: background-color 300ms ease;
 }
 
 .hero-playlist__eq.is-playing i {
   background: var(--brand, #b65a3c);
-  animation: hero-eq-bounce 640ms ease-in-out infinite alternate;
 }
 
-.hero-playlist__eq.is-playing i:nth-child(1) {
-  --eq-peak: 0.62;
-  animation-duration: 540ms;
+/* Fullscreen ------------------------------------------------------------- */
+
+/* The wide strip that fills the band left over around the video. It rises out
+   of the top edge of the bar and spans its whole width. */
+.hero-playlist__eq--wide {
+  position: absolute;
+  left: clamp(10px, 2.5vw, 44px);
+  right: clamp(10px, 2.5vw, 44px);
+  bottom: calc(100% + 10px);
+  height: clamp(44px, 12vh, 150px);
+  gap: clamp(2px, 0.45vw, 7px);
+  pointer-events: none;
 }
 
-.hero-playlist__eq.is-playing i:nth-child(2) {
-  --eq-peak: 1;
-  animation-duration: 760ms;
+.hero-playlist__eq--wide i {
+  flex: 1 1 0;
+  width: auto;
+  border-radius: 4px 4px 0 0;
+  background: linear-gradient(180deg, rgba(182, 90, 60, 0.92), rgba(182, 90, 60, 0.2));
 }
 
-.hero-playlist__eq.is-playing i:nth-child(3) {
-  --eq-peak: 0.78;
-  animation-duration: 430ms;
+.hero-playlist__eq--wide.is-playing i {
+  background: linear-gradient(180deg, rgba(182, 90, 60, 0.92), rgba(182, 90, 60, 0.2));
 }
 
-.hero-playlist__eq.is-playing i:nth-child(4) {
-  --eq-peak: 0.94;
-  animation-duration: 880ms;
+/* The video keeps its own shape rather than being cropped to the screen, which
+   is the whole reason there is a band to fill. */
+.events-scene__hero.is-fullscreen {
+  aspect-ratio: auto;
+  width: 100vw;
+  height: 100vh;
+  max-height: none;
+  background: #17110d;
 }
 
-.hero-playlist__eq.is-playing i:nth-child(5) {
-  --eq-peak: 0.55;
-  animation-duration: 610ms;
+.events-scene__hero.is-fullscreen .events-scene__hero-image,
+.events-scene__hero.is-fullscreen .events-scene__hero-video {
+  object-fit: contain;
+  object-position: center center;
 }
 
-@keyframes hero-eq-bounce {
-  from {
-    transform: scaleY(0.2);
-  }
+/* The player becomes the floor of the screen. */
+.events-scene__hero.is-fullscreen .hero-playlist-dock {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  max-width: none;
+  transform: none;
+  padding: 0 clamp(10px, 2.5vw, 44px) clamp(10px, 2.5vh, 28px);
+}
 
-  to {
-    transform: scaleY(var(--eq-peak, 1));
-  }
+.events-scene__hero.is-fullscreen .hero-playlist {
+  padding: 10px clamp(12px, 2vw, 22px);
+  font-size: 0.92rem;
+}
+
+.events-scene__hero.is-fullscreen .hero-playlist__yt {
+  width: 132px;
+  height: 74px;
+}
+
+.events-scene__hero.is-fullscreen .hero-playlist__btn {
+  width: 36px;
+  height: 36px;
+}
+
+.events-scene__hero.is-fullscreen .hero-playlist__btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.events-scene__hero.is-fullscreen .hero-playlist__btn--play {
+  width: 44px;
+  height: 44px;
+}
+
+.events-scene__hero.is-fullscreen .hero-playlist__btn--play svg {
+  width: 24px;
+  height: 24px;
+}
+
+.events-scene__hero.is-fullscreen .hero-playlist__eq:not(.hero-playlist__eq--wide) {
+  height: 17px;
+}
+
+/* Anything else in the frame belongs to the page, not to fullscreen. */
+.events-scene__hero.is-fullscreen .chonga-mic-container,
+.events-scene__hero.is-fullscreen .mic-countdown-block {
+  display: none;
 }
 
 /* The playlists on offer ------------------------------------------------- */
@@ -564,12 +619,7 @@ p.hero-playlist-picker__label {
 
 @media (prefers-reduced-motion: reduce) {
 
-  /* Still an equaliser, just not a moving one. */
-  .hero-playlist__eq.is-playing i {
-    animation: none;
-    transform: scaleY(var(--eq-peak, 0.7));
-  }
-
+  /* hero-equaliser writes fixed levels instead of running its loop. */
   .hero-playlist__eq i,
   .hero-playlist-picker__preset {
     transition: none;
