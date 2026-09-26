@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useId, useRef, useState, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import './hero-playlist.css'
 import type { Playlist } from '@/utils/data/playlists'
 import {
@@ -11,7 +11,7 @@ import {
   writeCustomPlaylistId,
 } from '@/utils/data/custom-playlist'
 import { PRESET_PLAYLISTS, presetName } from '@/utils/data/preset-playlists'
-import Equaliser from './hero-equaliser'
+import PlaylistContents, { type QueueItem } from './playlist-contents'
 
 /**
  * Off, the whole playlist on a loop, or the one song on a loop - the three
@@ -50,6 +50,9 @@ type YouTubePlayerInstance = {
   previousVideo(): void
   setShuffle(shuffle: boolean): void
   setLoop(loop: boolean): void
+  getPlaylist(): string[] | null
+  getPlaylistIndex(): number
+  playVideoAt(index: number): void
   seekTo(seconds: number, allowSeekAhead: boolean): void
   getCurrentTime(): number
   getDuration(): number
@@ -139,6 +142,14 @@ type BarProps = {
   repeat: RepeatMode
   onRepeat: () => void
   onSeek: (seconds: number) => void
+  /** The songs in what is loaded, for the contents panel. */
+  queue: QueueItem[]
+  queueIndex: number
+  queueOpen: boolean
+  onToggleQueue: () => void
+  onPlayAt: (index: number) => void
+  /** Set when the queue is a YouTube playlist, for the links out. */
+  playlistId?: string
   /** Takes the video and the player to the whole screen, and back. */
   onFullscreen: () => void
   isFullscreen: boolean
@@ -167,6 +178,12 @@ function PlayerBar({
   repeat,
   onRepeat,
   onSeek,
+  queue,
+  queueIndex,
+  queueOpen,
+  onToggleQueue,
+  onPlayAt,
+  playlistId,
   onFullscreen,
   isFullscreen,
   canFullscreen,
@@ -249,6 +266,22 @@ function PlayerBar({
           </svg>
         </button>
 
+        <button
+          type="button"
+          className={`hero-playlist__btn hero-playlist__btn--queue ${queueOpen ? 'is-on' : ''}`}
+          onClick={onToggleQueue}
+          aria-label="What is in this playlist"
+          title="What is in this playlist"
+          aria-expanded={queueOpen}
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M4 7h11" />
+            <path d="M4 12h11" />
+            <path d="M4 17h7" />
+            <path d="M17.5 14.2v5.6a.4.4 0 0 0 .62.33l4.2-2.8a.4.4 0 0 0 0-.66l-4.2-2.8a.4.4 0 0 0-.62.33Z" />
+          </svg>
+        </button>
+
         {canFullscreen && (
           <button
             type="button"
@@ -296,24 +329,18 @@ function PlayerBar({
         </button>
       </div>
 
-      {/* Fullscreen: the video keeps its own shape, so there is screen left
-          over around it. This fills the band under it, rising out of the bar.
-          Hidden while the panel is open, which occupies the same space. */}
-      {isFullscreen && !pickerOpen && (
-        <Equaliser
-          playing={isPlaying}
-          position={currentTime}
-          seed={title}
-          bars={36}
-          className="hero-playlist__eq--wide"
+      {queueOpen && (
+        <PlaylistContents
+          items={queue}
+          currentIndex={queueIndex}
+          playlistId={playlistId}
+          onPlayAt={onPlayAt}
+          onClose={onToggleQueue}
         />
       )}
 
       <div className="hero-playlist__body">
         <div className="hero-playlist__meta">
-          {/* Driven by the playback clock and seeded from the song title;
-              see hero-equaliser for why it cannot be a real analyser. */}
-          <Equaliser playing={isPlaying} position={currentTime} seed={title} bars={5} />
           <span className="hero-playlist__title" title={title}>{title}</span>
           {artist && <span className="hero-playlist__artist" title={artist}>{artist}</span>}
         </div>
@@ -374,6 +401,13 @@ function AudioPlayer({
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [failed, setFailed] = useState(false)
+  const [queueOpen, setQueueOpen] = useState(false)
+
+  // Hosted audio knows its own songs; there is nothing to look up.
+  const queue = useMemo<QueueItem[]>(
+    () => tracks.map((item) => ({ title: item.title, artist: item.artist })),
+    [tracks]
+  )
 
   const track = tracks[index]
 
@@ -472,6 +506,11 @@ function AudioPlayer({
         setCurrentTime(value)
         if (audioRef.current) audioRef.current.currentTime = value
       }}
+      queue={queue}
+      queueIndex={index}
+      queueOpen={queueOpen}
+      onToggleQueue={() => setQueueOpen((open) => !open)}
+      onPlayAt={(next) => goTo(next, true)}
       onFullscreen={onFullscreen}
       isFullscreen={isFullscreen}
       canFullscreen={canFullscreen}
@@ -540,6 +579,13 @@ function YouTubePlayer({
   const [title, setTitle] = useState(name)
   const [artist, setArtist] = useState<string | undefined>(undefined)
   const [error, setError] = useState(false)
+  const [queueOpen, setQueueOpen] = useState(false)
+  // The video ids of what YouTube actually loaded, which is the only list of
+  // the playlist's contents available without an API key.
+  const [videoIds, setVideoIds] = useState<string[]>([])
+  const [queueIndex, setQueueIndex] = useState(0)
+
+  const queue = useMemo<QueueItem[]>(() => videoIds.map((videoId) => ({ videoId })), [videoIds])
 
   // Read inside the player's own callbacks, which are set up once per playlist
   // and would otherwise close over whatever repeat was when the player was
@@ -562,6 +608,14 @@ function YouTubePlayer({
       if (data?.title) setTitle(data.title)
       setArtist(data?.author || undefined)
       setDuration(player.getDuration() || 0)
+
+      // The contents, re-read on every transition: the list is empty until
+      // YouTube has loaded the playlist, and shuffle reorders it.
+      const list = player.getPlaylist?.() || []
+      setVideoIds((current) =>
+        current.length === list.length && current.every((id, i) => id === list[i]) ? current : list
+      )
+      setQueueIndex(player.getPlaylistIndex?.() ?? 0)
     }
 
     loadYouTubeApi().then(
@@ -671,6 +725,12 @@ function YouTubePlayer({
         setCurrentTime(value)
         playerRef.current?.seekTo(value, true)
       }}
+      queue={queue}
+      queueIndex={queueIndex}
+      queueOpen={queueOpen}
+      onToggleQueue={() => setQueueOpen((open) => !open)}
+      onPlayAt={(next) => playerRef.current?.playVideoAt(next)}
+      playlistId={playlistId}
       onFullscreen={onFullscreen}
       isFullscreen={isFullscreen}
       canFullscreen={canFullscreen}

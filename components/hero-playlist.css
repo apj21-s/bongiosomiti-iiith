@@ -456,56 +456,7 @@
 
 /* The equaliser ---------------------------------------------------------- */
 
-/* The levels themselves are written per frame by components/hero-equaliser,
-   which follows the playback clock; see that file for why this cannot be a
-   real analyser. Nothing here animates the bars - a transition on transform
-   would smear against sixty writes a second - so this is only their shape. */
-.hero-playlist__eq {
-  display: inline-flex;
-  align-items: flex-end;
-  gap: 2px;
-  flex-shrink: 0;
-  height: 13px;
-}
-
-.hero-playlist__eq i {
-  width: 2.5px;
-  height: 100%;
-  border-radius: 1.5px;
-  background: rgba(110, 78, 52, 0.35);
-  transform: scaleY(0.12);
-  transform-origin: bottom center;
-  transition: background-color 300ms ease;
-}
-
-.hero-playlist__eq.is-playing i {
-  background: var(--brand, #b65a3c);
-}
-
 /* Fullscreen ------------------------------------------------------------- */
-
-/* The wide strip that fills the band left over around the video. It rises out
-   of the top edge of the bar and spans its whole width. */
-.hero-playlist__eq--wide {
-  position: absolute;
-  left: clamp(10px, 2.5vw, 44px);
-  right: clamp(10px, 2.5vw, 44px);
-  bottom: calc(100% + 10px);
-  height: clamp(44px, 12vh, 150px);
-  gap: clamp(2px, 0.45vw, 7px);
-  pointer-events: none;
-}
-
-.hero-playlist__eq--wide i {
-  flex: 1 1 0;
-  width: auto;
-  border-radius: 4px 4px 0 0;
-  background: linear-gradient(180deg, rgba(182, 90, 60, 0.92), rgba(182, 90, 60, 0.2));
-}
-
-.hero-playlist__eq--wide.is-playing i {
-  background: linear-gradient(180deg, rgba(182, 90, 60, 0.92), rgba(182, 90, 60, 0.2));
-}
 
 /* The video keeps its own shape rather than being cropped to the screen, which
    is the whole reason there is a band to fill. */
@@ -563,11 +514,6 @@
   width: 24px;
   height: 24px;
 }
-
-.events-scene__hero.is-fullscreen .hero-playlist__eq:not(.hero-playlist__eq--wide) {
-  height: 17px;
-}
-
 /* Anything else in the frame belongs to the page, not to fullscreen. */
 .events-scene__hero.is-fullscreen .chonga-mic-container,
 .events-scene__hero.is-fullscreen .mic-countdown-block {
@@ -619,9 +565,186 @@ p.hero-playlist-picker__label {
 
 @media (prefers-reduced-motion: reduce) {
 
-  /* hero-equaliser writes fixed levels instead of running its loop. */
-  .hero-playlist__eq i,
   .hero-playlist-picker__preset {
     transition: none;
   }
+}
+
+/* What is in the playlist ------------------------------------------------ */
+
+/* Sits above the bar, like the picker, and is positioned against the bar
+   rather than the dock so it lands in the same place in fullscreen. */
+.hero-playlist-queue {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(100% + 8px);
+  z-index: 5;
+
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: rgba(251, 245, 232, 0.96);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 26px rgba(47, 33, 20, 0.32);
+
+  color: #3c2c1e;
+  font-size: 0.82rem;
+}
+
+.hero-playlist-queue__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.hero-playlist-queue__heading {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-weight: 700;
+}
+
+.hero-playlist-queue__count {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: rgba(182, 90, 60, 0.14);
+  color: var(--brand-2, #8e3f2d);
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.hero-playlist-queue__list {
+  counter-reset: song;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: min(46vh, 320px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.hero-playlist-queue__row {
+  counter-increment: song;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 4px;
+  border-radius: 10px;
+}
+
+.hero-playlist-queue__row::before {
+  content: counter(song);
+  flex-shrink: 0;
+  width: 1.7em;
+  text-align: right;
+  color: #9a8776;
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.hero-playlist-queue__row.is-current {
+  background: rgba(182, 90, 60, 0.13);
+}
+
+.hero-playlist-queue__row.is-current .hero-playlist-queue__song {
+  font-weight: 700;
+}
+
+.hero-playlist-queue__play {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #6b5b4c;
+  cursor: pointer;
+}
+
+.hero-playlist-queue__play svg {
+  width: 13px;
+  height: 13px;
+  fill: currentColor;
+  stroke: none;
+}
+
+.hero-playlist-queue__play:hover {
+  color: #fdf7ea;
+  background: var(--brand, #b65a3c);
+}
+
+.hero-playlist-queue__play:focus-visible {
+  outline: 2px solid var(--brand-2, #8e3f2d);
+  outline-offset: 2px;
+}
+
+.hero-playlist-queue__name {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+  color: inherit;
+  text-decoration: none;
+}
+
+.hero-playlist-queue__song {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+a.hero-playlist-queue__name:hover .hero-playlist-queue__song {
+  color: var(--brand-2, #8e3f2d);
+  text-decoration: underline;
+}
+
+a.hero-playlist-queue__name:focus-visible {
+  outline: 2px solid var(--brand-2, #8e3f2d);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.hero-playlist-queue__by {
+  flex-shrink: 2;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: #6b5b4c;
+  font-size: 0.72rem;
+}
+
+.hero-playlist-queue__empty,
+.hero-playlist-queue__more {
+  margin: 0;
+  color: #6b5b4c;
+  font-size: 0.74rem;
+  line-height: 1.45;
+}
+
+.hero-playlist-queue__more {
+  align-self: flex-start;
+  text-decoration: underline;
+}
+
+.hero-playlist-queue__more:hover {
+  color: var(--brand-2, #8e3f2d);
+}
+
+/* There is room for more of it on a whole screen. */
+.events-scene__hero.is-fullscreen .hero-playlist-queue__list {
+  max-height: min(56vh, 520px);
 }
