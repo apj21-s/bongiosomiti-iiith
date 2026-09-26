@@ -196,7 +196,11 @@ function PlayerBar({
   const progress = seekMax > 0 ? (currentTime / seekMax) * 100 : 0
 
   return (
-    <div className="hero-playlist" role="group" aria-label="Festival music player">
+    <div
+      className={`hero-playlist ${isPlaying ? 'is-playing' : ''}`}
+      role="group"
+      aria-label="Festival music player"
+    >
       {children}
 
       <div className="hero-playlist__controls">
@@ -858,6 +862,28 @@ function PlaylistPicker({
  * button.
  */
 const subscribeToNothing = () => () => {}
+
+/**
+ * Whether this is a phone-sized screen, which is where the player starts out of
+ * the way.
+ *
+ * The server cannot know, and answering wrongly for a moment would show the
+ * player on a phone and then snatch it away, so the server's answer is "no idea"
+ * and the dock is left without a state class until the browser has one. The
+ * stylesheet reads that undecided state exactly the same way - open above the
+ * breakpoint, shut below it - so the first paint is already right and nothing
+ * moves when React catches up.
+ */
+const SMALL_SCREEN = '(max-width: 560px)'
+
+function subscribeToScreen(onChange: () => void) {
+  const query = window.matchMedia(SMALL_SCREEN)
+  query.addEventListener('change', onChange)
+  return () => query.removeEventListener('change', onChange)
+}
+
+const readScreen = () => (window.matchMedia(SMALL_SCREEN).matches ? 'small' : 'wide')
+const screenUnknownOnTheServer = () => null
 const readFullscreenSupport = () => typeof document !== 'undefined' && Boolean(document.fullscreenEnabled)
 const noFullscreenOnTheServer = () => false
 
@@ -873,6 +899,14 @@ export default function HeroPlaylist({ playlists }: { playlists: Playlist[] }) {
   const [picking, setPicking] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const dockRef = useRef<HTMLDivElement>(null)
+
+  const screen = useSyncExternalStore(subscribeToScreen, readScreen, screenUnknownOnTheServer)
+
+  // null until somebody says otherwise, at which point their choice holds for
+  // the visit whatever the screen does.
+  const [choice, setChoice] = useState<boolean | null>(null)
+  const shown = choice ?? (screen === null ? null : screen === 'wide')
+  const dockState = shown === null ? '' : shown ? 'is-open' : 'is-shut'
 
   const canFullscreen = useSyncExternalStore(
     subscribeToNothing,
@@ -940,7 +974,7 @@ export default function HeroPlaylist({ playlists }: { playlists: Playlist[] }) {
   // playlist to hand it.
   if (!playlist) {
     return (
-      <div className="hero-playlist-dock" ref={dockRef}>
+      <div className={`hero-playlist-dock ${dockState}`} ref={dockRef}>
         {picker}
         <button
           type="button"
@@ -962,7 +996,27 @@ export default function HeroPlaylist({ playlists }: { playlists: Playlist[] }) {
   }
 
   return (
-    <div className="hero-playlist-dock" ref={dockRef}>
+    <div className={`hero-playlist-dock ${dockState}`} ref={dockRef}>
+      {/* Always rendered, so the stylesheet can hide the player before React
+          has run rather than after. */}
+      <button
+        type="button"
+        className="hero-playlist__toggle"
+        onClick={() => setChoice(!(shown ?? true))}
+        aria-expanded={shown ?? true}
+        aria-label={shown === false ? 'Show the music player' : 'Hide the music player'}
+        title={shown === false ? 'Show the music player' : 'Hide the music player'}
+      >
+        <svg className="hero-playlist__toggle-note" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M9 18V6l10-2v12" />
+          <circle cx="6.5" cy="18" r="2.5" />
+          <circle cx="16.5" cy="16" r="2.5" />
+        </svg>
+        <svg className="hero-playlist__toggle-chevron" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="m6 10 6 6 6-6" />
+        </svg>
+      </button>
+
       {picker}
       {playlist.youtubePlaylistId ? (
         // Keyed by the playlist, so switching to your own starts a fresh

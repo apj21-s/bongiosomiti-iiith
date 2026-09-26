@@ -748,3 +748,114 @@ a.hero-playlist-queue__name:focus-visible {
 .events-scene__hero.is-fullscreen .hero-playlist-queue__list {
   max-height: min(56vh, 520px);
 }
+
+/* Hiding the player ------------------------------------------------------ */
+
+/* Three states, and the stylesheet handles all of them so the first paint is
+   already right:
+     (no class)  the server's answer - open above the breakpoint, shut below it
+     .is-open    somebody, or the screen, says show it
+     .is-shut    somebody says hide it, at any width
+
+   Collapsed while music is playing leaves YouTube's own tile on screen, small
+   but visible, because their terms ask for their player to be shown while it
+   is playing. With nothing playing there is nothing to show, and the dock
+   shrinks to the button. */
+.hero-playlist__toggle {
+  align-self: flex-end;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 5px 8px;
+
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: rgba(251, 245, 232, 0.82);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 14px rgba(47, 33, 20, 0.28);
+
+  color: #6b5b4c;
+  cursor: pointer;
+  transition: color 200ms ease, background-color 200ms ease;
+}
+
+.hero-playlist__toggle:hover {
+  color: var(--brand-2, #8e3f2d);
+  background: rgba(251, 245, 232, 0.96);
+}
+
+.hero-playlist__toggle:focus-visible {
+  outline: 2px solid var(--brand-2, #8e3f2d);
+  outline-offset: 2px;
+}
+
+.hero-playlist__toggle svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.hero-playlist__toggle-note {
+  width: 15px;
+  height: 15px;
+}
+
+.hero-playlist__toggle-chevron {
+  width: 14px;
+  height: 14px;
+  transition: transform 220ms ease;
+}
+
+/* Shut at any width, because this one was asked for. */
+.hero-playlist-dock.is-shut > :not(.hero-playlist__toggle) {
+  display: none;
+}
+
+.hero-playlist-dock.is-shut .hero-playlist.is-playing {
+  display: flex;
+  align-self: flex-end;
+  width: auto;
+  padding: 4px;
+  border-radius: 12px;
+}
+
+.hero-playlist-dock.is-shut .hero-playlist.is-playing > :not(.hero-playlist__yt) {
+  display: none;
+}
+
+.hero-playlist-dock.is-shut .hero-playlist__toggle-chevron {
+  transform: rotate(180deg);
+}
+
+/* A phone, before anybody has said either way. */
+@media (max-width: 560px) {
+  .hero-playlist-dock:not(.is-open) > :not(.hero-playlist__toggle) {
+    display: none;
+  }
+
+  .hero-playlist-dock:not(.is-open) .hero-playlist.is-playing {
+    display: flex;
+    align-self: flex-end;
+    width: auto;
+    padding: 4px;
+    border-radius: 12px;
+  }
+
+  .hero-playlist-dock:not(.is-open) .hero-playlist.is-playing > :not(.hero-playlist__yt) {
+    display: none;
+  }
+
+  .hero-playlist-dock:not(.is-open) .hero-playlist__toggle-chevron {
+    transform: rotate(180deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .hero-playlist__toggle,
+  .hero-playlist__toggle-chevron {
+    transition: none;
+  }
+}
