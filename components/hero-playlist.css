@@ -3,7 +3,9 @@
    overlays read as one family. The videos underneath are pointer-events: none,
    so nothing here fights them for clicks. */
 
-.hero-playlist {
+/* Everything the player owns lives in one dock, so the panel for adding a
+   playlist can stack above the bar instead of being positioned against it. */
+.hero-playlist-dock {
   position: absolute;
   left: 50%;
   bottom: clamp(12px, 2.2vw, 24px);
@@ -11,16 +13,30 @@
   z-index: 4;
 
   display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  width: min(560px, calc(100% - 24px));
+}
+
+.hero-playlist {
+  position: relative;
+
+  display: flex;
   align-items: center;
   gap: clamp(8px, 1.4vw, 14px);
-  width: min(560px, calc(100% - 24px));
+  width: 100%;
   padding: 8px clamp(10px, 1.6vw, 16px);
 
   border-radius: 48px;
   border: 1px solid rgba(255, 255, 255, 0.5);
   background: rgba(251, 245, 232, 0.82);
+  /* Only the unprefixed property: the CSS pipeline collapses a hand-written
+     -webkit-backdrop-filter and backdrop-filter pair down to the prefixed one
+     alone, and Chrome no longer accepts that alias - the blur silently did
+     nothing. Written unprefixed, the prefix is added back for the browsers
+     whose targets need it. */
   backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
   box-shadow: 0 6px 22px rgba(47, 33, 20, 0.3);
 
   color: #3c2c1e;
@@ -219,9 +235,12 @@
 }
 
 @media (max-width: 560px) {
-  .hero-playlist {
+  .hero-playlist-dock {
     width: calc(100% - 16px);
     bottom: 10px;
+  }
+
+  .hero-playlist {
     gap: 6px;
     padding: 6px 10px;
   }
@@ -255,5 +274,162 @@
 
   .hero-playlist__btn:active {
     transform: none;
+  }
+}
+
+/* Your own playlist ---------------------------------------------------- */
+
+.hero-playlist__btn--custom.is-on {
+  color: var(--brand, #b65a3c);
+  background: rgba(182, 90, 60, 0.16);
+}
+
+/* With nothing configured and nothing chosen, this button is the player. It
+   borrows the bar's own glass so the two are recognisably the same object. */
+.hero-playlist--empty {
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 18px;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #3c2c1e;
+  cursor: pointer;
+}
+
+.hero-playlist--empty svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.hero-playlist--empty:hover {
+  color: var(--brand-2, #8e3f2d);
+}
+
+.hero-playlist--empty:focus-visible {
+  outline: 2px solid var(--brand-2, #8e3f2d);
+  outline-offset: 2px;
+}
+
+.hero-playlist-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: rgba(251, 245, 232, 0.94);
+  /* Only the unprefixed property: the CSS pipeline collapses a hand-written
+     -webkit-backdrop-filter and backdrop-filter pair down to the prefixed one
+     alone, and Chrome no longer accepts that alias - the blur silently did
+     nothing. Written unprefixed, the prefix is added back for the browsers
+     whose targets need it. */
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 26px rgba(47, 33, 20, 0.32);
+
+  color: #3c2c1e;
+  font-size: 0.82rem;
+}
+
+.hero-playlist-picker__label {
+  font-weight: 700;
+}
+
+.hero-playlist-picker__row {
+  display: flex;
+  gap: 8px;
+}
+
+.hero-playlist-picker__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(110, 78, 52, 0.3);
+  background: rgba(255, 255, 255, 0.82);
+  color: #3c2c1e;
+  font: inherit;
+}
+
+.hero-playlist-picker__input:focus-visible {
+  outline: 2px solid var(--brand-2, #8e3f2d);
+  outline-offset: 1px;
+}
+
+.hero-playlist-picker__go {
+  flex-shrink: 0;
+  padding: 7px 18px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--brand, #b65a3c);
+  color: #fdf7ea;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 200ms ease;
+}
+
+.hero-playlist-picker__go:hover {
+  background: var(--brand-2, #8e3f2d);
+}
+
+.hero-playlist-picker__go:focus-visible {
+  outline: 2px solid var(--brand-2, #8e3f2d);
+  outline-offset: 2px;
+}
+
+.hero-playlist-picker__error {
+  margin: 0;
+  color: #8e3f2d;
+  font-size: 0.74rem;
+  line-height: 1.4;
+}
+
+.hero-playlist-picker__hint {
+  margin: 0;
+  color: #6b5b4c;
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
+.hero-playlist-picker__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+}
+
+.hero-playlist-picker__link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #6b5b4c;
+  font: inherit;
+  font-size: 0.74rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.hero-playlist-picker__link:hover {
+  color: var(--brand-2, #8e3f2d);
+}
+
+.hero-playlist-picker__link:focus-visible {
+  outline: 2px solid var(--brand-2, #8e3f2d);
+  outline-offset: 2px;
+}
+
+@media (max-width: 560px) {
+  .hero-playlist-picker__row {
+    flex-wrap: wrap;
+  }
+
+  .hero-playlist-picker__go {
+    flex: 1 1 auto;
   }
 }

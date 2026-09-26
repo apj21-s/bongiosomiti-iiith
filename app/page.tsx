@@ -125,7 +125,9 @@ export default async function Home() {
             <div className="events-scene__hero scroll-reveal scroll-reveal--delay-1" id="events-hero-player">
               <img className="events-scene__hero-image events-scene__hero-poster" src="/assets/puja-poster.webp" alt="Bengali Puja Courtyard Celebration" width={1200} height={880} loading="lazy" decoding="async" />
               <CrossfadeVideo />
-              {playlists.length > 0 && <HeroPlaylist playlists={playlists} />}
+              {/* Rendered even with nothing configured: the player carries the button
+                  for a visitor to bring their own playlist. */}
+              <HeroPlaylist playlists={playlists} />
             </div>
 
             <div className="story-card__intro scroll-reveal" style={{ padding: '0 clamp(16px, 4vw, 48px)' }}>

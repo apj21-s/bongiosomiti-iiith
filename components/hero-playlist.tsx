@@ -1,8 +1,15 @@
 'use client'
 
-import { useCallback, useEffect, useId, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useRef, useState, useSyncExternalStore } from 'react'
 import './hero-playlist.css'
 import type { Playlist } from '@/utils/data/playlists'
+import {
+  noCustomPlaylist,
+  readCustomPlaylistId,
+  subscribeToCustomPlaylist,
+  toCustomPlaylistId,
+  writeCustomPlaylistId,
+} from '@/utils/data/custom-playlist'
 
 /**
  * Music player overlaid on the events video on the homepage.
@@ -108,6 +115,11 @@ type BarProps = {
   onPrevious: () => void
   onShuffle: () => void
   onSeek: (seconds: number) => void
+  /** Opens the panel for pasting your own YouTube playlist link. */
+  onCustomise: () => void
+  /** Whether what is playing is the visitor's own playlist. */
+  customActive?: boolean
+  pickerOpen?: boolean
   children?: React.ReactNode
 }
 
@@ -125,6 +137,9 @@ function PlayerBar({
   onPrevious,
   onShuffle,
   onSeek,
+  onCustomise,
+  customActive = false,
+  pickerOpen = false,
   children,
 }: BarProps) {
   const seekMax = duration > 0 ? duration : 0
@@ -183,6 +198,25 @@ function PlayerBar({
             <path d="m15 15 2.5 2L15 19" />
           </svg>
         </button>
+
+        {/* Bringing your own music is not a hidden feature, so it gets a
+            control in the bar rather than a gesture to discover. */}
+        <button
+          type="button"
+          className={`hero-playlist__btn hero-playlist__btn--custom ${customActive ? 'is-on' : ''}`}
+          onClick={onCustomise}
+          aria-label="Use your own YouTube playlist"
+          title="Use your own YouTube playlist"
+          aria-expanded={pickerOpen}
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M4 7h11" />
+            <path d="M4 12h11" />
+            <path d="M4 17h7" />
+            <path d="M18 13v7" />
+            <path d="M14.5 16.5h7" />
+          </svg>
+        </button>
       </div>
 
       <div className="hero-playlist__body">
@@ -214,7 +248,17 @@ function PlayerBar({
 }
 
 /** Plays audio files hosted by the site. */
-function AudioPlayer({ playlist }: { playlist: Playlist }) {
+function AudioPlayer({
+  playlist,
+  onCustomise,
+  customActive,
+  pickerOpen,
+}: {
+  playlist: Playlist
+  onCustomise: () => void
+  customActive: boolean
+  pickerOpen: boolean
+}) {
   const tracks = playlist.tracks
 
   const audioRef = useRef<HTMLAudioElement>(null)
@@ -326,6 +370,9 @@ function AudioPlayer({ playlist }: { playlist: Playlist }) {
         setCurrentTime(value)
         if (audioRef.current) audioRef.current.currentTime = value
       }}
+      onCustomise={onCustomise}
+      customActive={customActive}
+      pickerOpen={pickerOpen}
     >
       <audio
         ref={audioRef}
@@ -347,7 +394,19 @@ function AudioPlayer({ playlist }: { playlist: Playlist }) {
 }
 
 /** Plays a YouTube playlist through YouTube's own embedded player. */
-function YouTubePlayer({ playlistId, name }: { playlistId: string; name: string }) {
+function YouTubePlayer({
+  playlistId,
+  name,
+  onCustomise,
+  customActive,
+  pickerOpen,
+}: {
+  playlistId: string
+  name: string
+  onCustomise: () => void
+  customActive: boolean
+  pickerOpen: boolean
+}) {
   const mountId = useId().replace(/:/g, '')
   const hostRef = useRef<HTMLDivElement>(null)
   const playerRef = useRef<YouTubePlayerInstance | null>(null)
@@ -472,6 +531,9 @@ function YouTubePlayer({ playlistId, name }: { playlistId: string; name: string 
         setCurrentTime(value)
         playerRef.current?.seekTo(value, true)
       }}
+      onCustomise={onCustomise}
+      customActive={customActive}
+      pickerOpen={pickerOpen}
     >
       {/* Kept visible on purpose: YouTube's terms require their player to be
           shown while it is playing, so it sits in the bar as a small tile. */}
@@ -482,15 +544,181 @@ function YouTubePlayer({ playlistId, name }: { playlistId: string; name: string 
   )
 }
 
+/**
+ * The panel behind the playlist button: paste a link, press Play.
+ *
+ * The link is checked with the same parseYouTubePlaylistId the admin form and
+ * the server-side setting use, so anything that is not a YouTube playlist -
+ * a javascript: URL, a lookalike host, a video link - is refused here too, and
+ * only the id it extracts is kept.
+ */
+function PlaylistPicker({
+  current,
+  hasSite,
+  onChoose,
+  onClose,
+}: {
+  current: string | null
+  hasSite: boolean
+  onChoose: (id: string | null) => void
+  onClose: () => void
+}) {
+  const fieldId = useId()
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [link, setLink] = useState('')
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    inputRef.current?.focus()
+  }, [])
+
+  return (
+    <form
+      className="hero-playlist-picker"
+      onSubmit={(e) => {
+        e.preventDefault()
+        const id = toCustomPlaylistId(link)
+        if (!id) {
+          setError('That does not look like a YouTube playlist link. It should look like youtube.com/playlist?list=PL...')
+          return
+        }
+        onChoose(id)
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onClose()
+      }}
+    >
+      <label className="hero-playlist-picker__label" htmlFor={fieldId}>
+        Play your own YouTube playlist
+      </label>
+
+      <div className="hero-playlist-picker__row">
+        <input
+          id={fieldId}
+          ref={inputRef}
+          className="hero-playlist-picker__input"
+          type="text"
+          inputMode="url"
+          autoComplete="off"
+          spellCheck={false}
+          placeholder="https://www.youtube.com/playlist?list=..."
+          value={link}
+          onChange={(e) => {
+            setLink(e.currentTarget.value)
+            setError(null)
+          }}
+        />
+        <button type="submit" className="hero-playlist-picker__go">
+          Play
+        </button>
+      </div>
+
+      {error && (
+        <p className="hero-playlist-picker__error" role="alert">
+          {error}
+        </p>
+      )}
+
+      <p className="hero-playlist-picker__hint">
+        It has to be a public or unlisted playlist. Your choice is kept in this
+        browser only and does not change what anyone else hears.
+      </p>
+
+      <div className="hero-playlist-picker__actions">
+        {current && (
+          <button type="button" className="hero-playlist-picker__link" onClick={() => onChoose(null)}>
+            {hasSite ? 'Back to the festival playlist' : 'Remove my playlist'}
+          </button>
+        )}
+        <button type="button" className="hero-playlist-picker__link" onClick={onClose}>
+          Close
+        </button>
+      </div>
+    </form>
+  )
+}
+
 export default function HeroPlaylist({ playlists }: { playlists: Playlist[] }) {
   // One playlist drives the hero. Extra playlists stay in the data file for a
   // future selector rather than being silently concatenated.
-  const playlist = playlists[0]
-  if (!playlist) return null
+  const sitePlaylist = playlists[0]
 
-  if (playlist.youtubePlaylistId) {
-    return <YouTubePlayer playlistId={playlist.youtubePlaylistId} name={playlist.name} />
+  // Read as an external store, because that is what localStorage is: nothing
+  // on the server, so the server snapshot is empty and the real value arrives
+  // after hydration, without a setState in an effect to cascade a render.
+  const customId = useSyncExternalStore(subscribeToCustomPlaylist, readCustomPlaylistId, noCustomPlaylist)
+  const [picking, setPicking] = useState(false)
+
+  // The visitor's own playlist wins over the configured one while it is set.
+  const playlist: Playlist | undefined = customId
+    ? { id: 'custom', name: 'Your playlist', youtubePlaylistId: customId, tracks: [] }
+    : sitePlaylist
+
+  const togglePicker = () => setPicking((open) => !open)
+
+  const picker = picking ? (
+    <PlaylistPicker
+      current={customId}
+      hasSite={Boolean(sitePlaylist)}
+      onClose={() => setPicking(false)}
+      onChoose={(id) => {
+        // The write notifies the store, which re-renders this with the new id.
+        writeCustomPlaylistId(id)
+        setPicking(false)
+      }}
+    />
+  ) : null
+
+  // Nothing configured and nothing chosen. The button is then the whole
+  // player, rather than there being no way in at all - which is what used to
+  // happen, because the homepage did not render this component without a
+  // playlist to hand it.
+  if (!playlist) {
+    return (
+      <div className="hero-playlist-dock">
+        {picker}
+        <button
+          type="button"
+          className="hero-playlist hero-playlist--empty"
+          onClick={togglePicker}
+          aria-expanded={picking}
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M4 7h11" />
+            <path d="M4 12h11" />
+            <path d="M4 17h7" />
+            <path d="M18 13v7" />
+            <path d="M14.5 16.5h7" />
+          </svg>
+          Add a YouTube playlist
+        </button>
+      </div>
+    )
   }
 
-  return <AudioPlayer playlist={playlist} />
+  return (
+    <div className="hero-playlist-dock">
+      {picker}
+      {playlist.youtubePlaylistId ? (
+        // Keyed by the playlist, so switching to your own starts a fresh
+        // player instead of showing the old track title until YouTube
+        // catches up.
+        <YouTubePlayer
+          key={playlist.youtubePlaylistId}
+          playlistId={playlist.youtubePlaylistId}
+          name={playlist.name}
+          onCustomise={togglePicker}
+          customActive={Boolean(customId)}
+          pickerOpen={picking}
+        />
+      ) : (
+        <AudioPlayer
+          playlist={playlist}
+          onCustomise={togglePicker}
+          customActive={false}
+          pickerOpen={picking}
+        />
+      )}
+    </div>
+  )
 }
