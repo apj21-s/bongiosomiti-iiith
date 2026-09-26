@@ -11166,6 +11166,13 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
   --hero-sky: #f3e2c1;
   /* autumn-landscape.webp is 1792x592 */
   --hero-art-ratio: 3.0270;
+  /* How much of the screen the painting occupies. Its own ratio on a laptop;
+     on a narrow phone that alone would leave a 137px sliver under a screen of
+     flat sky, so it holds at least 42vh and the image crops instead. The crop
+     keeps the right of the frame (object-position: right 45%), which is where
+     the cyclist the bird lands on rides. One value, used by both the scene and
+     the text above it, so the two cannot drift apart. */
+  --hero-art-height: max(calc(100vw / var(--hero-art-ratio)), 42vh);
 }
 
 .home-hero {
@@ -11183,7 +11190,7 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
 .home-hero__scene {
   position: absolute;
   inset: auto 0 0 0;
-  height: min(calc(100vw / var(--hero-art-ratio)), 100%);
+  height: min(var(--hero-art-height), 100%);
 }
 
 /* The painting's top row is not perfectly flat - it runs from #f3e0be to
@@ -11200,19 +11207,23 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
   pointer-events: none;
 }
 
-/* The title, subtitle and tagline sit in the sky above the artwork. */
+/* The title, subtitle and tagline sit in the sky, low enough that the landing
+   bird's run across the highlighted letters and down onto the cyclist's
+   shoulder stays a short, readable arc rather than a dive across the screen. */
 .home-hero__content {
   top: 0;
-  bottom: min(calc(100vw / var(--hero-art-ratio)), 100%);
+  bottom: min(var(--hero-art-height), 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
   /* Clear of the fixed navbar. The extra room matters because the title's
      line-height of 0.5 lets its glyphs overflow their own box upward, so
      centring alone tucks the capitals under the bar. */
-  padding-top: calc(var(--home-strip-height, 46px) + 3.5rem);
-  padding-bottom: clamp(16px, 4vh, 48px);
+  padding-top: calc(var(--home-strip-height, 46px) + 1rem);
+  /* Sits the tagline just clear of the horizon, in proportion to the sky, so
+     the spacing holds from a phone to a wide laptop. */
+  padding-bottom: clamp(12px, 5vh, 56px);
   z-index: 4;
 }
 
@@ -11220,12 +11231,36 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
   margin-top: 0;
 }
 
-/* The birds deliberately stay inside the scene rather than roaming the whole
-   sky: .hero-shoulder-perch, where the landing bird comes to rest, is a
-   percentage of this box and is aimed at the man's shoulder in the painting. */
+/* The bird's canvas covers the whole hero, not just the strip over the
+   painting. hero-birds-animator measures every target against this box, so
+   while the title sat above it the highlighted letters resolved to a negative
+   y and the bird was clipped away by overflow: hidden on its own way to them.
+   Anchored to the scene's bottom edge and given the hero's height, it now
+   reaches from the navbar down to the horizon.
 
-/* Same colour as the sky, so the bar and the hero read as one surface. */
+   Safe to enlarge because nothing here is a hand-placed percentage: the
+   animator derives the shoulder from the image's rendered rect within this box
+   (getCoverImageRect) and writes .hero-shoulder-perch itself, so the landing
+   point follows the painting at any size. */
+.home-hero__birds-sky {
+  inset: auto 0 0 0;
+  height: 100vh;
+  height: 100dvh;
+}
+
+/* Same colour as the sky, and no rule between them - the border was the last
+   visible seam once the two surfaces matched. */
 .home-strip {
   background: var(--hero-sky);
-  border-bottom-color: rgba(109, 80, 53, 0.1);
+  border-bottom-color: transparent;
+}
+
+/* The perch marker lives in the sky box, where 39.9% down fell on the cyclist
+   while that box was the painting. Measured up from the bottom instead, it
+   stays on him now that the sky reaches the navbar. The animator overwrites
+   both offsets before the bird lands - inline top wins over this bottom - so
+   this is what holds before the first flight. */
+.hero-shoulder-perch {
+  top: auto;
+  bottom: calc(min(var(--hero-art-height), 100%) * 0.601);
 }

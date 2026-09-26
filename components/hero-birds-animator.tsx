@@ -21,9 +21,16 @@ export default function HeroBirdsAnimator() {
     let timeoutId = null;
     let currentlyRestingTarget = null; // charA1 | charY | charS | charT | "shoulder" | null
 
-    // Precise calculation of object-fit: cover rendered image box
+    // Precise calculation of object-fit: cover rendered image box.
+    //
+    // Measured from the image element itself and returned in the sky box's
+    // coordinates. The sky spans the whole hero while the painting occupies
+    // only the bottom band, so running this against the sky put the cyclist
+    // up in the flat sky; the image's own rect is the painting wherever it
+    // sits.
     function getCoverImageRect(img, container) {
-      const cRect = container.getBoundingClientRect();
+      const skyRect = sky.getBoundingClientRect();
+      const cRect = (img || container).getBoundingClientRect();
       const cW = cRect.width;
       const cH = cRect.height || 1;
       const imgW = (img && img.naturalWidth) ? img.naturalWidth : 1792;
@@ -46,8 +53,8 @@ export default function HeroBirdsAnimator() {
       }
 
       return {
-        left: leftOffset,
-        top: topOffset,
+        left: (cRect.left - skyRect.left) + leftOffset,
+        top: (cRect.top - skyRect.top) + topOffset,
         width: renderedW,
         height: renderedH
       };
