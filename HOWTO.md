@@ -40,7 +40,7 @@ Two things that will bite you early:
 
 | URL | What it is | Rendered by |
 |---|---|---|
-| `/` | Home: hero, events tabs, music player, photo album | `app/page.tsx` |
+| `/` | Home: hero, the two event cards, music player, photo album | `app/page.tsx` |
 | `/events` | Event catalogue | `app/events/page.tsx` |
 | `/events/[slug]` | Event detail + 5-step registration | `app/events/[slug]/page.tsx`, `RegistrationForm.tsx` |
 | `/durga-puja` | Map of 60+ pandals in Hyderabad | `app/durga-puja/page.tsx` |
@@ -270,7 +270,6 @@ app/
 components/
   hero-playlist.tsx     the music player
   crossfade-video.tsx   the looping video + the chonga mic audio
-  events-tabs.tsx       the sliding tab switcher on the home page
   scroll-reveal.tsx     adds is-revealed as elements enter the viewport
 utils/
   auth/                 sessions, tiers, manager profiles, payment scoping

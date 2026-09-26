@@ -63,7 +63,7 @@ client in `utils/supabase/mock-client.ts`, backed by a local JSON store.
 ### Public flow
 
 ```
-/                     home: hero, events tab switcher, photo album, music player
+/                     home: hero, the two event cards, photo album, music player
 /events               catalogue
 /events/[slug]        five-step registration wizard
 /pass/[token]         a QR pass
