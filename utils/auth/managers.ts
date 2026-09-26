@@ -149,7 +149,16 @@ export async function createManager(input: {
 
   if (error || !data) {
     const duplicate = (error?.code === '23505') || /duplicate|unique/i.test(error?.message || '')
-    return { ok: false, error: duplicate ? 'That username is already taken' : (error?.message || 'Could not create the profile') }
+    if (duplicate) return { ok: false, error: 'That username is already taken' }
+
+    // The table is missing until the migration is run, and Postgres says so in
+    // its own words - which named the schema back to whoever asked. Say the
+    // useful half instead.
+    if (/manager_profiles/.test(error?.message || '') || error?.code === 'PGRST205') {
+      return { ok: false, error: 'Run supabase/manager-profiles.sql first' }
+    }
+
+    return { ok: false, error: 'Could not create the profile' }
   }
 
   return { ok: true, manager: toProfile(data as ManagerRow) }
