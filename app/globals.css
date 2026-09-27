@@ -3642,7 +3642,9 @@ video::cue {
   font-weight: 900;
   line-height: 1.1;
   letter-spacing: 0.04em;
-  color: #241107;
+  /* The card behind this is terracotta, so the type is the page's own cream
+     rather than near-black - the same #fff9f0 the footer and hero use. */
+  color: #fff9f0;
   text-transform: uppercase;
 }
 
@@ -3652,7 +3654,7 @@ video::cue {
   font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #3b190a;
+  color: rgba(255, 249, 240, 0.88);
 }
 
 /* Timeline Vertical Connector */
@@ -3689,20 +3691,20 @@ video::cue {
   width: 13px;
   height: 13px;
   border-radius: 50%;
-  background: #ffffff;
-  border: 2.5px solid #281208;
+  background: #fff9f0;
+  border: 2.5px solid rgba(255, 249, 240, 0.45);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
 }
 
 .mahalaya-timeline__title {
   font-size: 0.94rem;
   font-weight: 800;
-  color: #251208;
+  color: #fff9f0;
 }
 
 .mahalaya-timeline__desc {
   font-size: 0.82rem;
-  color: rgba(37, 18, 8, 0.92);
+  color: rgba(255, 249, 240, 0.9);
   line-height: 1.35;
 }
 
@@ -8262,11 +8264,15 @@ video::cue {
   position: relative;
   width: 100%;
   margin-top: 1.25rem;
-  background: #a94b22;
+  /* Sampled from footer-banner.webp, which sits at the top of this block: the
+     old #a94b22 was close enough to look like a mistake rather than a change
+     of tone, so the two now read as one surface. */
+  background: #ac5935;
   color: #fff9f0;
   overflow: hidden;
   box-shadow: 0 -8px 24px rgba(45, 22, 10, 0.12);
-  border-top: 2px solid rgba(255, 240, 215, 0.25);
+  /* A clean white rule where the page ends and the footer begins. */
+  border-top: 3px solid #fffaf2;
 }
 
 .utsav-footer__banner {

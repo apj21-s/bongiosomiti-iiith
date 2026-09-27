@@ -136,8 +136,6 @@ export default function SiteHeader({ variant = 'public' }: SiteHeaderProps) {
         <nav className="home-strip__nav" aria-label="Primary">
           <Link className="home-strip__link" href="/#home" aria-current={pathname === '/' ? "page" : undefined}>HOME</Link>
           <Link className="home-strip__link" href="/durga-puja">DURGA PUJA</Link>
-          {pathname !== '/' && <Link className="home-strip__link" href="/#events">EVENTS</Link>}
-          {pathname !== '/' && <Link className="home-strip__link" href="/#story">STORY</Link>}
         </nav>
         
         {/* Mobile Nav Morph Container */}
@@ -146,8 +144,6 @@ export default function SiteHeader({ variant = 'public' }: SiteHeaderProps) {
             <div className="t-morph-menu">
               <Link className="home-strip__link" href="/#home" aria-current={pathname === '/' ? "page" : undefined}>HOME</Link>
               <Link className="home-strip__link" href="/durga-puja">DURGA PUJA</Link>
-              {pathname !== '/' && <Link className="home-strip__link" href="/#events">EVENTS</Link>}
-              {pathname !== '/' && <Link className="home-strip__link" href="/#story">STORY</Link>}
             </div>
             
             <button 
