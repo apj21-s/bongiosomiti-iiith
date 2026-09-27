@@ -8273,20 +8273,21 @@ video::cue {
   position: relative;
   width: 100%;
   height: auto;
-  min-height: 48px;
-  max-height: 110px;
   background: #faf4e8;
-  overflow: hidden;
   line-height: 0;
   border-bottom: 2px solid #8e3a15;
 }
 
+/* The strip is 1024x136, and it is a motif with a top and a bottom - so it is
+   shown whole. It used to be capped at 110px and cropped to fill, which took
+   the bottom third off on any screen wider than about 830px. Now it keeps its
+   own proportions, and stops widening past 1440px so a large monitor gets a
+   centred band rather than a 255px-tall one. */
 .utsav-footer__bannerImage {
   width: 100%;
+  max-width: 1440px;
   height: auto;
-  max-height: 110px;
-  object-fit: cover;
-  object-position: center top;
+  margin-inline: auto;
   display: block;
 }
 
