@@ -10,7 +10,7 @@ import {
   toCustomPlaylistId,
   writeCustomPlaylistId,
 } from '@/utils/data/custom-playlist'
-import { PRESET_PLAYLISTS, presetName } from '@/utils/data/preset-playlists'
+import { presetName } from '@/utils/data/preset-playlists'
 import PlaylistContents, { type QueueItem } from './playlist-contents'
 
 /**
@@ -761,10 +761,13 @@ function YouTubePlayer({
  */
 function PlaylistPicker({
   current,
+  offered,
   onChoose,
   onClose,
 }: {
   current: string | null
+  /** What the super admin put on the homepage, in their order. */
+  offered: { id: string; name: string }[]
   onChoose: (id: string | null) => void
   onClose: () => void
 }) {
@@ -796,16 +799,15 @@ function PlaylistPicker({
       <p className="hero-playlist-picker__label">Choose the music</p>
 
       <div className="hero-playlist-picker__presets">
-        {PRESET_PLAYLISTS.map((preset) => (
+        {offered.map((choice) => (
           <button
-            key={preset.id}
+            key={choice.id}
             type="button"
-            className={`hero-playlist-picker__preset ${current === preset.id ? 'is-on' : ''}`}
-            title={preset.note}
-            aria-pressed={current === preset.id}
-            onClick={() => onChoose(preset.id)}
+            className={`hero-playlist-picker__preset ${current === choice.id ? 'is-on' : ''}`}
+            aria-pressed={current === choice.id}
+            onClick={() => onChoose(choice.id)}
           >
-            {preset.name}
+            {choice.name}
           </button>
         ))}
       </div>
@@ -888,9 +890,16 @@ const readFullscreenSupport = () => typeof document !== 'undefined' && Boolean(d
 const noFullscreenOnTheServer = () => false
 
 export default function HeroPlaylist({ playlists }: { playlists: Playlist[] }) {
-  // One playlist drives the hero. Extra playlists stay in the data file for a
-  // future selector rather than being silently concatenated.
+  // The first is what plays; the rest are what the picker offers. Both come
+  // from the super admin's list at /admin/playlist.
   const sitePlaylist = playlists[0]
+
+  const offered = useMemo(
+    () => playlists
+      .filter((playlist) => Boolean(playlist.youtubePlaylistId))
+      .map((playlist) => ({ id: playlist.youtubePlaylistId as string, name: playlist.name })),
+    [playlists]
+  )
 
   // Read as an external store, because that is what localStorage is: nothing
   // on the server, so the server snapshot is empty and the real value arrives
@@ -948,7 +957,11 @@ export default function HeroPlaylist({ playlists }: { playlists: Playlist[] }) {
   const playlist: Playlist | undefined = customId
     ? {
         id: 'custom',
-        name: presetName(customId) || 'Your playlist',
+        // Named if it is one of the offered ones, and otherwise a link the
+        // visitor pasted themselves.
+        name: offered.find((choice) => choice.id === customId)?.name
+          || presetName(customId)
+          || 'Your playlist',
         youtubePlaylistId: customId,
         tracks: [],
       }
@@ -959,6 +972,7 @@ export default function HeroPlaylist({ playlists }: { playlists: Playlist[] }) {
   const picker = picking ? (
     <PlaylistPicker
       current={customId}
+      offered={offered}
       onClose={() => setPicking(false)}
       onChoose={(id) => {
         // The write notifies the store, which re-renders this with the new id.

@@ -1,7 +1,7 @@
 import { createServiceRoleClient } from '@/utils/supabase/server'
 import { parseYouTubePlaylistId } from './youtube'
 import { getPlaylists, type Playlist } from './playlists'
-import { DEFAULT_PLAYLIST } from './preset-playlists'
+import { PRESET_PLAYLISTS } from './preset-playlists'
 
 /**
  * The homepage playlist, as configured from the admin UI.
@@ -116,33 +116,43 @@ export async function setSitePlaylist(input: {
 }
 
 /**
- * What the homepage renders, in order: the playlist configured from
- * /admin/playlist, then whatever public/data/playlists.json holds so a
- * developer can still ship hosted audio files, and failing both, the Agomoni
- * songs. There is always music to start from, and a visitor can change it to
- * any of the others from the player itself.
+ * Every playlist the homepage offers, the first being the one it starts on.
+ *
+ * The list is curated from /admin/playlist into public/data/playlists.json,
+ * which is where this reads it. Nothing curated yet means the shipped set, so
+ * there is always music and the player is never an empty control.
+ *
+ * The single-row site_playlist setting is still honoured: if it names a
+ * playlist, that one plays first. The admin screen writes it in step with the
+ * head of the list, so the two cannot disagree - but a deployment reads the row
+ * in preference to a file it may not be able to write, which is exactly how the
+ * events data drifted.
  */
 export async function getHomepagePlaylists(): Promise<Playlist[]> {
   const setting = await getSitePlaylistSetting()
 
-  if (setting.isEnabled && setting.youtubePlaylistId) {
-    return [{
-      id: 'site',
-      name: setting.name,
-      youtubePlaylistId: setting.youtubePlaylistId,
-      tracks: [],
-    }]
-  }
-
+  // Disabled is a kill switch: no player at all.
   if (!setting.isEnabled) return []
 
-  const fromFile = getPlaylists()
-  if (fromFile.length > 0) return fromFile
+  const curated = getPlaylists()
+  const list: Playlist[] = curated.length > 0
+    ? curated
+    : PRESET_PLAYLISTS.map((preset) => ({
+        id: preset.id,
+        name: preset.name,
+        youtubePlaylistId: preset.id,
+        tracks: [],
+      }))
 
-  return [{
-    id: DEFAULT_PLAYLIST.id,
-    name: DEFAULT_PLAYLIST.name,
-    youtubePlaylistId: DEFAULT_PLAYLIST.id,
-    tracks: [],
-  }]
+  const configured = setting.youtubePlaylistId
+  if (!configured) return list
+
+  // Put the configured one at the head, whether or not it is already listed.
+  const rest = list.filter((playlist) => playlist.youtubePlaylistId !== configured)
+  const existing = list.find((playlist) => playlist.youtubePlaylistId === configured)
+
+  return [
+    existing || { id: 'site', name: setting.name, youtubePlaylistId: configured, tracks: [] },
+    ...rest,
+  ]
 }
