@@ -15,6 +15,23 @@
  * Kept free of imports so it can be exercised on its own.
  */
 
+/**
+ * Whether this deployment may write the shared events rows.
+ *
+ * Every deployment pointed at this Supabase project - the live site, this
+ * branch, a preview - reads and writes one events table. The file is per
+ * branch; the row is not. So opening an event here would reach into whatever
+ * else is pointed at the same project, which is not what a dev branch is for.
+ *
+ * Only the deployment that owns those rows sets EVENTS_DB_WRITES=true, and
+ * only it mirrors. Everywhere else the edit stays in that deployment's own
+ * events.json, which is exactly as far as it should travel. Off by default, so
+ * a new environment is isolated until somebody says otherwise.
+ */
+export function ownsEventRows(): boolean {
+  return process.env.EVENTS_DB_WRITES === 'true'
+}
+
 /** The columns the events table actually has. config and created_at are file-only. */
 export const MIRRORED_FIELDS = [
   'id',

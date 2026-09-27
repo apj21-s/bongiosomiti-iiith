@@ -5,6 +5,14 @@
  *
  *   node scripts/sync-events.js --check    say what differs, change nothing
  *   node scripts/sync-events.js            push the file into the table
+ *   node scripts/sync-events.js --force    push even from a deployment that
+ *                                          does not own the rows
+ *
+ * Every deployment pointed at this Supabase project shares one events table,
+ * while events.json is per branch. Writing is therefore refused unless
+ * EVENTS_DB_WRITES=true says these rows belong to this environment - a dev
+ * branch reconciling would otherwise reach into the live site's row. --check
+ * works anywhere, and is the point on a branch that does not own them.
  *
  * The file is the truth: every page and API route reads it. The row exists so
  * tickets.event_id has something to point at and the admin counts have
@@ -76,7 +84,18 @@ function drift(event, row) {
 
 async function main() {
   const check = process.argv.includes('--check')
+  const force = process.argv.includes('--force')
   const { url, key } = loadEnv()
+
+  const owns = process.env.EVENTS_DB_WRITES === 'true'
+  if (!check && !owns && !force) {
+    console.error('This environment does not own the shared events rows.')
+    console.error('EVENTS_DB_WRITES is not "true", so reconciling would write into')
+    console.error('whatever else points at this Supabase project.')
+    console.error('Run with --check to see the differences, or --force if you are certain.')
+    process.exitCode = 2
+    return
+  }
 
   if (!url || !key) {
     console.error('NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set.')

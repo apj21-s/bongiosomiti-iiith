@@ -104,10 +104,19 @@ This is the thing to understand first, because it is split:
 | Photo album | Supabase (`album_photos`), falling back to `public/data/album.json` | `GET /api/album` |
 | Playlist | `public/data/playlists.json` | Imported at build time |
 
-> **Event edits do not persist in production.** `PUT /api/admin/events/[slug]`
-> writes to `public/data/events.json` with `fs.writeFileSync`. That works
-> locally and is silently lost on Vercel, whose filesystem is read-only and
-> ephemeral. Change events by editing the JSON and redeploying.
+> **Events are kept in two places, and only one deployment owns the row.**
+> The site reads `public/data/events.json`, which is per branch. The `events`
+> table is shared by everything pointed at the same Supabase project, and is
+> what `tickets.event_id` refers to. The editor and the open/lock toggle write
+> both - but only where `EVENTS_DB_WRITES=true`, so opening an event on a dev
+> branch cannot open it on the live site. Everywhere else the change stays in
+> that deployment's own JSON, and the response says so.
+>
+> On Vercel the JSON write fails anyway (read-only filesystem), so on
+> production the row is the durable half and the JSON has to be edited in the
+> repository to match. `node scripts/sync-events.js --check` reports any
+> difference; without `--check` it reconciles, and refuses to unless this
+> environment owns the rows.
 
 ### Data model
 

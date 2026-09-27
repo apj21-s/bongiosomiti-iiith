@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import fs from 'fs'
 import path from 'path'
 import { createServiceRoleClient } from '@/utils/supabase/server'
+import { ownsEventRows } from '@/utils/data/event-sync'
 
 /**
  * Opens or locks registration for an event.
@@ -59,14 +60,23 @@ export async function POST(
     )
   }
 
-  try {
-    const supabase = await createServiceRoleClient()
-    const { error } = await supabase.from('events').update({ status }).eq('slug', slug)
+  if (!ownsEventRows()) {
+    // A dev branch opening an event must not open it on the live site, which
+    // reads a different events.json but shares this table.
+    warnings.push(
+      'This deployment does not own the shared events rows, so the change stayed in its own ' +
+      'events.json. Set EVENTS_DB_WRITES=true only where those rows belong.'
+    )
+  } else {
+    try {
+      const supabase = await createServiceRoleClient()
+      const { error } = await supabase.from('events').update({ status }).eq('slug', slug)
 
-    if (error) warnings.push(`The events row was not updated: ${error.message}`)
-    else written.database = true
-  } catch (e) {
-    warnings.push(`The events row was not updated: ${e instanceof Error ? e.message : 'unknown'}`)
+      if (error) warnings.push(`The events row was not updated: ${error.message}`)
+      else written.database = true
+    } catch (e) {
+      warnings.push(`The events row was not updated: ${e instanceof Error ? e.message : 'unknown'}`)
+    }
   }
 
   if (!written.file && !written.database) {

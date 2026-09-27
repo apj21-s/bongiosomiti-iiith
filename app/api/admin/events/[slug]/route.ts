@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 import fs from 'fs'
 import path from 'path'
 import { createServiceRoleClient } from '@/utils/supabase/server'
-import { toDatabaseRow } from '@/utils/data/event-sync'
+import { ownsEventRows, toDatabaseRow } from '@/utils/data/event-sync'
 
 export async function DELETE(
   request: Request,
@@ -77,17 +77,24 @@ export async function PUT(
     )
   }
 
-  try {
-    const supabase = await createServiceRoleClient()
-    const { error } = await supabase
-      .from('events')
-      .update(toDatabaseRow(updated))
-      .eq('slug', slug)
+  if (!ownsEventRows()) {
+    problems.push(
+      'This deployment does not own the shared events rows, so the change stayed in its own ' +
+      'events.json. Set EVENTS_DB_WRITES=true only where those rows belong.'
+    )
+  } else {
+    try {
+      const supabase = await createServiceRoleClient()
+      const { error } = await supabase
+        .from('events')
+        .update(toDatabaseRow(updated))
+        .eq('slug', slug)
 
-    if (error) problems.push(`The events row was not updated: ${error.message}`)
-    else written.database = true
-  } catch (e) {
-    problems.push(`The events row was not updated: ${e instanceof Error ? e.message : 'unknown'}`)
+      if (error) problems.push(`The events row was not updated: ${error.message}`)
+      else written.database = true
+    } catch (e) {
+      problems.push(`The events row was not updated: ${e instanceof Error ? e.message : 'unknown'}`)
+    }
   }
 
   if (!written.file && !written.database) {
