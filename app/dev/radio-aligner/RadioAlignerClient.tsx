@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import initialConfig from '@/components/radio-buttons.json'
 
-type ButtonConfig = { left: number; width: number; height: number; top: number }
+type ButtonConfig = { left: number; width: number; height: number; top: number; iconSize?: number; iconColor?: string; iconOffsetX?: number; iconOffsetY?: number }
 type ConfigMap = Record<string, ButtonConfig>
 
 const BUTTON_KEYS = ['shuffle', 'prev', 'play', 'next', 'repeat']
