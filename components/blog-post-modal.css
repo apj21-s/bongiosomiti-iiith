@@ -1,0 +1,240 @@
+/* The blog post dialog, and the image that opens it.
+   Same cream-and-terracotta language as the rest of the site. */
+
+.blog-trigger {
+  display: block;
+  position: relative;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  text-align: inherit;
+  color: inherit;
+  font: inherit;
+  /* The wrapped header has its own rounding and shadow. */
+  border-radius: inherit;
+}
+
+.blog-trigger:focus-visible {
+  outline: 3px solid var(--brand, #b65a3c);
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+
+/* Says the image does something, without covering the artwork. */
+.blog-trigger__cue {
+  position: absolute;
+  right: clamp(12px, 2vw, 28px);
+  bottom: clamp(12px, 2vw, 24px);
+  z-index: 3;
+
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  background: rgba(30, 18, 10, 0.55);
+  backdrop-filter: blur(6px);
+
+  color: #fff9f0;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+
+  transition: background-color 200ms ease, transform 200ms ease;
+}
+
+.blog-trigger:hover .blog-trigger__cue {
+  background: var(--brand, #b65a3c);
+  transform: translateY(-1px);
+}
+
+/* The dialog ------------------------------------------------------------- */
+
+.blog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(12px, 4vw, 40px);
+  background: rgba(28, 16, 9, 0.62);
+  backdrop-filter: blur(4px);
+  animation: blog-fade 180ms ease;
+}
+
+.blog-dialog {
+  position: relative;
+  width: min(760px, 100%);
+  max-height: min(86vh, 900px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+
+  padding: clamp(22px, 4vw, 44px);
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: #fdf7ea;
+  box-shadow: 0 24px 60px rgba(28, 16, 9, 0.45);
+
+  color: #3c2c1e;
+  animation: blog-rise 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.blog-dialog__close {
+  position: sticky;
+  top: 0;
+  float: right;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  margin: -8px -8px 0 0;
+
+  border: 0;
+  border-radius: 50%;
+  background: rgba(110, 78, 52, 0.12);
+  color: #6b5b4c;
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.blog-dialog__close:hover {
+  background: var(--brand, #b65a3c);
+  color: #fdf7ea;
+}
+
+.blog-dialog__close:focus-visible {
+  outline: 2px solid var(--brand-2, #8e3f2d);
+  outline-offset: 2px;
+}
+
+.blog-dialog__head {
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(110, 78, 52, 0.18);
+}
+
+.blog-dialog__head h2 {
+  margin: 0;
+  font-family: "Tiro Bangla", Georgia, "Times New Roman", serif;
+  font-size: clamp(1.5rem, 3.4vw, 2.1rem);
+  line-height: 1.2;
+  color: #1d1712;
+}
+
+.blog-dialog__subtitle {
+  margin: 8px 0 0;
+  font-family: "Tiro Bangla", Georgia, serif;
+  font-style: italic;
+  font-size: clamp(0.94rem, 1.6vw, 1.1rem);
+  color: #6b5b4c;
+}
+
+.blog-dialog__byline {
+  margin: 10px 0 0;
+  font-size: 0.74rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--brand-2, #8e3f2d);
+}
+
+.blog-dialog__body {
+  font-size: 0.96rem;
+  line-height: 1.65;
+}
+
+.blog-dialog__body h2,
+.blog-dialog__body h3,
+.blog-dialog__body h4 {
+  margin: 1.6em 0 0.5em;
+  font-family: "Tiro Bangla", Georgia, serif;
+  color: #1d1712;
+  line-height: 1.25;
+}
+
+.blog-dialog__body h2 { font-size: 1.24rem; }
+.blog-dialog__body h3 { font-size: 1.08rem; }
+.blog-dialog__body h4 { font-size: 1rem; }
+
+.blog-dialog__body p {
+  margin: 0 0 1em;
+}
+
+.blog-dialog__body ul {
+  margin: 0 0 1em;
+  padding-left: 1.3em;
+}
+
+.blog-dialog__body li {
+  margin-bottom: 0.4em;
+}
+
+.blog-dialog__body blockquote {
+  margin: 0 0 1em;
+  padding: 2px 0 2px 16px;
+  border-left: 3px solid var(--brand, #b65a3c);
+  color: #6b5b4c;
+  font-style: italic;
+}
+
+.blog-dialog__body hr {
+  margin: 1.6em 0;
+  border: 0;
+  border-top: 1px solid rgba(110, 78, 52, 0.2);
+}
+
+.blog-dialog__body code {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(110, 78, 52, 0.1);
+  font-size: 0.88em;
+}
+
+.blog-dialog__body a {
+  color: var(--brand-2, #8e3f2d);
+  text-decoration: underline;
+}
+
+.blog-dialog__note {
+  margin: 0;
+  color: #6b5b4c;
+}
+
+@keyframes blog-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes blog-rise {
+  from { opacity: 0; transform: translateY(14px) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (max-width: 560px) {
+  .blog-trigger__cue {
+    right: 10px;
+    bottom: 10px;
+    padding: 6px 11px;
+    font-size: 0.68rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .blog-overlay,
+  .blog-dialog {
+    animation: none;
+  }
+
+  .blog-trigger__cue {
+    transition: none;
+  }
+
+  .blog-trigger:hover .blog-trigger__cue {
+    transform: none;
+  }
+}

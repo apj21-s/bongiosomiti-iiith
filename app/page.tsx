@@ -6,6 +6,7 @@ import PhotoAlbum from '@/components/photo-album'
 import CrossfadeVideo from '@/components/crossfade-video'
 import HeroBirdsAnimator from '@/components/hero-birds-animator'
 import HeroPlaylist from '@/components/hero-playlist'
+import BlogPostModal from '@/components/blog-post-modal'
 import { getHomepagePlaylists } from '@/utils/data/site-playlist'
 
 export const revalidate = 0
@@ -205,7 +206,10 @@ export default async function Home() {
             <h2 id="story-title">A curated memory archive</h2>
           </div>
 
-          <div className="story-card__header scroll-reveal scroll-reveal--delay-1">
+          {/* Opens the post at public/assets/blogs/our-story.md. Edit that file
+              to change what this says; drop in another .md and point a new
+              slug at it to add one. */}
+          <BlogPostModal slug="our-story" label="Read our story" className="story-card__header scroll-reveal scroll-reveal--delay-1">
             <img className="story-card__headerImage" src="/assets/amader-golpo.webp" alt="Bangiya Samiti Story Illustration" width={1536} height={660} loading="lazy" decoding="async" />
             <div className="story-card__sunbeam" aria-hidden="true"></div>
             <div className="story-card__headerOverlay" aria-hidden="true"></div>
@@ -214,7 +218,7 @@ export default async function Home() {
               <h2>Our story</h2>
               <p>Real moments from Bengali community events, gathered in one editable archive.</p>
             </div>
-          </div>
+          </BlogPostModal>
 
           <div className="story-card__body">
             <PhotoAlbum />
