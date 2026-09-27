@@ -10,8 +10,12 @@ export const registerSchema = z.object({
   phone: z.string().max(20).optional().or(z.literal('')),
   utr: z.string().max(64).optional(),
   // Which UPI id the money was sent to, read off the receipt by OCR or
-  // typed by the visitor. It routes the payment to the right manager.
+  // typed by the visitor. It routes the payment to the right manager, and the
+  // route checks it against the ids the festival actually collects at.
   receiverUpi: z.string().max(80).optional(),
+  // Where /api/receipts stored the uploaded receipt. Its shape is checked
+  // again on arrival; a client-supplied path is not filed as-is.
+  receiptPath: z.string().max(200).optional(),
   numPasses: z.number().int().min(1).max(6).optional(),
   foodPref: z.string().max(200).optional(),
   isIiit: z.boolean().optional(),

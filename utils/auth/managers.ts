@@ -98,6 +98,33 @@ export async function listManagers(): Promise<ManagerProfile[]> {
   return (data as ManagerRow[]).map(toProfile)
 }
 
+/**
+ * The UPI ids this festival actually collects at: one per active manager.
+ *
+ * The registration form checks the receiver read off a receipt against this
+ * list, and the register route checks it again. Only the ids are returned, and
+ * nothing about who holds them - a payer is shown the id to pay anyway, but
+ * which manager sits behind it is not their business.
+ *
+ * An empty list when the table is missing, which the callers treat as 'fall
+ * back to whatever the event config lists'.
+ */
+export async function listCollectionUpiIds(): Promise<string[]> {
+  const supabase = await createServiceRoleClient()
+  const { data, error } = await supabase
+    .from('manager_profiles')
+    .select('upi_id, is_active')
+
+  if (error || !data) return []
+
+  const ids = (data as { upi_id: string; is_active: boolean }[])
+    .filter((row) => row.is_active !== false)
+    .map((row) => normaliseUpiId(row.upi_id))
+    .filter((id) => isValidUpiId(id))
+
+  return Array.from(new Set(ids))
+}
+
 export async function getManagerById(id: string): Promise<ManagerProfile | null> {
   const supabase = await createServiceRoleClient()
   const { data, error } = await supabase

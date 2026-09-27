@@ -4,6 +4,8 @@ import { registerSchema } from '@/utils/schemas'
 import { sendQRPassEmail, sendRegistrationPendingEmail } from '@/utils/email'
 import { getEventBySlug } from '@/utils/data/events'
 import { rateLimit, tooManyRequests } from '@/utils/rate-limit'
+import { checkReceiptDetails, normaliseUpi, normaliseUtr } from '@/utils/payments/receipt-gate'
+import { listCollectionUpiIds } from '@/utils/auth/managers'
 
 // Registration sends mail to the address in the request, so it is throttled per
 // address. Deliberately not per IP: an entire campus shares a handful of them.
@@ -88,6 +90,8 @@ export async function POST(request: Request) {
     const registrationId = generateRegistrationId()
 
     const isFree = event.price === 0
+
+
     const numPasses = data.numPasses || 1
     const isIiit = data.isIiit !== false
     const passPrice = isFree ? 0 : isIiit ? event.price : 350
@@ -95,9 +99,35 @@ export async function POST(request: Request) {
     const coupon = resolveCoupon(event, data.couponCode)
     const discountAmount = coupon ? Math.min(coupon.discount, subtotal) : 0
     const amount = Math.max(0, subtotal - discountAmount)
+
+    // The same gate the form applies, applied again here. The form's copy is a
+    // courtesy to the visitor; this one is the rule. A payable registration
+    // without a transaction id, without a stored receipt, or naming a UPI id
+    // this festival does not collect at, does not become a ticket. Gated on
+    // the amount rather than the ticket price, because a coupon can take a
+    // paid event to zero and then there is no receipt to ask for.
+    const managerUpiIds = await listCollectionUpiIds()
+    const eventConfig = (event as { config?: { upi_ids?: unknown; upi_id?: unknown } }).config
+    const configuredUpiIds: string[] = Array.isArray(eventConfig?.upi_ids)
+      ? (eventConfig.upi_ids as string[])
+      : (typeof eventConfig?.upi_id === 'string' ? [eventConfig.upi_id] : [])
+    const allowedUpiIds = (managerUpiIds.length > 0 ? managerUpiIds : configuredUpiIds).map(normaliseUpi)
+    const nothingToPay = isFree || amount === 0
+
+    const gate = checkReceiptDetails({
+      isFree: nothingToPay,
+      utr: data.utr,
+      receiverUpi: data.receiverUpi,
+      receiptPath: data.receiptPath,
+      allowedUpiIds,
+    })
+
+    if (!gate.ok) {
+      return NextResponse.json({ error: gate.error, field: gate.field }, { status: 400 })
+    }
     // Normalised so a manager scoped to this UPI id matches it regardless of
     // how the receipt or the visitor cased it.
-    const receiverUpi = data.receiverUpi?.trim().toLowerCase() || null
+    const receiverUpi = normaliseUpi(data.receiverUpi) || null
     const paymentStatus = isFree ? 'APPROVED' : 'PENDING'
     const status = isFree ? 'UNUSED' : 'PENDING_PAYMENT'
 
@@ -108,7 +138,7 @@ export async function POST(request: Request) {
       college_id: data.collegeId,
       email: data.email,
       phone: data.phone,
-      utr: data.utr || (isFree ? 'FREE-PASS' : ''),
+      utr: normaliseUtr(data.utr) || (nothingToPay ? 'FREE-PASS' : ''),
       amount: amount / numPasses,
       payment_status: paymentStatus,
       status,
@@ -117,6 +147,8 @@ export async function POST(request: Request) {
         ? (i < (data as any).vegCount ? 'Veg' : 'Non-Veg')
         : data.foodPref,
       receiver_upi: receiverUpi,
+      // Every pass in one booking points at the same receipt.
+      payment_proof_url: nothingToPay ? null : ((data.receiptPath as string) || null),
       is_iiit: isIiit,
       coupon_code: coupon ? coupon.code : null,
       discount_amount: discountAmount / numPasses,

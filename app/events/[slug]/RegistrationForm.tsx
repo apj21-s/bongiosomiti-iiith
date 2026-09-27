@@ -3,6 +3,12 @@
 import { useMemo, useState, useEffect, useRef, Fragment } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 import UtsavLoader from '@/components/utsav-loader'
+import {
+  checkReceiptDetails,
+  isValidUtr,
+  normaliseUpi,
+  normaliseUtr,
+} from '@/utils/payments/receipt-gate'
 
 type RegistrationFormProps = { event: any }
 
@@ -28,6 +34,13 @@ type DraftState = {
   selectedUpiId: string
   utr: string
   receiverUpi: string
+  // Where /api/receipts put the uploaded image. Sent with the registration.
+  receiptPath: string
+  // Whether each value was read off the receipt rather than typed. A read value
+  // is shown but not editable: the visitor is confirming what the receipt says,
+  // not restating it.
+  utrFromOcr: boolean
+  receiverUpiFromOcr: boolean
   screenshot: string | null
   stage: number
   paymentState: 'READY' | 'COMPLETED'
@@ -36,7 +49,9 @@ type DraftState = {
 const DEFAULT_DRAFT: DraftState = {
   isIiit: null, fullName: '', email: '', phone: '', collegeId: '', city: '',
   numPasses: 1, foodPref: '', vegCount: 0, nonVegCount: 1, passSelections: {}, couponInput: '', appliedCoupon: null,
-  selectedUpiId: '', utr: '', receiverUpi: '', screenshot: null, stage: 1, paymentState: 'READY'
+  selectedUpiId: '', utr: '', receiverUpi: '', receiptPath: '',
+  utrFromOcr: false, receiverUpiFromOcr: false,
+  screenshot: null, stage: 1, paymentState: 'READY'
 }
 
 export default function RegistrationForm({ event }: RegistrationFormProps) {
@@ -48,6 +63,22 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
   const [couponMsg, setCouponMsg] = useState<{type: 'success'|'error', text: string} | null>(null)
   const [confirmation, setConfirmation] = useState<any>(null)
   const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null)
+
+  // The UPI ids this festival collects at - one per manager. What the OCR reads
+  // off a receipt is checked against these, so a receipt naming somebody else's
+  // handle cannot be filed as a payment to the festival.
+  const [allowedUpiIds, setAllowedUpiIds] = useState<string[]>([])
+
+  useEffect(() => {
+    let cancelled = false
+
+    fetch(`/api/upi-ids?event=${encodeURIComponent(event.slug)}`)
+      .then((r) => (r.ok ? r.json() : { upiIds: [] }))
+      .then((d) => { if (!cancelled) setAllowedUpiIds(Array.isArray(d.upiIds) ? d.upiIds : []) })
+      .catch(() => { /* the same gate runs on the server */ })
+
+    return () => { cancelled = true }
+  }, [event.slug])
 
   useEffect(() => {
     try {
@@ -126,9 +157,16 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (total > 0 && draft.utr.trim().length !== 12) return setError('UTR must be exactly 12 digits.')
-    if (total > 0 && !draft.screenshot) return setError('Payment screenshot is required.')
-    if (total > 0 && !draft.receiverUpi.trim()) return setError('Enter the UPI ID you paid to.')
+    // The same module the register route uses, so the button and the server
+    // cannot disagree about what a complete payment looks like.
+    const gate = checkReceiptDetails({
+      isFree: total === 0,
+      utr: draft.utr,
+      receiverUpi: draft.receiverUpi,
+      receiptPath: draft.receiptPath,
+      allowedUpiIds,
+    })
+    if (!gate.ok) return setError(gate.error)
 
     setError(null)
     setLoading(true)
@@ -144,6 +182,7 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
           email: draft.email,
           utr: draft.utr || 'FREE',
           receiverUpi: draft.receiverUpi || undefined,
+          receiptPath: draft.receiptPath || undefined,
           numPasses: calculatedNumPasses,
           foodPref: passTypes ? Object.entries(draft.passSelections).filter(([_, v]) => v > 0).map(([k, v]) => `${v} ${k}`).join(', ') : (draft.numPasses === 1 ? draft.foodPref : `${draft.vegCount} Veg, ${draft.nonVegCount} Non-Veg`),
           vegCount: passTypes ? undefined : (draft.numPasses === 1 ? (draft.foodPref === 'Veg' ? 1 : 0) : draft.vegCount),
@@ -163,7 +202,7 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
 
   if (!isLoaded) return <div>Loading...</div>
 
-  const stepProps = { event, draft, updateDraft, nextStage, prevStage, error, setError, total, subtotal, discount, applyCoupon, couponMsg, handleSubmit, loading, confirmation, setScreenshotPreview, screenshotPreview, transitionTo }
+  const stepProps = { event, draft, updateDraft, nextStage, prevStage, error, setError, total, subtotal, discount, applyCoupon, couponMsg, handleSubmit, loading, confirmation, setScreenshotPreview, screenshotPreview, transitionTo, allowedUpiIds }
 
   if (event?.status !== 'OPEN') {
     if (event?.slug !== 'mahalaya') {
@@ -702,65 +741,82 @@ function PaymentStep({ event, draft, updateDraft, prevStage, transitionTo, total
   )
 }
 
-function PaymentCompletedStep({ event, prevStage, handleSubmit, draft, updateDraft, transitionTo, error, loading, setScreenshotPreview, screenshotPreview }: any) {
-  // 'idle' | 'reading' | 'found' | 'partial' | 'failed' - drives whether the
-  // visitor is told we read the receipt or asked to fill the gaps in.
-  const [scan, setScan] = useState<{ state: string; progress: number }>({ state: 'idle', progress: 0 })
+function PaymentCompletedStep({ event, prevStage, handleSubmit, draft, updateDraft, transitionTo, error, loading, setScreenshotPreview, screenshotPreview, allowedUpiIds, total }: any) {
+  // idle | uploading | reading | found | partial | wrong-payee | failed | upload-failed
+  const [scan, setScan] = useState<{ state: string; progress: number; detail?: string }>({ state: 'idle', progress: 0 })
 
-  const expectedUpiIds: string[] = event?.config?.upi_ids
-    || (event?.config?.upi_id ? [event.config.upi_id] : [])
+  // What the receipt said, kept apart from the draft so the reading can be
+  // shown even when it was refused for naming the wrong payee.
+  const [seen, setSeen] = useState<{ utr: string | null; upi: string | null }>({ utr: null, upi: null })
+
+  const receivers: string[] = (allowedUpiIds && allowedUpiIds.length > 0)
+    ? allowedUpiIds
+    : (event?.config?.upi_ids || (event?.config?.upi_id ? [event.config.upi_id] : []))
 
   async function handleReceipt(file: File) {
-    updateDraft({ screenshot: file.name })
+    updateDraft({ screenshot: file.name, receiptPath: '', utr: '', receiverUpi: '', utrFromOcr: false, receiverUpiFromOcr: false })
     setScreenshotPreview(URL.createObjectURL(file))
-    setScan({ state: 'reading', progress: 0 })
+    setSeen({ utr: null, upi: null })
 
+    // Stored first. A receipt that cannot be kept is no use to whoever has to
+    // verify the payment later, so the step does not go on without it.
+    setScan({ state: 'uploading', progress: 0 })
+    try {
+      const body = new FormData()
+      body.append('receipt', file)
+      const res = await fetch('/api/receipts', { method: 'POST', body })
+      const payload = await res.json()
+      if (!res.ok) throw new Error(payload.error || 'Could not store the receipt.')
+      updateDraft({ receiptPath: payload.path })
+    } catch (e: any) {
+      setScan({ state: 'upload-failed', progress: 1, detail: e?.message })
+      return
+    }
+
+    setScan({ state: 'reading', progress: 0 })
     const { readReceipt } = await import('@/utils/ocr/read-receipt')
     const result = await readReceipt(file, (progress) => setScan({ state: 'reading', progress }))
 
-    // Prefer a handle the event actually collects on, when the receipt shows
-    // more than one - a receipt lists the payer's handle as well as the payee's.
-    const expected = expectedUpiIds.map((id) => id.toLowerCase())
-    const matched = result.upiCandidates.find((id) => expected.includes(id))
-    const receiverUpi = matched || result.receiverUpi || ''
+    // A receipt lists the payer's handle as well as the payee's, so the one that
+    // counts is the one this festival actually collects at.
+    const allowed = receivers.map((id: string) => normaliseUpi(id))
+    const candidates = result.upiCandidates.map(normaliseUpi)
+    const matched = candidates.find((id) => allowed.includes(id)) || ''
+    const sawAnyUpi = candidates.length > 0 || Boolean(result.receiverUpi)
 
-    // Only fill a field the visitor has not already typed into.
-    const updates: Record<string, string> = {}
-    if (result.transactionId && !draft.utr.trim()) updates.utr = result.transactionId
-    if (receiverUpi && !draft.receiverUpi?.trim()) updates.receiverUpi = receiverUpi
-    if (Object.keys(updates).length > 0) updateDraft(updates)
+    const utr = isValidUtr(result.transactionId) ? normaliseUtr(result.transactionId) : ''
+    setSeen({ utr: result.transactionId || null, upi: matched || result.receiverUpi || null })
 
-    const haveUtr = Boolean(result.transactionId || draft.utr.trim())
-    const haveUpi = Boolean(receiverUpi || draft.receiverUpi?.trim())
-    setScan({
-      state: haveUtr && haveUpi ? 'found' : (haveUtr || haveUpi ? 'partial' : 'failed'),
-      progress: 1,
+    updateDraft({
+      utr,
+      utrFromOcr: Boolean(utr),
+      receiverUpi: matched,
+      receiverUpiFromOcr: Boolean(matched),
     })
+
+    const state = utr && matched
+      ? 'found'
+      : (!matched && sawAnyUpi ? 'wrong-payee' : (utr || matched ? 'partial' : 'failed'))
+
+    setScan({ state, progress: 1 })
   }
+
+  const gate = checkReceiptDetails({
+    isFree: total === 0,
+    utr: draft.utr,
+    receiverUpi: draft.receiverUpi,
+    receiptPath: draft.receiptPath,
+    allowedUpiIds: receivers,
+  })
 
   return (
     <div className="reg-payment-done">
       <TypewriterHeading lines={['VERIFYING PAYMENT']} />
       <p className="reg-p">Please provide your transaction details</p>
 
+      {/* The receipt comes first now: the two fields below are filled from it,
+          and are only typed in when it could not be read. */}
       <div className="reg-field full">
-        <label>UPI Transaction ID / UTR *</label>
-        <input className="reg-input" value={draft.utr} onChange={e => updateDraft({ utr: e.target.value })} placeholder="e.g. 429810294812" />
-      </div>
-
-      <div className="reg-field full" style={{ marginTop: '2cqw' }}>
-        <label>Paid to (UPI ID) *</label>
-        {expectedUpiIds.length > 1 ? (
-          <select className="reg-input" value={draft.receiverUpi || ''} onChange={e => updateDraft({ receiverUpi: e.target.value })}>
-            <option value="" disabled>Select the UPI ID you paid</option>
-            {expectedUpiIds.map((id: string) => <option key={id} value={id}>{id}</option>)}
-          </select>
-        ) : (
-          <input className="reg-input" value={draft.receiverUpi || ''} onChange={e => updateDraft({ receiverUpi: e.target.value })} placeholder={expectedUpiIds[0] || 'name@bank'} />
-        )}
-      </div>
-
-      <div className="reg-field full" style={{ marginTop: '2cqw' }}>
         <label>Payment Receipt *</label>
         <div className="reg-upload-area">
           <input type="file" id="receipt-upload" className="reg-file-input" accept="image/*" onChange={e => {
@@ -784,26 +840,74 @@ function PaymentCompletedStep({ event, prevStage, handleSubmit, draft, updateDra
 
         {scan.state !== 'idle' && (
           <div className={`reg-scan reg-scan--${scan.state}`} aria-live="polite">
-            {scan.state === 'reading' && (
-              <span>Reading your receipt… {Math.round(scan.progress * 100)}%</span>
+            {scan.state === 'uploading' && <span>Saving your receipt…</span>}
+            {scan.state === 'reading' && <span>Reading your receipt… {Math.round(scan.progress * 100)}%</span>}
+            {scan.state === 'found' && <span>✓ Read both details off your receipt. Please check them below.</span>}
+            {scan.state === 'partial' && <span>Only part of the receipt was readable. Fill in what is still blank below.</span>}
+            {scan.state === 'wrong-payee' && (
+              <span>
+                The UPI ID on this receipt{seen.upi ? <> (<strong>{seen.upi}</strong>)</> : null} is not one this
+                festival collects at. If you paid one of the IDs we gave you, choose it below; otherwise check you
+                have uploaded the right receipt.
+              </span>
             )}
-            {scan.state === 'found' && (
-              <span>✓ Read the transaction ID and UPI ID from your receipt. Please check they are right.</span>
-            )}
-            {scan.state === 'partial' && (
-              <span>Part of the receipt was readable. Please fill in whatever is still blank above.</span>
-            )}
-            {scan.state === 'failed' && (
-              <span>Could not read the receipt. Please type the transaction ID and the UPI ID you paid to.</span>
+            {scan.state === 'failed' && <span>Could not read the receipt. Please enter both details below.</span>}
+            {scan.state === 'upload-failed' && (
+              <span>{scan.detail || 'Could not save the receipt.'} Please try uploading it again - the registration cannot be submitted without it.</span>
             )}
           </div>
         )}
       </div>
 
+      {/* Transaction ID. Read off the receipt when it could be, and then shown
+          rather than offered for editing - the visitor is here to confirm what
+          the receipt says, and a value they can retype is a value we cannot
+          trust against the image we stored. */}
+      <div className="reg-field full" style={{ marginTop: '2cqw' }}>
+        <label>UPI Transaction ID / UTR *</label>
+        {draft.utrFromOcr ? (
+          <div className="reg-read" aria-readonly="true">
+            <span className="reg-read__value">{draft.utr}</span>
+            <span className="reg-read__note">read from your receipt</span>
+          </div>
+        ) : (
+          <input
+            className="reg-input"
+            value={draft.utr}
+            onChange={e => updateDraft({ utr: e.target.value, utrFromOcr: false })}
+            placeholder="e.g. 429810294812"
+            inputMode="text"
+            autoComplete="off"
+          />
+        )}
+      </div>
+
+      <div className="reg-field full" style={{ marginTop: '2cqw' }}>
+        <label>Paid to (UPI ID) *</label>
+        {draft.receiverUpiFromOcr ? (
+          <div className="reg-read" aria-readonly="true">
+            <span className="reg-read__value">{draft.receiverUpi}</span>
+            <span className="reg-read__note">read from your receipt</span>
+          </div>
+        ) : receivers.length > 0 ? (
+          <select className="reg-input" value={draft.receiverUpi || ''} onChange={e => updateDraft({ receiverUpi: e.target.value, receiverUpiFromOcr: false })}>
+            <option value="" disabled>Select the UPI ID you paid</option>
+            {receivers.map((id: string) => <option key={id} value={id}>{id}</option>)}
+          </select>
+        ) : (
+          <input className="reg-input" value={draft.receiverUpi || ''} onChange={e => updateDraft({ receiverUpi: e.target.value, receiverUpiFromOcr: false })} placeholder="name@bank" />
+        )}
+      </div>
+
+      {/* Why the button is not available yet, said before it is pressed. */}
+      {!gate.ok && draft.screenshot && (
+        <div className="reg-scan reg-scan--partial" aria-live="polite">{gate.error}</div>
+      )}
+
       {error && <div className="reg-error">{error}</div>}
       <div className="reg-actions dual">
         <RegButton text="BACK" onClick={() => transitionTo({ paymentState: 'READY' })} type="back" />
-        <RegButton text="SUBMIT" onClick={handleSubmit} disabled={loading} loadingText="PROCESSING..." type="continue" />
+        <RegButton text="SUBMIT" onClick={handleSubmit} disabled={loading || !gate.ok} loadingText="PROCESSING..." type="continue" />
       </div>
     </div>
   )
