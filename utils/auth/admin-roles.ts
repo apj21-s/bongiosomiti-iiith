@@ -97,7 +97,13 @@ export function getAdminCredentials(): { email: string; password: string; tier: 
   return usable
 }
 
-export function matchAdminCredentials(email: string, password: string): AdminTier | null {
+export function matchAdminCredentials(email: unknown, password: unknown): AdminTier | null {
+  // The form hands over whatever was posted, and a missing field arrives as
+  // null. Anything that is not a pair of strings is simply not a match - it
+  // used to reach safeEqual and throw, which turned a malformed sign-in into a
+  // 500 instead of a refusal.
+  if (typeof email !== 'string' || typeof password !== 'string') return null
+
   let matched: AdminTier | null = null
 
   // Every entry is checked whichever one matches, so the time taken does not
