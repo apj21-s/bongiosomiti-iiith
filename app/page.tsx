@@ -5,15 +5,12 @@ import SiteFooter from '@/components/site-footer'
 import PhotoAlbum from '@/components/photo-album'
 import CrossfadeVideo from '@/components/crossfade-video'
 import HeroBirdsAnimator from '@/components/hero-birds-animator'
-import HeroPlaylist from '@/components/hero-playlist'
 import BlogPostModal from '@/components/blog-post-modal'
-import { getHomepagePlaylists } from '@/utils/data/site-playlist'
 
 export const revalidate = 0
 
 export default async function Home() {
   const activeEvents = getEvents().sort((a: any, b: any) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime())
-  const playlists = await getHomepagePlaylists()
 
   return (
     <main id="top" className="home-page">
@@ -29,6 +26,28 @@ export default async function Home() {
             <div className="sun-corona"></div>
             <div className="sun-flare"></div>
             <div className="sun-rays"></div>
+            <div className="sun-disc"></div>
+          </div>
+
+          <div className="home-hero__clouds" aria-hidden="true">
+            <div className="hero-cloud cloud-1">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 19c2.485 0 4.5-2.015 4.5-4.5 0-2.485-2.015-4.5-4.5-4.5h-1c-.55-2.26-2.58-4-5-4-2.895 0-5.25 2.355-5.25 5.25v.25c-1.657 0-3 1.343-3 3s1.343 3 3 3h11.25z"/></svg>
+            </div>
+            <div className="hero-cloud cloud-2">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 19c2.485 0 4.5-2.015 4.5-4.5 0-2.485-2.015-4.5-4.5-4.5h-1c-.55-2.26-2.58-4-5-4-2.895 0-5.25 2.355-5.25 5.25v.25c-1.657 0-3 1.343-3 3s1.343 3 3 3h11.25z"/></svg>
+            </div>
+            <div className="hero-cloud cloud-3">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 19c2.485 0 4.5-2.015 4.5-4.5 0-2.485-2.015-4.5-4.5-4.5h-1c-.55-2.26-2.58-4-5-4-2.895 0-5.25 2.355-5.25 5.25v.25c-1.657 0-3 1.343-3 3s1.343 3 3 3h11.25z"/></svg>
+            </div>
+            <div className="hero-cloud cloud-4">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 19c2.485 0 4.5-2.015 4.5-4.5 0-2.485-2.015-4.5-4.5-4.5h-1c-.55-2.26-2.58-4-5-4-2.895 0-5.25 2.355-5.25 5.25v.25c-1.657 0-3 1.343-3 3s1.343 3 3 3h11.25z"/></svg>
+            </div>
+            <div className="hero-cloud cloud-5">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 19c2.485 0 4.5-2.015 4.5-4.5 0-2.485-2.015-4.5-4.5-4.5h-1c-.55-2.26-2.58-4-5-4-2.895 0-5.25 2.355-5.25 5.25v.25c-1.657 0-3 1.343-3 3s1.343 3 3 3h11.25z"/></svg>
+            </div>
+            <div className="hero-cloud cloud-6">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 19c2.485 0 4.5-2.015 4.5-4.5 0-2.485-2.015-4.5-4.5-4.5h-1c-.55-2.26-2.58-4-5-4-2.895 0-5.25 2.355-5.25 5.25v.25c-1.657 0-3 1.343-3 3s1.343 3 3 3h11.25z"/></svg>
+            </div>
           </div>
 
           <div className="home-hero__birds-sky">
@@ -123,8 +142,8 @@ export default async function Home() {
       {/* A breath between the hero and the events, so the two large sections do
           not run into each other. */}
       <section className="home-interlude scroll-reveal" aria-label="একসাথে, এক পরিচয়ে">
-        <p className="home-interlude__title">একসাথে, এক পরিচয়ে</p>
-        <p className="home-interlude__subtitle">A little piece of Bengal, a home at IIITH.</p>
+        <p className="home-interlude__title">✽ একসাথে, এক পরিচয়ে ✽</p>
+        <p className="home-interlude__subtitle">✽ A little piece of Bengal, a home at IIITH ✽</p>
       </section>
 
       <section id="events" className="events-page" aria-labelledby="events-title">
@@ -133,9 +152,6 @@ export default async function Home() {
             <div className="events-scene__hero scroll-reveal scroll-reveal--delay-1" id="events-hero-player">
               <img className="events-scene__hero-image events-scene__hero-poster" src="/assets/puja-poster.webp" alt="Bengali Puja Courtyard Celebration" width={1200} height={880} loading="lazy" decoding="async" />
               <CrossfadeVideo />
-              {/* Rendered even with nothing configured: the player carries the button
-                  for a visitor to bring their own playlist. */}
-              <HeroPlaylist playlists={playlists} />
             </div>
 
             <div className="story-card__intro scroll-reveal" style={{ padding: '0 clamp(16px, 4vw, 48px)' }}>

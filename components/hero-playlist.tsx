@@ -10,8 +10,9 @@ import {
   toCustomPlaylistId,
   writeCustomPlaylistId,
 } from '@/utils/data/custom-playlist'
-import { presetName } from '@/utils/data/preset-playlists'
-import PlaylistContents, { type QueueItem } from './playlist-contents'
+import { PRESET_PLAYLISTS, presetName } from '@/utils/data/preset-playlists'
+import { type QueueItem } from './playlist-contents'
+import buttonConfig from './radio-buttons.json'
 
 /**
  * Off, the whole playlist on a loop, or the one song on a loop - the three
@@ -129,6 +130,8 @@ function formatTime(seconds: number) {
 type BarProps = {
   title: string
   artist?: string
+  artwork?: string
+  category?: string
   isPlaying: boolean
   shuffle: boolean
   currentTime: number
@@ -159,13 +162,142 @@ type BarProps = {
   /** Whether what is playing is the visitor's own playlist. */
   customActive?: boolean
   pickerOpen?: boolean
+  volume: number
+  onVolume: (val: number) => void
+  muted: boolean
+  onMute: () => void
   children?: React.ReactNode
+}
+
+/** Complete reconstruction of the volume rocker control. */
+function VolumeControl({ volume, onVolume, muted, onMute }: { volume: number; onVolume: (v: number) => void; muted: boolean; onMute: () => void }) {
+  const trackRef = useRef<HTMLDivElement>(null)
+
+  const updateVolume = (clientY: number) => {
+    const track = trackRef.current
+    if (!track) return
+    const rect = track.getBoundingClientRect()
+    // 14px thumb means we inset the usable track by ~7px top and bottom
+    const padding = 7 
+    const usableHeight = rect.height - padding * 2
+    const y = Math.max(0, Math.min(clientY - rect.top - padding, usableHeight))
+    const percentage = usableHeight > 0 ? 1 - (y / usableHeight) : 1
+    onVolume(percentage)
+  }
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.stopPropagation()
+    e.currentTarget.setPointerCapture(e.pointerId)
+    updateVolume(e.clientY)
+  }
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      updateVolume(e.clientY)
+    }
+  }
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId)
+    }
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    let newVol = volume
+    if (e.key === 'ArrowUp') newVol = Math.min(volume + 0.05, 1)
+    else if (e.key === 'ArrowDown') newVol = Math.max(volume - 0.05, 0)
+    else if (e.key === 'Home') newVol = 0
+    else if (e.key === 'End') newVol = 1
+    
+    if (newVol !== volume) {
+      e.preventDefault()
+      e.stopPropagation()
+      onVolume(newVol)
+    }
+  }
+
+  return (
+    <>
+      <div
+        ref={trackRef}
+        className="vp-volume-rocker"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp} 
+        onClick={(e) => e.stopPropagation()}
+        role="slider"
+        aria-label="Volume"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round(volume * 100)}
+        tabIndex={0}
+        onKeyDown={handleKeyDown}
+        style={{ touchAction: 'none' }}
+      >
+        <div
+          className="vp-volume-fill"
+          style={{ height: `${volume * 100}%` }}
+          aria-hidden="true"
+        />
+        <div
+          className="vp-volume-thumb"
+          style={{ top: `${(1 - volume) * 100}%` }}
+          aria-hidden="true"
+        >
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="vp-vol-thumb-icon">
+            <path d="M11 5L6 9H2v6h4l5 4V5z" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/>
+            {volume === 0 ? (
+              <g></g>
+            ) : volume <= 0.5 ? (
+              <path d="M15.54 8.46a5 5 0 010 7.07" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            ) : (
+              <>
+                <path d="M19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              </>
+            )}
+          </svg>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        className={`vp-mute-btn ${muted || volume === 0 ? 'is-muted' : ''}`}
+        onClick={(e) => {
+          e.stopPropagation()
+          onMute()
+        }}
+        aria-label={muted || volume === 0 ? 'Unmute audio' : 'Mute audio'}
+        aria-pressed={muted || volume === 0}
+      >
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M11 5L6 9H2v6h4l5 4V5z" fill="currentColor"/>
+          {(muted || volume === 0) ? (
+            <>
+              <line x1="23" y1="9" x2="17" y2="15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              <line x1="17" y1="9" x2="23" y2="15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            </>
+          ) : volume <= 0.5 ? (
+            <path d="M15.54 8.46a5 5 0 010 7.07" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+          ) : (
+            <>
+              <path d="M15.54 8.46a5 5 0 010 7.07" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+              <path d="M19.07 4.93a10 10 0 010 14.14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+            </>
+          )}
+        </svg>
+      </button>
+    </>
+  )
 }
 
 /** The visible control bar. Shared by both engines so they look identical. */
 function PlayerBar({
   title,
   artist,
+  artwork,
+  category,
   isPlaying,
   shuffle,
   currentTime,
@@ -190,183 +322,292 @@ function PlayerBar({
   onCustomise,
   customActive = false,
   pickerOpen = false,
+  volume,
+  onVolume,
+  muted,
+  onMute,
   children,
 }: BarProps) {
   const seekMax = duration > 0 ? duration : 0
   const progress = seekMax > 0 ? (currentTime / seekMax) * 100 : 0
 
+  const titleWrapRef = useRef<HTMLDivElement>(null)
+  const titleTextRef = useRef<HTMLSpanElement>(null)
+  const [isTitleOverflowing, setIsTitleOverflowing] = useState(false)
+
+  useEffect(() => {
+    if (titleWrapRef.current && titleTextRef.current) {
+      setIsTitleOverflowing(titleTextRef.current.scrollWidth > titleWrapRef.current.clientWidth)
+    }
+  }, [title])
+
+  const handleProgressPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    const track = e.currentTarget;
+    const rect = track.getBoundingClientRect();
+    
+    const updateProgress = (clientX: number) => {
+      const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
+      const percentage = x / rect.width;
+      onSeek(percentage * seekMax);
+    };
+    
+    updateProgress(e.clientX);
+    
+    const onPointerMove = (e: PointerEvent) => {
+      updateProgress(e.clientX);
+    };
+    
+    const onPointerUp = () => {
+      document.removeEventListener('pointermove', onPointerMove);
+      document.removeEventListener('pointerup', onPointerUp);
+    };
+    
+    document.addEventListener('pointermove', onPointerMove);
+    document.addEventListener('pointerup', onPointerUp);
+  };
+
+
+
   return (
     <div
-      className={`hero-playlist ${isPlaying ? 'is-playing' : ''}`}
+      className={`hero-playlist-vintage ${isPlaying ? 'is-playing' : ''} ${shuffle ? 'is-shuffle' : ''} ${repeat !== 'off' ? `is-repeat-${repeat}` : ''}`}
       role="group"
-      aria-label="Festival music player"
+      aria-label="Vintage Festival Music Player"
     >
-      {children}
+      {/* Base artwork layer */}
+      <div className="vp-base-layer" aria-hidden="true">
+        <img
+          src="/assets/music player.png"
+          alt=""
+          className="vp-base-image"
+        />
+      </div>
 
-      <div className="hero-playlist__controls">
-        <button type="button" className="hero-playlist__btn" onClick={onPrevious} aria-label="Previous track">
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path d="M7 6v12" />
-            <path d="M18 6.5v11a.6.6 0 0 1-.94.5l-8-5.5a.6.6 0 0 1 0-1l8-5.5a.6.6 0 0 1 .94.5Z" />
-          </svg>
-        </button>
+      {/* Hidden video host for YouTube terms compliance */}
+      <div className="vp-hidden-video" aria-hidden="true">{children}</div>
 
+      {/* ── ALBUM ART ─────────────────────────────────────────────── */}
+      <div className="vp-album-art-frame" aria-hidden="true">
+        {artwork ? (
+          <img src={artwork} alt="Album Art" className="vp-album-art-img" />
+        ) : (
+          <div className="vp-album-art-fallback">
+            <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="20" cy="20" r="14" stroke="#7b1a13" strokeWidth="2" fill="none"/>
+              <circle cx="20" cy="20" r="4" fill="#7b1a13"/>
+              <circle cx="20" cy="20" r="8" stroke="#7b1a13" strokeWidth="1" fill="none" strokeDasharray="3 2"/>
+              <path d="M26 14 L28 10 L32 12" stroke="#7b1a13" strokeWidth="1.5" strokeLinecap="round"/>
+              <line x1="28" y1="10" x2="28" y2="18" stroke="#7b1a13" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </div>
+        )}
+      </div>
+
+      {/* ── TRACK INFO ────────────────────────────────────────────── */}
+      <div className="vp-track-info-block" aria-live="polite">
+        <div className={`vp-title-scroll-wrap ${isTitleOverflowing ? 'is-marquee' : ''}`} ref={titleWrapRef}>
+          <span className="vp-track-title" title={title} ref={titleTextRef}>{title}</span>
+        </div>
+        <span className="vp-track-meta">
+          {[artist, category].filter(Boolean).join(' • ') || 'মহালয়ার গান • পূজার সুর'}
+        </span>
+      </div>
+
+      {/* ── PROGRESS BAR ─────────────────────────────────────────── */}
+      <div
+        className="vp-progress-zone"
+        onPointerDown={handleProgressPointerDown}
+        role="slider"
+        aria-label="Seek track"
+        aria-valuemin={0}
+        aria-valuemax={seekMax || 100}
+        aria-valuenow={Math.floor(currentTime)}
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'ArrowRight') onSeek(Math.min(currentTime + 5, seekMax))
+          if (e.key === 'ArrowLeft') onSeek(Math.max(currentTime - 5, 0))
+        }}
+      >
+        <div className="vp-progress-track">
+          <div className="vp-progress-fill" style={{ width: `${progress}%` }} />
+          <div className="vp-progress-thumb" style={{ left: `${progress}%` }} />
+        </div>
+      </div>
+
+      {/* ── TIME DISPLAYS ─────────────────────────────────────────── */}
+      <div className="vp-time-left" aria-label={`Current time: ${formatTime(currentTime)}`}>
+        {formatTime(currentTime)}
+      </div>
+      <div className="vp-time-right" aria-label={`Duration: ${formatTime(seekMax)}`}>
+        {formatTime(seekMax)}
+      </div>
+
+      {/* ── FIVE CONTROL BUTTONS ──────────────────────────────────── */}
+      <div className="vp-ctrls" role="group" aria-label="Playback controls">
+
+      {/* Button 1: Shuffle */}
+      <div className="vp-ctrl-frame" style={{ left: `${buttonConfig.shuffle.left}%`, width: `${buttonConfig.shuffle.width}%`, height: `${buttonConfig.shuffle.height}%`, top: `${buttonConfig.shuffle.top}%` }}>
         <button
           type="button"
-          className="hero-playlist__btn hero-playlist__btn--play"
+          className={`vp-ctrl-btn ${shuffle ? 'is-active' : ''}`}
+          onClick={onShuffle}
+          aria-label={shuffle ? 'Shuffle on – click to turn off' : 'Shuffle off – click to turn on'}
+          aria-pressed={shuffle}
+        >
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M16 3h5v5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M4 20L21 3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+            <path d="M21 16v5h-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M15 15l6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+            <path d="M4 4l5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+          </svg>
+          {shuffle && <span className="vp-ctrl-active-dot" aria-hidden="true" />}
+        </button>
+      </div>
+
+      {/* Button 2: Previous */}
+      <div className="vp-ctrl-frame" style={{ left: `${buttonConfig.prev.left}%`, width: `${buttonConfig.prev.width}%`, height: `${buttonConfig.prev.height}%`, top: `${buttonConfig.prev.top}%` }}>
+        <button
+          type="button"
+          className="vp-ctrl-btn"
+          onClick={onPrevious}
+          disabled={disabled}
+          aria-label="Previous track"
+        >
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <polygon points="19,5 10,12 19,19" fill="currentColor"/>
+            <rect x="5" y="5" width="3" height="14" rx="1" fill="currentColor"/>
+          </svg>
+        </button>
+      </div>
+
+      {/* Button 3: Play / Pause */}
+      <div className="vp-ctrl-frame" style={{ left: `${buttonConfig.play.left}%`, width: `${buttonConfig.play.width}%`, height: `${buttonConfig.play.height}%`, top: `${buttonConfig.play.top}%` }}>
+        <button
+          type="button"
+          className="vp-ctrl-btn"
           onClick={onToggle}
           disabled={disabled}
           aria-label={isPlaying ? 'Pause music' : 'Play music'}
         >
           {isPlaying ? (
-            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-              <path d="M9 5v14" />
-              <path d="M15 5v14" />
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect x="5" y="4" width="4" height="16" rx="1.5" fill="currentColor"/>
+              <rect x="15" y="4" width="4" height="16" rx="1.5" fill="currentColor"/>
             </svg>
           ) : (
-            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-              <path d="M8 5.5v13a.6.6 0 0 0 .93.5l10-6.5a.6.6 0 0 0 0-1l-10-6.5a.6.6 0 0 0-.93.5Z" />
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <polygon points="7,4 20,12 7,20" fill="currentColor"/>
             </svg>
           )}
         </button>
+      </div>
 
-        <button type="button" className="hero-playlist__btn" onClick={onNext} aria-label="Next track">
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path d="M17 6v12" />
-            <path d="M6 6.5v11a.6.6 0 0 0 .94.5l8-5.5a.6.6 0 0 0 0-1l-8-5.5a.6.6 0 0 0-.94.5Z" />
-          </svg>
-        </button>
-
+      {/* Button 4: Next */}
+      <div className="vp-ctrl-frame" style={{ left: `${buttonConfig.next.left}%`, width: `${buttonConfig.next.width}%`, height: `${buttonConfig.next.height}%`, top: `${buttonConfig.next.top}%` }}>
         <button
           type="button"
-          className={`hero-playlist__btn hero-playlist__btn--shuffle ${shuffle ? 'is-on' : ''}`}
-          onClick={onShuffle}
-          aria-label="Shuffle"
-          aria-pressed={shuffle}
+          className="vp-ctrl-btn"
+          onClick={onNext}
+          disabled={disabled}
+          aria-label="Next track"
         >
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path d="M3 7h3.5l3 5m0 0 3 5H17" />
-            <path d="M3 17h3.5l3-5" />
-            <path d="M13.5 7H17" />
-            <path d="m15 5 2.5 2L15 9" />
-            <path d="m15 15 2.5 2L15 19" />
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <polygon points="5,5 14,12 5,19" fill="currentColor"/>
+            <rect x="16" y="5" width="3" height="14" rx="1" fill="currentColor"/>
           </svg>
         </button>
+      </div>
 
+      {/* Button 5: Repeat */}
+      <div className="vp-ctrl-frame" style={{ left: `${buttonConfig.repeat.left}%`, width: `${buttonConfig.repeat.width}%`, height: `${buttonConfig.repeat.height}%`, top: `${buttonConfig.repeat.top}%` }}>
         <button
           type="button"
-          className={`hero-playlist__btn hero-playlist__btn--repeat ${repeat === 'off' ? '' : 'is-on'}`}
+          className={`vp-ctrl-btn ${repeat !== 'off' ? 'is-active' : ''}`}
           onClick={onRepeat}
           aria-label={REPEAT_LABEL[repeat]}
-          title={REPEAT_LABEL[repeat]}
+          aria-pressed={repeat !== 'off'}
         >
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path d="M4 10.5A3.5 3.5 0 0 1 7.5 7H18" />
-            <path d="m15.5 4.5 3 2.5-3 2.5" />
-            <path d="M20 13.5a3.5 3.5 0 0 1-3.5 3.5H6" />
-            <path d="m8.5 20.5-3-3.5 3-2.5" />
-            {/* The 1 that turns "repeat" into "repeat this one". */}
-            {repeat === 'one' && <path d="M10.8 11.1 12 10.4V14" />}
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M17 2l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M3 11V9a4 4 0 014-4h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+            <path d="M7 22l-4-4 4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M21 13v2a4 4 0 01-4 4H3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
           </svg>
-        </button>
-
-        <button
-          type="button"
-          className={`hero-playlist__btn hero-playlist__btn--queue ${queueOpen ? 'is-on' : ''}`}
-          onClick={onToggleQueue}
-          aria-label="What is in this playlist"
-          title="What is in this playlist"
-          aria-expanded={queueOpen}
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path d="M4 7h11" />
-            <path d="M4 12h11" />
-            <path d="M4 17h7" />
-            <path d="M17.5 14.2v5.6a.4.4 0 0 0 .62.33l4.2-2.8a.4.4 0 0 0 0-.66l-4.2-2.8a.4.4 0 0 0-.62.33Z" />
-          </svg>
-        </button>
-
-        {canFullscreen && (
-          <button
-            type="button"
-            className={`hero-playlist__btn hero-playlist__btn--full ${isFullscreen ? 'is-on' : ''}`}
-            onClick={onFullscreen}
-            aria-label={isFullscreen ? 'Leave fullscreen' : 'Play fullscreen'}
-            title={isFullscreen ? 'Leave fullscreen' : 'Play fullscreen'}
-            aria-pressed={isFullscreen}
-          >
-            {isFullscreen ? (
-              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                <path d="M9 4v5H4" />
-                <path d="M15 4v5h5" />
-                <path d="M9 20v-5H4" />
-                <path d="M15 20v-5h5" />
-              </svg>
-            ) : (
-              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                <path d="M4 9V4h5" />
-                <path d="M20 9V4h-5" />
-                <path d="M4 15v5h5" />
-                <path d="M20 15v5h-5" />
-              </svg>
-            )}
-          </button>
-        )}
-
-        {/* Bringing your own music is not a hidden feature, so it gets a
-            control in the bar rather than a gesture to discover. */}
-        <button
-          type="button"
-          className={`hero-playlist__btn hero-playlist__btn--custom ${customActive ? 'is-on' : ''}`}
-          onClick={onCustomise}
-          aria-label="Use your own YouTube playlist"
-          title="Use your own YouTube playlist"
-          aria-expanded={pickerOpen}
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path d="M4 7h11" />
-            <path d="M4 12h11" />
-            <path d="M4 17h7" />
-            <path d="M18 13v7" />
-            <path d="M14.5 16.5h7" />
-          </svg>
+          {repeat === 'one' && <span className="vp-repeat-one-badge" aria-hidden="true">1</span>}
+          {repeat !== 'off' && <span className="vp-ctrl-active-dot" aria-hidden="true" />}
         </button>
       </div>
-
-      {queueOpen && (
-        <PlaylistContents
-          items={queue}
-          currentIndex={queueIndex}
-          playlistId={playlistId}
-          onPlayAt={onPlayAt}
-          onClose={onToggleQueue}
-        />
-      )}
-
-      <div className="hero-playlist__body">
-        <div className="hero-playlist__meta">
-          <span className="hero-playlist__title" title={title}>{title}</span>
-          {artist && <span className="hero-playlist__artist" title={artist}>{artist}</span>}
-        </div>
-
-        <div className="hero-playlist__scrub">
-          <input
-            className="hero-playlist__range"
-            type="range"
-            min={0}
-            max={seekMax || 1}
-            step="any"
-            value={Math.min(currentTime, seekMax || 1)}
-            disabled={seekMax === 0}
-            aria-label="Seek"
-            style={{ ['--hero-playlist-progress' as string]: `${progress}%` }}
-            onChange={(e) => onSeek(Number(e.currentTarget.value))}
-          />
-          <span className="hero-playlist__time">
-            {formatTime(currentTime)} / {formatTime(seekMax)}
-          </span>
-        </div>
       </div>
+
+      {/* ── VOLUME ROCKER AND MUTE ──────────────────────────────────────── */}
+      <VolumeControl volume={volume} onVolume={onVolume} muted={muted} onMute={onMute} />
+
+      {/* ── HIDDEN VINTAGE SWITCHES (SLOTTED PANEL) ───────────────── */}
+      <button
+        type="button"
+        className="vp-hidden-switch"
+        onClick={onToggleQueue}
+        aria-label="Toggle Queue"
+        aria-expanded={queueOpen}
+        style={{
+          left: `${buttonConfig.switchTop.left}%`,
+          top: `${buttonConfig.switchTop.top}%`,
+          width: `${buttonConfig.switchTop.width}%`,
+          height: `${buttonConfig.switchTop.height}%`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          position: 'absolute',
+        }}
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke={buttonConfig.switchTop.iconColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style={{
+          filter: 'drop-shadow(0px 1px 2px rgba(0,0,0,0.7)) drop-shadow(0px 0px 1px rgba(255,255,255,0.2))',
+          width: `clamp(8px, 2.5cqi, ${buttonConfig.switchTop.iconSize ?? 20}px)`,
+          height: `clamp(8px, 2.5cqi, ${buttonConfig.switchTop.iconSize ?? 20}px)`,
+          display: 'block',
+          flexShrink: 0,
+          transform: `translate(${(buttonConfig.switchTop as any).iconOffsetX ?? 0}%, ${(buttonConfig.switchTop as any).iconOffsetY ?? 0}%)`,
+        }}>
+          <path d="M2 5H14" />
+          <path d="M2 12H9" />
+          <path d="M2 19H9" />
+          <path d="M18 16V5C18 5 19 8.5 22 8.5M18 16C18 17.6569 16.6569 19 15 19C13.3431 19 12 17.6569 12 16C12 14.3431 13.3431 13 15 13C16.6569 13 18 14.3431 18 16Z" />
+        </svg>
+      </button>
+      <button
+        type="button"
+        className="vp-hidden-switch"
+        onClick={onCustomise}
+        aria-label="Customise Playlist"
+        aria-expanded={pickerOpen}
+        style={{
+          left: `${buttonConfig.switchBottom.left}%`,
+          top: `${buttonConfig.switchBottom.top}%`,
+          width: `${buttonConfig.switchBottom.width}%`,
+          height: `${buttonConfig.switchBottom.height}%`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          position: 'absolute',
+        }}
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke={buttonConfig.switchBottom.iconColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style={{
+          filter: 'drop-shadow(0px 1px 2px rgba(0,0,0,0.7)) drop-shadow(0px 0px 1px rgba(255,255,255,0.2))',
+          width: `clamp(8px, 2.5cqi, ${buttonConfig.switchBottom.iconSize ?? 20}px)`,
+          height: `clamp(8px, 2.5cqi, ${buttonConfig.switchBottom.iconSize ?? 20}px)`,
+          display: 'block',
+          flexShrink: 0,
+          transform: `translate(${(buttonConfig.switchBottom as any).iconOffsetX ?? 0}%, ${(buttonConfig.switchBottom as any).iconOffsetY ?? 0}%)`,
+        }}>
+          <path d="M7 9.5C7 10.8807 5.88071 12 4.5 12C3.11929 12 2 10.8807 2 9.5C2 8.11929 3.11929 7 4.5 7C5.88071 7 7 8.11929 7 9.5ZM7 9.5V2C7.33333 2.5 7.6 4.6 10 5" />
+          <circle cx="10.5" cy="19.5" r="2.5" />
+          <circle cx="20" cy="18" r="2" />
+          <path d="M13 19.5L13 11C13 10.09 13 9.63502 13.2466 9.35248C13.4932 9.06993 13.9938 9.00163 14.9949 8.86504C18.0085 8.45385 20.2013 7.19797 21.3696 6.42937C21.6498 6.24509 21.7898 6.15295 21.8949 6.20961C22 6.26627 22 6.43179 22 6.76283V17.9259" />
+          <path d="M13 13C17.8 13 21 10.6667 22 10" />
+        </svg>
+      </button>
+
     </div>
   )
 }
@@ -380,6 +621,7 @@ function AudioPlayer({
   onCustomise,
   customActive,
   pickerOpen,
+  onPlayingChange,
 }: {
   playlist: Playlist
   onFullscreen: () => void
@@ -388,6 +630,7 @@ function AudioPlayer({
   onCustomise: () => void
   customActive: boolean
   pickerOpen: boolean
+  onPlayingChange?: (playing: boolean) => void
 }) {
   const tracks = playlist.tracks
 
@@ -400,12 +643,26 @@ function AudioPlayer({
 
   const [index, setIndex] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
+
+  useEffect(() => {
+    onPlayingChange?.(isPlaying)
+  }, [isPlaying, onPlayingChange])
   const [shuffle, setShuffle] = useState(false)
   const [repeat, setRepeat] = useState<RepeatMode>('off')
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [failed, setFailed] = useState(false)
   const [queueOpen, setQueueOpen] = useState(false)
+  const [volume, setVolume] = useState(1)
+  const [muted, setMuted] = useState(false)
+
+  // Sync volume to audio element when it changes
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume
+      audioRef.current.muted = muted
+    }
+  }, [volume, muted])
 
   // Hosted audio knows its own songs; there is nothing to look up.
   const queue = useMemo<QueueItem[]>(
@@ -493,35 +750,50 @@ function AudioPlayer({
   if (!track) return null
 
   return (
-    <PlayerBar
-      title={failed ? 'Track unavailable' : track.title}
-      artist={failed ? undefined : track.artist}
-      isPlaying={isPlaying}
-      shuffle={shuffle}
-      currentTime={currentTime}
-      duration={duration}
-      onToggle={toggle}
-      onNext={next}
-      onPrevious={previous}
-      onShuffle={() => setShuffle((on) => !on)}
-      repeat={repeat}
-      onRepeat={() => setRepeat(nextRepeat)}
-      onSeek={(value) => {
-        setCurrentTime(value)
-        if (audioRef.current) audioRef.current.currentTime = value
-      }}
-      queue={queue}
-      queueIndex={index}
-      queueOpen={queueOpen}
-      onToggleQueue={() => setQueueOpen((open) => !open)}
-      onPlayAt={(next) => goTo(next, true)}
-      onFullscreen={onFullscreen}
-      isFullscreen={isFullscreen}
-      canFullscreen={canFullscreen}
-      onCustomise={onCustomise}
-      customActive={customActive}
-      pickerOpen={pickerOpen}
-    >
+    <>
+      {queueOpen && (
+        <PlaylistContents
+          queue={queue}
+          queueIndex={index}
+          onPlayAt={(i) => goTo(i, true)}
+          onClose={() => setQueueOpen(false)}
+        />
+      )}
+      <PlayerBar
+        title={failed ? 'Track unavailable' : track.title}
+        artist={failed ? undefined : track.artist}
+        artwork={track.artwork}
+        category={playlist.name}
+        isPlaying={isPlaying}
+        shuffle={shuffle}
+        currentTime={currentTime}
+        duration={duration}
+        volume={volume}
+        onVolume={setVolume}
+        muted={muted}
+        onMute={() => setMuted(m => !m)}
+        onToggle={toggle}
+        onNext={next}
+        onPrevious={previous}
+        onShuffle={() => setShuffle((on) => !on)}
+        repeat={repeat}
+        onRepeat={() => setRepeat(nextRepeat)}
+        onSeek={(value) => {
+          setCurrentTime(value)
+          if (audioRef.current) audioRef.current.currentTime = value
+        }}
+        queue={queue}
+        queueIndex={index}
+        queueOpen={queueOpen}
+        onToggleQueue={() => setQueueOpen((open) => !open)}
+        onPlayAt={(next) => goTo(next, true)}
+        onFullscreen={onFullscreen}
+        isFullscreen={isFullscreen}
+        canFullscreen={canFullscreen}
+        onCustomise={onCustomise}
+        customActive={customActive}
+        pickerOpen={pickerOpen}
+      >
       {/* loop repeats the one track in the browser itself, seamlessly and
           without onEnded firing at all. */}
       <audio
@@ -531,6 +803,10 @@ function AudioPlayer({
         loop={repeat === 'one'}
         onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
         onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
+        onVolumeChange={(e) => {
+          setVolume(e.currentTarget.volume)
+          setMuted(e.currentTarget.muted)
+        }}
         onEnded={() => {
           // Reaching the last track with repeat off is the end of the music.
           // Shuffle has no last track, so it carries on regardless.
@@ -547,6 +823,7 @@ function AudioPlayer({
         }}
       />
     </PlayerBar>
+    </>
   )
 }
 
@@ -560,6 +837,7 @@ function YouTubePlayer({
   onCustomise,
   customActive,
   pickerOpen,
+  onPlayingChange,
 }: {
   playlistId: string
   name: string
@@ -569,6 +847,7 @@ function YouTubePlayer({
   onCustomise: () => void
   customActive: boolean
   pickerOpen: boolean
+  onPlayingChange?: (playing: boolean) => void
 }) {
   const mountId = useId().replace(/:/g, '')
   const hostRef = useRef<HTMLDivElement>(null)
@@ -576,10 +855,17 @@ function YouTubePlayer({
 
   const [ready, setReady] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
+  
+  useEffect(() => {
+    onPlayingChange?.(isPlaying)
+  }, [isPlaying, onPlayingChange])
+
   const [shuffle, setShuffle] = useState(false)
   const [repeat, setRepeat] = useState<RepeatMode>('off')
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
+  const [volume, setVolume] = useState(1)
+  const [muted, setMuted] = useState(false)
   const [title, setTitle] = useState(name)
   const [artist, setArtist] = useState<string | undefined>(undefined)
   const [error, setError] = useState(false)
@@ -694,30 +980,58 @@ function YouTubePlayer({
     return () => window.clearInterval(id)
   }, [isPlaying])
 
+  // Sync volume to YouTube player when it changes
+  useEffect(() => {
+    const player = playerRef.current as any
+    if (player && player.setVolume) {
+      player.setVolume(volume * 100)
+      if (muted) player.mute()
+      else player.unMute()
+    }
+  }, [volume, muted, ready])
+
+  const currentVideoId = videoIds[queueIndex]
+  const artwork = currentVideoId ? `https://img.youtube.com/vi/${currentVideoId}/mqdefault.jpg` : undefined
+
   return (
-    <PlayerBar
-      title={error ? 'Playlist unavailable' : title}
-      artist={error ? undefined : artist}
-      isPlaying={isPlaying}
-      shuffle={shuffle}
-      currentTime={currentTime}
-      duration={duration}
-      disabled={!ready && !error}
-      onToggle={() => {
-        const player = playerRef.current
-        if (!player) return
-        if (isPlaying) player.pauseVideo()
-        else player.playVideo()
-      }}
-      onNext={() => playerRef.current?.nextVideo()}
-      onPrevious={() => {
-        const player = playerRef.current
-        if (!player) return
-        // Match the audio engine: restart the song first, step back after.
-        if (player.getCurrentTime() > 3) player.seekTo(0, true)
-        else player.previousVideo()
-      }}
-      onShuffle={() => {
+    <>
+      {queueOpen && (
+        <PlaylistContents
+          queue={queue}
+          queueIndex={queueIndex}
+          onPlayAt={(i) => playerRef.current?.playVideoAt(i)}
+          onClose={() => setQueueOpen(false)}
+        />
+      )}
+      <PlayerBar
+        title={error ? 'Playlist unavailable' : title}
+        artist={error ? undefined : artist}
+        artwork={artwork}
+        category={name}
+        isPlaying={isPlaying}
+        shuffle={shuffle}
+        currentTime={currentTime}
+        duration={duration}
+        volume={volume}
+        onVolume={setVolume}
+        muted={muted}
+        onMute={() => setMuted(m => !m)}
+        disabled={!ready && !error}
+        onToggle={() => {
+          const player = playerRef.current
+          if (!player) return
+          if (isPlaying) player.pauseVideo()
+          else player.playVideo()
+        }}
+        onNext={() => playerRef.current?.nextVideo()}
+        onPrevious={() => {
+          const player = playerRef.current
+          if (!player) return
+          // Match the audio engine: restart the song first, step back after.
+          if (player.getCurrentTime() > 3) player.seekTo(0, true)
+          else player.previousVideo()
+        }}
+        onShuffle={() => {
         setShuffle((on) => {
           playerRef.current?.setShuffle(!on)
           return !on
@@ -748,6 +1062,7 @@ function YouTubePlayer({
         <div ref={hostRef} id={`yt-${mountId}`} />
       </div>
     </PlayerBar>
+    </>
   )
 }
 
@@ -857,7 +1172,93 @@ function PlaylistPicker({
   )
 }
 
+import {
+  fetchVideoDetailsFor,
+  isVideoId,
+  type VideoDetails,
+} from '@/utils/data/youtube-video'
+
+const MAX_ROWS = 60
+
 /**
+ * The modal showing the current queue (tracks in the playlist).
+ */
+function PlaylistContents({
+  queue,
+  queueIndex,
+  onPlayAt,
+  onClose,
+}: {
+  queue: QueueItem[]
+  queueIndex: number
+  onPlayAt: (index: number) => void
+  onClose: () => void
+}) {
+  const [details, setDetails] = useState<Record<string, VideoDetails>>({})
+
+  useEffect(() => {
+    const ids = queue
+      .slice(0, MAX_ROWS)
+      .map((item) => item.videoId)
+      .filter(isVideoId)
+
+    if (ids.length === 0) return
+
+    const controller = new AbortController()
+
+    fetchVideoDetailsFor(
+      ids,
+      (found) => {
+        setDetails((current) => (current[found.id] ? current : { ...current, [found.id]: found }))
+      },
+      controller.signal
+    )
+
+    return () => controller.abort()
+  }, [queue])
+
+  const rows = queue.slice(0, MAX_ROWS)
+
+  return (
+    <div className="hero-playlist-picker vp-queue-modal">
+      <div className="vp-queue-header">
+        <span className="hero-playlist-picker__label">In this playlist</span>
+        <span className="vp-queue-count">{queue.length}</span>
+        <button type="button" className="hero-playlist-picker__link" onClick={onClose}>Close</button>
+      </div>
+      
+      {rows.length === 0 ? (
+        <p style={{ padding: '20px', textAlign: 'center', opacity: 0.8, color: '#3c2c1e' }}>
+          Waiting for the playlist. If it does not appear, press play once.
+        </p>
+      ) : (
+        <ol className="vp-queue-list">
+          {rows.map((item, i) => {
+            const found = item.videoId ? details[item.videoId] : undefined
+            const label = item.title || found?.title || `Track ${i + 1}`
+            const by = item.artist || found?.author
+
+            return (
+              <li key={`${item.videoId || 'track'}-${i}`} className={`vp-queue-item ${i === queueIndex ? 'is-playing' : ''}`}>
+                <button type="button" className="vp-queue-btn" onClick={() => onPlayAt(i)}>
+                  <span className="vp-queue-num">{i + 1}</span>
+                  <svg className="vp-queue-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M5 3l14 9-14 9V3z" fill="currentColor"/>
+                  </svg>
+                  <span className="vp-queue-title">{label}</span>
+                  {by && <span className="vp-queue-artist">{by}</span>}
+                </button>
+              </li>
+            )
+          })}
+        </ol>
+      )}
+    </div>
+  )
+}
+
+/**
+
  * Whether this browser will put an element fullscreen at all - iOS Safari will
  * not - read as an external store, because the answer does not exist while
  * this renders on the server and a button that does nothing is worse than no
@@ -911,11 +1312,61 @@ export default function HeroPlaylist({ playlists }: { playlists: Playlist[] }) {
 
   const screen = useSyncExternalStore(subscribeToScreen, readScreen, screenUnknownOnTheServer)
 
-  // null until somebody says otherwise, at which point their choice holds for
-  // the visit whatever the screen does.
   const [choice, setChoice] = useState<boolean | null>(null)
-  const shown = choice ?? (screen === null ? null : screen === 'wide')
+  const shown = choice ?? (screen === null ? null : true)
   const dockState = shown === null ? '' : shown ? 'is-open' : 'is-shut'
+
+  const [isAnyPlaying, setIsAnyPlaying] = useState(false)
+  const [hasScrolled, setHasScrolled] = useState(false)
+
+  useEffect(() => {
+    const onScroll = () => setHasScrolled(window.scrollY > 500)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    onScroll()
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  useEffect(() => {
+    if (!shown) return
+
+    let startY = window.scrollY
+    let isActive = false
+
+    const timer = setTimeout(() => {
+      isActive = true
+      startY = window.scrollY // Reset baseline after they finish opening it
+    }, 500)
+
+    const onScroll = () => {
+      if (isActive && Math.abs(window.scrollY - startY) > 200) {
+        setChoice(false)
+      }
+    }
+    
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      clearTimeout(timer)
+      window.removeEventListener('scroll', onScroll)
+    }
+  }, [shown])
+
+  useEffect(() => {
+    const onToggle = () => setChoice(!shown)
+    window.addEventListener('toggle-vintage-player', onToggle)
+    return () => window.removeEventListener('toggle-vintage-player', onToggle)
+  }, [shown])
+
+  useEffect(() => {
+    if (shown) {
+      const onKey = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') setChoice(false)
+      }
+      window.addEventListener('keydown', onKey)
+      return () => {
+        window.removeEventListener('keydown', onKey)
+      }
+    }
+  }, [shown])
 
   const canFullscreen = useSyncExternalStore(
     subscribeToNothing,
@@ -981,6 +1432,7 @@ export default function HeroPlaylist({ playlists }: { playlists: Playlist[] }) {
       }}
     />
   ) : null
+  const showLauncher = hasScrolled && !shown && isAnyPlaying
 
   // Nothing configured and nothing chosen. The button is then the whole
   // player, rather than there being no way in at all - which is what used to
@@ -988,76 +1440,83 @@ export default function HeroPlaylist({ playlists }: { playlists: Playlist[] }) {
   // playlist to hand it.
   if (!playlist) {
     return (
-      <div className={`hero-playlist-dock ${dockState}`} ref={dockRef}>
-        {picker}
-        <button
-          type="button"
-          className="hero-playlist hero-playlist--empty"
-          onClick={togglePicker}
-          aria-expanded={picking}
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path d="M4 7h11" />
-            <path d="M4 12h11" />
-            <path d="M4 17h7" />
-            <path d="M18 13v7" />
-            <path d="M14.5 16.5h7" />
-          </svg>
-          Add a YouTube playlist
-        </button>
-      </div>
+      <>
+        {showLauncher && (
+          <button
+            type="button"
+            className="vintage-launcher"
+            onClick={() => {
+              setChoice(!shown);
+              if (!shown) setPicking(true);
+            }}
+            aria-label="Add a YouTube playlist"
+          >
+            <img src="/assets/music%20thumbnail.png" alt="Pujor Gaan" />
+            <span className="vintage-launcher-label">Add Music</span>
+          </button>
+        )}
+
+        <div className={`hero-playlist-dock ${dockState}`} ref={dockRef}>
+          <div className="vp-modal-content">
+            {picker}
+          </div>
+        </div>
+      </>
     )
   }
 
   return (
-    <div className={`hero-playlist-dock ${dockState}`} ref={dockRef}>
-      {/* Always rendered, so the stylesheet can hide the player before React
-          has run rather than after. */}
-      <button
-        type="button"
-        className="hero-playlist__toggle"
-        onClick={() => setChoice(!(shown ?? true))}
-        aria-expanded={shown ?? true}
-        aria-label={shown === false ? 'Show the music player' : 'Hide the music player'}
-        title={shown === false ? 'Show the music player' : 'Hide the music player'}
-      >
-        <svg className="hero-playlist__toggle-note" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <path d="M9 18V6l10-2v12" />
-          <circle cx="6.5" cy="18" r="2.5" />
-          <circle cx="16.5" cy="16" r="2.5" />
-        </svg>
-        <svg className="hero-playlist__toggle-chevron" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <path d="m6 10 6 6 6-6" />
-        </svg>
-      </button>
-
-      {picker}
-      {playlist.youtubePlaylistId ? (
-        // Keyed by the playlist, so switching to your own starts a fresh
-        // player instead of showing the old track title until YouTube
-        // catches up.
-        <YouTubePlayer
-          key={playlist.youtubePlaylistId}
-          playlistId={playlist.youtubePlaylistId}
-          name={playlist.name}
-          onFullscreen={toggleFullscreen}
-          isFullscreen={isFullscreen}
-          canFullscreen={canFullscreen}
-          onCustomise={togglePicker}
-          customActive={Boolean(customId)}
-          pickerOpen={picking}
-        />
-      ) : (
-        <AudioPlayer
-          playlist={playlist}
-          onFullscreen={toggleFullscreen}
-          isFullscreen={isFullscreen}
-          canFullscreen={canFullscreen}
-          onCustomise={togglePicker}
-          customActive={false}
-          pickerOpen={picking}
-        />
+    <>
+      {showLauncher && (
+        <button
+          type="button"
+          className="vintage-launcher"
+          onClick={() => setChoice(!shown)}
+          aria-label={shown ? "Close Music Player" : "Open Music Player"}
+        >
+          <img src="/assets/music%20thumbnail.png" alt="Pujor Gaan" />
+          <span className="vintage-launcher-label">Pujor Gaan</span>
+        </button>
       )}
-    </div>
+
+      <div className={`hero-playlist-dock ${dockState}`} ref={dockRef}>
+        {/* Click outside to close */}
+        {shown && (
+          <div
+            className="vp-dock-backdrop"
+            onClick={() => setChoice(false)}
+            aria-hidden="true"
+          />
+        )}
+        <div className="vp-modal-content">
+          {picker}
+          {playlist.youtubePlaylistId ? (
+            <YouTubePlayer
+              key={playlist.youtubePlaylistId}
+              playlistId={playlist.youtubePlaylistId}
+              name={playlist.name}
+              onFullscreen={toggleFullscreen}
+              isFullscreen={isFullscreen}
+              canFullscreen={canFullscreen}
+              onCustomise={togglePicker}
+              customActive={Boolean(customId)}
+              pickerOpen={picking}
+              onPlayingChange={setIsAnyPlaying}
+            />
+          ) : (
+            <AudioPlayer
+              playlist={playlist}
+              onFullscreen={toggleFullscreen}
+              isFullscreen={isFullscreen}
+              canFullscreen={canFullscreen}
+              onCustomise={togglePicker}
+              customActive={false}
+              pickerOpen={picking}
+              onPlayingChange={setIsAnyPlaying}
+            />
+          )}
+        </div>
+      </div>
+    </>
   )
 }

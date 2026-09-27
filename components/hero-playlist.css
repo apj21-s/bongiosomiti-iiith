@@ -5,18 +5,122 @@
 
 /* Everything the player owns lives in one dock, so the panel for adding a
    playlist can stack above the bar instead of being positioned against it. */
-.hero-playlist-dock {
-  position: absolute;
-  left: 50%;
-  bottom: clamp(12px, 2.2vw, 24px);
-  transform: translateX(-50%);
-  z-index: 4;
-
+/* Floating Launcher */
+.vintage-launcher {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 50;
+  background: transparent;
+  border: none;
+  outline: none;
+  cursor: pointer;
   display: flex;
   flex-direction: column;
-  align-items: stretch;
-  gap: 8px;
-  width: min(560px, calc(100% - 24px));
+  align-items: center;
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
+  animation: float-gentle 4s ease-in-out infinite;
+}
+
+.vintage-launcher.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(30px) scale(0.9);
+}
+
+.vintage-launcher img {
+  width: 90px;
+  height: auto;
+  filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5));
+  outline: none;
+  /* Crops out 2px from the edges in case the exported PNG has a stray 1px border artifact */
+  clip-path: inset(2px);
+}
+
+.vintage-launcher-label {
+  background: #3b2313;
+  color: #f7ecd5;
+  font-size: 0.8rem;
+  padding: 4px 12px;
+  border-radius: 12px;
+  margin-top: -10px;
+  font-family: 'Noto Serif Bengali', serif;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+  border: 1px solid #dca75d;
+  z-index: 1;
+}
+
+@keyframes float-gentle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+/* Modal Overlay */
+.hero-playlist-dock {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.hero-playlist-dock.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.vp-dock-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 5, 0, 0.65);
+  backdrop-filter: blur(2px);
+  cursor: pointer;
+}
+
+.vp-modal-content {
+  position: relative;
+  width: 100%;
+  max-width: 900px;
+  padding: 0 12px;
+  box-sizing: border-box;
+  margin: 0 auto;
+  z-index: 101;
+  transform: scale(0.95) translateY(20px);
+  transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.hero-playlist-dock.is-open .vp-modal-content {
+  transform: scale(1) translateY(0);
+}
+
+.vp-modal-close {
+  position: absolute;
+  top: -40px;
+  right: 0;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+  z-index: 102;
+}
+
+.vp-modal-close:hover {
+  background: rgba(0, 0, 0, 0.6);
+  transform: scale(1.1);
 }
 
 .hero-playlist {
@@ -236,10 +340,6 @@
 }
 
 @media (max-width: 560px) {
-  .hero-playlist-dock {
-    width: calc(100% - 16px);
-    bottom: 10px;
-  }
 
   /* Two rows on a phone. Six controls, the YouTube tile and the equaliser
      left the title about fifty pixels - four characters and an ellipsis - so
@@ -474,16 +574,7 @@
   object-position: center center;
 }
 
-/* The player becomes the floor of the screen. */
-.events-scene__hero.is-fullscreen .hero-playlist-dock {
-  left: 0;
-  right: 0;
-  bottom: 0;
-  width: 100%;
-  max-width: none;
-  transform: none;
-  padding: 0 clamp(10px, 2.5vw, 44px) clamp(10px, 2.5vh, 28px);
-}
+
 
 .events-scene__hero.is-fullscreen .hero-playlist {
   padding: 10px clamp(12px, 2vw, 22px);
@@ -808,54 +899,659 @@ a.hero-playlist-queue__name:focus-visible {
   transition: transform 220ms ease;
 }
 
-/* Shut at any width, because this one was asked for. */
-.hero-playlist-dock.is-shut > :not(.hero-playlist__toggle) {
-  display: none;
-}
 
-.hero-playlist-dock.is-shut .hero-playlist.is-playing {
-  display: flex;
-  align-self: flex-end;
-  width: auto;
-  padding: 4px;
-  border-radius: 12px;
-}
-
-.hero-playlist-dock.is-shut .hero-playlist.is-playing > :not(.hero-playlist__yt) {
-  display: none;
-}
-
-.hero-playlist-dock.is-shut .hero-playlist__toggle-chevron {
-  transform: rotate(180deg);
-}
-
-/* A phone, before anybody has said either way. */
-@media (max-width: 560px) {
-  .hero-playlist-dock:not(.is-open) > :not(.hero-playlist__toggle) {
-    display: none;
-  }
-
-  .hero-playlist-dock:not(.is-open) .hero-playlist.is-playing {
-    display: flex;
-    align-self: flex-end;
-    width: auto;
-    padding: 4px;
-    border-radius: 12px;
-  }
-
-  .hero-playlist-dock:not(.is-open) .hero-playlist.is-playing > :not(.hero-playlist__yt) {
-    display: none;
-  }
-
-  .hero-playlist-dock:not(.is-open) .hero-playlist__toggle-chevron {
-    transform: rotate(180deg);
-  }
-}
 
 @media (prefers-reduced-motion: reduce) {
-
   .hero-playlist__toggle,
   .hero-playlist__toggle-chevron {
     transition: none;
   }
 }
+
+/* ==========================================================================
+   VINTAGE BENGALI RADIO — COMPLETE INTERACTIVE PLAYER
+   
+   Coordinate system: percentage-based, relative to the .hero-playlist-vintage
+   container. The image is 1520 × 476 px (aspect ratio ≈ 3.193 : 1).
+
+   Key landmark columns (as % of image width):
+     Left speaker body:   0  – 28%
+     Album art frame:    29% – 41%
+     Track info area:    41% – 71%
+     Progress bar:       29% – 71%  (below track info)
+     5 buttons row:      29% – 71%  (below progress bar)
+     Volume rocker:      71% – 76%
+     Decorative panel:   76% – 80%
+     Right speaker:      80% – 100%
+
+   Key landmark rows (as % of image height):
+     Radio top:           0%
+     Display top:        22%
+     Display mid:        27%   (track title starts here)
+     Progress bar:       58%
+     Buttons top:        66%
+     Buttons bottom:     88%
+     Radio bottom:      100%
+   ========================================================================== */
+
+/* ── CONTAINER ──────────────────────────────────────────────────────────── */
+.hero-playlist-vintage {
+  position: relative;
+  width: 100%;
+  max-width: 900px;
+  /* exact image aspect ratio */
+  aspect-ratio: 1520 / 476;
+  margin: 0 auto;
+  overflow: visible; /* allow tooltips/badges to overflow */
+  background: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ── BASE IMAGE ─────────────────────────────────────────────────────────── */
+.vp-base-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.vp-base-image {
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  display: block;
+}
+
+/* Hidden YouTube iframe — 1×1, out of the way but technically "visible" */
+.vp-hidden-video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0.01;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── ALBUM ART ──────────────────────────────────────────────────────────── */
+/*
+  Frame visible in the image:
+    left ≈ 29.5%  top ≈ 22%  width ≈ 11%  height ≈ 35%
+*/
+.vp-album-art-frame {
+  position: absolute;
+  left: 31%;
+  top: 31.5%;
+  width: 8%;
+  height: 25.5%;
+  overflow: hidden;
+  border-radius: 4%;
+  z-index: 2;
+  pointer-events: none;
+  background: #2a1608;
+}
+
+.vp-album-art-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 3%;
+}
+
+.vp-album-art-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1c0d04;
+}
+
+.vp-album-art-fallback svg {
+  width: 60%;
+  height: 60%;
+  opacity: 0.6;
+}
+
+/* ── TRACK INFO BLOCK ───────────────────────────────────────────────────── */
+/*
+  Parchment area right of album art:
+    left ≈ 41%  top ≈ 22%  width ≈ 30%  height ≈ 32%
+*/
+.vp-track-info-block {
+  position: absolute;
+  left: 39.6%;
+  top: 29.7%;
+  width: 32.5%;
+  height: 20.5%;
+  z-index: 2;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 1%;
+  padding: 0 3%;
+  box-sizing: border-box;
+  background: linear-gradient(135deg, rgba(238, 222, 186, 0.85), rgba(215, 185, 140, 0.75));
+  border-radius: 6px;
+  box-shadow: inset 0 0 8px rgba(100, 60, 20, 0.2);
+  overflow: hidden;
+}
+
+.vp-title-scroll-wrap {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+}
+
+.vp-track-title {
+  font-family: 'Noto Serif Bengali', 'Tiro Bangla', serif;
+  font-weight: 700;
+  color: #7b1a13;
+  /* scales with container — clamp between 0.55rem and 1.1rem */
+  font-size: clamp(0.55rem, 1.8cqi, 1.1rem);
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+}
+
+.vp-title-scroll-wrap.is-marquee .vp-track-title {
+  display: inline-block;
+  text-overflow: clip;
+  padding-left: 100%;
+  animation: marquee 16s linear infinite;
+  will-change: transform;
+}
+
+@keyframes marquee {
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-100%, 0, 0); }
+}
+
+.vp-track-meta {
+  width: 100%;
+  min-width: 0;
+  font-family: 'Noto Serif Bengali', serif;
+  font-size: clamp(0.45rem, 1.2cqi, 0.75rem);
+  color: #554332;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── PROGRESS BAR ───────────────────────────────────────────────────────── */
+/*
+  Thin bar at bottom of display:
+    left ≈ 29.5%  top ≈ 57%  width ≈ 41.5%  height ≈ 5%
+*/
+.vp-progress-zone {
+  position: absolute;
+  left: 39.9%;
+  top: 51.3%;
+  width: 31.9%;
+  height: 5.4%;
+  z-index: 3;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  touch-action: none;
+}
+
+.vp-progress-track {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: rgba(200, 170, 110, 0.4);
+  border-radius: 999px;
+  border: 1px solid rgba(110, 70, 30, 0.3);
+  overflow: hidden;
+}
+
+.vp-progress-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: linear-gradient(180deg, #c84a2f 0%, #8a1a10 100%);
+  border-radius: 999px;
+  min-width: 0;
+  transition: width 0.1s linear;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,100,80,0.4);
+}
+
+.vp-progress-thumb {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 14px;
+  height: 14px;
+  background: radial-gradient(circle at 30% 30%, #f7ecd5, #dca75d);
+  border: 2px solid #3b2313;
+  border-radius: 50%;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.6);
+  pointer-events: none;
+  transition: left 0.1s linear;
+}
+
+/* ── TIME DISPLAYS ──────────────────────────────────────────────────────── */
+.vp-time-left,
+.vp-time-right {
+  position: absolute;
+  top: 51.3%;
+  height: 5.4%;
+  font-family: 'Courier New', monospace;
+  font-size: clamp(0.35rem, 0.8cqi, 0.5rem);
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+  z-index: 3;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  font-weight: 700;
+}
+
+.vp-time-left {
+  left: 39.9%;
+  justify-content: flex-start;
+}
+
+.vp-time-right {
+  right: 28.2%;   /* 100% - (39.9% + 31.9%) = 28.2% */
+  justify-content: flex-end;
+}
+
+/* ── FIVE RECTANGULAR CONTROL BUTTONS ──────────────────────────────────── */
+/*
+  5 buttons below the display:
+    Row: top ≈ 65%  height ≈ 22%
+    Left edge ≈ 29.5%  total width ≈ 41.5%
+    Each button width ≈ 41.5/5 = 8.3%  gap between ≈ 0.2%
+*/
+
+.vp-ctrls {
+  position: absolute;
+  top: 64.0%;
+  left: 0;
+  width: 100%;
+  height: 13.0%;
+  z-index: 3;
+}
+
+/* Frames acting as exact bounds of the brass placeholders */
+.vp-ctrl-frame {
+  position: absolute;
+  height: 100%;
+}
+
+/* 
+  Absolute positions are now driven by components/radio-buttons.json
+  and injected via inline styles in hero-playlist.tsx
+*/
+
+.vp-ctrl-btn {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(180deg, rgba(200, 74, 47, 0.85) 0%, rgba(138, 26, 16, 0.95) 100%);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #f7ecd5;
+  transition: transform 0.1s, filter 0.15s;
+  z-index: 3;
+  padding: 0;
+  box-sizing: border-box;
+  touch-action: manipulation;
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.2), 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.vp-ctrl-btn:hover {
+  filter: brightness(1.1);
+}
+
+.vp-ctrl-btn:active {
+  transform: scale(0.95);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+}
+
+.vp-ctrl-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.vp-ctrl-btn.is-active {
+  color: #dca75d;
+  filter: brightness(1.2);
+}
+
+.vp-ctrl-btn svg {
+  height: 55%;
+  width: auto;
+  aspect-ratio: 1;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.4));
+}
+
+/* Active state dot indicator */
+.vp-ctrl-active-dot {
+  position: absolute;
+  bottom: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  background: #9b2218;
+  border-radius: 50%;
+}
+
+.vp-repeat-one-badge {
+  position: absolute;
+  top: 12%;
+  right: 12%;
+  font-size: clamp(0.35rem, 0.9cqi, 0.55rem);
+  font-weight: 700;
+  color: #9b2218;
+  line-height: 1;
+}
+
+/* (Removed old individual absolute button positions) */
+
+/* ── VOLUME ROCKER ──────────────────────────────────────────────────────── */
+/*
+  Tall narrow channel to the right of the display:
+    left ≈ 71.5%  top ≈ 25%  width ≈ 3.5%  height ≈ 50%
+*/
+.vp-volume-rocker {
+  position: absolute;
+  left: 75.2%;
+  top: 31%;
+  width: 2.2%;
+  height: 45%;
+  z-index: 3;
+  cursor: ns-resize;
+  touch-action: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  /* Make track transparent so the underlying image groove shows through */
+  background: transparent;
+  border-radius: 3px;
+}
+
+.vp-volume-fill {
+  width: 65%;
+  background: linear-gradient(180deg, #c84a2f 0%, #9b2218 100%);
+  border-radius: 3px;
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  min-height: 0;
+  max-height: 100%;
+  pointer-events: none;
+  transition: height 0.1s linear;
+}
+
+.vp-volume-thumb {
+  position: absolute;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 85%;
+  height: 7%;
+  background: linear-gradient(180deg, #f5e0a0, #d4a73a);
+  border: 1.5px solid #7a5020;
+  border-radius: 3px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+  pointer-events: none;
+  transition: top 0.1s linear;
+  min-height: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vp-vol-thumb-icon {
+  height: 80%;
+  width: auto;
+  aspect-ratio: 1;
+  max-width: 80%;
+  color: #7a5020;
+  filter: drop-shadow(0 1px 1px rgba(255,255,255,0.4));
+}
+
+/* ── MUTE BUTTON ────────────────────────────────────────────────────────── */
+/*
+  Small speaker icon area at the top of the volume section.
+  Visually it appears at about: left ≈ 70.5%, top ≈ 18%, w ≈ 5%, h ≈ 7%
+*/
+.vp-mute-btn {
+  position: absolute;
+  /* Placed directly above the volume rocker */
+  left: 74.3%;
+  top: 23%;
+  width: 4%;
+  height: 6%;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #5c2d0a;
+  z-index: 3;
+  transition: color 0.15s, transform 0.1s;
+  touch-action: manipulation;
+  padding: 5%;
+  box-sizing: border-box;
+}
+
+.vp-mute-btn svg {
+  width: 80%;
+  height: 80%;
+}
+
+.vp-mute-btn:hover { color: #9b2218; }
+.vp-mute-btn:active { transform: scale(0.9); }
+.vp-mute-btn.is-muted { color: #9b2218; opacity: 0.7; }
+
+/* ── HIDDEN VINTAGE SWITCHES (SLOTTED PANEL) ────────────────────────────── */
+/*
+  The wooden slotted panel to the right of the volume rocker.
+  We split it into a top half and bottom half to trigger Queue and Customise.
+*/
+.vp-hidden-switch {
+  position: absolute;
+  left: 78%;
+  width: 3.5%;
+  height: 25.5%;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  overflow: visible; /* let the icon show even if it's wider than the narrow click zone */
+}
+
+.vp-switch-top {
+  top: 25%;
+  justify-content: flex-start;
+  padding-top: 15%;
+}
+
+.vp-switch-bottom {
+  top: 50.5%;
+  justify-content: flex-end;
+  padding-bottom: 15%;
+}
+
+.vp-imprinted-icon {
+  width: 75%;
+  height: auto;
+  aspect-ratio: 1;
+  color: #f5e0a0; /* Bright gold to stand out clearly on dark wood */
+  opacity: 1;
+  /* Dark shadow behind it to guarantee it stands out from the wood grain */
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.8));
+  transition: color 0.2s, transform 0.1s, filter 0.2s;
+}
+
+.vp-hidden-switch:hover .vp-imprinted-icon {
+  color: #a6724b; /* Lighter brown on hover */
+}
+
+.vp-hidden-switch:active .vp-imprinted-icon {
+  transform: scale(0.95);
+  filter: none;
+}
+
+/* ── QUEUE MODAL ────────────────────────────────────────────────────────── */
+.vp-queue-modal {
+  position: relative;
+  width: 100%;
+  max-width: 600px;
+  max-height: 45vh;
+  margin: 0 auto 16px auto;
+  z-index: 20;
+}
+
+.vp-queue-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.vp-queue-count {
+  background: rgba(182, 90, 60, 0.2);
+  color: #8e3f2d;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+
+.vp-queue-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  overflow-y: auto;
+  flex: 1 1 auto;
+}
+
+.vp-queue-item {
+  margin: 4px 0;
+}
+
+.vp-queue-btn {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 8px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #3c2c1e;
+  font: inherit;
+  font-size: 0.85rem;
+  text-align: left;
+  transition: background-color 0.15s;
+}
+
+.vp-queue-btn:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.vp-queue-item.is-playing .vp-queue-btn {
+  background: rgba(182, 90, 60, 0.16);
+  color: #8e3f2d;
+  font-weight: bold;
+}
+
+.vp-queue-num {
+  width: 24px;
+  color: #6b5b4c;
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.vp-queue-item.is-playing .vp-queue-num {
+  display: none;
+}
+
+.vp-queue-icon {
+  display: none;
+  width: 14px;
+  height: 14px;
+  margin-right: 10px;
+  color: #8e3f2d;
+}
+
+.vp-queue-item.is-playing .vp-queue-icon {
+  display: block;
+}
+
+.vp-queue-title {
+  flex: 1 1 auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vp-queue-artist {
+  flex-shrink: 0;
+  margin-left: 12px;
+  font-size: 0.75rem;
+  color: #6b5b4c;
+  opacity: 0.8;
+}
+
+/* ── RESPONSIVE SCALING ─────────────────────────────────────────────────── */
+/*
+  The container uses aspect-ratio + width:100%, so everything inside
+  scales proportionally. The only thing we need to watch is the progress
+  thumb which uses px — scale it down with a media query.
+*/
+@media (max-width: 600px) {
+  .vp-progress-thumb {
+    width: 7px;
+    height: 7px;
+  }
+  .vp-ctrl-active-dot {
+    width: 3px;
+    height: 3px;
+  }
+}
+
+@media (max-width: 400px) {
+  .vp-progress-thumb {
+    width: 5px;
+    height: 5px;
+  }
+}
+
+/* ── CONTAINER QUERY SUPPORT ─────────────────────────────────────────────── */
+@supports (container-type: inline-size) {
+  .hero-playlist-vintage {
+    container-type: inline-size;
+  }
+}
+

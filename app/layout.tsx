@@ -2,17 +2,21 @@ import type { Metadata } from "next";
 import "./globals.css";
 import ScrollReveal from "@/components/scroll-reveal";
 import UtsavLoader from "@/components/utsav-loader";
+import { getHomepagePlaylists } from "@/utils/data/site-playlist";
+import HeroPlaylist from "@/components/hero-playlist";
 
 export const metadata: Metadata = {
   title: "bangiya.samiti.iiith",
   description: "আমরা বাঙ্গালী জাতি",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const playlists = await getHomepagePlaylists();
+
   return (
     <html lang="en">
       <head>
@@ -33,6 +37,7 @@ export default function RootLayout({
         <UtsavLoader />
         <ScrollReveal />
         {children}
+        <HeroPlaylist playlists={playlists} />
       </body>
     </html>
   );

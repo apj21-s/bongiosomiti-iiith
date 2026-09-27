@@ -23,6 +23,7 @@ export type PlaylistTrack = {
   id: string
   title: string
   artist?: string
+  artwork?: string
   src: string
 }
 
@@ -53,6 +54,7 @@ function toTrack(value: unknown, index: number): PlaylistTrack | null {
     id: isFilledString(track.id) ? track.id.trim() : `track-${index}`,
     title: track.title.trim(),
     artist: isFilledString(track.artist) ? track.artist.trim() : undefined,
+    artwork: isFilledString(track.artwork) ? track.artwork.trim() : undefined,
     src: track.src.trim(),
   }
 }

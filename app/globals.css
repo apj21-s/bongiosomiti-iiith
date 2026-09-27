@@ -1862,7 +1862,7 @@ button {
   width: 100vw;
   max-width: 100vw;
   margin-left: calc(50% - 50vw);
-  margin-top: 8px;
+  margin-top: 0;
   margin-bottom: 0;
   padding: 0;
   box-sizing: border-box;
@@ -6752,7 +6752,8 @@ video::cue {
   position: relative;
   width: 100vw;
   margin-left: calc(50% - 50vw);
-  min-height: clamp(360px, 34vw, 490px);
+  height: 100vh;
+  min-height: 100vh;
   overflow: hidden;
   border: 0;
   border-radius: 0;
@@ -6841,6 +6842,15 @@ video::cue {
   mix-blend-mode: screen;
 }
 
+@media (max-width: 768px) {
+  .home-hero__sun-glow {
+    left: 82%;
+    top: 10%;
+    width: 180px;
+    height: 180px;
+  }
+}
+
 .sun-corona {
   position: absolute;
   inset: -15%;
@@ -6857,6 +6867,15 @@ video::cue {
   background: radial-gradient(circle, rgba(255, 255, 245, 0.92) 0%, rgba(255, 215, 115, 0.58) 45%, transparent 75%);
   animation: utsav-sun-flare 3.6s ease-in-out infinite alternate;
   filter: blur(8px);
+}
+
+.sun-disc {
+  position: absolute;
+  inset: 38%;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffffff 0%, #fff1cc 80%, rgba(255,241,204,0) 100%);
+  box-shadow: 0 0 12px 2px rgba(255, 255, 255, 0.9);
+  filter: blur(1.5px);
 }
 
 .sun-rays {
@@ -6914,6 +6933,101 @@ video::cue {
   to {
     transform: rotate(360deg);
   }
+}
+
+/* -------------------------------------------------------------------------
+   Gliding Clouds
+   ------------------------------------------------------------------------- */
+.home-hero__clouds {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 40%;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+  display: none; /* Hidden by default on desktop */
+}
+
+@media (max-width: 768px) {
+  .home-hero__clouds {
+    display: block; /* Show only on mobile */
+  }
+}
+
+.hero-cloud {
+  position: absolute;
+  color: rgba(255, 255, 255, 0.4);
+  filter: blur(1px);
+  animation: utsav-cloud-glide linear infinite;
+}
+
+.hero-cloud svg {
+  width: 100%;
+  height: 100%;
+}
+
+.cloud-1 {
+  top: 15%;
+  width: 80px;
+  height: 80px;
+  animation-duration: 45s;
+  animation-delay: -10s;
+}
+
+.cloud-2 {
+  top: 5%;
+  width: 120px;
+  height: 120px;
+  animation-duration: 60s;
+  animation-delay: -30s;
+  color: rgba(255, 255, 255, 0.3);
+  filter: blur(2px);
+}
+
+.cloud-3 {
+  top: 25%;
+  width: 60px;
+  height: 60px;
+  animation-duration: 35s;
+  animation-delay: -5s;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.cloud-4 {
+  top: 2%; /* Just beneath the navbar */
+  width: 90px;
+  height: 90px;
+  animation-duration: 50s;
+  animation-delay: -20s;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.cloud-5 {
+  top: 8%; /* Just beneath the navbar */
+  width: 130px;
+  height: 130px;
+  animation-duration: 70s;
+  animation-delay: -45s;
+  color: rgba(255, 255, 255, 0.25);
+  filter: blur(3px);
+}
+
+.cloud-6 {
+  top: 18%;
+  width: 70px;
+  height: 70px;
+  animation-duration: 40s;
+  animation-delay: -15s;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+@keyframes utsav-cloud-glide {
+  0% { transform: translateX(-150px); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateX(calc(100vw + 150px)); opacity: 0; }
 }
 
 /* -------------------------------------------------------------------------
@@ -7288,14 +7402,15 @@ video::cue {
   top: 0;
   bottom: 0;
   z-index: 6;
-  display: grid;
-  align-content: start;
-  justify-items: center;
-  padding: 24px 8% 12%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8%;
 }
 
 .home-hero__title {
-  margin: 4.1rem 0 0;
+  margin: 0;
   color: #1d1712;
   font-family: "Times New Roman", Georgia, serif;
   font-size: clamp(2.5rem, 4.2vw, 3.8rem);
@@ -7835,7 +7950,8 @@ video::cue {
   .home-hero {
     width: 100vw;
     margin-left: calc(50% - 50vw);
-    min-height: clamp(340px, 85vw, 460px);
+    height: auto;
+    min-height: clamp(280px, 70vw, 380px);
     overflow: hidden;
   }
 
@@ -8279,9 +8395,9 @@ video::cue {
   position: relative;
   width: 100%;
   height: auto;
-  background: #faf4e8;
+  background: transparent;
   line-height: 0;
-  border-bottom: 2px solid #8e3a15;
+  border-bottom: none;
 }
 
 /* The strip is 1024x136, and it is a motif with a top and a bottom - so it is
@@ -11251,18 +11367,12 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
    shoulder stays a short, readable arc rather than a dive across the screen. */
 .home-hero__content {
   top: 0;
-  bottom: min(var(--hero-art-height), 100%);
+  bottom: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-end;
-  /* Clear of the fixed navbar. The extra room matters because the title's
-     line-height of 0.5 lets its glyphs overflow their own box upward, so
-     centring alone tucks the capitals under the bar. */
-  padding-top: calc(var(--home-strip-height, 46px) + 1rem);
-  /* Sits the tagline just clear of the horizon, in proportion to the sky, so
-     the spacing holds from a phone to a wide laptop. */
-  padding-bottom: clamp(12px, 5vh, 56px);
+  justify-content: center;
+  padding: 0 8%;
   z-index: 4;
 }
 
@@ -11349,6 +11459,11 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
    breath rather than as a third block.
    ============================================================ */
 
+@keyframes black-shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
 .home-interlude {
   /* Full bleed the same way the events section does, and the same gutter, so
      this line starts exactly where "আমাদের উৎসব" starts below it. */
@@ -11356,47 +11471,62 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
   max-width: 100vw;
   margin-left: calc(50% - 50vw);
   box-sizing: border-box;
-  /* Deeper at the bottom than the top on purpose: the chonga mic and its
-     countdown hang out of the events section above their own image, and with
-     even padding they came to rest level with the subtitle and read as one
-     stray row. The text keeps the upper half of the band; they get the lower.
-     */
-  padding: clamp(44px, 9vh, 104px) clamp(16px, 4vw, 48px) clamp(96px, 15vh, 160px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* A very little room to breathe */
+  padding: clamp(2px, 0.5vh, 4px) clamp(16px, 4vw, 48px);
+  height: auto;
+  min-height: 0;
+}
+
+@media (max-width: 768px) {
+  .home-interlude {
+    padding: 0px 4px 0px 8px; /* push right side closer to edge */
+    height: 16px; /* Force it to be very narrow on mobile */
+  }
+  .home-interlude__title {
+    font-size: 6px;
+    letter-spacing: -0.02em;
+    transform-origin: left center;
+  }
+  .home-interlude__subtitle {
+    font-size: 6px;
+    letter-spacing: -0.05em;
+    transform-origin: right center;
+  }
 }
 
 .home-interlude__title {
   margin: 0;
-  max-width: 24ch;
-  color: #1d1712;
-  font-family: "Tiro Bangla", "Noto Serif Bengali", Georgia, serif;
-  font-size: clamp(1.85rem, 4.4vw, 3.3rem);
-  /* Bengali hangs its matras above the line and its vowel signs below, so it
-     needs more room than a Latin heading at the same size. */
-  line-height: 1.34;
+  font-size: clamp(9px, 2.2vw, 0.86rem);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 800;
+  line-height: 1.1;
+  white-space: nowrap;
+  background: linear-gradient(110deg, var(--brand-2, #8c2d19) 35%, #000000 50%, var(--brand-2, #8c2d19) 65%);
+  background-size: 200% auto;
+  color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: black-shimmer 4s linear infinite;
 }
 
-/* A short rule, because a divider that is only text reads as a stray
-   paragraph. */
-.home-interlude__title::before {
-  content: "";
-  display: block;
-  width: clamp(34px, 5vw, 58px);
-  height: 2px;
-  margin-bottom: clamp(14px, 2.4vh, 26px);
-  border-radius: 2px;
-  background: var(--brand, #b65a3c);
-}
-
-/* Set against the right edge, opposite the Bengali line. The two languages
-   holding opposite margins is what makes the band read as a spread rather
-   than as a heading with a caption under it. */
+/* Set against the right edge, opposite the Bengali line. */
 .home-interlude__subtitle {
-  margin: clamp(10px, 1.6vh, 18px) 0 0 auto;
-  max-width: 36ch;
+  margin: 0;
   text-align: right;
-  color: #6b5b4c;
-  font-family: "Tiro Bangla", Georgia, "Times New Roman", serif;
-  font-style: italic;
-  font-size: clamp(1rem, 1.9vw, 1.42rem);
-  line-height: 1.5;
+  font-family: "Times New Roman", Georgia, serif;
+  font-size: clamp(9px, 2.2vw, 0.86rem);
+  font-weight: bold;
+  line-height: 1.1;
+  letter-spacing: -0.04em;
+  white-space: nowrap;
+  background: linear-gradient(110deg, #7a543b 35%, #000000 50%, #7a543b 65%);
+  background-size: 200% auto;
+  color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: black-shimmer 4s linear infinite;
 }

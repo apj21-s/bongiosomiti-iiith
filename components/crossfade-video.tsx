@@ -454,6 +454,77 @@ export default function CrossfadeVideo() {
           .mic-tooltip::before { animation: none !important; }
           .lock-pulse { animation: none !important; }
         }
+
+        .fixed-thumbnail-launcher {
+          position: absolute;
+          bottom: 50px;
+          right: 50px;
+          z-index: 20;
+          background: transparent;
+          border: none;
+          cursor: pointer;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          transition: transform 0.2s;
+        }
+        .fixed-thumbnail-launcher img {
+          width: 180px;
+          height: auto;
+          filter: drop-shadow(0 6px 12px rgba(0,0,0,0.4));
+        }
+        .fixed-thumbnail-launcher:hover {
+          transform: scale(1.05);
+        }
+        .fixed-thumbnail-launcher:hover .fixed-thumbnail-animator {
+          animation-play-state: paused;
+        }
+        
+        .fixed-thumbnail-animator {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          animation: premium-shake 5s cubic-bezier(0.36, 0.07, 0.19, 0.97) infinite;
+        }
+        
+        @keyframes premium-shake {
+          0%, 80%, 100% { transform: rotate(0deg) scale(1); }
+          83% { transform: rotate(-3deg) scale(1.02); }
+          86% { transform: rotate(3deg) scale(1.02); }
+          89% { transform: rotate(-2deg) scale(1.02); }
+          92% { transform: rotate(2deg) scale(1.02); }
+          95% { transform: rotate(0deg) scale(1.02); }
+        }
+
+        .fixed-thumbnail-label {
+          position: absolute;
+          top: 100%;
+          margin-top: 4px;
+          background-color: #432b1f;
+          color: #f7ecd5;
+          border: 1.5px solid #d4a35d;
+          border-radius: 20px;
+          padding: 4px 16px;
+          font-family: serif;
+          font-size: 15px;
+          font-weight: 600;
+          white-space: nowrap;
+          box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+          pointer-events: none;
+        }
+        @media (max-width: 768px) {
+          .fixed-thumbnail-launcher {
+            bottom: -40px;
+            right: 20px;
+            z-index: 30; /* Ensure it stays above the white section */
+          }
+          .fixed-thumbnail-launcher img {
+            width: 120px;
+          }
+          .fixed-thumbnail-label {
+            margin-top: -12px;
+          }
+        }
       `}</style>
       
       <div 
@@ -509,6 +580,18 @@ export default function CrossfadeVideo() {
           <div className="wave"></div>
         </div>
       </div>
+
+      {/* Fixed Music Launcher over Video */}
+      <button
+        type="button"
+        className="fixed-thumbnail-launcher"
+        onClick={() => window.dispatchEvent(new CustomEvent('toggle-vintage-player'))}
+      >
+        <div className="fixed-thumbnail-animator">
+          <img src="/assets/music%20thumbnail.png" alt="Pujor Gaan" />
+          <span className="fixed-thumbnail-label">Pujor Gaan</span>
+        </div>
+      </button>
 
       <audio ref={audioRef} src="/assets/mahalaya_audio.mp3" loop preload="none" />
 

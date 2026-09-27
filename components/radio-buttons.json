@@ -1,0 +1,52 @@
+{
+  "shuffle": {
+    "left": 30.93,
+    "width": 6.42,
+    "height": 114.71,
+    "top": -11.08
+  },
+  "prev": {
+    "left": 38.95,
+    "width": 6.76,
+    "height": 115.81,
+    "top": -12.75
+  },
+  "play": {
+    "left": 47.4,
+    "width": 7.7,
+    "height": 117.06,
+    "top": -11.19
+  },
+  "next": {
+    "left": 56.48,
+    "width": 7.26,
+    "height": 120.49,
+    "top": -13.69
+  },
+  "repeat": {
+    "left": 65.23,
+    "width": 7.03,
+    "height": 121.87,
+    "top": -14.13
+  },
+  "switchTop": {
+    "left": 80.19,
+    "top": 34.02,
+    "width": 3.44,
+    "height": 11.13,
+    "iconSize": 45,
+    "iconColor": "#8a4a2a",
+    "iconOffsetX": 0,
+    "iconOffsetY": 0
+  },
+  "switchBottom": {
+    "left": 80.36,
+    "top": 66.95,
+    "width": 3.09,
+    "height": 11.46,
+    "iconSize": 40,
+    "iconColor": "#8a4a2a",
+    "iconOffsetX": 0,
+    "iconOffsetY": 0
+  }
+}
