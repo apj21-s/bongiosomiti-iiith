@@ -67,9 +67,14 @@ function safeEqual(a: string, b: string): boolean {
  * all, which is the right way round for this to fail.
  */
 export function getAdminCredentials(): { email: string; password: string; tier: AdminTier }[] {
+  // Two accounts, and only two: the gate credential the gate staff share, and
+  // the super admin. There is deliberately no shared manager login - a manager
+  // exists when the super admin creates a profile for them at /admin/managers,
+  // with their own password and their own UPI id, and not before. A single
+  // manager password passed between people could not be scoped to anybody's
+  // takings, which is the whole point of the manager tier.
   const configured: { email?: string; password?: string; tier: AdminTier }[] = [
     { email: process.env.TIER1_EMAIL, password: process.env.TIER1_PASSWORD, tier: 1 },
-    { email: process.env.TIER2_EMAIL, password: process.env.TIER2_PASSWORD, tier: 2 },
     { email: process.env.TIER3_EMAIL, password: process.env.TIER3_PASSWORD, tier: 3 },
   ]
 

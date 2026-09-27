@@ -647,10 +647,16 @@ function SpinningCounter({ value }: { value: number }) {
   )
 }
 
-function PaymentStep({ event, draft, updateDraft, prevStage, transitionTo, total, subtotal, discount, applyCoupon, couponMsg }: any) {
+function PaymentStep({ event, draft, updateDraft, prevStage, transitionTo, total, subtotal, discount, applyCoupon, couponMsg, allowedUpiIds }: any) {
   const [copied, setCopied] = useState(false)
-  const upiIds = event?.config?.upi_ids || (event?.config?.upi_id ? [event.config.upi_id] : ["bangiya.samiti.iiith@oksbi"])
-  const activeUpiId = draft.selectedUpiId || upiIds[0]
+  // One UPI id per manager, so adding a manager adds a way to pay: the id in
+  // the list and the QR beside it, which is generated from whichever id is
+  // selected. Falls back to the event's own configured ids while no manager
+  // profiles exist.
+  const upiIds = (allowedUpiIds && allowedUpiIds.length > 0)
+    ? allowedUpiIds
+    : (event?.config?.upi_ids || (event?.config?.upi_id ? [event.config.upi_id] : ["bangiya.samiti.iiith@oksbi"]))
+  const activeUpiId = upiIds.includes(draft.selectedUpiId) ? draft.selectedUpiId : upiIds[0]
   const deepLink = `upi://pay?pa=${activeUpiId}&pn=BangiyaSomiti&am=${total}&cu=INR`
   
   const handleCopy = () => {

@@ -43,9 +43,8 @@ client in `utils/supabase/mock-client.ts`, backed by a local JSON store.
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | yes | Publishable key, used by the browser and middleware |
 | `SUPABASE_SERVICE_ROLE_KEY` | yes | Secret key. Server-only; bypasses row-level security |
 | `SESSION_SECRET` | strongly recommended | Signs admin session cookies. Falls back to `SUPABASE_SERVICE_ROLE_KEY`, which means rotating that key signs everyone out |
-| `TIER1_EMAIL` / `TIER1_PASSWORD` | yes in production | Gate staff sign-in |
-| `TIER2_EMAIL` / `TIER2_PASSWORD` | yes in production | Manager sign-in |
-| `TIER3_EMAIL` / `TIER3_PASSWORD` | yes in production | Super admin sign-in |
+| `TIER1_EMAIL` / `TIER1_PASSWORD` | yes | The gate credential, shared by the gate staff |
+| `TIER3_EMAIL` / `TIER3_PASSWORD` | yes | Super admin sign-in |
 | `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` | for email | Pass delivery. Without `SMTP_USER`/`SMTP_PASS` sending is skipped with a warning rather than failing |
 | `FROM_EMAIL` | no | Sender address; defaults to `SMTP_USER` |
 | `NEXT_PUBLIC_APP_URL` | no | Absolute links in emails |
@@ -134,11 +133,16 @@ Rows for one booking are grouped by `utr`, which is how the payments screen and
 
 Two kinds of admin account, both landing on `/admin/login`:
 
-1. **Env-credential tiers.** Three fixed accounts from `TIER*_EMAIL` /
-   `TIER*_PASSWORD`. Tier 1 is gate staff, 2 manager, 3 super admin.
+1. **Env-credential tiers.** Two fixed accounts from `TIER*_EMAIL` /
+   `TIER*_PASSWORD`: tier 1 is the gate credential the gate staff share, tier 3
+   is the super admin. There is deliberately no tier-2 pair - see below.
 2. **Manager profiles.** Rows in `manager_profiles`, created by a super admin at
    `/admin/managers`, with a username, a scrypt-hashed password and a UPI id.
-   They sign in at tier 2.
+   They sign in at tier 2. This is the only way a manager exists: a shared
+   manager password passed between people could not be scoped to anybody's
+   takings, which is the whole point of the tier. Adding a manager also adds
+   their UPI id, and the QR generated from it, to the registration payment
+   step.
 
 The session is a **signed cookie**: `v2.<tier>.<subject>.<expiry>.<hmac>`, HMAC
 covering the whole payload, so neither the tier nor the manager identity can be
