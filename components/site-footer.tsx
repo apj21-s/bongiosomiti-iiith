@@ -93,7 +93,7 @@ export default function SiteFooter({ variant = 'public' }: SiteFooterProps) {
                     <p className="utsav-footer__copyright">
                         &copy; 2026 IIIT Bangiya Samiti &bull; {variant === 'admin' ? 'Protected Internal Organiser Area' : 'All Rights Reserved'} {variant !== 'admin' && (
                             <>
-                                &bull; By <a href="https://github.com/apj21-s">arco</a> & <a href="https://github.com/sagarjha7174">sagar</a>
+                                &bull; By <a href="https://github.com/apj21-s">arco</a>, <a href="https://github.com/sagarjha7174">sagar</a> & <a href="https://github.com/HimalayanSaswataBose">Saswata</a>
                             </>
                         )}
                     </p>
