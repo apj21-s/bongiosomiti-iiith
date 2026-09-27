@@ -31,8 +31,8 @@ export default function AdminLoginPage() {
       <div className="grid" style={{padding: '24px 28px', }}>
         <form id="login-form" className="section" action={handleSubmit} style={{padding: '0', }}>
           <div className="field" style={{marginBottom: '1.25rem', }}>
-            <label htmlFor="email" style={{fontWeight: '600', display: 'block', marginBottom: '6px', }}>Organiser Email</label>
-            <input id="email" name="email" type="email" placeholder="admin@gmail.com" style={{width: '100%', padding: '12px 16px', borderRadius: '14px', border: '1px solid var(--border)', fontSize: '1rem', }} required />
+            <label htmlFor="email" style={{fontWeight: '600', display: 'block', marginBottom: '6px', }}>Email or manager username</label>
+            <input id="email" name="email" type="text" autoComplete="username" spellCheck={false} placeholder="you@example.com or a username" style={{width: '100%', padding: '12px 16px', borderRadius: '14px', border: '1px solid var(--border)', fontSize: '1rem', }} required />
           </div>
           
           <div className="field" style={{marginBottom: '1.25rem', }}>
