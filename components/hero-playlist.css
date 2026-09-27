@@ -33,8 +33,6 @@
   height: auto;
   filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5));
   outline: none;
-  /* Crops out 2px from the edges in case the exported PNG has a stray 1px border artifact */
-  clip-path: inset(2px);
 }
 
 .vintage-launcher-label {
