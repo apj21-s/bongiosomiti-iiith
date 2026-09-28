@@ -23,7 +23,12 @@ export async function GET() {
         name
       )
     `)
-    .in('payment_status', ['PENDING', 'REJECTED'])
+    // APPROVED belongs here too. The screen offers a "VERIFIED (Active
+    // Passes)" filter, which could only ever come back empty while this list
+    // stopped at PENDING and REJECTED - and a manager who has approved a
+    // payment can no longer look at the receipt behind it, which is the one
+    // record of where their money came from.
+    .in('payment_status', ['PENDING', 'REJECTED', 'APPROVED'])
     .order('created_at', { ascending: false })
 
   if (scope.upi) {

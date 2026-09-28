@@ -23,7 +23,14 @@ create table if not exists manager_profiles (
   created_by text
 );
 
-create index if not exists manager_profiles_upi_idx on manager_profiles (lower(upi_id));
+-- The UPI id has to be unique, not merely indexed. It is what routes a payment
+-- to the manager who collected it: tickets carry receiver_upi, and the scope
+-- in utils/auth/payment-scope.ts matches on it. Two managers sharing an id
+-- would each be able to read and approve the other's payments, and no query
+-- could say whose money it was. The application refuses a duplicate before it
+-- inserts; this is what settles two insertions racing each other.
+drop index if exists manager_profiles_upi_idx;
+create unique index if not exists manager_profiles_upi_idx on manager_profiles (lower(upi_id));
 create unique index if not exists manager_profiles_username_idx on manager_profiles (lower(username));
 
 -- Where the money actually went, read off the receipt at registration time.

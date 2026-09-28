@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
 import fs from 'fs'
 import path from 'path'
+import { createServiceRoleClient } from '@/utils/supabase/server'
+import { ownsEventRows, toDatabaseRow } from '@/utils/data/event-sync'
 
 export async function DELETE(
   request: Request,
@@ -37,6 +39,10 @@ export async function PUT(
   const guard = await requireAdmin(3)
   if (!guard.ok) return guard.response
 
+  let updated: Record<string, unknown>
+  const written = { file: false, database: false }
+  const problems: string[] = []
+
   try {
     const updates = await request.json()
     const filePath = path.join(process.cwd(), 'public', 'data', 'events.json')
@@ -47,15 +53,58 @@ export async function PUT(
       return NextResponse.json({ error: 'Event not found' }, { status: 404 })
     }
 
-    events[eventIndex] = { ...events[eventIndex], ...updates }
-    fs.writeFileSync(filePath, JSON.stringify(events, null, 2))
-    
-    // Invalidate caches to ensure the frontend reflects changes immediately
-    revalidatePath('/', 'layout')
+    // The slug and the id identify the event in both stores; an edit that
+    // changed either would orphan every ticket pointing at it.
+    const safeUpdates = { ...(updates || {}) }
+    delete safeUpdates.slug
+    delete safeUpdates.id
+    updated = { ...events[eventIndex], ...safeUpdates }
+    events[eventIndex] = updated
 
-    return NextResponse.json(events[eventIndex])
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    try {
+      fs.writeFileSync(filePath, JSON.stringify(events, null, 2) + '\n')
+      written.file = true
+    } catch (e) {
+      problems.push(
+        `The events file could not be written (${e instanceof Error ? e.message : 'unknown'}). ` +
+        'On a read-only deployment this is expected: the change is in the database, ' +
+        'and events.json has to be edited in the repository to match.'
+      )
+    }
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Could not read the events file' },
+      { status: 500 }
+    )
   }
 
+  if (!ownsEventRows()) {
+    problems.push(
+      'This deployment does not own the shared events rows, so the change stayed in its own ' +
+      'events.json. Set EVENTS_DB_WRITES=true only where those rows belong.'
+    )
+  } else {
+    try {
+      const supabase = await createServiceRoleClient()
+      const { error } = await supabase
+        .from('events')
+        .update(toDatabaseRow(updated))
+        .eq('slug', slug)
+
+      if (error) problems.push(`The events row was not updated: ${error.message}`)
+      else written.database = true
+    } catch (e) {
+      problems.push(`The events row was not updated: ${e instanceof Error ? e.message : 'unknown'}`)
+    }
+  }
+
+  if (!written.file && !written.database) {
+    return NextResponse.json({ error: problems.join(' ') || 'Nothing was saved' }, { status: 500 })
+  }
+
+  // The pages that read events.json are cached, so an edit that saved but was
+  // not revalidated shows the old text until the next build.
+  revalidatePath('/', 'layout')
+
+  return NextResponse.json({ ...updated, written, warnings: problems })
 }

@@ -138,6 +138,53 @@ export async function getManagerById(id: string): Promise<ManagerProfile | null>
   return profile.isActive ? profile : null
 }
 
+/**
+ * Whether this UPI id or this password already belongs to another manager.
+ *
+ * Both have to be unique, for different reasons.
+ *
+ * The UPI id is how a payment is routed to the manager who collected it:
+ * tickets carry receiver_upi, and the scope in utils/auth/payment-scope.ts
+ * matches on it. Two managers sharing an id would mean each could read and
+ * approve the other's payments, and neither the list nor the receipt view
+ * could tell whose money it was.
+ *
+ * The password is a separate matter - two managers with the same password is
+ * not a collision the system suffers from, it is a sign that one of them
+ * chose something obvious, and a credential that unlocks two accounts is
+ * worth twice as much to whoever guesses it.
+ *
+ * Passwords are salted, so there is no index to look this up with: the
+ * candidate has to be run against each stored hash in turn. That is one scrypt
+ * per existing manager, on a table holding a committee's worth of rows, and
+ * only when a super admin creates a profile.
+ */
+async function findClash(upiId: string, password: string): Promise<string | null> {
+  const supabase = await createServiceRoleClient()
+  const { data, error } = await supabase
+    .from('manager_profiles')
+    .select('upi_id, password_hash')
+
+  // A table that cannot be read is reported by the insert that follows, which
+  // knows how to name the missing migration. Refusing here would hide that.
+  if (error || !data) return null
+
+  const rows = data as { upi_id: string; password_hash: string }[]
+  const wanted = normaliseUpiId(upiId)
+
+  if (rows.some((row) => normaliseUpiId(row.upi_id || '') === wanted)) {
+    return 'That UPI ID already belongs to another manager. Each manager collects at their own id.'
+  }
+
+  for (const row of rows) {
+    if (row.password_hash && (await verifyPassword(password, row.password_hash))) {
+      return 'That password is already in use by another manager. Choose a different one.'
+    }
+  }
+
+  return null
+}
+
 export async function createManager(input: {
   username: string
   password: string
@@ -161,6 +208,9 @@ export async function createManager(input: {
     return { ok: false, error: 'Enter a valid UPI ID, for example name@bank' }
   }
 
+  const clash = await findClash(upiId, input.password)
+  if (clash) return { ok: false, error: clash }
+
   const supabase = await createServiceRoleClient()
   const { data, error } = await supabase
     .from('manager_profiles')
@@ -176,7 +226,14 @@ export async function createManager(input: {
 
   if (error || !data) {
     const duplicate = (error?.code === '23505') || /duplicate|unique/i.test(error?.message || '')
-    if (duplicate) return { ok: false, error: 'That username is already taken' }
+    if (duplicate) {
+      // findClash checked the UPI id a moment ago, so reaching a unique
+      // violation on it means two profiles were created at once. The database
+      // constraint is what actually settles that race; this only reports it.
+      return /upi/i.test(error?.message || '')
+        ? { ok: false, error: 'That UPI ID already belongs to another manager' }
+        : { ok: false, error: 'That username is already taken' }
+    }
 
     // The table is missing until the migration is run, and Postgres says so in
     // its own words - which named the schema back to whoever asked. Say the

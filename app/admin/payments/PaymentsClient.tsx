@@ -8,6 +8,41 @@ export default function PaymentsClient() {
   const [status, setStatus] = useState('PENDING')
   const [reviewing, setReviewing] = useState<any | null>(null)
 
+  /**
+   * The receipt for the payment being reviewed.
+   *
+   * The bucket is private, so there is no src to render straight from the
+   * ticket: the route hands back a signed URL that lasts two minutes. It is
+   * fetched when the reviewer asks rather than with the list, so opening the
+   * payments screen does not mint a batch of live links to other people's
+   * bank screenshots.
+   */
+  const [receipt, setReceipt] = useState<
+    { state: 'idle' | 'loading' } | { state: 'ready'; url: string } | { state: 'error'; message: string }
+  >({ state: 'idle' })
+
+  function openReview(pmt: any) {
+    setReceipt({ state: 'idle' })
+    setReviewing(pmt)
+  }
+
+  function closeReview() {
+    setReviewing(null)
+    setReceipt({ state: 'idle' })
+  }
+
+  async function showReceipt(token: string) {
+    setReceipt({ state: 'loading' })
+    try {
+      const res = await fetch(`/api/admin/payments/${token}/receipt`)
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Could not open the receipt')
+      setReceipt({ state: 'ready', url: data.url })
+    } catch (e: any) {
+      setReceipt({ state: 'error', message: e.message })
+    }
+  }
+
   async function fetchPayments() {
     setLoading(true)
     try {
@@ -122,7 +157,7 @@ export default function PaymentsClient() {
                     <div className="action-btn-group" style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                       {pmt.payment_status !== 'APPROVED' && <button type="button" className="btn btn-sm btn-success" onClick={() => handleApprove(pmt.token)}>VERIFY</button>}
                       {pmt.payment_status !== 'REJECTED' && <button type="button" className="btn btn-sm btn-danger" onClick={() => handleReject(pmt.token)}>REJECT</button>}
-                      <button type="button" className="btn btn-sm btn-secondary" onClick={() => setReviewing(pmt)}>REVIEW</button>
+                      <button type="button" className="btn btn-sm btn-secondary" onClick={() => openReview(pmt)}>REVIEW</button>
                     </div>
                   </td>
                 </tr>
@@ -138,7 +173,7 @@ export default function PaymentsClient() {
           <div className="admin-modal-card">
             <div className="admin-modal-head">
               <h3 id="modal-review-title">Payment Verification Review</h3>
-              <button type="button" className="admin-modal-close" onClick={() => setReviewing(null)} aria-label="Close modal">&times;</button>
+              <button type="button" className="admin-modal-close" onClick={closeReview} aria-label="Close modal">&times;</button>
             </div>
             <div className="admin-modal-body" style={{ overflowX: 'auto' }}>
               <table className="verification-meta-table" style={{ margin: 0, minWidth: 'max-content' }}>
@@ -152,13 +187,56 @@ export default function PaymentsClient() {
                   <tr><td>UPI Transaction UTR</td><td><strong style={{ letterSpacing: '0.05em' }}>{reviewing.utr || 'N/A'}</strong></td></tr>
                   <tr><td>Expected Amount</td><td>₹{reviewing.amount}</td></tr>
                   <tr><td>Submitted At</td><td>{new Date(reviewing.created_at).toLocaleString()}</td></tr>
+                  <tr><td>Paid To (UPI)</td><td><strong style={{ fontFamily: 'monospace' }}>{reviewing.receiver_upi || 'N/A'}</strong></td></tr>
                   <tr><td>Payment Status</td><td><span className="badge">{renderStatus(reviewing.payment_status)}</span></td></tr>
                 </tbody>
               </table>
+
+              {/* The receipt itself, so the UTR above can be checked against
+                  what the payer's bank actually showed. */}
+              <div style={{ marginTop: '16px' }}>
+                {receipt.state === 'idle' && (
+                  <button type="button" className="btn btn-sm btn-secondary" onClick={() => showReceipt(reviewing.token)}>
+                    Show payment receipt
+                  </button>
+                )}
+
+                {receipt.state === 'loading' && <p className="text-muted">Opening the receipt...</p>}
+
+                {receipt.state === 'error' && (
+                  <p className="text-muted" role="alert">
+                    {receipt.message}{' '}
+                    <button type="button" className="btn btn-sm btn-secondary" onClick={() => showReceipt(reviewing.token)}>
+                      Try again
+                    </button>
+                  </p>
+                )}
+
+                {receipt.state === 'ready' && (
+                  <figure style={{ margin: 0 }}>
+                    <img
+                      src={receipt.url}
+                      alt={`Payment receipt uploaded for pass ${reviewing.token}`}
+                      style={{
+                        display: 'block',
+                        width: '100%',
+                        maxWidth: '520px',
+                        height: 'auto',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border, rgba(0,0,0,0.15))',
+                      }}
+                    />
+                    <figcaption className="text-muted" style={{ marginTop: '6px', fontSize: '0.8rem' }}>
+                      This link expires after two minutes.{' '}
+                      <a href={receipt.url} target="_blank" rel="noreferrer">Open full size</a>
+                    </figcaption>
+                  </figure>
+                )}
+              </div>
             </div>
             <div className="admin-modal-footer" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'flex-end' }}>
-              <button type="button" className="btn btn-danger" style={{ flex: '1 1 auto', minWidth: 'min(100%, 140px)', justifyContent: 'center' }} onClick={() => { setReviewing(null); handleReject(reviewing.token) }}>✕ Reject</button>
-              <button type="button" className="btn btn-success" style={{ flex: '1 1 auto', minWidth: 'min(100%, 140px)', justifyContent: 'center' }} onClick={() => { setReviewing(null); handleApprove(reviewing.token) }}>✓ Verify Payment</button>
+              <button type="button" className="btn btn-danger" style={{ flex: '1 1 auto', minWidth: 'min(100%, 140px)', justifyContent: 'center' }} onClick={() => { const t = reviewing.token; closeReview(); handleReject(t) }}>✕ Reject</button>
+              <button type="button" className="btn btn-success" style={{ flex: '1 1 auto', minWidth: 'min(100%, 140px)', justifyContent: 'center' }} onClick={() => { const t = reviewing.token; closeReview(); handleApprove(t) }}>✓ Verify Payment</button>
             </div>
           </div>
         </div>

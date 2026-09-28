@@ -100,18 +100,28 @@ export default async function Home() {
               </svg>
             </div>
 
-            {/* Landing bird animation element */}
-            <div className="hero-landing-bird" aria-hidden="true">
-              <svg className="bird-svg" viewBox="0 0 32 18">
-                <path className="bird-wing-left" d="M16 12 C10 4, 3 3, 0 6 C5 12, 12 13, 16 12 Z" fill="#3c2618" />
-                <path className="bird-wing-right" d="M16 12 C22 4, 29 3, 32 6 C27 12, 20 13, 16 12 Z" fill="#3c2618" />
-                <path className="bird-body" d="M13 11 C15 10, 18 10, 20 12 C17 14, 15 14, 13 11 Z" fill="#28180e" />
-              </svg>
-            </div>
-
-            {/* Invisible anchor at the man's right shoulder in the autumn landscape */}
-            <div className="hero-shoulder-perch" aria-hidden="true"></div>
           </div>
+        </div>
+
+        {/* The landing bird gets its own layer rather than sharing the birds'
+            sky. The sky is z-index 3 and clips what leaves it, while the title
+            sits at z-index 4 - so a bird that flew to the letters passed behind
+            them and looked like it had vanished. This layer is the same box as
+            the sky, which is what every coordinate in hero-birds-animator.tsx
+            is measured against, but it stacks above the title and does not
+            clip. */}
+        <div className="home-hero__bird-layer" aria-hidden="true">
+          {/* Landing bird animation element */}
+          <div className="hero-landing-bird" aria-hidden="true">
+            <svg className="bird-svg" viewBox="0 0 32 18">
+              <path className="bird-wing-left" d="M16 12 C10 4, 3 3, 0 6 C5 12, 12 13, 16 12 Z" fill="#3c2618" />
+              <path className="bird-wing-right" d="M16 12 C22 4, 29 3, 32 6 C27 12, 20 13, 16 12 Z" fill="#3c2618" />
+              <path className="bird-body" d="M13 11 C15 10, 18 10, 20 12 C17 14, 15 14, 13 11 Z" fill="#28180e" />
+            </svg>
+          </div>
+
+          {/* Invisible anchor at the man's right shoulder in the autumn landscape */}
+          <div className="hero-shoulder-perch" aria-hidden="true"></div>
         </div>
 
         <div className="home-hero__content scroll-reveal">

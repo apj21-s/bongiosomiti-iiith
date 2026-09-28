@@ -6,6 +6,13 @@ import { getEventBySlug } from '@/utils/data/events'
 import { rateLimit, tooManyRequests } from '@/utils/rate-limit'
 import { checkReceiptDetails, normaliseUpi, normaliseUtr } from '@/utils/payments/receipt-gate'
 import { listCollectionUpiIds } from '@/utils/auth/managers'
+import {
+  iiitClaimAllowed,
+  isIiitEmail,
+  isPlausibleEmail,
+  normaliseEmail,
+  verifyProof,
+} from '@/utils/email-verification'
 
 // Registration sends mail to the address in the request, so it is throttled per
 // address. Deliberately not per IP: an entire campus shares a handful of them.
@@ -72,6 +79,31 @@ export async function POST(request: Request) {
       }
     }
 
+    // The address has to be one the registrant can actually read. /api/verify-email
+    // mails a code and hands back a signed proof when it comes back; this is where
+    // that proof is spent. The form checks the same thing, but the form is a
+    // courtesy - a request that skips it simply arrives without a proof.
+    const verifiedEmail = normaliseEmail(data.email)
+    if (!isPlausibleEmail(verifiedEmail)) {
+      return NextResponse.json(
+        { error: 'A valid email address is required.', field: 'email' },
+        { status: 400 }
+      )
+    }
+
+    const proofSecret = process.env.SESSION_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+    if (!proofSecret) {
+      console.error('[register] No SESSION_SECRET or SUPABASE_SERVICE_ROLE_KEY; cannot check email proofs.')
+      return NextResponse.json({ error: 'Registration is not configured on this server.' }, { status: 503 })
+    }
+
+    if (!(await verifyProof(data.emailProof, verifiedEmail, proofSecret))) {
+      return NextResponse.json(
+        { error: 'Please confirm your email address before registering.', field: 'email' },
+        { status: 400 }
+      )
+    }
+
     const { count, error: countError } = await supabase
       .from('tickets')
       .select('*', { count: 'exact', head: true })
@@ -93,7 +125,24 @@ export async function POST(request: Request) {
 
 
     const numPasses = data.numPasses || 1
-    const isIiit = data.isIiit !== false
+
+    // The institute price is granted on the strength of the address that was
+    // actually verified, not on a boolean in the request body. That boolean set
+    // the price on its own until now, so a stranger who ticked "yes" and typed
+    // any roll number paid the student rate. The roll number proved nothing and
+    // is no longer asked for - staff, faculty and alumni have never had one -
+    // while the mailbox at iiit.ac.in is something only the institute can hand out.
+    const claimsIiit = data.isIiit !== false
+    if (!iiitClaimAllowed(claimsIiit, verifiedEmail)) {
+      return NextResponse.json(
+        {
+          error: 'The institute rate needs a confirmed @iiit.ac.in address. Register as a guest, or use your institute email.',
+          field: 'email',
+        },
+        { status: 400 }
+      )
+    }
+    const isIiit = claimsIiit && isIiitEmail(verifiedEmail)
     const passPrice = isFree ? 0 : isIiit ? event.price : 350
     const subtotal = numPasses * passPrice
     const coupon = resolveCoupon(event, data.couponCode)

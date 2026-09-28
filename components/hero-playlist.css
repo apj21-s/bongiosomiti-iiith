@@ -566,6 +566,50 @@
   background: #17110d;
 }
 
+/*
+  What actually goes fullscreen is the document, not this element - the player
+  is a fixed overlay rendered from the layout, outside the hero, and fullscreen
+  renders only the subtree of the element that asked for it. Taking the whole
+  document keeps the player in the picture; pinning the hero over everything
+  else is what makes it look like the video went fullscreen on its own.
+
+  The stack, bottom to top: hero, launcher, player. Every one of these is
+  scoped to the class the video component sets, so nothing here applies to the
+  ordinary page.
+*/
+.is-hero-fullscreen .events-scene__hero.is-fullscreen {
+  position: fixed;
+  inset: 0;
+  margin: 0;
+  min-height: 0;
+  z-index: 99990;
+}
+
+.is-hero-fullscreen body {
+  overflow: hidden;
+}
+
+.is-hero-fullscreen .vintage-launcher {
+  z-index: 99995;
+}
+
+/* The player sits at the bottom of the screen here rather than across the
+   middle of the video, and is given the width the wider frame allows. */
+.is-hero-fullscreen .hero-playlist-dock {
+  align-items: flex-end;
+  padding-bottom: clamp(14px, 3.5vh, 54px);
+}
+
+.is-hero-fullscreen .hero-playlist-dock .vp-modal-content {
+  max-width: min(1280px, 94vw);
+}
+
+/* The backdrop would grey out the video it is meant to be played over. */
+.is-hero-fullscreen .vp-dock-backdrop {
+  background: transparent;
+  backdrop-filter: none;
+}
+
 .events-scene__hero.is-fullscreen .events-scene__hero-image,
 .events-scene__hero.is-fullscreen .events-scene__hero-video {
   object-fit: contain;
@@ -1264,6 +1308,123 @@ a.hero-playlist-queue__name:focus-visible {
   font-weight: 700;
   color: #9b2218;
   line-height: 1;
+}
+
+/* ── REPEAT: THREE READABLE STATES ──────────────────────────────────────── */
+/*
+  Off carries a stroke through the loop and sits dim; playlist and song are
+  both lit, and the 1 drawn inside the loop is what separates them - the same
+  distinction YouTube Music makes.
+*/
+.vp-repeat-btn.is-repeat-off svg {
+  opacity: 0.55;
+}
+
+.vp-repeat-btn.is-repeat-all svg,
+.vp-repeat-btn.is-repeat-one svg {
+  opacity: 1;
+}
+
+.vp-repeat-btn.is-repeat-one text {
+  /* The numeral is drawn at the icon's own scale, so it tracks the button. */
+  font-family: 'Courier New', monospace;
+  paint-order: stroke;
+}
+
+/* ── HOVER EXPLANATIONS ─────────────────────────────────────────────────── */
+/*
+  Every control on the radio is a bare icon on brass, so what each one does is
+  not guessable. Any element carrying data-tip gets a label on hover and on
+  keyboard focus; data-tip-pos picks the side, because the transport row has
+  the display above it and the switch column has the cabinet edge to its right.
+*/
+/* :where() so this carries no specificity at all. Several of these hosts are
+   already absolutely positioned by their own class - the progress zone, the
+   volume rocker, the switches - and a plain [data-tip] rule would outrank
+   those by source order and drop them out of their slots on the cabinet. This
+   only supplies a containing block where nothing else set one. */
+:where([data-tip]) {
+  position: relative;
+}
+
+[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  z-index: 40;
+  width: max-content;
+  max-width: min(15rem, 42vw);
+  padding: 0.4em 0.62em;
+  border-radius: 6px;
+  border: 1px solid rgba(247, 236, 213, 0.22);
+  background: rgba(38, 22, 13, 0.97);
+  color: #f7ecd5;
+  font-family: inherit;
+  font-size: clamp(0.5rem, 1.35cqi, 0.72rem);
+  font-weight: 500;
+  font-style: normal;
+  line-height: 1.35;
+  text-align: center;
+  text-transform: none;
+  letter-spacing: 0.01em;
+  white-space: normal;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.16s ease, visibility 0.16s ease, transform 0.16s ease;
+}
+
+[data-tip]:hover::after,
+[data-tip]:focus-visible::after {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Below - the transport row, which has the screen directly above it. */
+[data-tip][data-tip-pos='bottom']::after {
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%) translateY(-3px);
+}
+[data-tip][data-tip-pos='bottom']:hover::after,
+[data-tip][data-tip-pos='bottom']:focus-visible::after {
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Above - the launcher and the seek bar. */
+[data-tip][data-tip-pos='top']::after {
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%) translateY(3px);
+}
+[data-tip][data-tip-pos='top']:hover::after,
+[data-tip][data-tip-pos='top']:focus-visible::after {
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Left - the switch column and volume, which sit near the right edge. */
+[data-tip][data-tip-pos='left']::after {
+  right: calc(100% + 8px);
+  top: 50%;
+  transform: translateY(-50%) translateX(3px);
+}
+[data-tip][data-tip-pos='left']:hover::after,
+[data-tip][data-tip-pos='left']:focus-visible::after {
+  transform: translateY(-50%) translateX(0);
+}
+
+/* A touch screen has no hover, and a tip that latches open on tap sits over
+   the control you just pressed. */
+@media (hover: none) {
+  [data-tip]::after {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-tip]::after {
+    transition: none;
+  }
 }
 
 /* (Removed old individual absolute button positions) */

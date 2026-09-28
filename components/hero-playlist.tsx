@@ -33,6 +33,17 @@ const REPEAT_LABEL: Record<RepeatMode, string> = {
 }
 
 /**
+ * One button cycles three modes, so the tooltip says where you are and what
+ * the next press gives you - otherwise you have to click through all three to
+ * find out which is which.
+ */
+const REPEAT_TIP: Record<RepeatMode, string> = {
+  off: 'Repeat is off — click to repeat the whole playlist',
+  all: 'Repeating the whole playlist — click to repeat just this song',
+  one: 'Repeating this song — click to turn repeat off',
+}
+
+/**
  * Music player overlaid on the events video on the homepage.
  *
  * Two sources, one set of controls:
@@ -234,6 +245,8 @@ function VolumeControl({ volume, onVolume, muted, onMute }: { volume: number; on
         aria-valuenow={Math.round(volume * 100)}
         tabIndex={0}
         onKeyDown={handleKeyDown}
+        data-tip="Volume — drag the knob, or use the arrow keys"
+        data-tip-pos="left"
         style={{ touchAction: 'none' }}
       >
         <div
@@ -270,6 +283,8 @@ function VolumeControl({ volume, onVolume, muted, onMute }: { volume: number; on
         }}
         aria-label={muted || volume === 0 ? 'Unmute audio' : 'Mute audio'}
         aria-pressed={muted || volume === 0}
+        data-tip={muted || volume === 0 ? 'Unmute' : 'Mute'}
+        data-tip-pos="left"
       >
         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <path d="M11 5L6 9H2v6h4l5 4V5z" fill="currentColor"/>
@@ -422,6 +437,8 @@ function PlayerBar({
         aria-valuemin={0}
         aria-valuemax={seekMax || 100}
         aria-valuenow={Math.floor(currentTime)}
+        data-tip="Click or drag to scrub — arrow keys jump 5 seconds"
+        data-tip-pos="top"
         tabIndex={0}
         onKeyDown={(e) => {
           if (e.key === 'ArrowRight') onSeek(Math.min(currentTime + 5, seekMax))
@@ -452,6 +469,8 @@ function PlayerBar({
           className={`vp-ctrl-btn ${shuffle ? 'is-active' : ''}`}
           onClick={onShuffle}
           aria-label={shuffle ? 'Shuffle on – click to turn off' : 'Shuffle off – click to turn on'}
+          data-tip={shuffle ? 'Shuffle is on — click to play in playlist order' : 'Shuffle — play the playlist in random order'}
+          data-tip-pos="bottom"
           aria-pressed={shuffle}
         >
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -473,6 +492,8 @@ function PlayerBar({
           onClick={onPrevious}
           disabled={disabled}
           aria-label="Previous track"
+          data-tip="Previous song"
+          data-tip-pos="bottom"
         >
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
             <polygon points="19,5 10,12 19,19" fill="currentColor"/>
@@ -489,6 +510,8 @@ function PlayerBar({
           onClick={onToggle}
           disabled={disabled}
           aria-label={isPlaying ? 'Pause music' : 'Play music'}
+          data-tip={isPlaying ? 'Pause' : 'Play'}
+          data-tip-pos="bottom"
         >
           {isPlaying ? (
             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -511,6 +534,8 @@ function PlayerBar({
           onClick={onNext}
           disabled={disabled}
           aria-label="Next track"
+          data-tip="Next song"
+          data-tip-pos="bottom"
         >
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
             <polygon points="5,5 14,12 5,19" fill="currentColor"/>
@@ -523,18 +548,40 @@ function PlayerBar({
       <div className="vp-ctrl-frame" style={{ left: `${buttonConfig.repeat.left}%`, width: `${buttonConfig.repeat.width}%`, height: `${buttonConfig.repeat.height}%`, top: `${buttonConfig.repeat.top}%` }}>
         <button
           type="button"
-          className={`vp-ctrl-btn ${repeat !== 'off' ? 'is-active' : ''}`}
+          className={`vp-ctrl-btn vp-repeat-btn is-repeat-${repeat} ${repeat !== 'off' ? 'is-active' : ''}`}
           onClick={onRepeat}
           aria-label={REPEAT_LABEL[repeat]}
           aria-pressed={repeat !== 'off'}
+          data-tip={REPEAT_TIP[repeat]}
+          data-tip-pos="bottom"
         >
+          {/* Three states, three glyphs, the way YouTube Music tells them apart:
+              off is the bare loop struck through, all is the lit loop, and one
+              is the lit loop with a 1 inside it. Colour alone was not enough to
+              read off from all at this size. */}
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
             <path d="M17 2l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
             <path d="M3 11V9a4 4 0 014-4h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
             <path d="M7 22l-4-4 4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
             <path d="M21 13v2a4 4 0 01-4 4H3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+            {repeat === 'one' && (
+              <text
+                x="12"
+                y="12"
+                textAnchor="middle"
+                dominantBaseline="central"
+                fontSize="11"
+                fontWeight="700"
+                fill="currentColor"
+                stroke="none"
+              >
+                1
+              </text>
+            )}
+            {repeat === 'off' && (
+              <path d="M4 20L20 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+            )}
           </svg>
-          {repeat === 'one' && <span className="vp-repeat-one-badge" aria-hidden="true">1</span>}
           {repeat !== 'off' && <span className="vp-ctrl-active-dot" aria-hidden="true" />}
         </button>
       </div>
@@ -550,6 +597,8 @@ function PlayerBar({
         onClick={onToggleQueue}
         aria-label="Toggle Queue"
         aria-expanded={queueOpen}
+        data-tip="What's in this playlist — click any song to jump to it"
+        data-tip-pos="left"
         style={{
           left: `${buttonConfig.switchTop.left}%`,
           top: `${buttonConfig.switchTop.top}%`,
@@ -581,6 +630,8 @@ function PlayerBar({
         onClick={onCustomise}
         aria-label="Customise Playlist"
         aria-expanded={pickerOpen}
+        data-tip="Change the playlist — pick one, or paste your own YouTube link"
+        data-tip-pos="left"
         style={{
           left: `${buttonConfig.switchBottom.left}%`,
           top: `${buttonConfig.switchBottom.top}%`,
@@ -608,6 +659,11 @@ function PlayerBar({
         </svg>
       </button>
 
+      {/* Fullscreen is not here. It belongs to the video, in the corner of the
+          video, and lives in components/crossfade-video.tsx - this dock is a
+          fixed overlay rendered from the layout, so it is not inside the hero
+          the way the brass panel's placement implied. */}
+
     </div>
   )
 }
@@ -621,6 +677,8 @@ function AudioPlayer({
   onCustomise,
   customActive,
   pickerOpen,
+  queueOpen,
+  onToggleQueue,
   onPlayingChange,
 }: {
   playlist: Playlist
@@ -630,6 +688,8 @@ function AudioPlayer({
   onCustomise: () => void
   customActive: boolean
   pickerOpen: boolean
+  queueOpen: boolean
+  onToggleQueue: () => void
   onPlayingChange?: (playing: boolean) => void
 }) {
   const tracks = playlist.tracks
@@ -652,7 +712,7 @@ function AudioPlayer({
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [failed, setFailed] = useState(false)
-  const [queueOpen, setQueueOpen] = useState(false)
+  // queueOpen is the parent's - see the pane state in HeroPlaylist.
   const [volume, setVolume] = useState(1)
   const [muted, setMuted] = useState(false)
 
@@ -756,7 +816,7 @@ function AudioPlayer({
           queue={queue}
           queueIndex={index}
           onPlayAt={(i) => goTo(i, true)}
-          onClose={() => setQueueOpen(false)}
+          onClose={onToggleQueue}
         />
       )}
       <PlayerBar
@@ -785,7 +845,7 @@ function AudioPlayer({
         queue={queue}
         queueIndex={index}
         queueOpen={queueOpen}
-        onToggleQueue={() => setQueueOpen((open) => !open)}
+        onToggleQueue={onToggleQueue}
         onPlayAt={(next) => goTo(next, true)}
         onFullscreen={onFullscreen}
         isFullscreen={isFullscreen}
@@ -837,6 +897,8 @@ function YouTubePlayer({
   onCustomise,
   customActive,
   pickerOpen,
+  queueOpen,
+  onToggleQueue,
   onPlayingChange,
 }: {
   playlistId: string
@@ -847,6 +909,8 @@ function YouTubePlayer({
   onCustomise: () => void
   customActive: boolean
   pickerOpen: boolean
+  queueOpen: boolean
+  onToggleQueue: () => void
   onPlayingChange?: (playing: boolean) => void
 }) {
   const mountId = useId().replace(/:/g, '')
@@ -869,7 +933,7 @@ function YouTubePlayer({
   const [title, setTitle] = useState(name)
   const [artist, setArtist] = useState<string | undefined>(undefined)
   const [error, setError] = useState(false)
-  const [queueOpen, setQueueOpen] = useState(false)
+  // queueOpen is the parent's - see the pane state in HeroPlaylist.
   // The video ids of what YouTube actually loaded, which is the only list of
   // the playlist's contents available without an API key.
   const [videoIds, setVideoIds] = useState<string[]>([])
@@ -1000,7 +1064,7 @@ function YouTubePlayer({
           queue={queue}
           queueIndex={queueIndex}
           onPlayAt={(i) => playerRef.current?.playVideoAt(i)}
-          onClose={() => setQueueOpen(false)}
+          onClose={onToggleQueue}
         />
       )}
       <PlayerBar
@@ -1046,7 +1110,7 @@ function YouTubePlayer({
       queue={queue}
       queueIndex={queueIndex}
       queueOpen={queueOpen}
-      onToggleQueue={() => setQueueOpen((open) => !open)}
+      onToggleQueue={onToggleQueue}
       onPlayAt={(next) => playerRef.current?.playVideoAt(next)}
       playlistId={playlistId}
       onFullscreen={onFullscreen}
@@ -1306,7 +1370,19 @@ export default function HeroPlaylist({ playlists }: { playlists: Playlist[] }) {
   // on the server, so the server snapshot is empty and the real value arrives
   // after hydration, without a setState in an effect to cascade a render.
   const customId = useSyncExternalStore(subscribeToCustomPlaylist, readCustomPlaylistId, noCustomPlaylist)
-  const [picking, setPicking] = useState(false)
+  /**
+   * Which of the two panels is showing.
+   *
+   * They used to be separate booleans in separate components - the picker
+   * here, the queue inside whichever player was mounted - so both could be
+   * open together, stacked on each other over the same corner of the radio.
+   * One value cannot hold two panels open, so the exclusion is structural
+   * rather than something each toggle has to remember to enforce.
+   */
+  const [pane, setPane] = useState<'none' | 'picker' | 'queue'>('none')
+  const picking = pane === 'picker'
+
+  const setPicking = (open: boolean) => setPane(open ? 'picker' : 'none')
   const [isFullscreen, setIsFullscreen] = useState(false)
   const dockRef = useRef<HTMLDivElement>(null)
 
@@ -1418,7 +1494,8 @@ export default function HeroPlaylist({ playlists }: { playlists: Playlist[] }) {
       }
     : sitePlaylist
 
-  const togglePicker = () => setPicking((open) => !open)
+  const togglePicker = () => setPane((open) => (open === 'picker' ? 'none' : 'picker'))
+  const toggleQueue = () => setPane((open) => (open === 'queue' ? 'none' : 'queue'))
 
   const picker = picking ? (
     <PlaylistPicker
@@ -1450,6 +1527,8 @@ export default function HeroPlaylist({ playlists }: { playlists: Playlist[] }) {
               if (!shown) setPicking(true);
             }}
             aria-label="Add a YouTube playlist"
+            data-tip="Add a YouTube playlist to play here"
+            data-tip-pos="top"
           >
             <img src="/assets/music%20thumbnail.png" alt="Pujor Gaan" />
             <span className="vintage-launcher-label">Add Music</span>
@@ -1473,6 +1552,8 @@ export default function HeroPlaylist({ playlists }: { playlists: Playlist[] }) {
           className="vintage-launcher"
           onClick={() => setChoice(!shown)}
           aria-label={shown ? "Close Music Player" : "Open Music Player"}
+          data-tip={shown ? 'Hide the music player' : 'Show the music player'}
+          data-tip-pos="top"
         >
           <img src="/assets/music%20thumbnail.png" alt="Pujor Gaan" />
           <span className="vintage-launcher-label">Pujor Gaan</span>
@@ -1501,6 +1582,8 @@ export default function HeroPlaylist({ playlists }: { playlists: Playlist[] }) {
               onCustomise={togglePicker}
               customActive={Boolean(customId)}
               pickerOpen={picking}
+              queueOpen={pane === 'queue'}
+              onToggleQueue={toggleQueue}
               onPlayingChange={setIsAnyPlaying}
             />
           ) : (
@@ -1512,6 +1595,8 @@ export default function HeroPlaylist({ playlists }: { playlists: Playlist[] }) {
               onCustomise={togglePicker}
               customActive={false}
               pickerOpen={picking}
+              queueOpen={pane === 'queue'}
+              onToggleQueue={toggleQueue}
               onPlayingChange={setIsAnyPlaying}
             />
           )}

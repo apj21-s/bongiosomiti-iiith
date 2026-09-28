@@ -6,7 +6,13 @@ export const registerSchema = z.object({
   eventSlug: z.string().min(1).max(64),
   participantName: z.string().min(1).max(120),
   collegeId: z.string().max(64).optional(),
-  email: z.string().email().max(200).optional().or(z.literal('')),
+  // Required now, and required to be reachable: the route spends an emailProof
+  // against it. Affiliation is decided by the verified domain, so this field
+  // is what the institute rate rests on rather than a roll number.
+  email: z.string().email().max(200),
+  // Issued by /api/verify-email once a mailed code comes back. Signed, so it
+  // cannot be minted or edited onto a different address by the client.
+  emailProof: z.string().max(400).optional(),
   phone: z.string().max(20).optional().or(z.literal('')),
   utr: z.string().max(64).optional(),
   // Which UPI id the money was sent to, read off the receipt by OCR or

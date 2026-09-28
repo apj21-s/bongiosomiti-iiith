@@ -1,19 +1,19 @@
-import nodemailer from 'nodemailer'
 import QRCode from 'qrcode'
 import path from 'path'
+import { mailIsConfigured, sendMail } from './mail-transport'
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.hostinger.com',
-  port: Number(process.env.SMTP_PORT) || 465,
-  secure: Number(process.env.SMTP_PORT) !== 587,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-})
+/**
+ * Every message in this file goes through utils/mail-transport.ts rather than
+ * a transporter of its own. That module holds the configured SMTP accounts,
+ * alternates between them so the day's free allowances add up instead of one
+ * being exhausted alone, and moves a refused message to the next account
+ * before giving up. It also owns the From address, because a relay rejects a
+ * sender it has not verified and the right sender depends on which account
+ * ends up carrying the message.
+ */
 
 export async function sendQRPassEmail(email: string, participantName: string, eventName: string, tokens: string | string[]) {
-  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+  if (!mailIsConfigured()) {
     console.warn('SMTP credentials missing. Skipping email send to:', email)
     return
   }
@@ -212,8 +212,8 @@ export async function sendQRPassEmail(email: string, participantName: string, ev
   `
 
   try {
-    await transporter.sendMail({
-      from: `"Utsav Pass" <${process.env.FROM_EMAIL || process.env.SMTP_USER}>`,
+    await sendMail({
+      fromName: 'Utsav Pass',
       to: email,
       subject: `Your Digital Pass for ${eventName}`,
       html,
@@ -232,7 +232,7 @@ export async function sendRegistrationPendingEmail(
   utr: string,
   referenceNo: string,
 ) {
-  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+  if (!mailIsConfigured()) {
     console.warn('SMTP credentials missing. Skipping pending email send to:', email)
     return
   }
@@ -721,8 +721,8 @@ export async function sendRegistrationPendingEmail(
     }
   ]
 
-  await transporter.sendMail({
-    from: `"Utsav Pass" <${process.env.FROM_EMAIL || process.env.SMTP_USER}>`,
+  await sendMail({
+    fromName: 'Utsav Pass',
     to: email,
     subject: `Registration Pending Verification for ${eventName}`,
     html,
@@ -735,7 +735,7 @@ export async function sendPaymentRejectedEmail(
   participantName: string,
   eventName: string,
 ) {
-  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+  if (!mailIsConfigured()) {
     console.warn('SMTP credentials missing. Skipping rejection email send to:', email)
     return
   }
@@ -775,10 +775,91 @@ export async function sendPaymentRejectedEmail(
 </html>
   `;
 
-  await transporter.sendMail({
-    from: `"Utsav Admin" <${process.env.FROM_EMAIL || process.env.SMTP_USER}>`,
+  await sendMail({
+    fromName: 'Utsav Admin',
     to: email,
     subject: `Action Required: Payment Verification Failed for ${eventName}`,
     html,
   })
+}
+
+/**
+ * Sends the one-time code that proves the address is real.
+ *
+ * Unlike the other senders in this file, this one reports failure instead of
+ * warning and returning. The others are courtesies - a pass that does not
+ * arrive by mail can still be looked up - but this message *is* the check. If
+ * it cannot be sent, the caller must refuse the verification rather than let a
+ * registration through unproved.
+ */
+export async function sendVerificationCodeEmail(
+  email: string,
+  code: string,
+  minutesValid: number,
+): Promise<{ ok: true } | { ok: false; reason: string }> {
+  if (!mailIsConfigured()) {
+    console.error('[verify] SMTP credentials missing; cannot send a verification code to:', email)
+    return { ok: false, reason: 'mail-not-configured' }
+  }
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <title>Your verification code</title>
+</head>
+<body style="margin:0;padding:0;background:#fdf6e9;font-family:Georgia,'Times New Roman',serif;color:#2b1d12;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fdf6e9;padding:32px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#fffaf2;border:1px solid #e6d3b3;border-radius:12px;padding:32px;">
+          <tr><td style="font-size:20px;font-weight:bold;padding-bottom:8px;">Confirm your email</td></tr>
+          <tr><td style="font-size:15px;line-height:1.6;padding-bottom:24px;color:#5b4632;">
+            Enter this code on the registration form to confirm this address is yours.
+          </td></tr>
+          <tr><td align="center" style="padding-bottom:24px;">
+            <div style="display:inline-block;font-family:'Courier New',monospace;font-size:34px;letter-spacing:10px;font-weight:bold;color:#8c2d19;background:#f6e7cd;border:1px solid #e0c79b;border-radius:10px;padding:14px 20px 14px 30px;">${code}</div>
+          </td></tr>
+          <tr><td style="font-size:13px;line-height:1.6;color:#6b5b4c;">
+            The code is good for ${minutesValid} minutes. If you did not ask to register
+            for a Bangiya Samiti event, no action is needed - someone may have
+            mistyped their address, and nothing has been created in your name.
+          </td></tr>
+        </table>
+        <div style="font-size:12px;color:#8a7861;padding-top:16px;">বঙ্গীয় সমিতি &middot; IIIT Hyderabad</div>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`
+
+  // sendMail reports failure in its result rather than throwing, because it has
+  // already tried every configured account by the time it gives up. Checking
+  // `result.ok` is therefore the whole check - a try/catch here would see
+  // nothing and wave an undelivered code through as sent, which would let an
+  // unverifiable address register.
+  let result
+  try {
+    result = await sendMail({
+      fromName: 'Utsav Pass',
+      to: email,
+      subject: `${code} is your Bangiya Samiti verification code`,
+      text: `Your verification code is ${code}. It is good for ${minutesValid} minutes.`,
+      html,
+    })
+  } catch (e) {
+    console.error('[verify] Could not send a verification code:', e instanceof Error ? e.message : e)
+    return { ok: false, reason: 'send-failed' }
+  }
+
+  if (!result.ok) {
+    // A rejected recipient lands here too, which is itself a useful signal that
+    // the address does not exist.
+    console.error('[verify] Could not send a verification code:', result.errors.join('; '))
+    return { ok: false, reason: 'send-failed' }
+  }
+
+  return { ok: true }
 }

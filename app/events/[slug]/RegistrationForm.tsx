@@ -44,6 +44,15 @@ type DraftState = {
   screenshot: string | null
   stage: number
   paymentState: 'READY' | 'COMPLETED'
+  // --- email OTP ---------------------------------------------------------
+  // The signed receipt /api/verify-email hands back once the mailed code comes
+  // back, and the address it was issued for. They are kept as a pair because a
+  // proof is bound to one address: change the field and the proof is void, so
+  // the comparison is what stops a verified address being swapped for another.
+  emailProof: string
+  verifiedEmail: string
+  otpSent: boolean
+  otpInput: string
 }
 
 const DEFAULT_DRAFT: DraftState = {
@@ -51,7 +60,8 @@ const DEFAULT_DRAFT: DraftState = {
   numPasses: 1, foodPref: '', vegCount: 0, nonVegCount: 1, passSelections: {}, couponInput: '', appliedCoupon: null,
   selectedUpiId: '', utr: '', receiverUpi: '', receiptPath: '',
   utrFromOcr: false, receiverUpiFromOcr: false,
-  screenshot: null, stage: 1, paymentState: 'READY'
+  screenshot: null, stage: 1, paymentState: 'READY',
+  emailProof: '', verifiedEmail: '', otpSent: false, otpInput: ''
 }
 
 export default function RegistrationForm({ event }: RegistrationFormProps) {
@@ -80,19 +90,101 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
     return () => { cancelled = true }
   }, [event.slug])
 
+  /**
+   * Every registration starts at step 1, with nothing carried over.
+   *
+   * The draft used to be written to localStorage on every keystroke and read
+   * back on mount - stage included - so returning to the page dropped the
+   * visitor wherever they had stopped, which was step 4 for anyone who had
+   * reached the payment screen once. Worse than confusing: the stored draft
+   * also held utr, receiptPath, receiverUpi and paymentState, so a stale
+   * transaction id and somebody's earlier receipt sat in the form waiting to
+   * be submitted against a new booking.
+   *
+   * Nothing is written any more, and whatever a previous version left behind
+   * is cleared here - for every event, not just this one, since the key was
+   * per slug and a visitor may have drafts under several.
+   */
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(DRAFT_KEY + '_' + event.slug)
-      if (saved) setDraft({ ...DEFAULT_DRAFT, ...JSON.parse(saved) })
-    } catch(e) {}
+      for (let i = localStorage.length - 1; i >= 0; i -= 1) {
+        const key = localStorage.key(i)
+        if (key && key.startsWith(DRAFT_KEY)) localStorage.removeItem(key)
+      }
+    } catch (e) {}
     setIsLoaded(true)
   }, [event.slug])
 
-  useEffect(() => {
-    if (isLoaded && !confirmation) localStorage.setItem(DRAFT_KEY + '_' + event.slug, JSON.stringify(draft))
-  }, [draft, isLoaded, confirmation, event.slug])
-
   const updateDraft = (u: Partial<DraftState>) => setDraft(p => ({ ...p, ...u }))
+
+  /**
+   * The email OTP.
+   *
+   * Asking for a code and checking it both go to /api/verify-email; checking
+   * returns a signed proof that travels with the registration and is checked
+   * again there. Nothing here decides anything - the form cannot verify an
+   * address, it can only carry the server's word for it.
+   */
+  const [otpBusy, setOtpBusy] = useState(false)
+  const [otpNote, setOtpNote] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+
+  const emailIsVerified =
+    Boolean(draft.emailProof) && draft.verifiedEmail === draft.email.trim().toLowerCase()
+
+  async function sendOtp() {
+    const email = draft.email.trim().toLowerCase()
+    if (!email.includes('@')) { setOtpNote({ type: 'error', text: 'Enter your email address first.' }); return }
+
+    setOtpBusy(true)
+    setOtpNote(null)
+    try {
+      const res = await fetch('/api/verify-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Could not send the code.')
+      updateDraft({ otpSent: true, otpInput: '' })
+      setOtpNote({ type: 'success', text: `Code sent to ${email}. It is good for 10 minutes.` })
+    } catch (e: any) {
+      setOtpNote({ type: 'error', text: e.message })
+    } finally {
+      setOtpBusy(false)
+    }
+  }
+
+  async function checkOtp() {
+    const email = draft.email.trim().toLowerCase()
+    setOtpBusy(true)
+    setOtpNote(null)
+    try {
+      const res = await fetch('/api/verify-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, code: draft.otpInput.trim() }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'That code is not right.')
+      updateDraft({ emailProof: data.proof, verifiedEmail: email, otpSent: false, otpInput: '' })
+      setOtpNote({ type: 'success', text: 'Email confirmed.' })
+    } catch (e: any) {
+      setOtpNote({ type: 'error', text: e.message })
+    } finally {
+      setOtpBusy(false)
+    }
+  }
+
+  /** Editing the address voids the proof, which was issued for the old one. */
+  function onEmailChange(value: string) {
+    updateDraft({
+      email: value,
+      ...(draft.emailProof && value.trim().toLowerCase() !== draft.verifiedEmail
+        ? { emailProof: '', verifiedEmail: '', otpSent: false, otpInput: '' }
+        : {}),
+    })
+    setOtpNote(null)
+  }
 
   const transitionTo = (newUpdates: Partial<DraftState>) => {
     setIsAnimating(true)
@@ -112,8 +204,17 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
       if (!draft.fullName.trim()) return setError('Enter full name.')
       if (!draft.email.includes('@')) return setError('Invalid email.')
       if (draft.phone.length < 10) return setError('Invalid phone.')
-      if (draft.isIiit === 'yes' && !draft.collegeId.trim()) return setError('Enter IIIT Roll No.')
+      // The roll number is gone: affiliation is settled by the verified email
+      // domain, and staff, faculty and alumni never had one to give.
       if (draft.isIiit === 'no' && !draft.city.trim()) return setError('Enter City.')
+      // The address has to be confirmed, and confirmed for *this* address - the
+      // proof is bound to it, so editing the field after verifying clears it.
+      if (!draft.emailProof || draft.verifiedEmail !== draft.email.trim().toLowerCase()) {
+        return setError('Confirm your email address first.')
+      }
+      if (draft.isIiit === 'yes' && !/@([a-z0-9-]+\.)*iiit\.ac\.in$/.test(draft.email.trim().toLowerCase())) {
+        return setError('The institute rate needs a confirmed @iiit.ac.in address. Go back and register as a guest, or use your institute email.')
+      }
     }
     if (draft.stage === 3) {
       if (passTypes) {
@@ -177,9 +278,12 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
         body: JSON.stringify({
           eventSlug: event.slug,
           participantName: draft.fullName,
-          collegeId: draft.collegeId,
+          // Kept in the payload for older rows' sake; nothing collects it now.
+          collegeId: draft.collegeId || undefined,
           phone: draft.phone,
           email: draft.email,
+          // The server's own receipt for this address, spent on arrival.
+          emailProof: draft.emailProof,
           utr: draft.utr || 'FREE',
           receiverUpi: draft.receiverUpi || undefined,
           receiptPath: draft.receiptPath || undefined,
@@ -202,7 +306,7 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
 
   if (!isLoaded) return <div>Loading...</div>
 
-  const stepProps = { event, draft, updateDraft, nextStage, prevStage, error, setError, total, subtotal, discount, applyCoupon, couponMsg, handleSubmit, loading, confirmation, setScreenshotPreview, screenshotPreview, transitionTo, allowedUpiIds }
+  const stepProps = { event, draft, updateDraft, nextStage, prevStage, error, setError, total, subtotal, discount, applyCoupon, couponMsg, handleSubmit, loading, confirmation, setScreenshotPreview, screenshotPreview, transitionTo, allowedUpiIds, sendOtp, checkOtp, onEmailChange, otpBusy, otpNote, emailIsVerified }
 
   if (event?.status !== 'OPEN') {
     if (event?.slug !== 'mahalaya') {
@@ -382,7 +486,7 @@ function AssociationStep({ draft, updateDraft, nextStage, transitionTo, error }:
   )
 }
 
-function DetailsStep({ draft, updateDraft, nextStage, prevStage, transitionTo, error }: any) {
+function DetailsStep({ draft, updateDraft, nextStage, prevStage, transitionTo, error, sendOtp, checkOtp, onEmailChange, otpBusy, otpNote, emailIsVerified }: any) {
   return (
     <div className="reg-details">
       <TypewriterHeading lines={['YOUR DETAILS']} />
@@ -395,7 +499,54 @@ function DetailsStep({ draft, updateDraft, nextStage, prevStage, transitionTo, e
         </div>
         <div className="reg-field">
           <label>Email Address *</label>
-          <input className="reg-input" type="email" value={draft.email} onChange={e => updateDraft({ email: e.target.value })} placeholder="your.email@iiit.ac.in" />
+          <input
+            className="reg-input"
+            type="email"
+            value={draft.email}
+            onChange={e => onEmailChange(e.target.value)}
+            placeholder="Enter your email address"
+            autoComplete="email"
+            inputMode="email"
+          />
+
+          {/* The address has to be confirmed before the form moves on. For
+              anyone claiming the institute rate this is also what establishes
+              the claim - there is no roll number to give any more. */}
+          {emailIsVerified ? (
+            <p className="reg-otp-note is-ok" role="status">✓ Email confirmed</p>
+          ) : (
+            <div className="reg-otp">
+              {!draft.otpSent ? (
+                <button type="button" className="reg-otp-btn" onClick={sendOtp} disabled={otpBusy || !draft.email.includes('@')}>
+                  {otpBusy ? 'Sending…' : 'Send confirmation code'}
+                </button>
+              ) : (
+                <div className="reg-otp-row">
+                  <input
+                    className="reg-input reg-otp-input"
+                    value={draft.otpInput}
+                    onChange={e => updateDraft({ otpInput: e.target.value.replace(/\D/g, '').slice(0, 6) })}
+                    placeholder="6-digit code"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    maxLength={6}
+                  />
+                  <button type="button" className="reg-otp-btn" onClick={checkOtp} disabled={otpBusy || draft.otpInput.length !== 6}>
+                    {otpBusy ? 'Checking…' : 'Confirm'}
+                  </button>
+                  <button type="button" className="reg-otp-link" onClick={sendOtp} disabled={otpBusy}>
+                    Resend
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {otpNote && (
+            <p className={`reg-otp-note ${otpNote.type === 'error' ? 'is-error' : 'is-ok'}`} role="status">
+              {otpNote.text}
+            </p>
+          )}
         </div>
         <div className="reg-field">
           <label>Phone Number *</label>
@@ -404,15 +555,20 @@ function DetailsStep({ draft, updateDraft, nextStage, prevStage, transitionTo, e
              <input className="reg-input" type="tel" value={draft.phone} onChange={e => updateDraft({ phone: e.target.value })} placeholder="Enter your phone number" />
           </div>
         </div>
-        <div className="reg-field">
-          <label>{draft.isIiit === 'yes' ? 'IIIT Roll No. / ID *' : 'City *'}</label>
-          <input 
-            className="reg-input" 
-            value={draft.isIiit === 'yes' ? draft.collegeId : draft.city} 
-            onChange={e => draft.isIiit === 'yes' ? updateDraft({ collegeId: e.target.value }) : updateDraft({ city: e.target.value })} 
-            placeholder={draft.isIiit === 'yes' ? 'e.g. 2023CSB0101' : 'City'} 
-          />
-        </div>
+        {/* No roll number. A confirmed @iiit.ac.in address is what establishes
+            the institute rate now, and it covers staff, faculty and alumni,
+            who were never issued a roll number and could not fill this in. */}
+        {draft.isIiit === 'no' && (
+          <div className="reg-field">
+            <label>City *</label>
+            <input
+              className="reg-input"
+              value={draft.city}
+              onChange={e => updateDraft({ city: e.target.value })}
+              placeholder="City"
+            />
+          </div>
+        )}
       </div>
       
       {error && <div className="reg-error">{error}</div>}

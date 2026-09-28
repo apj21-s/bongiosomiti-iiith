@@ -342,3 +342,64 @@
 .reg-anim-enter {
   animation: dissolveIn 0.4s cubic-bezier(0.0, 0, 0.2, 1) forwards;
 }
+
+/* ── EMAIL OTP ──────────────────────────────────────────────────────────── */
+/*
+  Sits directly under the email field. The registration cannot move past this
+  step until the address has answered, because a confirmed @iiit.ac.in address
+  is what now grants the institute rate - there is no roll number to give.
+*/
+.reg-otp { margin-top: 6px; }
+
+.reg-otp-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.reg-otp-input {
+  flex: 0 1 120px;
+  letter-spacing: 0.22em;
+  font-family: 'Courier New', monospace;
+  text-align: center;
+}
+
+.reg-otp-btn {
+  flex: 0 0 auto;
+  height: 32px;
+  padding: 0 12px;
+  background: #8F321F;
+  color: #FDF6E9;
+  border: none;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background-color 0.2s, opacity 0.2s;
+}
+
+.reg-otp-btn:hover:not(:disabled) { background: #742718; }
+.reg-otp-btn:disabled { opacity: 0.45; cursor: default; }
+
+.reg-otp-link {
+  background: none;
+  border: none;
+  padding: 0 4px;
+  color: #8F321F;
+  font-family: inherit;
+  font-size: 11px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.reg-otp-link:disabled { opacity: 0.45; cursor: default; }
+
+.reg-otp-note {
+  margin: 6px 0 0;
+  font-size: 11px;
+  line-height: 1.4;
+}
+.reg-otp-note.is-ok { color: #2f6b3f; }
+.reg-otp-note.is-error { color: #8F321F; font-weight: bold; }

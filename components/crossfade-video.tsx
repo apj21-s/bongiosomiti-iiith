@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 
 // Unlock time: October 10, 2026 at 4:29 AM IST (UTC+5:30)
@@ -63,8 +63,10 @@ function MicCountdown({ days, hours, minutes, seconds }: { days: number; hours: 
   return (
     <div className="mic-countdown-block">
       {units.map((u, i) => (
-        <>
-          <div key={u.label} className="mic-cd-unit">
+        // The fragment is what the map returns, so the key belongs on it; the
+        // keys on the elements inside it do not satisfy the list.
+        <Fragment key={u.label}>
+          <div className="mic-cd-unit">
             <span className="mic-cd-num">
               {u.val.split('').map((ch, ci) => (
                 <AnimatedNumber key={ci} value={ch} />
@@ -72,16 +74,71 @@ function MicCountdown({ days, hours, minutes, seconds }: { days: number; hours: 
             </span>
             <span className="mic-cd-label">{u.label}</span>
           </div>
-          {i < units.length - 1 && <span key={`sep-${i}`} className="mic-cd-sep">:</span>}
-        </>
+          {i < units.length - 1 && <span className="mic-cd-sep">:</span>}
+        </Fragment>
       ))}
     </div>
   )
 }
 
+/**
+ * Whether this browser will put anything fullscreen at all. Read through
+ * useSyncExternalStore rather than an effect so the server and the first
+ * client render agree, and so nothing sets state during render.
+ */
+const subscribeToNothing = () => () => {}
+const readFullscreenSupport = () => typeof document !== 'undefined' && Boolean(document.fullscreenEnabled)
+const noFullscreenOnTheServer = () => false
+
 export default function CrossfadeVideo() {
   const video1Ref = useRef<HTMLVideoElement>(null)
   const video2Ref = useRef<HTMLVideoElement>(null)
+  const fullscreenBtnRef = useRef<HTMLButtonElement>(null)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+
+  const canFullscreen = useSyncExternalStore(
+    subscribeToNothing,
+    readFullscreenSupport,
+    noFullscreenOnTheServer
+  )
+
+  const heroOf = () => fullscreenBtnRef.current?.closest('.events-scene__hero') as HTMLElement | null
+
+  /**
+   * The document goes fullscreen, not the hero.
+   *
+   * Fullscreen renders only the subtree of the element that asked for it, and
+   * the music player is not in this one: it is a fixed overlay that
+   * app/layout.tsx renders outside the page, so asking the hero for fullscreen
+   * put the video up and left the player behind with no way to reach it.
+   *
+   * Taking the whole document keeps everything in the tree. The hero is then
+   * pinned over the rest of the page by the .is-fullscreen rules in
+   * globals.css, and the player sits above it - see the dock rules there,
+   * which also move it to the bottom of the screen in this mode.
+   */
+  useEffect(() => {
+    const onChange = () => {
+      const on = document.fullscreenElement === document.documentElement
+      setIsFullscreen(on)
+      // The hero is rendered by the page, not by this component, so its class
+      // is set directly - nothing here re-renders it.
+      heroOf()?.classList.toggle('is-fullscreen', on)
+      document.documentElement.classList.toggle('is-hero-fullscreen', on)
+    }
+
+    document.addEventListener('fullscreenchange', onChange)
+    return () => document.removeEventListener('fullscreenchange', onChange)
+  }, [])
+
+  const toggleFullscreen = () => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {})
+      return
+    }
+    document.documentElement.requestFullscreen?.().catch(() => {})
+  }
+
   const [isLoaded, setIsLoaded] = useState(false)
   const [activeVideo, setActiveVideo] = useState<1 | 2>(1)
   const [fadingInVideo, setFadingInVideo] = useState<1 | 2 | null>(null)
@@ -629,6 +686,40 @@ export default function CrossfadeVideo() {
           </>
         )}
       </video>
+
+      {/* Lower right of the video, the corner every player puts it in. */}
+      {canFullscreen && (
+        <button
+          ref={fullscreenBtnRef}
+          type="button"
+          className="hero-fullscreen-btn"
+          onClick={toggleFullscreen}
+          aria-label={isFullscreen ? 'Leave fullscreen' : 'Watch fullscreen'}
+          aria-pressed={isFullscreen}
+          data-tip={isFullscreen ? 'Leave fullscreen — or press Esc' : 'Fullscreen'}
+          // In fullscreen the button sits at the top of the screen, so its
+          // label has to open downwards or it would run off the edge.
+          data-tip-pos={isFullscreen ? 'bottom' : 'top'}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            {isFullscreen ? (
+              <>
+                <path d="M9 3v6H3" />
+                <path d="M15 3v6h6" />
+                <path d="M9 21v-6H3" />
+                <path d="M15 21v-6h6" />
+              </>
+            ) : (
+              <>
+                <path d="M3 9V3h6" />
+                <path d="M21 9V3h-6" />
+                <path d="M3 15v6h6" />
+                <path d="M21 15v6h-6" />
+              </>
+            )}
+          </svg>
+        </button>
+      )}
     </>
   )
 }

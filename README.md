@@ -45,7 +45,7 @@ client in `utils/supabase/mock-client.ts`, backed by a local JSON store.
 | `SESSION_SECRET` | strongly recommended | Signs admin session cookies. Falls back to `SUPABASE_SERVICE_ROLE_KEY`, which means rotating that key signs everyone out |
 | `TIER1_EMAIL` / `TIER1_PASSWORD` | yes | The gate credential, shared by the gate staff |
 | `TIER3_EMAIL` / `TIER3_PASSWORD` | yes | Super admin sign-in |
-| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` | for email | Pass delivery. Without `SMTP_USER`/`SMTP_PASS` sending is skipped with a warning rather than failing |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` | **yes** | Registration mails a one-time code to confirm the address and refuses to register when it cannot send, so without these nobody can register. Any provider works; see `.env.example`, and check with `node scripts/check-smtp.js` |
 | `FROM_EMAIL` | no | Sender address; defaults to `SMTP_USER` |
 | `NEXT_PUBLIC_APP_URL` | no | Absolute links in emails |
 | `DUMMY_DB` | no | `True` runs against the local mock store |
