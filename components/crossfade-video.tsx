@@ -133,6 +133,10 @@ export default function CrossfadeVideo() {
 
   const toggleFullscreen = () => {
     if (document.fullscreenElement) {
+      // This button is the screen's own minimise: it puts the whole thing
+      // away, video and player together. Clicking anywhere else while
+      // fullscreen closes only the player and leaves the video up.
+      window.dispatchEvent(new CustomEvent('close-vintage-player'))
       document.exitFullscreen().catch(() => {})
       return
     }
@@ -536,6 +540,13 @@ export default function CrossfadeVideo() {
         .fixed-thumbnail-launcher:hover .fixed-thumbnail-animator {
           animation-play-state: paused;
         }
+        /* The full player is up, so this tile is the same player in miniature
+           and has no business being on screen beside it. */
+        :global(html.is-player-open) .fixed-thumbnail-launcher {
+          opacity: 0;
+          pointer-events: none;
+          transform: translateY(12px) scale(0.92);
+        }
         
         .fixed-thumbnail-animator {
           display: flex;
@@ -638,17 +649,11 @@ export default function CrossfadeVideo() {
         </div>
       </div>
 
-      {/* Fixed Music Launcher over Video */}
-      <button
-        type="button"
-        className="fixed-thumbnail-launcher"
-        onClick={() => window.dispatchEvent(new CustomEvent('toggle-vintage-player'))}
-      >
-        <div className="fixed-thumbnail-animator">
-          <img src="/assets/music%20thumbnail.png" alt="Pujor Gaan" />
-          <span className="fixed-thumbnail-label">Pujor Gaan</span>
-        </div>
-      </button>
+      {/* The music launcher that used to sit over the video is gone. There is
+          one minimised player now, fixed at the bottom left of every page
+          (.vintage-launcher in components/hero-playlist.tsx); a second tile
+          over the video was the same control in a second place. Its styles
+          below are left in case the tile is ever wanted back. */}
 
       <audio ref={audioRef} src="/assets/mahalaya_audio.mp3" loop preload="none" />
 
@@ -700,6 +705,9 @@ export default function CrossfadeVideo() {
           // In fullscreen the button sits at the top of the screen, so its
           // label has to open downwards or it would run off the edge.
           data-tip-pos={isFullscreen ? 'bottom' : 'top'}
+          // The button sits hard against the right edge, so its label
+          // grows leftwards rather than centring and running off screen.
+          data-tip-align="end"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
             {isFullscreen ? (

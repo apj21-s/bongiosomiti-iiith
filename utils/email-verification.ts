@@ -67,17 +67,45 @@ export function isPlausibleEmail(value: unknown): boolean {
 }
 
 /**
+ * The subdomains the institute actually issues addresses under.
+ *
+ * An address may also sit directly at iiit.ac.in, with no subdomain at all.
+ *
+ * Exported and named so that adding one is a single line here rather than a
+ * regex somewhere in the form: if the institute starts issuing under another
+ * subdomain, every check below follows automatically.
+ */
+export const IIIT_SUBDOMAINS = ['students', 'research', 'staff', 'faculty', 'alumni'] as const
+
+/**
  * Whether a *verified* address belongs to the institute.
  *
- * Matches iiit.ac.in and its subdomains (students.iiit.ac.in, research., and
- * so on) and nothing else. The check is on the whole final labels, so
- * notiiit.ac.in and iiit.ac.in.example.com do not slip through.
+ * The institute's addresses are firstname.lastname@<subdomain>.iiit.ac.in,
+ * with the subdomain optional. Anything else under iiit.ac.in is not an
+ * address the institute hands out, so it does not earn the institute rate.
+ *
+ * The comparison is on whole labels, which is what keeps notiiit.ac.in and
+ * iiit.ac.in.example.com out - both of which "ends with iiit.ac.in" would let
+ * through.
+ *
+ * The local part is deliberately not held to firstname.lastname. That is the
+ * convention rather than a rule the mail server enforces, and a person with
+ * one name, or an older account predating it, would be turned away from a
+ * rate they are entitled to. What establishes the entitlement is owning the
+ * mailbox, and the confirmation code already proves that.
  */
 export function isIiitEmail(value: unknown): boolean {
   const email = normaliseEmail(value)
   if (!isPlausibleEmail(email)) return false
+
   const domain = email.slice(email.indexOf('@') + 1)
-  return domain === 'iiit.ac.in' || domain.endsWith('.iiit.ac.in')
+  if (domain === 'iiit.ac.in') return true
+
+  const sub = domain.endsWith('.iiit.ac.in')
+    ? domain.slice(0, -'.iiit.ac.in'.length)
+    : null
+
+  return sub !== null && (IIIT_SUBDOMAINS as readonly string[]).includes(sub)
 }
 
 /** A six digit code, drawn from the system's random source rather than Math.random. */

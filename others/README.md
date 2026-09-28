@@ -41,6 +41,39 @@ scratch work they are.
 |---|---|
 | `AudioProvider.tsx` | Defines `AudioProvider` and a `useAudio` hook, and exports both. Nothing imports either — the player owns its own audio state inside `components/hero-playlist.tsx`. |
 
+## retired-album-sources/
+
+The gallery could be changed from four places at once, and which one won
+depended on whichever happened to be non-empty first.
+
+| File | What it did |
+|---|---|
+| `album.json` | Read by `/api/album` when the database was empty or absent. |
+| `album_migration.sql` | Created `album_photos`, which `/api/album` read before either file. |
+| `api-admin-album-sync-route.ts` | Wrote `album_photos`. Nothing called it. |
+| `api-admin-album-upload-route.ts` | Wrote files into `public/assets`. Nothing called it, and the filesystem is read-only on Vercel. |
+
+The gallery is now **`public/gallery/gallery.csv`** and nothing else. Add a row
+there and drop the image in `public/gallery/<Event Year>/`.
+
+The `album_photos` table has been left in Supabase rather than dropped —
+nothing reads it, and dropping data is not something to do on the way past.
+
+## orphaned/
+
+| File | Why it is here |
+|---|---|
+| `client-map.tsx` | A Leaflet map superseded by the MapLibre one written inline in `app/durga-puja/page.tsx`. Nothing imported it. |
+| `pujas.json` | An empty `[]` that only `client-map.tsx` read. |
+
+## pujas-raw-65-finalversion-1.json
+
+The 65 map pins, as the Durga Puja page used to import them directly. They now
+live in the `puja_locations` table, which a super admin edits from
+`/admin/map-locations` — a JSON file cannot be edited in production, because
+Vercel's filesystem is read-only. This file is only the seed for
+`scripts/seed-puja-locations.js`, which reads it from here.
+
 ## What deliberately stayed put
 
 - `RUNBOOK.md` — linked from `README.md` and `HOWTO.md`.

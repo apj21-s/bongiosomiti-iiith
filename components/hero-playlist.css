@@ -8,8 +8,11 @@
 /* Floating Launcher */
 .vintage-launcher {
   position: fixed;
+  /* Always the bottom left, on every page and at every scroll position. It is
+     the player at rest, so it has one home and stays in it. */
   bottom: 24px;
-  right: 24px;
+  left: 24px;
+  right: auto;
   z-index: 50;
   background: transparent;
   border: none;
@@ -33,6 +36,28 @@
   height: auto;
   filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5));
   outline: none;
+  /* The same periodic shake the tile over the video used to have: still for
+     most of the cycle, then a short wave to catch the eye without ever being
+     the thing you are watching. */
+  animation: vintage-launcher-shake 5s cubic-bezier(0.36, 0.07, 0.19, 0.97) infinite;
+  transform-origin: center bottom;
+}
+
+.vintage-launcher:hover img {
+  animation-play-state: paused;
+}
+
+@keyframes vintage-launcher-shake {
+  0%, 80%, 100% { transform: rotate(0deg) scale(1); }
+  83% { transform: rotate(-3deg) scale(1.02); }
+  86% { transform: rotate(3deg) scale(1.02); }
+  89% { transform: rotate(-2deg) scale(1.02); }
+  92% { transform: rotate(2deg) scale(1.02); }
+  95% { transform: rotate(0deg) scale(1.02); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vintage-launcher img { animation: none; }
 }
 
 .vintage-launcher-label {
@@ -71,6 +96,22 @@
 
 .hero-playlist-dock.is-open {
   opacity: 1;
+  /*
+    Deliberately still none. The dock is a fixed, full-viewport flex container,
+    so making the dock itself clickable makes the whole screen clickable - and
+    anything underneath, such as the fullscreen minimise button in the corner
+    of the video, stops receiving clicks entirely.
+
+    The two children that actually need clicks take them instead: the backdrop
+    (which closes the player) and the player itself. That leaves any gap the
+    backdrop does not cover genuinely transparent, which is what lets the
+    minimise button be pressed while the player is extended.
+  */
+  pointer-events: none;
+}
+
+.hero-playlist-dock.is-open .vp-dock-backdrop,
+.hero-playlist-dock.is-open .vp-modal-content {
   pointer-events: auto;
 }
 
@@ -608,6 +649,12 @@
 .is-hero-fullscreen .vp-dock-backdrop {
   background: transparent;
   backdrop-filter: none;
+  /* And it must not swallow the screen's minimise button. The backdrop is the
+     click target that closes the player, and it covers the whole viewport at a
+     z-index the hero cannot reach - so in fullscreen it starts below the strip
+     that button sits in, leaving it reachable. Clicking anywhere else still
+     closes the player and leaves the video full screen. */
+  top: 88px;
 }
 
 .events-scene__hero.is-fullscreen .events-scene__hero-image,
@@ -1389,6 +1436,24 @@ a.hero-playlist-queue__name:focus-visible {
 [data-tip][data-tip-pos='bottom']:hover::after,
 [data-tip][data-tip-pos='bottom']:focus-visible::after {
   transform: translateX(-50%) translateY(0);
+}
+
+/*
+  Anchored to the control's right edge instead of centred on it.
+
+  A centred label needs half its width of clear space either side. A control in
+  the top right corner of the screen does not have that on its right, so the
+  label ran off the edge and the half that mattered was unreadable. Growing
+  leftwards from the right edge keeps it on screen whatever it says.
+*/
+[data-tip][data-tip-align='end']::after {
+  left: auto;
+  right: 0;
+  transform: translateX(0) translateY(-3px);
+}
+[data-tip][data-tip-align='end']:hover::after,
+[data-tip][data-tip-align='end']:focus-visible::after {
+  transform: translateX(0) translateY(0);
 }
 
 /* Above - the launcher and the seek bar. */

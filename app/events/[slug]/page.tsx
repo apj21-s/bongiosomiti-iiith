@@ -4,6 +4,7 @@ import Image from 'next/image'
 import SiteHeader from '@/components/site-header'
 import SiteFooter from '@/components/site-footer'
 import MenuCardModal from '@/components/menu-card-modal'
+import MeetTheTeam from '@/components/meet-the-team'
 import RegistrationForm from './RegistrationForm'
 
 export const dynamic = 'force-dynamic'
@@ -116,6 +117,11 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
             </div>
           </div>
         </section>
+
+        {/* The people running the event, from public/data/team.csv. Renders
+            nothing when that file is missing or empty, so an unfinished list
+            leaves no gap. */}
+        {isMahalaya && <MeetTheTeam />}
       </main>
 
       <SiteFooter />

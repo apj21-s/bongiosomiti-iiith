@@ -1,0 +1,132 @@
+/* ── MEET THE TEAM ──────────────────────────────────────────────────────── */
+/*
+  Built on the same bones as the sections above it: the section-label in
+  Bengali, a serif heading under it, then the content. The card surface and
+  border match the festival's paper-and-terracotta palette rather than
+  introducing a second visual language for one section.
+*/
+
+.team-section {
+  width: min(1180px, 92vw);
+  margin: clamp(48px, 8vh, 96px) auto 0;
+}
+
+.team-section__intro {
+  text-align: center;
+  margin-bottom: clamp(22px, 4vh, 40px);
+}
+
+.team-section__intro h2 {
+  margin: 6px 0 0;
+  font-family: "Playfair Display", "Lora", Georgia, serif;
+  font-size: clamp(1.6rem, 3.6vw, 2.5rem);
+  line-height: 1.2;
+  color: #1d1712;
+}
+
+.team-section__lede {
+  margin: 10px auto 0;
+  max-width: 54ch;
+  color: #6b5b4c;
+  font-size: clamp(0.88rem, 1.6vw, 1rem);
+  line-height: 1.6;
+}
+
+/*
+  auto-fit is what makes this arrange itself. The file decides how many people
+  there are; three centre as three, nine wrap to rows, and nobody has to pick
+  a column count when the committee changes size.
+*/
+.team-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: clamp(14px, 2.2vw, 24px);
+  justify-content: center;
+}
+
+.team-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 18px 14px 16px;
+  background: #fffaf2;
+  border: 1px solid #e6d3b3;
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(45, 22, 10, 0.07);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.team-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 26px rgba(45, 22, 10, 0.12);
+}
+
+.team-card__portrait {
+  width: clamp(86px, 9vw, 110px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid #f0e0c4;
+  background: #f3e7d2;
+  margin-bottom: 12px;
+  flex: 0 0 auto;
+}
+
+.team-card__portrait img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.team-card__name {
+  margin: 0;
+  font-family: "Playfair Display", "Lora", Georgia, serif;
+  font-size: 1.02rem;
+  line-height: 1.25;
+  color: #1d1712;
+}
+
+.team-card__role {
+  margin: 4px 0 0;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #b65a3c;
+}
+
+.team-card__course {
+  margin: 6px 0 12px;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: #6b5b4c;
+}
+
+.team-card__wa {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: auto;
+  padding: 6px 11px;
+  border-radius: 999px;
+  background: #e8f5ec;
+  border: 1px solid #bfe0cb;
+  color: #216c42;
+  font-size: 0.74rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.team-card__wa:hover { background: #d8eee1; }
+.team-card__wa.is-muted { background: #f2ece2; border-color: #e0d3bf; color: #806052; }
+
+@media (prefers-reduced-motion: reduce) {
+  .team-card { transition: none; }
+  .team-card:hover { transform: none; }
+}

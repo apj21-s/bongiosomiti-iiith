@@ -17,8 +17,17 @@
 }
 @media (min-width: 580px) {
   .reg-shell {
+    /*
+      Square while the content fits, taller when it does not.
+
+      aspect-ratio alone fixes the height from the width, and this card clips
+      its overflow - so any step that grew past the square was simply cropped,
+      with no scrollbar and nothing to say so. min-height: fit-content lets the
+      content set a floor the ratio cannot undercut: short steps still get the
+      square they were designed as, and a long one is allowed to be long.
+    */
     aspect-ratio: 1/1;
-    min-height: auto;
+    min-height: fit-content;
   }
 }
 
@@ -28,13 +37,19 @@
 
 /* Bottom Landscape Layer & Grass */
 .reg-bottom-decor { position: absolute; bottom: 0; left: 0; right: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; display: flex; flex-direction: column; align-items: center; }
-.reg-landscape-img { width: 100%; height: auto; object-fit: cover; object-position: bottom; position: absolute; bottom: 0; margin-bottom: -2px; }
+/* Flush, not bleeding. These two used to hang 2px below the card to cover a
+   possible hairline seam. The card clips, so the bleed was never visible -
+   but it still counted as scrollable overflow, which is what made the card
+   scroll by 2px with nothing to show for it. The shell's own background is
+   the same paper colour, so there is nothing for a seam to expose. */
+.reg-landscape-img { width: 100%; height: auto; object-fit: cover; object-position: bottom; position: absolute; bottom: 0; margin-bottom: 0; }
 .reg-bengali-footer { position: absolute; bottom: 45px; left: 50%; transform: translateX(-50%); width: 160px; height: auto; object-fit: contain; }
 
-.reg-decor-grass-left { position: absolute; bottom: -2px; left: -2px; height: 45%; width: auto; object-fit: contain; object-position: bottom left; z-index: 1; pointer-events: none; }
+.reg-decor-grass-left { position: absolute; bottom: 0; left: -2px; height: 45%; width: auto; object-fit: contain; object-position: bottom left; z-index: 1; pointer-events: none; }
 .reg-decor-grass-right { position: absolute; bottom: 130px; right: -2px; height: 55%; width: auto; object-fit: contain; object-position: bottom right; z-index: 1; pointer-events: none; }
 
-.reg-content-wrapper { position: relative; z-index: 2; padding: 4px 24px 35px 24px; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; }
+/* min-height, not height: the wrapper has to be able to outgrow the square. */
+.reg-content-wrapper { position: relative; z-index: 2; padding: 4px 24px 35px 24px; min-height: 100%; box-sizing: border-box; display: flex; flex-direction: column; }
 
 /* Header */
 .reg-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; margin-top: 24px; flex-wrap: wrap; gap: 12px; }
@@ -403,3 +418,419 @@
 }
 .reg-otp-note.is-ok { color: #2f6b3f; }
 .reg-otp-note.is-error { color: #8F321F; font-weight: bold; }
+
+/* ── COUPON FEEDBACK ────────────────────────────────────────────────────── */
+/*
+  .success was styled and .error was not, so a rejected code printed in
+  whatever colour it inherited at 10px and read as a caption rather than as a
+  refusal. The whole point of the message is that it is noticed.
+*/
+.reg-coupon-msg.error {
+  color: #8F321F;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.reg-coupon-msg.error::before {
+  content: "✕";
+  font-weight: 700;
+}
+
+/* The applied row and the field agree about state, so a refused code does not
+   sit next to a box that still looks accepted. */
+.reg-coupon-input.is-invalid,
+.reg-coupon-row.is-invalid .reg-input {
+  border-color: #8F321F;
+  background: #fdf3f0;
+}
+
+/* ── VERIFICATION STEP ──────────────────────────────────────────────────── */
+/*
+  Built like the payment step: opaque panels laid side by side inside the same
+  card. Stacked full width, this step ran past the bottom of the shell, and its
+  labels sat directly on the decorative landscape behind the form, where dark
+  text on a dark illustration is barely readable. Panels solve both without
+  touching the background, adding a scroll, or changing any other step.
+*/
+.reg-p--tight { margin-bottom: 10px; }
+
+.reg-verify-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  margin-bottom: 10px;
+}
+
+.reg-verify-box {
+  padding: 8px 10px;
+  min-width: 0;          /* so a long UPI id cannot push the column wider */
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.reg-verify-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #8F321F;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* The fields column carries two stacked fields; they set their own spacing. */
+.reg-verify-box--fields .reg-field { margin-top: 0 !important; }
+
+/* A smaller preview: the receipt is here to be recognised, not read. */
+.reg-verify-box .reg-upload-area { padding: 8px; }
+.reg-verify-box .reg-upload-preview-img { max-height: 76px; }
+.reg-verify-box .reg-upload-preview { gap: 8px; }
+.reg-verify-box .upload-text { font-size: 11px; line-height: 1.3; }
+
+.reg-verify-box .reg-scan {
+  margin-top: 0;
+  font-size: 10.5px;
+  line-height: 1.4;
+}
+
+.reg-read__note {
+  display: block;
+  margin-top: 3px;
+  font-size: 9.5px;
+  color: #806052;
+  font-style: italic;
+}
+
+/* Narrow screens have no room for two columns, and stacking is fine there
+   because the card is already scrolling with the page. */
+@media (max-width: 480px) {
+  .reg-verify-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ── THE FORM ON A PHONE ────────────────────────────────────────────────── */
+/*
+  Two separate problems, both only visible on a real handset.
+
+  The first is the one that actually breaks the page: iOS Safari zooms the
+  whole viewport in whenever a focused input has a font-size below 16px, and
+  it does not zoom back out. The form's inputs are 12px - some of the inline
+  ones 9px - so tapping any field left the person zoomed in and scrolling
+  sideways through a form that fits perfectly well. 16px is the threshold, not
+  a preference, which is why these are exact rather than scaled.
+
+  The second is reach. The fields are 32px tall and the toast's dismiss button
+  was 12x13, which is smaller than a fingertip and sits next to nothing else
+  that would forgive a miss.
+
+  Both are held to phone widths so the compact desktop card is unchanged.
+*/
+@media (max-width: 767px) {
+  .reg-input,
+  .reg-shell select,
+  .reg-shell textarea {
+    font-size: 16px;
+    height: 44px;
+  }
+
+  /* These two sit inside their own bordered rows and fill them, so the row
+     sets the height and the input just has to stop being zoom-bait. */
+  .coupon-input-row .reg-input,
+  .upi-copy-row .reg-input {
+    font-size: 16px;
+    height: 100%;
+  }
+
+  .coupon-input-row,
+  .upi-copy-row {
+    min-height: 40px;
+  }
+
+  .reg-phone-wrapper {
+    min-height: 44px;
+  }
+
+  /* A dismiss control has to be hittable without aiming. The glyph stays the
+     size it was; the padding is what grows. */
+  .reg-toast__close {
+    min-width: 40px;
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin: -10px -8px -10px 0;
+    font-size: 16px;
+  }
+}
+
+/* ── KEEPING THE FORM READABLE OVER ITS OWN DECORATION ──────────────────── */
+/*
+  The card is decorated: grass up both sides, a landscape along the bottom, a
+  Bengali motif over it. The content already sits above all of that - the
+  wrapper is z-index 2 and the art is 1 - so nothing is covered. The trouble is
+  contrast. Labels are 10px brand red, and where the grass rises behind the
+  field grid they stop being readable, which is what "Phone Number is masked"
+  actually is.
+
+  So the step's content gets a veil of the paper colour between it and the art.
+  Not a box: the large same-colour spread on the shadow feathers the edge out,
+  so the decoration still shows around the card and nothing gains a visible
+  border. The art is untouched, no other page is affected, and nothing scrolls.
+
+  z-index -1 keeps it behind the step's own text while staying above the
+  decoration, because .reg-content-wrapper is a stacking context of its own.
+*/
+.reg-step-container::before {
+  content: "";
+  position: absolute;
+  inset: -6px -12px 0;
+  z-index: -1;
+  border-radius: 14px;
+  background: rgba(247, 238, 219, 0.82);
+  box-shadow: 0 0 26px 20px rgba(247, 238, 219, 0.82);
+  pointer-events: none;
+}
+
+/* The boxed steps bring their own opaque panels, so a veil behind them would
+   only dull the decoration for nothing. */
+.reg-step-container:has(.reg-payment)::before,
+.reg-step-container:has(.reg-payment-done)::before {
+  background: rgba(247, 238, 219, 0.55);
+  box-shadow: 0 0 22px 16px rgba(247, 238, 219, 0.55);
+}
+
+/* A label still carries a faint halo of its own, so a stray leaf behind it
+   cannot break a letterform. */
+.reg-field label,
+.reg-verify-label,
+.coupon-label {
+  text-shadow: 0 0 3px rgba(247, 238, 219, 0.95), 0 0 6px rgba(247, 238, 219, 0.8);
+}
+
+/* ── SCROLL INSIDE THE CARD, NOT A CROP ─────────────────────────────────── */
+/*
+  The card grows with its content, but a step can still be taller than the
+  screen. Rather than let the page grow without limit, the card stops at the
+  viewport and the step area scrolls inside it. The decoration is positioned
+  against the shell, so it stays put while the fields move - the card reads as
+  a fixed object with a scrolling panel, not as a scrolling page.
+*/
+.reg-shell {
+  max-height: min(92vh, 900px);
+  display: flex;
+  flex-direction: column;
+}
+
+.reg-content-wrapper { min-height: 0; }
+
+.reg-step-container {
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* Without this a flex child refuses to shrink below its content, and the
+     overflow lands on the card again instead of here. */
+  min-height: 0;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(143, 50, 31, 0.45) transparent;
+  padding-right: 2px;
+}
+
+.reg-step-container::-webkit-scrollbar { width: 6px; }
+.reg-step-container::-webkit-scrollbar-track { background: transparent; }
+.reg-step-container::-webkit-scrollbar-thumb {
+  background: rgba(143, 50, 31, 0.35);
+  border-radius: 999px;
+}
+.reg-step-container::-webkit-scrollbar-thumb:hover { background: rgba(143, 50, 31, 0.6); }
+
+/* ── THE FLOATING NOTICE ────────────────────────────────────────────────── */
+/*
+  Messages used to be inserted into the form, which pushed every field below
+  them down the moment anything was said - so being told about a mistake moved
+  the box you were about to correct. This sits over the card instead: absolute,
+  so it occupies no layout, and animated in and out so it is noticed without
+  the form ever shifting under the cursor.
+*/
+.reg-toast-layer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 10px;
+  z-index: 40;
+  display: flex;
+  justify-content: center;
+  padding: 0 16px;
+  pointer-events: none;
+}
+
+.reg-toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  max-width: 100%;
+  padding: 9px 13px;
+  border-radius: 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.35;
+  text-align: left;
+  color: #fffaf2;
+  box-shadow: 0 8px 22px rgba(38, 16, 6, 0.28);
+  pointer-events: auto;
+  animation: reg-toast-in 0.34s cubic-bezier(0.22, 1.2, 0.4, 1) both;
+}
+
+.reg-toast--error { background: linear-gradient(180deg, #a8391f, #8F321F); }
+.reg-toast--success { background: linear-gradient(180deg, #35794a, #2c6640); }
+
+.reg-toast__icon {
+  flex: 0 0 auto;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+  font-weight: 700;
+  background: rgba(255, 250, 242, 0.22);
+}
+
+.reg-toast__close {
+  flex: 0 0 auto;
+  background: none;
+  border: none;
+  color: inherit;
+  opacity: 0.7;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  padding: 0 0 0 4px;
+}
+.reg-toast__close:hover { opacity: 1; }
+
+@keyframes reg-toast-in {
+  from { opacity: 0; transform: translateY(14px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.reg-toast.is-leaving { animation: reg-toast-out 0.22s ease-in both; }
+@keyframes reg-toast-out {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to   { opacity: 0; transform: translateY(10px) scale(0.97); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reg-toast, .reg-toast.is-leaving { animation: none; }
+}
+
+/* ── THE FIELD ITSELF CARRIES THE VERDICT ───────────────────────────────── */
+/*
+  A message at the foot of the form does not say which box it is about. The
+  border does, at the point of correction, and the reason is one hover away
+  through the shared [data-tip] tooltip.
+*/
+.reg-input.is-valid,
+.reg-phone-wrapper.is-valid {
+  border-color: #2f7d4f;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.03), 0 0 0 2px rgba(47, 125, 79, 0.16);
+}
+
+.reg-input.is-invalid,
+.reg-phone-wrapper.is-invalid {
+  border-color: #8F321F;
+  background: #fdf3f0;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.03), 0 0 0 2px rgba(143, 50, 31, 0.16);
+}
+
+.reg-input.is-invalid:focus { border-color: #8F321F; }
+.reg-input.is-valid:focus { border-color: #2f7d4f; }
+
+/* A tick sits in the corner of the input that is settled, so "this one is
+   done" survives at a glance without reading anything.
+
+   It is positioned against the control, never against .reg-field: the field
+   grid stretches every cell in a row to the tallest, so a mark anchored to the
+   field's bottom edge ends up wherever that row happens to end - which put the
+   name's tick next to the email's Send button. */
+.reg-field__control {
+  position: relative;
+  display: block;
+}
+
+.reg-field__mark {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 11px;
+  font-weight: 700;
+  pointer-events: none;
+  line-height: 1;
+}
+.reg-field__mark--ok { color: #2f7d4f; }
+.reg-field__mark--bad { color: #8F321F; }
+
+/* ── ROOM FOR THE BUTTONS, WITHOUT REACHING FOR THE SCROLLBAR ───────────── */
+/*
+  `margin-top: auto` already pushes the actions to the foot of the step, but
+  when a step fills its space that resolves to zero and the last field ends up
+  touching the buttons. A floor on the gap fixes that; the rest of this is
+  about buying the height back elsewhere, because the scrollbar should be the
+  exception and not how the form normally behaves.
+*/
+.reg-actions {
+  /* auto still does the pushing; the padding is the floor under it, so the
+     last field never sits flush against the buttons when the step fills its
+     space and auto resolves to nothing. (auto is not valid inside max().) */
+  margin-top: auto;
+  padding-top: 18px;
+}
+
+/* Tighter where it costs nothing: the intro lines above each step were set for
+   a page with far less in it than these steps now carry. */
+.reg-p { margin-bottom: 14px; }
+.reg-floral-divider { margin-bottom: 12px; }
+.reg-header { margin-top: 14px; margin-bottom: 8px; }
+
+/* The field grid gives back a few pixels per row, which is where the height
+   actually goes on the details step. */
+.reg-grid { gap: 9px 16px; }
+.reg-field { gap: 3px; }
+
+/* The OTP block is the tallest thing on that step; it does not need the same
+   spacing as a field group. */
+.reg-otp { margin-top: 4px; }
+.reg-otp-row { gap: 5px; }
+.reg-read__note { margin-top: 2px; }
+
+/*
+  The last resort, and only on screens too short to hold the step at all. The
+  card prefers to grow; this is what stops it growing past the window. On a
+  tall screen the scrollbar never appears, which is the point.
+*/
+@media (min-height: 860px) {
+  .reg-shell { max-height: none; }
+  .reg-step-container { overflow-y: visible; }
+}
+
+/* The ordering advisory under the UPI selector. Quiet: it is a request, not a
+   rule, and the list is already in the order it recommends. */
+.upi-advisory {
+  margin: 6px 0 0;
+  font-size: 10px;
+  line-height: 1.45;
+  color: #806052;
+  font-style: italic;
+}
+
+/* The ordering advisory under the UPI selector. Quiet: it is a request, not a
+   rule, and the list is already in the order it recommends. */
+.upi-advisory {
+  margin: 6px 0 0;
+  font-size: 10px;
+  line-height: 1.45;
+  color: #806052;
+  font-style: italic;
+}

@@ -6,7 +6,7 @@ import { getHomepagePlaylists } from "@/utils/data/site-playlist";
 import HeroPlaylist from "@/components/hero-playlist";
 
 export const metadata: Metadata = {
-  title: "bangiya.samiti.iiith",
+  title: "বঙ্গীয় সমিতি @ IIITH",
   description: "আমরা বাঙ্গালী জাতি",
 };
 

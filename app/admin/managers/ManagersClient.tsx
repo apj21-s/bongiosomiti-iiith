@@ -22,6 +22,7 @@ export default function ManagersClient() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [upiId, setUpiId] = useState('')
+  const [email, setEmail] = useState('')
   const [name, setName] = useState('')
 
   const load = useCallback(async () => {
@@ -58,13 +59,13 @@ export default function ManagersClient() {
       const res = await fetch('/api/admin/managers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password, upiId, name }),
+        body: JSON.stringify({ username, password, upiId, email, name }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Could not create the profile')
 
       setNotice(`Created ${data.username}. They sign in at /admin/login with this username and password.`)
-      setUsername(''); setPassword(''); setUpiId(''); setName('')
+      setUsername(''); setPassword(''); setUpiId(''); setEmail(''); setName('')
       load()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not create the profile')
@@ -115,6 +116,17 @@ export default function ManagersClient() {
               style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border)' }} />
           </div>
 
+          <div className="field">
+            <label htmlFor="mgr-email" style={{ fontWeight: 600, display: 'block', marginBottom: '6px' }}>Email *</label>
+            <input id="mgr-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@example.com" required
+              style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border)' }} />
+            <p style={{ margin: '6px 0 0', fontSize: '0.78rem', color: '#718096' }}>
+              Where their digest goes: how many payments came to them, how many are verified,
+              how many are waiting, and anything reassigned to them. Sent only when there is
+              something to report.
+            </p>
+          </div>
+          
           <div className="field">
             <label htmlFor="mgr-name" style={{ fontWeight: 600, display: 'block', marginBottom: '6px' }}>Display name</label>
             <input id="mgr-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Optional"

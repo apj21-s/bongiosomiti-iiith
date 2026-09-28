@@ -45,3 +45,11 @@ local_db.json
 
 # runtime debug logs (may contain attendee data)
 scratch/*.log
+
+# Full-size camera originals for the gallery. The copies the site serves are
+# under public/gallery/ at 1920px webp - about a fortieth of the bytes, and
+# larger than anything the page displays. Keeping the originals here too would
+# put ~50 MB into history permanently for files that are duplicates of the
+# photographers' own folders. Re-encode from those if a bigger version is ever
+# wanted; scripts/build-gallery-thumbs.js rebuilds the small ones.
+others/gallery-originals/

@@ -116,6 +116,8 @@ export default function SiteHeader({ variant = 'public' }: SiteHeaderProps) {
             <Link className="home-strip__link" href="/admin/payments">PAYMENTS</Link>
             <Link className="home-strip__link" href="/admin/scanner">SCANNER</Link>
             <Link className="home-strip__link" href="/admin/check-ins">CHECK-INS</Link>
+            {/* Super admin only; the page itself redirects a lower tier. */}
+            <Link className="home-strip__link" href="/admin/map-locations">MAP</Link>
           </nav>
           <Link className="home-strip__action" href="/admin/login">SIGN OUT</Link>
         </div>
@@ -135,7 +137,7 @@ export default function SiteHeader({ variant = 'public' }: SiteHeaderProps) {
         {/* Desktop Nav */}
         <nav className="home-strip__nav" aria-label="Primary">
           <Link className="home-strip__link" href="/#home" aria-current={pathname === '/' ? "page" : undefined}>HOME</Link>
-          <Link className="home-strip__link" href="/durga-puja">DURGA PUJA</Link>
+          <Link className="home-strip__link" href="/durga-puja">DURGA PUJA BHROMON</Link>
         </nav>
         
         {/* Mobile Nav Morph Container */}
@@ -143,7 +145,7 @@ export default function SiteHeader({ variant = 'public' }: SiteHeaderProps) {
           <div className="t-morph" data-open={isMobileMenuOpen}>
             <div className="t-morph-menu">
               <Link className="home-strip__link" href="/#home" aria-current={pathname === '/' ? "page" : undefined}>HOME</Link>
-              <Link className="home-strip__link" href="/durga-puja">DURGA PUJA</Link>
+              <Link className="home-strip__link" href="/durga-puja">DURGA PUJA BHROMON</Link>
             </div>
             
             <button 

@@ -23,7 +23,7 @@ export async function POST(
 
   // A manager may only act on payments made to their own UPI id; without this
   // the list filter could be sidestepped by calling the route with a token.
-  if (!scopeAllows(scope, ticket.receiver_upi)) {
+  if (!scopeAllows(scope, ticket)) {
     return NextResponse.json({ error: 'This payment belongs to another collector' }, { status: 403 })
   }
 

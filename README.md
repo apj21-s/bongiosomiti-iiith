@@ -46,7 +46,9 @@ client in `utils/supabase/mock-client.ts`, backed by a local JSON store.
 | `TIER1_EMAIL` / `TIER1_PASSWORD` | yes | The gate credential, shared by the gate staff |
 | `TIER3_EMAIL` / `TIER3_PASSWORD` | yes | Super admin sign-in |
 | `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` | **yes** | Registration mails a one-time code to confirm the address and refuses to register when it cannot send, so without these nobody can register. Any provider works; see `.env.example`, and check with `node scripts/check-smtp.js` |
-| `FROM_EMAIL` | no | Sender address; defaults to `SMTP_USER` |
+| `FROM_EMAIL` | no | Sender address; defaults to `SMTP_USER`. Most relays refuse a sender they have not verified |
+| `SMTP_USER_2` / `SMTP_PASS_2` / `FROM_EMAIL_2` … `_9` | no | Extra SMTP accounts. `utils/mail-transport.ts` alternates between them and fails over, so the free daily allowances add up (two Brevo accounts = 600/day) |
+| `SMTP_DAILY_LIMIT` | no | Per-account daily ceiling used to rotate away before the provider refuses. Defaults to 500 for Gmail, 300 otherwise |
 | `NEXT_PUBLIC_APP_URL` | no | Absolute links in emails |
 | `DUMMY_DB` | no | `True` runs against the local mock store |
 

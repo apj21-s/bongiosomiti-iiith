@@ -1,6 +1,12 @@
 import { randomBytes, scrypt, timingSafeEqual } from 'node:crypto'
 import { promisify } from 'node:util'
 import { createServiceRoleClient } from '@/utils/supabase/server'
+import { isPlausibleEmail } from '@/utils/email-verification'
+
+/** The same shape check the registration form applies to a visitor's address. */
+function isPlausibleManagerEmail(value: string): boolean {
+  return isPlausibleEmail(value)
+}
 
 /**
  * Manager profiles: accounts a super admin creates, each tied to the UPI id
@@ -24,6 +30,9 @@ export type ManagerProfile = {
   id: string
   username: string
   upiId: string
+  /** Where this manager's digest is sent. Optional: a profile without one
+   *  simply does not receive digests. */
+  email?: string | null
   name?: string | null
   isActive: boolean
   createdAt?: string | null
@@ -69,6 +78,7 @@ type ManagerRow = {
   username: string
   password_hash: string
   upi_id: string
+  email: string | null
   name: string | null
   is_active: boolean
   created_at: string | null
@@ -80,6 +90,7 @@ function toProfile(row: ManagerRow): ManagerProfile {
     id: row.id,
     username: row.username,
     upiId: row.upi_id,
+    email: row.email ?? null,
     name: row.name,
     isActive: row.is_active,
     createdAt: row.created_at,
@@ -91,7 +102,7 @@ export async function listManagers(): Promise<ManagerProfile[]> {
   const supabase = await createServiceRoleClient()
   const { data, error } = await supabase
     .from('manager_profiles')
-    .select('id, username, upi_id, name, is_active, created_at, created_by')
+    .select('id, username, upi_id, email, name, is_active, created_at, created_by')
     .order('created_at', { ascending: false })
 
   if (error || !data) return []
@@ -129,7 +140,7 @@ export async function getManagerById(id: string): Promise<ManagerProfile | null>
   const supabase = await createServiceRoleClient()
   const { data, error } = await supabase
     .from('manager_profiles')
-    .select('id, username, upi_id, name, is_active, created_at, created_by')
+    .select('id, username, upi_id, email, name, is_active, created_at, created_by')
     .eq('id', id)
     .maybeSingle()
 
@@ -159,21 +170,27 @@ export async function getManagerById(id: string): Promise<ManagerProfile | null>
  * per existing manager, on a table holding a committee's worth of rows, and
  * only when a super admin creates a profile.
  */
-async function findClash(upiId: string, password: string): Promise<string | null> {
+async function findClash(upiId: string, password: string, email: string): Promise<string | null> {
   const supabase = await createServiceRoleClient()
   const { data, error } = await supabase
     .from('manager_profiles')
-    .select('upi_id, password_hash')
+    .select('upi_id, password_hash, email')
 
   // A table that cannot be read is reported by the insert that follows, which
   // knows how to name the missing migration. Refusing here would hide that.
   if (error || !data) return null
 
-  const rows = data as { upi_id: string; password_hash: string }[]
+  const rows = data as { upi_id: string; password_hash: string; email: string | null }[]
   const wanted = normaliseUpiId(upiId)
 
   if (rows.some((row) => normaliseUpiId(row.upi_id || '') === wanted)) {
     return 'That UPI ID already belongs to another manager. Each manager collects at their own id.'
+  }
+
+  // Two profiles on one address would send one person two partial pictures of
+  // the takings and neither of them a whole one.
+  if (email && rows.some((row) => (row.email || '').trim().toLowerCase() === email)) {
+    return 'That email address already belongs to another manager.'
   }
 
   for (const row of rows) {
@@ -189,6 +206,7 @@ export async function createManager(input: {
   username: string
   password: string
   upiId: string
+  email?: string
   name?: string
   createdBy?: string
 }): Promise<{ ok: true; manager: ManagerProfile } | { ok: false; error: string }> {
@@ -208,7 +226,14 @@ export async function createManager(input: {
     return { ok: false, error: 'Enter a valid UPI ID, for example name@bank' }
   }
 
-  const clash = await findClash(upiId, input.password)
+  // An address is required: without one the manager gets no digest, and the
+  // point of the digest is that nobody has to remember to go and look.
+  const email = (input.email || '').trim().toLowerCase()
+  if (!isPlausibleManagerEmail(email)) {
+    return { ok: false, error: 'Enter a valid email address for this manager' }
+  }
+
+  const clash = await findClash(upiId, input.password, email)
   if (clash) return { ok: false, error: clash }
 
   const supabase = await createServiceRoleClient()
@@ -218,10 +243,11 @@ export async function createManager(input: {
       username,
       password_hash: await hashPassword(input.password),
       upi_id: upiId,
+      email,
       name: input.name?.trim() || null,
       created_by: input.createdBy || null,
     })
-    .select('id, username, upi_id, name, is_active, created_at, created_by')
+    .select('id, username, upi_id, email, name, is_active, created_at, created_by')
     .single()
 
   if (error || !data) {
@@ -272,7 +298,7 @@ export async function authenticateManager(
   const supabase = await createServiceRoleClient()
   const { data, error } = await supabase
     .from('manager_profiles')
-    .select('id, username, password_hash, upi_id, name, is_active, created_at, created_by')
+    .select('id, username, password_hash, upi_id, email, name, is_active, created_at, created_by')
     .ilike('username', username.trim())
     .maybeSingle()
 

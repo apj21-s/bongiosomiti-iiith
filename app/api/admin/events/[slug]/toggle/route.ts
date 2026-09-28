@@ -31,6 +31,38 @@ export async function POST(
   const written = { file: false, database: false }
   const warnings: string[] = []
 
+  /**
+   * Three states, not two.
+   *
+   *   OPEN    taking registrations
+   *   LOCKED  paused, and expected to reopen
+   *   CLOSED  finished - the event has happened, or is not going to
+   *
+   * Everything downstream already reads "not OPEN" as "no registrations", so
+   * CLOSED needs no new checks; the distinction is for the people running it,
+   * who need to tell a pause from an ending.
+   *
+   * A request may name the state it wants. With no body the old behaviour
+   * stands and the button flips between OPEN and LOCKED.
+   */
+  const ALLOWED = ['OPEN', 'LOCKED', 'CLOSED']
+  let wanted: string | null = null
+  try {
+    const body = (await request.json()) as Record<string, unknown>
+    if (typeof body.status === 'string') {
+      const asked = body.status.trim().toUpperCase()
+      if (!ALLOWED.includes(asked)) {
+        return NextResponse.json(
+          { error: `Status must be one of ${ALLOWED.join(', ')}.` },
+          { status: 400 }
+        )
+      }
+      wanted = asked
+    }
+  } catch {
+    // No body: fall through to the toggle.
+  }
+
   try {
     const filePath = path.join(process.cwd(), 'public', 'data', 'events.json')
     const events = JSON.parse(fs.readFileSync(filePath, 'utf8'))
@@ -40,7 +72,7 @@ export async function POST(
       return NextResponse.json({ error: 'Event not found' }, { status: 404 })
     }
 
-    status = events[eventIndex].status === 'OPEN' ? 'LOCKED' : 'OPEN'
+    status = wanted ?? (events[eventIndex].status === 'OPEN' ? 'LOCKED' : 'OPEN')
     events[eventIndex].status = status
 
     try {

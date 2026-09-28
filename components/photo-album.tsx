@@ -9,24 +9,17 @@ type Photo = {
   title: string
   date: string
   pos: string
+  /** Small copy for the filmstrip; falls back to src when none was built. */
+  thumb: string
 }
 
-const DEFAULT_PHOTOS: Photo[] = [
-  { src: '/assets/photo_1.webp', alt: 'সরস্বতী পূজা', title: 'সরস্বতী পূজা', date: 'সরস্বতী পূজা • ২০২৬', pos: 'center 32%' },
-  { src: '/assets/photo_2026-08-11_21-42-50.webp', alt: 'হাতের আলপনা', title: 'হাতের আলপনা', date: 'সরস্বতী পূজা • ২০২৬', pos: 'center 28%' },
-  { src: '/assets/photo_2026-08-11_21-42-48.webp', alt: 'সরস্বতী প্রাঙ্গণ', title: 'সরস্বতী প্রাঙ্গণ', date: 'সরস্বতী পূজা • ২০২৬', pos: 'center 42%' },
-  { src: '/assets/p10.webp', alt: 'ভোগ বিতরণ', title: 'ভোগ ও প্রসাদ বিতরণ', date: 'সরস্বতী পূজা • ২০২৬', pos: 'center 36%' },
-  { src: '/assets/photo_2026-08-11_22-55-53.webp', alt: 'পূজার প্রস্তুতি', title: 'পূজার প্রস্তুতি ও সাজসজ্জা', date: 'সরস্বতী পূজা • ২০২৬', pos: 'center 30%' },
-  { src: '/assets/photo_2026-08-11_22-56-00.webp', alt: 'সন্ধ্যা আরতি', title: 'সন্ধ্যা আরতি ও প্রার্থনা', date: 'সরস্বতী পূজা • ২০২৬', pos: 'center 38%' },
-  { src: '/assets/photo_2026-08-11_21-42-44.webp', alt: 'মণ্ডপ পরিক্রমা', title: 'মণ্ডপ পরিক্রমা ও উৎসব', date: 'সরস্বতী পূজা • ২০২৬', pos: 'center 34%' },
-  { src: '/assets/p7.webp', alt: 'ধুনুচি নাচ', title: 'ধুনুচি নাচ ও ঢাকের বোল', date: 'সরস্বতী পূজা • ২০২৬', pos: 'center 36%' },
-  { src: '/assets/p8.webp', alt: 'সাংস্কৃতিক সন্ধ্যা', title: 'সাংস্কৃতিক সন্ধ্যা ও সংগীত', date: 'সরস্বতী পূজা • ২০২৬', pos: 'center 36%' },
-  { src: '/assets/p9.webp', alt: 'প্রদীপ প্রজ্জ্বলন', title: 'প্রদীপ প্রজ্জ্বলন ও পুষ্পাঞ্জলি', date: 'সরস্বতী পূজা • ২০২৬', pos: 'center 36%' },
-  { src: '/assets/p11.webp', alt: 'ক্যাম্পাস আড্ডা', title: 'ক্যাম্পাস আড্ডা ও আনন্দ', date: 'সরস্বতী পূজা • ২০২৬', pos: 'center 36%' },
-  { src: '/assets/p12.webp', alt: 'সন্ধ্যা মিলন', title: 'সন্ধ্যা মিলন ও প্রসাদ সেবা', date: 'সরস্বতী পূজা • ২০২৬', pos: 'center 36%' },
-  { src: '/assets/p13.webp', alt: 'আনন্দ উৎসব', title: 'আনন্দ উৎসব ও স্মৃতি', date: 'সরস্বতী পূজা • ২০২৬', pos: 'center 36%' },
-  { src: '/assets/p14.webp', alt: 'শুভ বিজয়া', title: 'শুভ বিজয়া সম্মিলনী', date: 'সরস্বতী পূজা • ২০২৬', pos: 'center 36%' },
-]
+/**
+ * The gallery has one source: public/gallery/gallery.csv, served by
+ * /api/album. There is deliberately no hardcoded copy here - the list that
+ * used to sit in this file drifted out of step with the CSV the moment the
+ * photos were reorganised into per-event folders, and every one of its paths
+ * was dead. An empty album renders nothing rather than renders a lie.
+ */
 
 const VISIBLE = 4
 
@@ -34,21 +27,11 @@ function toBn(n: number) {
   return String(n).replace(/[0-9]/g, (d) => '০১২৩৪৫৬৭৮৯'[Number(d)])
 }
 
-export default function PhotoAlbum() {
-  const [photos, setPhotos] = useState<Photo[]>(DEFAULT_PHOTOS)
+export default function PhotoAlbum({ photos }: { photos: Photo[] }) {
   const [active, setActive] = useState<number | null>(null)
   const [changing, setChanging] = useState(false)
   const [touchStartX, setTouchStartX] = useState<number | null>(null)
   const [touchEndX, setTouchEndX] = useState<number | null>(null)
-
-  useEffect(() => {
-    fetch(`/api/album`)
-      .then(res => res.json())
-      .then(data => {
-        if (data && data.length > 0) setPhotos(data)
-      })
-      .catch(console.error)
-  }, [])
 
   const total = photos.length
   const moreCount = total > VISIBLE ? total - VISIBLE : 0
@@ -108,6 +91,10 @@ export default function PhotoAlbum() {
       document.documentElement.style.overflow = ''
     }
   }, [active])
+
+  // Nothing in the CSV, or it has not arrived yet. The grid below indexes
+  // photos[0] directly, so there is nothing to draw until it has.
+  if (total === 0) return null
 
   return (
     <>
@@ -248,7 +235,10 @@ export default function PhotoAlbum() {
                     className={`story-lightbox__thumb ${active === index ? 'is-active' : ''}`}
                     onClick={() => openLightbox(index)}
                   >
-                    <img src={photo.src} alt={photo.title} loading="lazy" />
+                    {/* photo.thumb, not photo.src: the strip draws these at
+                        68x50, so the full picture would be ~30x the pixels
+                        needed, 44 times over. */}
+                    <img src={photo.thumb} alt={photo.title} loading="lazy" decoding="async" />
                   </button>
                 ))}
               </div>

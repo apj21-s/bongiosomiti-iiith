@@ -1389,7 +1389,11 @@ export default function HeroPlaylist({ playlists }: { playlists: Playlist[] }) {
   const screen = useSyncExternalStore(subscribeToScreen, readScreen, screenUnknownOnTheServer)
 
   const [choice, setChoice] = useState<boolean | null>(null)
-  const shown = choice ?? (screen === null ? null : true)
+  // Closed until asked for. The player used to open itself the moment the
+  // screen size was known, which put a radio across the middle of the page
+  // before anyone had asked to hear anything. The small tile at the bottom
+  // left is the resting state; clicking it brings the full player up.
+  const shown = choice ?? (screen === null ? null : false)
   const dockState = shown === null ? '' : shown ? 'is-open' : 'is-shut'
 
   const [isAnyPlaying, setIsAnyPlaying] = useState(false)
@@ -1428,8 +1432,24 @@ export default function HeroPlaylist({ playlists }: { playlists: Playlist[] }) {
 
   useEffect(() => {
     const onToggle = () => setChoice(!shown)
+    // Leaving fullscreen takes the player down with the video: the screen's
+    // own minimise button means "put all of this away", while a click anywhere
+    // else only closes the player and leaves the video full screen.
+    const onClose = () => setChoice(false)
     window.addEventListener('toggle-vintage-player', onToggle)
-    return () => window.removeEventListener('toggle-vintage-player', onToggle)
+    window.addEventListener('close-vintage-player', onClose)
+    return () => {
+      window.removeEventListener('toggle-vintage-player', onToggle)
+      window.removeEventListener('close-vintage-player', onClose)
+    }
+  }, [shown])
+
+  // Lets anything outside this component know the full player is up - the tile
+  // drawn over the video hides itself on it, so the two sizes are never both
+  // on screen at once.
+  useEffect(() => {
+    document.documentElement.classList.toggle('is-player-open', shown === true)
+    return () => document.documentElement.classList.remove('is-player-open')
   }, [shown])
 
   useEffect(() => {
@@ -1509,7 +1529,16 @@ export default function HeroPlaylist({ playlists }: { playlists: Playlist[] }) {
       }}
     />
   ) : null
-  const showLauncher = hasScrolled && !shown && isAnyPlaying
+  /**
+   * The minimised player: always there, always the bottom left, and only
+   * hidden while the full player is up - the two are the same thing in two
+   * sizes, so showing both at once says there are two players.
+   *
+   * It used to wait for a 500px scroll and for something to already be
+   * playing, which meant the only way to start the music was to open the full
+   * player first, and there was nothing to click if you had not scrolled.
+   */
+  const showLauncher = shown === false
 
   // Nothing configured and nothing chosen. The button is then the whole
   // player, rather than there being no way in at all - which is what used to

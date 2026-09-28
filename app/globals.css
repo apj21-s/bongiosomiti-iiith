@@ -8517,12 +8517,44 @@ video::cue {
   display: block;
 }
 
+/*
+  The panel is lifted off the alpona rather than printed on it.
+  
+  The banner above is a drawn motif, and the footer text used to sit flat on the
+  same flat colour, so the two read as one surface and the lettering competed
+  with the pattern. A slightly lighter panel with a soft drop shadow puts the
+  text on something that is clearly in front: the alpona stays a background, and
+  the shadow is what says so.
+
+  z-index keeps it above the banner it overlaps, and the negative top margin is
+  what makes the overlap - the panel rides up onto the motif by a few pixels, so
+  the shadow falls across the drawing and the elevation is visible rather than
+  implied.
+*/
 .utsav-footer__content {
   position: relative;
+  z-index: 1;
   max-width: 1360px;
-  margin: 0 auto;
-  padding: 16px 24px 12px;
+  margin: -10px auto 0;
+  padding: 20px 24px 14px;
   box-sizing: border-box;
+  border-radius: 14px 14px 0 0;
+  background: linear-gradient(180deg, #b35f3a 0%, #ac5935 42%);
+  box-shadow:
+    /* the cast shadow, thrown down onto the alpona */
+    0 -10px 26px rgba(38, 16, 6, 0.30),
+    0 -2px 6px rgba(38, 16, 6, 0.20),
+    /* a hairline catch-light along the lifted edge */
+    inset 0 1px 0 rgba(255, 249, 240, 0.16);
+}
+
+/* Edge to edge on a phone, where a rounded panel inside a narrow screen just
+   looks like a mistake. The lift stays; only the corners go. */
+@media (max-width: 640px) {
+  .utsav-footer__content {
+    border-radius: 0;
+    margin-top: -6px;
+  }
 }
 
 .utsav-footer__grid {
@@ -8667,8 +8699,45 @@ video::cue {
 
   /* Readable already; this is about hitting them with a thumb. */
   .utsav-footer__links a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0;
+  }
+
+  /* The contact lines and the credits in the copyright were 15-16px tall,
+     which is about half a fingertip. They sit inside running text, so the
+     hit area is grown with padding and the negative margin gives the space
+     straight back - the sentence wraps exactly as it did, the target does
+     not. */
+  .utsav-footer__contact a,
+  .utsav-footer__copyright a {
     display: inline-block;
-    padding: 5px 0;
+    padding: 12px 6px;
+    margin: -12px -6px;
+  }
+}
+
+/* ── REACHING THE REST OF IT WITH A THUMB ───────────────────────────────── */
+/*
+  The header brand and the menu card's meal tabs were 18px and 27px tall. Both
+  sit in tight bars where growing the box would move everything around it, so
+  the padding grows and a matching negative margin hands the space back: the
+  target gets bigger, the layout does not move.
+*/
+@media (max-width: 767px) {
+  .home-strip__brand {
+    padding: 13px 0;
+    margin: -13px 0;
+  }
+
+  /* Same treatment for the two links on the admin sign-in page. */
+  .admin-sidebar-brand,
+  .admin-page-content a.text-muted,
+  a.text-muted {
+    display: inline-block;
+    padding: 12px 4px;
+    margin: -12px -4px;
   }
 }
 
@@ -9312,6 +9381,18 @@ div[id] {
 
 .mahalaya-meal-tab.is-active .mahalaya-meal-tab__icon {
   transform: scale(1.12);
+}
+
+/* The meal tabs are 27px tall, which is a small thing to hit on a phone when
+   switching between them is the whole point of the card. Placed after the
+   base rule above rather than with the other touch-target fixes, because
+   both are a single class and the later one would otherwise win. */
+@media (max-width: 767px) {
+  .mahalaya-meal-tab,
+  .saraswati-meal-tab {
+    padding-top: 12px;
+    padding-bottom: 14px;
+  }
 }
 
 /* ---- Dietary Type Sections ---- */

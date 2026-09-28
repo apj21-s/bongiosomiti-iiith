@@ -72,7 +72,9 @@
   overflow-y: auto;
   overscroll-behavior: contain;
 
-  padding: clamp(22px, 4vw, 44px);
+  /* Named because the pager below has to undo it to span the full width. */
+  --blog-pad: clamp(22px, 4vw, 44px);
+  padding: var(--blog-pad);
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.5);
   background: #fdf7ea;
@@ -237,4 +239,87 @@
   .blog-trigger:hover .blog-trigger__cue {
     transform: none;
   }
+}
+
+/* ── LANGUAGE AND SERIES CONTROLS ───────────────────────────────────────── */
+/*
+  The language button only renders when the other translation exists, so its
+  presence is itself the answer to "is there a Bengali version of this one?".
+  The pager only renders for a series of more than one.
+*/
+.blog-dialog__lang {
+  margin-top: 10px;
+  padding: 5px 12px;
+  border: 1px solid var(--brand, #b65a3c);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--brand, #b65a3c);
+  font-family: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: background-color 0.18s ease, color 0.18s ease;
+}
+
+.blog-dialog__lang:hover,
+.blog-dialog__lang:focus-visible {
+  background: var(--brand, #b65a3c);
+  color: #fffaf2;
+}
+
+/*
+  Pinned to the bottom of the dialog rather than sitting at the end of the
+  text.
+
+  .blog-dialog is the scrolling box, so in normal flow this bar lived past the
+  end of the article: moving to another story meant scrolling all the way down
+  first, which is a long way through a long read and the reason it was easy to
+  miss there was more than one story at all. Sticky keeps it in the same place
+  the whole time.
+
+  The negative margins pull it out to the dialog's edges so the bar spans the
+  full width, and the padding puts the buttons back where they were. The
+  background is the dialog's own, so text scrolling underneath is covered.
+*/
+.blog-dialog__pager {
+  position: sticky;
+  bottom: calc(var(--blog-pad) * -1);
+  z-index: 2;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  margin: 18px calc(var(--blog-pad) * -1) calc(var(--blog-pad) * -1);
+  padding: 14px var(--blog-pad);
+
+  border-top: 1px solid rgba(182, 90, 60, 0.22);
+  background: #fdf7ea;
+  /* Lifts the bar off the text passing beneath it. */
+  box-shadow: 0 -10px 18px -12px rgba(28, 16, 9, 0.55);
+}
+
+.blog-dialog__page {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--brand, #b65a3c);
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.blog-dialog__page:hover:not(:disabled) { text-decoration: underline; }
+.blog-dialog__page:disabled { opacity: 0.32; cursor: default; }
+
+.blog-dialog__count {
+  font-size: 0.72rem;
+  color: #6b5b4c;
+  letter-spacing: 0.04em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .blog-dialog__lang { transition: none; }
 }

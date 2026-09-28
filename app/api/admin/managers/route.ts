@@ -28,12 +28,14 @@ export async function POST(request: Request) {
   const username = typeof input.username === 'string' ? input.username : ''
   const password = typeof input.password === 'string' ? input.password : ''
   const upiId = typeof input.upiId === 'string' ? input.upiId : ''
+  const email = typeof input.email === 'string' ? input.email : ''
   const name = typeof input.name === 'string' ? input.name : undefined
 
   const result = await createManager({
     username,
     password,
     upiId,
+    email,
     name,
     createdBy: String(guard.user.email || guard.user.id),
   })

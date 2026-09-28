@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="220" height="220" role="img" aria-label="Photo to follow">
+  <rect width="220" height="220" fill="#f3e7d2"/>
+  <circle cx="110" cy="88" r="38" fill="#dcc6a4"/>
+  <path d="M110 138c-38 0-64 22-70 52h140c-6-30-32-52-70-52z" fill="#dcc6a4"/>
+</svg>

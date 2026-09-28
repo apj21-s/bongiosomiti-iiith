@@ -74,6 +74,36 @@ export default function PaymentsClient() {
     }
   }
 
+  /**
+   * "This is not mine."
+   *
+   * Reports the payment as wrongly allocated. It leaves this queue and waits in
+   * the super admin's Wrong Allocations list to be routed to whoever actually
+   * collected it - it is not approved or rejected, because a payment nobody can
+   * vouch for should not resolve either way while it waits.
+   */
+  async function handleWrongAllocation(token: string) {
+    const reason = prompt(
+      'Reporting this payment as wrongly allocated. It will leave your list and go to a super admin.\n\n' +
+      'Anything useful to add? (optional)'
+    )
+    if (reason === null) return
+
+    try {
+      const res = await fetch(`/api/admin/payments/${token}/flag-allocation`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason }),
+      })
+      const d = await res.json()
+      if (!res.ok) throw new Error(d.error || 'Could not report this payment.')
+      alert('Reported. A super admin will route it to the right collector.')
+      fetchPayments()
+    } catch (e: any) {
+      alert(e.message)
+    }
+  }
+
   async function handleReject(token: string) {
     if (!confirm(`Reject payment for pass ${token}?`)) return
     try {
@@ -158,6 +188,14 @@ export default function PaymentsClient() {
                       {pmt.payment_status !== 'APPROVED' && <button type="button" className="btn btn-sm btn-success" onClick={() => handleApprove(pmt.token)}>VERIFY</button>}
                       {pmt.payment_status !== 'REJECTED' && <button type="button" className="btn btn-sm btn-danger" onClick={() => handleReject(pmt.token)}>REJECT</button>}
                       <button type="button" className="btn btn-sm btn-secondary" onClick={() => openReview(pmt)}>REVIEW</button>
+                      {pmt.payment_status !== 'APPROVED' && (
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-secondary"
+                          title="This payment was not made to my UPI ID"
+                          onClick={() => handleWrongAllocation(pmt.token)}
+                        >WRONG ALLOCATION</button>
+                      )}
                     </div>
                   </td>
                 </tr>

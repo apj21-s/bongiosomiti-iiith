@@ -90,6 +90,15 @@ export async function POST(request: Request) {
       email: maskedEmail
     })
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    // The message is whatever failed inside, and for a mail failure that is the
+    // relay's own text - host, account name, sometimes the reason it refused.
+    // That belongs in the log, not in a response to whoever asked. The senders
+    // now throw when every account fails, so this path is reached for a genuine
+    // delivery failure rather than only for a crash.
+    console.error('[pass/resend] Failed:', err instanceof Error ? err.message : err)
+    return NextResponse.json(
+      { error: 'Could not resend the pass just now. Please try again in a few minutes.' },
+      { status: 500 }
+    )
   }
 }

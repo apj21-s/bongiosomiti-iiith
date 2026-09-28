@@ -16,10 +16,16 @@ export default function EventsTable({ events }: { events: any[] }) {
     }
   }
 
-  async function handleToggleStatus(slug: string) {
+  async function handleToggleStatus(slug: string, status?: 'OPEN' | 'LOCKED' | 'CLOSED') {
     try {
-      const res = await fetch(`/api/admin/events/${slug}/toggle`, { method: 'POST' })
-      if (!res.ok) throw new Error('Failed to toggle status')
+      const res = await fetch(`/api/admin/events/${slug}/toggle`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        // No status means "flip between open and locked", which is what the
+        // Lock/Unlock button has always done.
+        body: JSON.stringify(status ? { status } : {}),
+      })
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'Failed to change status')
       router.refresh()
     } catch (e: any) {
       alert(e.message)
@@ -59,6 +65,26 @@ export default function EventsTable({ events }: { events: any[] }) {
                 <button type="button" className={`btn btn-sm ${evt.status === 'OPEN' ? 'btn-danger' : 'btn-secondary'}`} onClick={() => handleToggleStatus(evt.slug)}>
                   {evt.status === 'OPEN' ? 'Lock' : 'Unlock'}
                 </button>
+                {/* Closing is a separate decision from pausing, so it is a
+                    separate button and it asks first - reopening a closed
+                    event is easy, but telling people it has ended and then
+                    taking that back is not. */}
+                {evt.status !== 'CLOSED' ? (
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-danger"
+                    title="Registrations have ended for good"
+                    onClick={() => {
+                      if (confirm(`Close "${evt.name}"? It will stop taking registrations and show as finished. You can reopen it later.`)) {
+                        handleToggleStatus(evt.slug, 'CLOSED')
+                      }
+                    }}
+                  >Close</button>
+                ) : (
+                  <button type="button" className="btn btn-sm btn-secondary" onClick={() => handleToggleStatus(evt.slug, 'OPEN')}>
+                    Reopen
+                  </button>
+                )}
                 <Link href={`/admin/events/${evt.slug}/edit`} className="btn btn-sm btn-primary">Edit</Link>
                 <Link href={`/events/${evt.slug}`} target="_blank" className="btn btn-sm btn-secondary">View Page</Link>
                 <button type="button" className="btn btn-sm btn-danger" onClick={() => handleDelete(evt.slug)}>Delete</button>

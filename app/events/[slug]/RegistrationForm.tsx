@@ -9,6 +9,9 @@ import {
   normaliseUpi,
   normaliseUtr,
 } from '@/utils/payments/receipt-gate'
+// The same rule the register route applies, so the form and the server cannot
+// disagree about what counts as an institute address.
+import { isIiitEmail } from '@/utils/email-verification'
 
 type RegistrationFormProps = { event: any }
 
@@ -135,6 +138,18 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
     const email = draft.email.trim().toLowerCase()
     if (!email.includes('@')) { setOtpNote({ type: 'error', text: 'Enter your email address first.' }); return }
 
+    // Checked before a code is sent, not after it comes back. Someone claiming
+    // the institute rate on a personal address would otherwise verify it
+    // happily and only be refused at the end of the form - having spent a code
+    // out of the day's allowance to be told so.
+    if (draft.isIiit === 'yes' && !isIiitEmail(email)) {
+      setOtpNote({
+        type: 'error',
+        text: 'Use your institute address — name@students.iiit.ac.in, or research, staff, faculty, alumni, or plain iiit.ac.in. If you are not from IIIT Hyderabad, go back and register as a guest.',
+      })
+      return
+    }
+
     setOtpBusy(true)
     setOtpNote(null)
     try {
@@ -167,7 +182,10 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'That code is not right.')
       updateDraft({ emailProof: data.proof, verifiedEmail: email, otpSent: false, otpInput: '' })
-      setOtpNote({ type: 'success', text: 'Email confirmed.' })
+      // No note on success: once emailIsVerified is true the field shows a
+      // standing "✓ Email confirmed", and setting a note here put the same
+      // sentence on the screen twice.
+      setOtpNote(null)
     } catch (e: any) {
       setOtpNote({ type: 'error', text: e.message })
     } finally {
@@ -212,8 +230,8 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
       if (!draft.emailProof || draft.verifiedEmail !== draft.email.trim().toLowerCase()) {
         return setError('Confirm your email address first.')
       }
-      if (draft.isIiit === 'yes' && !/@([a-z0-9-]+\.)*iiit\.ac\.in$/.test(draft.email.trim().toLowerCase())) {
-        return setError('The institute rate needs a confirmed @iiit.ac.in address. Go back and register as a guest, or use your institute email.')
+      if (draft.isIiit === 'yes' && !isIiitEmail(draft.email)) {
+        return setError('The institute rate needs a confirmed @iiit.ac.in address — students, research, staff, faculty or alumni. Go back and register as a guest, or use your institute email.')
       }
     }
     if (draft.stage === 3) {
@@ -226,7 +244,13 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
     }
     if (draft.stage === 4 && draft.paymentState === 'COMPLETED') {
       if (total > 0 && draft.utr.length < 6) return setError('Enter valid UTR.')
-      if (total > 0 && !draft.screenshot) return setError('Upload receipt.')
+      // Both halves are checked: `screenshot` is the file the visitor picked,
+      // `receiptPath` is where it was actually stored. Removing the image used
+      // to clear only the first, and the gate downstream reads the second - so
+      // a booking could go on with a receipt nobody could open.
+      if (total > 0 && (!draft.screenshot || !draft.receiptPath)) {
+        return setError('Upload the payment screenshot before continuing.')
+      }
       if (total > 0 && !draft.receiverUpi.trim()) return setError('Enter the UPI ID you paid to.')
     }
     transitionTo({ stage: draft.stage + 1 })
@@ -246,21 +270,39 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
     const code = draft.couponInput.trim().toUpperCase()
     const coupons = event.config?.coupons || []
     const foundCoupon = coupons.find((c: any) => c.code.toUpperCase() === code)
-    
+
+    // An empty box is not a wrong code, and saying so sends people hunting for
+    // a typo in something they never typed.
+    if (!code) {
+      updateDraft({ appliedCoupon: null })
+      setCouponMsg({ type: 'error', text: 'Enter a coupon code first.' })
+      return
+    }
+
     if (foundCoupon) {
       updateDraft({ appliedCoupon: { code, discount: foundCoupon.discount } })
-      setCouponMsg({ type: 'success', text: `✓ Coupon applied (-₹${foundCoupon.discount})` })
-    } else {
-      updateDraft({ appliedCoupon: null })
-      setCouponMsg({ type: 'error', text: 'Invalid coupon' })
+      // The tick is added by the renderer; putting one here too printed two.
+      setCouponMsg({ type: 'success', text: `Coupon ${code} applied (-₹${foundCoupon.discount})` })
+      return
     }
+
+    // Losing a discount silently is worse than being told the new code is bad,
+    // so say which of the two just happened.
+    const hadOne = Boolean(draft.appliedCoupon)
+    updateDraft({ appliedCoupon: null })
+    setCouponMsg({
+      type: 'error',
+      text: hadOne
+        ? `"${code}" is not a valid coupon — the earlier discount has been removed.`
+        : `"${code}" is not a valid coupon for this event.`,
+    })
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     // The same module the register route uses, so the button and the server
     // cannot disagree about what a complete payment looks like.
-    const gate = checkReceiptDetails({
+  const gate = checkReceiptDetails({
       isFree: total === 0,
       utr: draft.utr,
       receiverUpi: draft.receiverUpi,
@@ -306,7 +348,7 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
 
   if (!isLoaded) return <div>Loading...</div>
 
-  const stepProps = { event, draft, updateDraft, nextStage, prevStage, error, setError, total, subtotal, discount, applyCoupon, couponMsg, handleSubmit, loading, confirmation, setScreenshotPreview, screenshotPreview, transitionTo, allowedUpiIds, sendOtp, checkOtp, onEmailChange, otpBusy, otpNote, emailIsVerified }
+  const stepProps = { event, draft, updateDraft, nextStage, prevStage, error, setError, total, subtotal, discount, applyCoupon, couponMsg, setCouponMsg, handleSubmit, loading, confirmation, setScreenshotPreview, screenshotPreview, transitionTo, allowedUpiIds, sendOtp, checkOtp, onEmailChange, otpBusy, otpNote, emailIsVerified }
 
   if (event?.status !== 'OPEN') {
     if (event?.slug !== 'mahalaya') {
@@ -376,6 +418,19 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
         {draft.stage < 6 && <RegistrationHeader />}
         {draft.stage < 6 && <ProgressStepper currentStage={draft.stage} />}
         {draft.stage < 6 && <img src="/mahalaya_registration_assets/06_divider_floral.png" className="reg-floral-divider" alt="" />}
+
+        {/* One notice for the card. It is rendered here, outside the step, so a
+            step changing does not take the message with it, and so it floats
+            over the form instead of displacing it. */}
+        <FormToast
+          message={
+            error ? { type: 'error' as const, text: error }
+            : couponMsg ? { type: couponMsg.type, text: couponMsg.text }
+            : otpNote ? { type: otpNote.type, text: otpNote.text }
+            : null
+          }
+          onDismiss={() => { setError(null); setCouponMsg(null); setOtpNote(null) }}
+        />
 
         <div className={`reg-step-container ${isAnimating ? 'reg-anim-exit' : 'reg-anim-enter'}`}>
           {draft.stage === 1 && <AssociationStep {...stepProps} />}
@@ -478,7 +533,6 @@ function AssociationStep({ draft, updateDraft, nextStage, transitionTo, error }:
         </label>
       </div>
 
-      {error && <div className="reg-error">{error}</div>}
       <div className="reg-actions">
         {draft.isIiit && <RegButton text="CONTINUE" onClick={nextStage} type="continue" />}
       </div>
@@ -487,6 +541,30 @@ function AssociationStep({ draft, updateDraft, nextStage, transitionTo, error }:
 }
 
 function DetailsStep({ draft, updateDraft, nextStage, prevStage, transitionTo, error, sendOtp, checkOtp, onEmailChange, otpBusy, otpNote, emailIsVerified }: any) {
+  const wantsIiit = draft.isIiit === 'yes'
+
+  const nameState = fieldState(draft.fullName, {
+    touched: true,
+    rule: (v) => (v.length < 2 ? 'Enter your full name.' : null),
+  })
+  const emailState = fieldState(draft.email, {
+    touched: true,
+    rule: (v) => {
+      if (!v.includes('@') || !v.includes('.')) return 'That does not look like an email address.'
+      if (wantsIiit && !isIiitEmail(v)) return 'The institute rate needs an @iiit.ac.in address — students, research, staff, faculty or alumni.'
+      if (!emailIsVerified) return 'Send yourself a code and confirm this address.'
+      return null
+    },
+  })
+  const phoneState = fieldState(draft.phone, {
+    touched: true,
+    rule: (v) => (v.replace(/\D/g, '').length < 10 ? 'A phone number needs 10 digits.' : null),
+  })
+  const cityState = fieldState(draft.city, {
+    touched: true,
+    rule: (v) => (v.length < 2 ? 'Enter the city you are coming from.' : null),
+  })
+
   return (
     <div className="reg-details">
       <TypewriterHeading lines={['YOUR DETAILS']} />
@@ -495,19 +573,35 @@ function DetailsStep({ draft, updateDraft, nextStage, prevStage, transitionTo, e
       <div className="reg-grid">
         <div className="reg-field">
           <label>Full Name *</label>
-          <input className="reg-input" value={draft.fullName} onChange={e => updateDraft({ fullName: e.target.value })} placeholder="Enter your full name" />
+          {/* The mark is anchored to the input, not the field. The grid stretches
+              every cell in a row to the tallest, and the email cell carries the
+              whole OTP block - so a mark pinned to the field bottom drifted down
+              beside the Send button and read as belonging to it. */}
+          <span className="reg-field__control">
+            <input {...fieldProps(nameState)} className={`reg-input ${fieldProps(nameState).className}`}
+              value={draft.fullName} onChange={e => updateDraft({ fullName: e.target.value })} placeholder="Enter your full name" />
+            {nameState.tone && <span className={`reg-field__mark reg-field__mark--${nameState.tone === "ok" ? "ok" : "bad"}`} aria-hidden="true">{nameState.tone === "ok" ? "✓" : "!"}</span>}
+          </span>
         </div>
         <div className="reg-field">
           <label>Email Address *</label>
           <input
-            className="reg-input"
             type="email"
+            {...fieldProps(emailState)}
+            className={`reg-input ${fieldProps(emailState).className}`}
             value={draft.email}
             onChange={e => onEmailChange(e.target.value)}
-            placeholder="Enter your email address"
+            placeholder={draft.isIiit === 'yes' ? 'first.last@students.iiit.ac.in' : 'Enter your email address'}
             autoComplete="email"
             inputMode="email"
           />
+
+          {/* Said before they type, not after the code has been spent. */}
+          {draft.isIiit === 'yes' && (
+            <span className="reg-read__note">
+              name@students.iiit.ac.in — or research, staff, faculty, alumni, or plain iiit.ac.in
+            </span>
+          )}
 
           {/* The address has to be confirmed before the form moves on. For
               anyone claiming the institute rate this is also what establishes
@@ -542,17 +636,13 @@ function DetailsStep({ draft, updateDraft, nextStage, prevStage, transitionTo, e
             </div>
           )}
 
-          {otpNote && (
-            <p className={`reg-otp-note ${otpNote.type === 'error' ? 'is-error' : 'is-ok'}`} role="status">
-              {otpNote.text}
-            </p>
-          )}
         </div>
         <div className="reg-field">
           <label>Phone Number *</label>
           <div className="reg-phone-wrapper">
              <span className="reg-phone-prefix">+91</span>
-             <input className="reg-input" type="tel" value={draft.phone} onChange={e => updateDraft({ phone: e.target.value })} placeholder="Enter your phone number" />
+             <input {...fieldProps(phoneState)} className={`reg-input ${fieldProps(phoneState).className}`}
+               type="tel" value={draft.phone} onChange={e => updateDraft({ phone: e.target.value })} placeholder="Enter your phone number" />
           </div>
         </div>
         {/* No roll number. A confirmed @iiit.ac.in address is what establishes
@@ -562,7 +652,8 @@ function DetailsStep({ draft, updateDraft, nextStage, prevStage, transitionTo, e
           <div className="reg-field">
             <label>City *</label>
             <input
-              className="reg-input"
+              {...fieldProps(cityState)}
+              className={`reg-input ${fieldProps(cityState).className}`}
               value={draft.city}
               onChange={e => updateDraft({ city: e.target.value })}
               placeholder="City"
@@ -571,7 +662,6 @@ function DetailsStep({ draft, updateDraft, nextStage, prevStage, transitionTo, e
         )}
       </div>
       
-      {error && <div className="reg-error">{error}</div>}
       <div className="reg-actions dual">
         <RegButton text="BACK" onClick={prevStage} type="back" />
         <RegButton text="CONTINUE" onClick={nextStage} type="continue" />
@@ -683,7 +773,6 @@ function PassDetailsStep({ event, draft, updateDraft, nextStage, prevStage, erro
         )}
       </div>
       
-      {error && <div className="reg-error">{error}</div>}
       <div className="reg-actions dual">
         <RegButton text="BACK" onClick={prevStage} type="back" />
         <RegButton text="CONTINUE" onClick={nextStage} type="continue" />
@@ -692,14 +781,85 @@ function PassDetailsStep({ event, draft, updateDraft, nextStage, prevStage, erro
   )
 }
 
-function RegButton({ text, onClick, type = 'continue', disabled = false, style, loadingText }: any) {
+/**
+ * The card's one place for saying something went right or wrong.
+ *
+ * It floats over the form rather than sitting in it. Inserting a message into
+ * the flow pushed every field below it down, which meant being told about a
+ * mistake moved the box you were about to fix - worst at the moment you were
+ * already reaching for it. This occupies no layout at all, animates in, and
+ * clears itself.
+ *
+ * It is deliberately not the only signal: the field that caused it carries a
+ * border and a mark of its own, and the reason is on its tooltip. This is for
+ * noticing; the field is for locating.
+ */
+/**
+ * What a field should look like, and what it should say on hover.
+ *
+ * Returned together so a field cannot end up outlined red with no explanation,
+ * or explained with no outline. `tone` is null while a field is untouched -
+ * nothing is wrong with a box nobody has typed in yet, and colouring it before
+ * then just makes the form look like a list of complaints.
+ */
+function fieldState(value: string, opts: { touched: boolean; rule?: (v: string) => string | null }) {
+  const v = (value || '').trim()
+  if (!opts.touched || v === '') return { tone: null as null | 'ok' | 'bad', tip: undefined as string | undefined }
+  const problem = opts.rule ? opts.rule(v) : null
+  return problem
+    ? { tone: 'bad' as const, tip: problem }
+    : { tone: 'ok' as const, tip: undefined }
+}
+
+/** The class and hover text a field carries, from a fieldState result. */
+function fieldProps(state: { tone: null | 'ok' | 'bad'; tip?: string }) {
+  return {
+    className: state.tone === 'ok' ? 'is-valid' : state.tone === 'bad' ? 'is-invalid' : '',
+    ...(state.tip ? { 'data-tip': state.tip, 'data-tip-pos': 'top' } : {}),
+  }
+}
+
+function FormToast({ message, onDismiss }: {
+  message: { type: 'error' | 'success'; text: string } | null
+  onDismiss: () => void
+}) {
+  const [leaving, setLeaving] = useState(false)
+
+  useEffect(() => {
+    if (!message) return
+    setLeaving(false)
+    // Errors stay until dismissed or superseded; good news does not need to.
+    if (message.type !== 'success') return
+    const fade = setTimeout(() => setLeaving(true), 2600)
+    const gone = setTimeout(onDismiss, 2900)
+    return () => { clearTimeout(fade); clearTimeout(gone) }
+  }, [message, onDismiss])
+
+  if (!message) return null
+
+  return (
+    <div className="reg-toast-layer" aria-live="polite" aria-atomic="true">
+      <div className={`reg-toast reg-toast--${message.type} ${leaving ? 'is-leaving' : ''}`} role="status">
+        <span className="reg-toast__icon" aria-hidden="true">{message.type === 'success' ? '✓' : '!'}</span>
+        <span>{message.text}</span>
+        <button type="button" className="reg-toast__close" onClick={onDismiss} aria-label="Dismiss">×</button>
+      </div>
+    </div>
+  )
+}
+
+function RegButton({ text, onClick, type = 'continue', disabled = false, loading = false, style, loadingText }: any) {
   const isBack = type === 'back';
   const baseClass = type === 'home' ? 'reg-btn-home' : `reg-btn-${type}`;
   const className = `${baseClass} hover-btn ${isBack ? 'left' : 'right'}`;
-  const displayText = disabled && loadingText ? loadingText : text;
-  
+  // Only while something is actually in flight. This used to key off `disabled`,
+  // and SUBMIT is disabled for two quite different reasons - a request running,
+  // or a form not yet complete - so an unfinished form sat there claiming to be
+  // PROCESSING... before anyone had pressed anything.
+  const displayText = loading && loadingText ? loadingText : text;
+
   return (
-    <button className={className} onClick={onClick} disabled={disabled} style={style}>
+    <button className={className} onClick={onClick} disabled={disabled || loading} style={style}>
       <div className="hover-btn-dot"></div>
       <span className="hover-btn-text-idle">{displayText}</span>
       <div className="hover-btn-text-hover">
@@ -803,7 +963,7 @@ function SpinningCounter({ value }: { value: number }) {
   )
 }
 
-function PaymentStep({ event, draft, updateDraft, prevStage, transitionTo, total, subtotal, discount, applyCoupon, couponMsg, allowedUpiIds }: any) {
+function PaymentStep({ event, draft, updateDraft, prevStage, transitionTo, total, subtotal, discount, applyCoupon, couponMsg, setCouponMsg, allowedUpiIds }: any) {
   const [copied, setCopied] = useState(false)
   // One UPI id per manager, so adding a manager adds a way to pay: the id in
   // the list and the QR beside it, which is generated from whichever id is
@@ -839,12 +999,18 @@ function PaymentStep({ event, draft, updateDraft, prevStage, transitionTo, total
         <div className="reg-pay-box coupon-box">
            <span className="coupon-label">Coupon code</span>
            <div className="coupon-input-row">
-             <input className="reg-input" value={draft.couponInput} onChange={e => updateDraft({ couponInput: e.target.value })} placeholder="" />
+             {/* onChange clears couponMsg: a verdict on the previous
+                 code says nothing about the one being typed now. */}
+             <input
+               className={`reg-input ${couponMsg?.type === 'error' ? 'reg-coupon-input is-invalid' : ''}`}
+               value={draft.couponInput}
+               onChange={e => { updateDraft({ couponInput: e.target.value }); setCouponMsg(null) }}
+               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); applyCoupon() } }}
+               placeholder="Coupon code"
+               aria-invalid={couponMsg?.type === 'error'}
+             />
              <button type="button" className="reg-btn-apply" onClick={applyCoupon}>APPLY</button>
            </div>
-           {couponMsg && <div className={`reg-coupon-msg ${couponMsg.type}`}>
-               {couponMsg.type === 'success' ? '✓ ' : ''}{couponMsg.text}
-           </div>}
            <div className="coupon-breakdown">
              <div className="breakdown-row"><span className="label">Original Amount</span><span className="val">₹{subtotal}</span></div>
              <div className="breakdown-row"><span className="label">&bull; Discount</span><span className="val discount">- ₹{discount}</span></div>
@@ -872,6 +1038,16 @@ function PaymentStep({ event, draft, updateDraft, prevStage, transitionTo, total
                  )}
                  <button className="reg-btn-copy" onClick={handleCopy}>{copied ? 'COPIED' : 'COPY'}</button>
                </div>
+               {/* The list arrives least-used first, so the top entry is the one that
+                   spreads the load. Saying so turns an invisible ordering into
+                   something people can choose to go along with. */}
+               {upiIds.length > 1 && (
+                 <p className="upi-advisory">
+                   Please use the IDs in the order shown — the one at the top has taken the
+                   fewest payments so far, and using it helps us verify everyone&rsquo;s
+                   registration faster.
+                 </p>
+               )}
                <a href={deepLink} className="upi-deeplink-btn">
                  <span className="deeplink-btn-text">PAY NOW VIA UPI</span>
                  <div className="upi-icons-prominent">
@@ -903,7 +1079,7 @@ function PaymentStep({ event, draft, updateDraft, prevStage, transitionTo, total
   )
 }
 
-function PaymentCompletedStep({ event, prevStage, handleSubmit, draft, updateDraft, transitionTo, error, loading, setScreenshotPreview, screenshotPreview, allowedUpiIds, total }: any) {
+function PaymentCompletedStep({ event, prevStage, handleSubmit, draft, updateDraft, transitionTo, error, setError, loading, setScreenshotPreview, screenshotPreview, allowedUpiIds, total }: any) {
   // idle | uploading | reading | found | partial | wrong-payee | failed | upload-failed
   const [scan, setScan] = useState<{ state: string; progress: number; detail?: string }>({ state: 'idle', progress: 0 })
 
@@ -939,29 +1115,63 @@ function PaymentCompletedStep({ event, prevStage, handleSubmit, draft, updateDra
     const { readReceipt } = await import('@/utils/ocr/read-receipt')
     const result = await readReceipt(file, (progress) => setScan({ state: 'reading', progress }))
 
-    // A receipt lists the payer's handle as well as the payee's, so the one that
-    // counts is the one this festival actually collects at.
     const allowed = receivers.map((id: string) => normaliseUpi(id))
     const candidates = result.upiCandidates.map(normaliseUpi)
-    const matched = candidates.find((id) => allowed.includes(id)) || ''
-    const sawAnyUpi = candidates.length > 0 || Boolean(result.receiverUpi)
+
+    // Exact reading, then a misread recovered character by character, then a
+    // partly hidden handle matched against the ids we collect at. Anything
+    // ambiguous comes back with no id at all.
+    const { resolveReceiverUpi } = await import('@/utils/ocr/receipt')
+    const payee = resolveReceiverUpi(candidates, allowed)
+
+    // Nothing is filled in on a guess. Where the receipt does not settle it,
+    // the id chosen on the previous screen stands in - the visitor picked it
+    // themselves and it is one we collect at - and failing even that the field
+    // is left empty for them to complete.
+    // `|| receivers[0]` matters: the payment screen shows the first id as the
+    // selected one but only writes selectedUpiId when the visitor *changes*
+    // it, so anybody who simply paid the id they were shown left it empty.
+    // Reading the same default the screen displayed is what makes accepting
+    // that default count as a choice.
+    const chosen = normaliseUpi(draft.selectedUpiId || receivers[0] || '')
+    const fallback = chosen && allowed.includes(chosen) ? chosen : ''
+    const receiver = payee.id || fallback
 
     const utr = isValidUtr(result.transactionId) ? normaliseUtr(result.transactionId) : ''
-    setSeen({ utr: result.transactionId || null, upi: matched || result.receiverUpi || null })
 
     updateDraft({
       utr,
       utrFromOcr: Boolean(utr),
-      receiverUpi: matched,
-      receiverUpiFromOcr: Boolean(matched),
+      receiverUpi: receiver,
+      receiverUpiFromOcr: Boolean(payee.id),
     })
 
-    const state = utr && matched
-      ? 'found'
-      : (!matched && sawAnyUpi ? 'wrong-payee' : (utr || matched ? 'partial' : 'failed'))
+    // The only thing worth saying is what could not be read. A success needs no
+    // announcement - the filled field is the announcement - and naming the one
+    // field still blank is what tells somebody where to look.
+    const unread: string[] = []
+    if (!utr) unread.push('transaction ID')
+    if (!receiver) unread.push('UPI ID')
 
-    setScan({ state, progress: 1 })
+    setScan({ state: 'idle', progress: 1 })
+    if (unread.length > 0) {
+      setError(`Unable to read ${unread.join(' and ')} field${unread.length > 1 ? 's' : ''}. Please fill manually.`)
+    } else {
+      setError(null)
+    }
   }
+
+    // The same verdicts the gate reaches, expressed on the fields themselves.
+  const utrState = fieldState(draft.utr, {
+    touched: Boolean(draft.screenshot),
+    rule: (v) => (isValidUtr(v) ? null : 'That does not look like a transaction id.'),
+  })
+  const upiState = fieldState(draft.receiverUpi, {
+    touched: Boolean(draft.screenshot),
+    rule: (v) => (receivers.length > 0 && !receivers.map((x: string) => normaliseUpi(x)).includes(normaliseUpi(v))
+      ? 'This is not a UPI ID the festival collects at.'
+      : null),
+  })
 
   const gate = checkReceiptDetails({
     isFree: total === 0,
@@ -974,12 +1184,16 @@ function PaymentCompletedStep({ event, prevStage, handleSubmit, draft, updateDra
   return (
     <div className="reg-payment-done">
       <TypewriterHeading lines={['VERIFYING PAYMENT']} />
-      <p className="reg-p">Please provide your transaction details</p>
+      <p className="reg-p reg-p--tight">Please provide your transaction details</p>
 
-      {/* The receipt comes first now: the two fields below are filled from it,
-          and are only typed in when it could not be read. */}
-      <div className="reg-field full">
-        <label>Payment Receipt *</label>
+      {/* Two panels side by side, the way the payment step is built. The
+          receipt feeds the fields beside it, so they belong on one screen:
+          stacked full width they ran past the bottom of the card, and plain
+          text sat straight on the decorative background and was hard to read.
+          Opaque boxes fix both without touching the background. */}
+      <div className="reg-verify-grid">
+      <div className="reg-pay-box reg-verify-box">
+        <label className="reg-verify-label">Payment Receipt *</label>
         <div className="reg-upload-area">
           <input type="file" id="receipt-upload" className="reg-file-input" accept="image/*" onChange={e => {
             if (e.target.files?.[0]) handleReceipt(e.target.files[0])
@@ -994,82 +1208,104 @@ function PaymentCompletedStep({ event, prevStage, handleSubmit, draft, updateDra
                <img src={screenshotPreview} alt="preview" className="reg-upload-preview-img"/>
                <div className="reg-upload-actions">
                   <label htmlFor="receipt-upload" className="reg-btn-change">Change</label>
-                  <button type="button" className="reg-btn-remove" onClick={() => { updateDraft({ screenshot: null }); setScreenshotPreview(null); setScan({ state: 'idle', progress: 0 }) }}>Remove</button>
+                  {/* Removing the receipt has to undo everything the receipt
+                      produced. Clearing only `screenshot` left receiptPath,
+                      utr and receiverUpi behind, and the gate reads those - so
+                      the step stayed unlocked with no receipt attached to it. */}
+                  <button
+                    type="button"
+                    className="reg-btn-remove"
+                    onClick={() => {
+                      updateDraft({
+                        screenshot: null,
+                        receiptPath: '',
+                        utr: '',
+                        receiverUpi: '',
+                        utrFromOcr: false,
+                        receiverUpiFromOcr: false,
+                      })
+                      setScreenshotPreview(null)
+                      setSeen({ utr: null, upi: null })
+                      setScan({ state: 'idle', progress: 0 })
+                    }}
+                  >Remove</button>
                </div>
             </div>
           )}
         </div>
 
-        {scan.state !== 'idle' && (
-          <div className={`reg-scan reg-scan--${scan.state}`} aria-live="polite">
-            {scan.state === 'uploading' && <span>Saving your receipt…</span>}
-            {scan.state === 'reading' && <span>Reading your receipt… {Math.round(scan.progress * 100)}%</span>}
-            {scan.state === 'found' && <span>✓ Read both details off your receipt. Please check them below.</span>}
-            {scan.state === 'partial' && <span>Only part of the receipt was readable. Fill in what is still blank below.</span>}
-            {scan.state === 'wrong-payee' && (
-              <span>
-                The UPI ID on this receipt{seen.upi ? <> (<strong>{seen.upi}</strong>)</> : null} is not one this
-                festival collects at. If you paid one of the IDs we gave you, choose it below; otherwise check you
-                have uploaded the right receipt.
-              </span>
-            )}
-            {scan.state === 'failed' && <span>Could not read the receipt. Please enter both details below.</span>}
-            {scan.state === 'upload-failed' && (
-              <span>{scan.detail || 'Could not save the receipt.'} Please try uploading it again - the registration cannot be submitted without it.</span>
-            )}
+        {/* Progress only. Whether a field was read is said by the field being
+            filled or not; a running commentary on the reader is noise, and the
+            one useful message - which field is still blank - goes to the same
+            notice every other part of the form uses. */}
+        {(scan.state === 'uploading' || scan.state === 'reading') && (
+          <div className="reg-scan" aria-live="polite">
+            {scan.state === 'uploading'
+              ? <span>Saving your receipt…</span>
+              : <span>Reading your receipt… {Math.round(scan.progress * 100)}%</span>}
+          </div>
+        )}
+        {scan.state === 'upload-failed' && (
+          <div className="reg-scan reg-scan--partial" aria-live="polite">
+            {scan.detail || 'Could not save the receipt.'} Please try uploading it again -
+            the registration cannot be submitted without it.
           </div>
         )}
       </div>
 
-      {/* Transaction ID. Read off the receipt when it could be, and then shown
-          rather than offered for editing - the visitor is here to confirm what
-          the receipt says, and a value they can retype is a value we cannot
-          trust against the image we stored. */}
+      <div className="reg-pay-box reg-verify-box reg-verify-box--fields">
+      {/* Transaction ID and payee. Filled from the receipt when they can be
+          read, and always editable: OCR misreads a digit often enough that
+          locking the field just strands people on a value they can see is
+          wrong. Nothing is lost by letting them fix it - the receipt image is
+          stored alongside, and a verifier checks both against it. Removing the
+          image clears these, so a fresh receipt starts from nothing. */}
       <div className="reg-field full" style={{ marginTop: '2cqw' }}>
         <label>UPI Transaction ID / UTR *</label>
-        {draft.utrFromOcr ? (
-          <div className="reg-read" aria-readonly="true">
-            <span className="reg-read__value">{draft.utr}</span>
-            <span className="reg-read__note">read from your receipt</span>
-          </div>
-        ) : (
-          <input
-            className="reg-input"
-            value={draft.utr}
-            onChange={e => updateDraft({ utr: e.target.value, utrFromOcr: false })}
-            placeholder="e.g. 429810294812"
-            inputMode="text"
-            autoComplete="off"
-          />
+        <input
+          {...fieldProps(utrState)}
+          className={`reg-input ${fieldProps(utrState).className}`}
+          value={draft.utr}
+          onChange={e => updateDraft({ utr: e.target.value, utrFromOcr: false })}
+          placeholder="e.g. 429810294812"
+          inputMode="text"
+          autoComplete="off"
+        />
+        {draft.utrFromOcr && draft.utr && (
+          <span className="reg-read__note">read from your receipt — correct it if it is wrong</span>
         )}
       </div>
 
       <div className="reg-field full" style={{ marginTop: '2cqw' }}>
         <label>Paid to (UPI ID) *</label>
-        {draft.receiverUpiFromOcr ? (
-          <div className="reg-read" aria-readonly="true">
-            <span className="reg-read__value">{draft.receiverUpi}</span>
-            <span className="reg-read__note">read from your receipt</span>
-          </div>
-        ) : receivers.length > 0 ? (
-          <select className="reg-input" value={draft.receiverUpi || ''} onChange={e => updateDraft({ receiverUpi: e.target.value, receiverUpiFromOcr: false })}>
-            <option value="" disabled>Select the UPI ID you paid</option>
-            {receivers.map((id: string) => <option key={id} value={id}>{id}</option>)}
-          </select>
-        ) : (
-          <input className="reg-input" value={draft.receiverUpi || ''} onChange={e => updateDraft({ receiverUpi: e.target.value, receiverUpiFromOcr: false })} placeholder="name@bank" />
+        {/* Always a choice from the same list, in the same order the payment
+            screen showed - `receivers` comes from the one endpoint, so the two
+            cannot drift apart. Never a free text box: a typed handle is either
+            one of these or a payment we did not receive, and letting somebody
+            invent one only produces a registration nobody can verify. */}
+        <select {...fieldProps(upiState)} className={`reg-input ${fieldProps(upiState).className}`} value={draft.receiverUpi || ''} onChange={e => updateDraft({ receiverUpi: e.target.value, receiverUpiFromOcr: false })}>
+          <option value="" disabled>Select the UPI ID you paid</option>
+          {receivers.map((id: string) => <option key={id} value={id}>{id}</option>)}
+        </select>
+        {receivers.length === 0 && (
+          <span className="reg-read__note">
+            No collection IDs are configured for this event. Please contact the organisers.
+          </span>
+        )}
+        {draft.receiverUpiFromOcr && draft.receiverUpi && (
+          <span className="reg-read__note">read from your receipt — correct it if it is wrong</span>
         )}
       </div>
 
-      {/* Why the button is not available yet, said before it is pressed. */}
-      {!gate.ok && draft.screenshot && (
-        <div className="reg-scan reg-scan--partial" aria-live="polite">{gate.error}</div>
-      )}
+      </div>
+      </div>
 
-      {error && <div className="reg-error">{error}</div>}
       <div className="reg-actions dual">
         <RegButton text="BACK" onClick={() => transitionTo({ paymentState: 'READY' })} type="back" />
-        <RegButton text="SUBMIT" onClick={handleSubmit} disabled={loading || !gate.ok} loadingText="PROCESSING..." type="continue" />
+        {/* Deliberately not disabled. handleSubmit re-checks the same gate and
+            puts the reason in the notice, so pressing it answers "why not?" -
+            a dead button with nothing to click only poses the question. */}
+        <RegButton text="SUBMIT" onClick={handleSubmit} loading={loading} loadingText="PROCESSING..." type="continue" />
       </div>
     </div>
   )

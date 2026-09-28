@@ -136,7 +136,7 @@ export async function POST(request: Request) {
     if (!iiitClaimAllowed(claimsIiit, verifiedEmail)) {
       return NextResponse.json(
         {
-          error: 'The institute rate needs a confirmed @iiit.ac.in address. Register as a guest, or use your institute email.',
+          error: 'The institute rate needs a confirmed @iiit.ac.in address — students, research, staff, faculty or alumni. Register as a guest, or use your institute email.',
           field: 'email',
         },
         { status: 400 }

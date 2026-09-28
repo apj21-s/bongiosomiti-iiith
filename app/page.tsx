@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { getEvents } from '@/utils/data/events'
+import { getGallery } from '@/utils/data/gallery'
 import SiteHeader from '@/components/site-header'
 import SiteFooter from '@/components/site-footer'
 import PhotoAlbum from '@/components/photo-album'
@@ -247,10 +248,15 @@ export default async function Home() {
           </BlogPostModal>
 
           <div className="story-card__body">
-            <PhotoAlbum />
+            {/* Read on the server from public/gallery/gallery.csv, so the
+                album is in the HTML rather than fetched after paint. */}
+            <PhotoAlbum photos={getGallery()} />
           </div>
         </article>
       </section>
+
+      {/* Meet the Team now lives on the Mahalaya event page, where the people
+          being introduced are the ones running that event. */}
 
       <SiteFooter />
     </main>

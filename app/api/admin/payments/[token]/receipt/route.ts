@@ -41,7 +41,7 @@ export async function GET(
 
   const { data: ticket, error } = await supabase
     .from('tickets')
-    .select('token, receiver_upi, payment_proof_url')
+    .select('token, receiver_upi, payment_proof_url, assigned_manager_id, allocation_flagged_at')
     .eq('token', token.toUpperCase())
     .maybeSingle()
 
@@ -49,7 +49,7 @@ export async function GET(
     return NextResponse.json({ error: 'Ticket not found' }, { status: 404 })
   }
 
-  if (!scopeAllows(scope, ticket.receiver_upi)) {
+  if (!scopeAllows(scope, ticket)) {
     return NextResponse.json({ error: 'This payment belongs to another collector' }, { status: 403 })
   }
 

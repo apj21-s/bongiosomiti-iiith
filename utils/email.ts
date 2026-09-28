@@ -211,17 +211,45 @@ export async function sendQRPassEmail(email: string, participantName: string, ev
     </html>
   `
 
+  // sendMail reports failure in its result rather than throwing - it has
+  // already tried every configured account by then - so the result has to be
+  // read. Catching alone would see nothing and let the caller report a pass as
+  // sent when none was, which is exactly what /api/pass/resend used to do.
+  let result
   try {
-    await sendMail({
+    result = await sendMail({
       fromName: 'Utsav Pass',
       to: email,
       subject: `Your Digital Pass for ${eventName}`,
+      // Every message carries a plain-text part beside the HTML. A message
+      // that is HTML and nothing else is one of the oldest spam signals there
+      // is, and these are the mails that must not be filed away unseen.
+      text: [
+        `Hello ${participantName},`,
+        ``,
+        `Your pass for ${eventName} is confirmed.`,
+        ``,
+        Array.isArray(tokens) && tokens.length > 1
+          ? `Pass codes: ${tokens.join(', ')}`
+          : `Pass code: ${Array.isArray(tokens) ? tokens[0] : tokens}`,
+        ``,
+        `The QR code is attached to this email. Show it at the gate, either on`,
+        `your phone or printed. If the image does not load, the pass code above`,
+        `is enough for the gate to find your registration.`,
+        ``,
+        `Bangiya Samiti, IIIT Hyderabad`,
+      ].join('\n'),
       html,
       attachments
     });
   } catch (error: any) {
     console.error(`[email] Transporter error: ${error.message}`)
     throw error;
+  }
+
+  if (!result.ok) {
+    console.error(`[email] Could not send a pass to ${email}: ${result.errors.join('; ')}`)
+    throw new Error('The pass could not be emailed.')
   }
 }
 
@@ -721,13 +749,31 @@ export async function sendRegistrationPendingEmail(
     }
   ]
 
-  await sendMail({
+  const result = await sendMail({
     fromName: 'Utsav Pass',
     to: email,
     subject: `Registration Pending Verification for ${eventName}`,
+    text: [
+      `Hello ${participantName},`,
+      ``,
+      `We have your registration for ${eventName} and are checking the payment.`,
+      ``,
+      `Reference number: ${referenceNo}`,
+      utr ? `Transaction (UTR): ${utr}` : ``,
+      ``,
+      `Your pass will be emailed as soon as a volunteer has confirmed the`,
+      `payment. Nothing further is needed from you.`,
+      ``,
+      `Bangiya Samiti, IIIT Hyderabad`,
+    ].filter((line, i, all) => !(line === '' && all[i - 1] === '')).join('\n'),
     html,
     attachments
   })
+
+  if (!result.ok) {
+    console.error(`[email] Could not send the pending notice to ${email}: ${result.errors.join('; ')}`)
+    throw new Error('The registration notice could not be emailed.')
+  }
 }
 
 export async function sendPaymentRejectedEmail(
@@ -775,12 +821,30 @@ export async function sendPaymentRejectedEmail(
 </html>
   `;
 
-  await sendMail({
+  const result = await sendMail({
     fromName: 'Utsav Admin',
     to: email,
     subject: `Action Required: Payment Verification Failed for ${eventName}`,
+    text: [
+      `Hello ${participantName},`,
+      ``,
+      `We could not verify the payment for your ${eventName} registration, so`,
+      `no pass has been issued.`,
+      ``,
+      `This is usually a transaction id that does not match the receipt, or a`,
+      `payment made to the wrong UPI id. If you believe the payment went`,
+      `through, reply to this email with the transaction id and we will look`,
+      `again.`,
+      ``,
+      `Bangiya Samiti, IIIT Hyderabad`,
+    ].join('\n'),
     html,
   })
+
+  if (!result.ok) {
+    console.error(`[email] Could not send the rejection notice to ${email}: ${result.errors.join('; ')}`)
+    throw new Error('The rejection notice could not be emailed.')
+  }
 }
 
 /**
@@ -861,5 +925,91 @@ export async function sendVerificationCodeEmail(
     return { ok: false, reason: 'send-failed' }
   }
 
+  return { ok: true }
+}
+
+/**
+ * A manager's periodic summary of their own takings.
+ *
+ * Only sent when there is something in it - see worthSending() in
+ * utils/digest.ts. Reports failure rather than throwing, because a digest is
+ * a courtesy and one that does not arrive must not stop the rest of a run.
+ */
+export async function sendManagerDigestEmail(
+  email: string,
+  managerName: string,
+  upiId: string,
+  counts: { total: number; verified: number; pending: number; rejected: number; reallocated: number },
+  subject: string,
+): Promise<{ ok: boolean; reason?: string }> {
+  if (!mailIsConfigured()) {
+    console.warn('[digest] No SMTP account configured; skipping digest to:', email)
+    return { ok: false, reason: 'mail-not-configured' }
+  }
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  const row = (label: string, value: number, accent?: string) => `
+    <tr>
+      <td style="padding:7px 0;font-size:14px;color:#5b4632;">${label}</td>
+      <td style="padding:7px 0;font-size:16px;font-weight:bold;text-align:right;color:${accent || '#2b1d12'};">${value}</td>
+    </tr>`
+
+  const html = `<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Your payments</title></head>
+<body style="margin:0;padding:0;background:#fdf6e9;font-family:Georgia,'Times New Roman',serif;color:#2b1d12;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fdf6e9;padding:28px 16px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#fffaf2;border:1px solid #e6d3b3;border-radius:12px;padding:28px;">
+        <tr><td style="font-size:19px;font-weight:bold;padding-bottom:4px;">Hello ${managerName},</td></tr>
+        <tr><td style="font-size:14px;color:#6b5b4c;padding-bottom:18px;">
+          Payments collected at <strong>${upiId}</strong>.
+        </td></tr>
+        ${counts.reallocated > 0 ? `
+        <tr><td style="padding:10px 12px;margin-bottom:14px;background:#f6e7cd;border-left:3px solid #b65a3c;font-size:14px;color:#5b4632;">
+          <strong>${counts.reallocated}</strong> payment${counts.reallocated === 1 ? ' has' : 's have'} been assigned to you
+          by an administrator. ${counts.reallocated === 1 ? 'It was' : 'They were'} originally paid to someone else&rsquo;s ID.
+        </td></tr><tr><td style="height:14px;"></td></tr>` : ''}
+        <tr><td>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #efe1c9;">
+            ${row('Payments in total', counts.total)}
+            ${row('Verified', counts.verified, '#2f7d4f')}
+            ${row('Still to verify', counts.pending, counts.pending > 0 ? '#8F321F' : '#2b1d12')}
+            ${counts.rejected > 0 ? row('Rejected', counts.rejected) : ''}
+          </table>
+        </td></tr>
+        ${counts.pending > 0 ? `
+        <tr><td style="padding-top:22px;">
+          <a href="${appUrl}/admin/payments" style="display:inline-block;padding:11px 20px;background:#8F321F;color:#fffaf2;text-decoration:none;border-radius:8px;font-size:14px;font-weight:bold;">Verify them now</a>
+        </td></tr>` : `
+        <tr><td style="padding-top:18px;font-size:14px;color:#2f7d4f;">Nothing is waiting on you. Thank you.</td></tr>`}
+      </table>
+      <div style="font-size:12px;color:#8a7861;padding-top:14px;">বঙ্গীয় সমিতি &middot; IIIT Hyderabad</div>
+    </td></tr>
+  </table>
+</body></html>`
+
+  const text = [
+    `Hello ${managerName},`,
+    ``,
+    `Payments collected at ${upiId}:`,
+    ``,
+    `  In total:        ${counts.total}`,
+    `  Verified:        ${counts.verified}`,
+    `  Still to verify: ${counts.pending}`,
+    counts.rejected > 0 ? `  Rejected:        ${counts.rejected}` : '',
+    counts.reallocated > 0
+      ? `\n${counts.reallocated} payment(s) were assigned to you by an administrator.`
+      : '',
+    ``,
+    counts.pending > 0 ? `Verify them at ${appUrl}/admin/payments` : 'Nothing is waiting on you.',
+    ``,
+    `Bangiya Samiti, IIIT Hyderabad`,
+  ].filter((l) => l !== '').join('\n')
+
+  const result = await sendMail({ fromName: 'Utsav Admin', to: email, subject, text, html })
+  if (!result.ok) {
+    console.error(`[digest] Could not send to ${email}: ${result.errors.join('; ')}`)
+    return { ok: false, reason: 'send-failed' }
+  }
   return { ok: true }
 }

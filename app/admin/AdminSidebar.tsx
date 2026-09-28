@@ -77,6 +77,9 @@ export default function AdminSidebar() {
             {tier >= 2 && (
               <Link href="/admin/payments" className={`admin-nav-link ${isActive('/admin/payments') ? 'active' : ''}`} onClick={closeDrawer}>💳 Payments</Link>
             )}
+            {tier >= 3 && (
+              <Link href="/admin/allocations" className={`admin-nav-link ${isActive('/admin/allocations') ? 'active' : ''}`} onClick={closeDrawer}>🔀 Wrong Allocations</Link>
+            )}
             {tier >= 2 && (
               <Link href="/admin/check-ins" className={`admin-nav-link ${isActive('/admin/check-ins') ? 'active' : ''}`} onClick={closeDrawer}>📋 Check-ins</Link>
             )}
@@ -131,6 +134,11 @@ export default function AdminSidebar() {
           {tier >= 2 && (
             <Link href="/admin/payments" className={`admin-nav-link ${isActive('/admin/payments') ? 'active' : ''}`} onClick={closeDrawer}>
               <span style={{ marginRight: '10px' }}>💳</span> Payments
+            </Link>
+          )}
+          {tier >= 3 && (
+            <Link href="/admin/allocations" className={`admin-nav-link ${isActive('/admin/allocations') ? 'active' : ''}`} onClick={closeDrawer}>
+              <span style={{ marginRight: '10px' }}>🔀</span> Wrong Allocations
             </Link>
           )}
           {tier >= 2 && (

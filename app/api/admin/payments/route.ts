@@ -32,7 +32,17 @@ export async function GET() {
     .order('created_at', { ascending: false })
 
   if (scope.upi) {
-    query = query.ilike('receiver_upi', scope.upi)
+    // Three cases, in the order they decide:
+    //   assigned to me            -> mine, whatever receiver_upi says
+    //   unassigned, unflagged,
+    //     and paid to my id       -> mine, as before
+    //   flagged, unassigned       -> nobody's, until the super admin routes it
+    query = query.or(
+      [
+        `assigned_manager_id.eq.${scope.managerId}`,
+        `and(assigned_manager_id.is.null,allocation_flagged_at.is.null,receiver_upi.ilike.${scope.upi})`,
+      ].join(',')
+    )
   }
 
   const { data: payments, error } = await query

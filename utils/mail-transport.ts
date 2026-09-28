@@ -52,6 +52,25 @@ type AccountState = {
 
 const DEFAULT_DAILY_LIMIT = 300
 
+/**
+ * Gmail's own allowance for a free account sending over SMTP, which is higher
+ * than the free relays'. Workspace accounts get more; set SMTP_DAILY_LIMIT if
+ * yours does.
+ */
+const GMAIL_DAILY_LIMIT = 500
+
+/**
+ * Gmail will not send as an address other than the one that authenticated,
+ * unless that address has been added under "Send mail as" and confirmed. So a
+ * shared FROM_EMAIL - right for a relay, where several accounts legitimately
+ * send as one verified address - is wrong here: each Gmail account must write
+ * as itself, or Gmail silently rewrites the From and the reply-to leads
+ * somewhere nobody reads.
+ */
+export function isGmailHost(host: string): boolean {
+  return /(^|\.)(gmail|googlemail)\.com$/i.test(host.trim())
+}
+
 function utcDay(now = new Date()): string {
   return now.toISOString().slice(0, 10)
 }
@@ -67,7 +86,8 @@ function utcDay(now = new Date()): string {
 export function readAccounts(env: NodeJS.ProcessEnv = process.env): MailAccount[] {
   const baseHost = env.SMTP_HOST || 'smtp.hostinger.com'
   const basePort = Number(env.SMTP_PORT) || 465
-  const baseLimit = Number(env.SMTP_DAILY_LIMIT) || DEFAULT_DAILY_LIMIT
+  // An explicit global wins; otherwise the ceiling depends on who is sending.
+  const globalLimit = Number(env.SMTP_DAILY_LIMIT) || 0
 
   const accounts: MailAccount[] = []
 
@@ -76,14 +96,34 @@ export function readAccounts(env: NodeJS.ProcessEnv = process.env): MailAccount[
     const pass = env[`SMTP_PASS${suffix}`]
     if (!user || !pass) return
 
+    const host = env[`SMTP_HOST${suffix}`] || baseHost
+    const gmail = isGmailHost(host)
+
     accounts.push({
       label: suffix ? `account${suffix}` : 'account1',
-      host: env[`SMTP_HOST${suffix}`] || baseHost,
+      host,
       port: Number(env[`SMTP_PORT${suffix}`]) || basePort,
       user,
       pass,
-      from: env[`FROM_EMAIL${suffix}`] || user,
-      dailyLimit: Number(env[`SMTP_DAILY_LIMIT${suffix}`]) || baseLimit,
+      // Its own sender first, then it depends on who is sending.
+      //
+      // On a relay the shared FROM_EMAIL is the setup people actually have:
+      // one address verified on every account, so the festival writes from one
+      // place whichever account carries the message. Without that fallback a
+      // second account with no FROM_EMAIL_2 drops to its login - on Brevo an
+      // @smtp-brevo.com address nobody owns - and every message it sends is
+      // refused, which on the one-time code means registration quietly stops
+      // working for half of all attempts.
+      //
+      // Gmail is the opposite: it will not send as anything but the account
+      // that authenticated, so each Gmail account writes as itself and the
+      // shared value is deliberately skipped. An explicit FROM_EMAIL_<n> still
+      // wins, for an address confirmed under "Send mail as".
+      from: env[`FROM_EMAIL${suffix}`] || (gmail ? user : env.FROM_EMAIL || user),
+      dailyLimit:
+        Number(env[`SMTP_DAILY_LIMIT${suffix}`]) ||
+        globalLimit ||
+        (gmail ? GMAIL_DAILY_LIMIT : DEFAULT_DAILY_LIMIT),
     })
   }
 
@@ -93,8 +133,22 @@ export function readAccounts(env: NodeJS.ProcessEnv = process.env): MailAccount[
   return accounts
 }
 
+/**
+ * Whether this sender is the relay's own login rather than a real address.
+ *
+ * Relays hand out a machine address to authenticate with - Brevo's
+ * @smtp-brevo.com, Mailjet's API key - which is not a mailbox and is not a
+ * sender they will deliver for. Sending from one produces a refusal, or worse
+ * a silent spam-filing, and for the one-time code that is a registration
+ * nobody can complete.
+ */
+export function looksLikeProviderLogin(address: string): boolean {
+  return /@(smtp-)?(brevo|sendinblue|mailjet|sendgrid|mailgun)\b/i.test(address) || !address.includes('@')
+}
+
 const transports = new Map<string, nodemailer.Transporter>()
 const states = new Map<string, AccountState>()
+const warnedAboutSender = new Set<string>()
 let cursor = 0
 
 function transportFor(account: MailAccount): nodemailer.Transporter {
@@ -104,8 +158,18 @@ function transportFor(account: MailAccount): nodemailer.Transporter {
     existing = nodemailer.createTransport({
       host: account.host,
       port: account.port,
-      // 587 is STARTTLS; everything else (465) is implicit TLS.
-      secure: account.port !== 587,
+      // Only 465 is implicit TLS. Everything else - 587, and 2525, which is
+      // the fallback when a campus network blocks 587 - negotiates STARTTLS.
+      // Testing for "not 587" instead would hand 2525 an implicit-TLS socket
+      // and hang until it timed out.
+      secure: account.port === 465,
+      // Nodemailer waits about two minutes to connect and ten for a reply.
+      // In a pool that is the wrong end of the trade: one unreachable account
+      // would hold up the message that the next account could have sent
+      // immediately. Fail fast and move on.
+      connectionTimeout: 10_000,
+      greetingTimeout: 10_000,
+      socketTimeout: 20_000,
       auth: { user: account.user, pass: account.pass },
     })
     transports.set(key, existing)
@@ -173,10 +237,27 @@ export async function sendMail(
 
   for (const account of queue) {
     const state = stateFor(account)
+
+    // Said once per account, not once per message: a log line on every send
+    // would bury it, and this is a configuration problem, not an event.
+    if (looksLikeProviderLogin(account.from) && !warnedAboutSender.has(account.label)) {
+      warnedAboutSender.add(account.label)
+      console.error(
+        `[mail] ${account.label} is sending from ${account.from}, which is the relay's own ` +
+        'login rather than a verified sender. Mail from it will be refused or filed as spam. ' +
+        `Set FROM_EMAIL (shared by every account) or FROM_EMAIL for this one specifically.`
+      )
+    }
+
     try {
       const info = await transportFor(account).sendMail({
         ...rest,
         from: fromName ? `"${fromName}" <${account.from}>` : account.from,
+        // Mail people cannot reply to is treated with suspicion by filters and
+        // is useless to the person who needs to ask a question. The sending
+        // account is a machine mailbox nobody reads, so replies are pointed at
+        // whatever address the festival actually watches.
+        replyTo: rest.replyTo || process.env.REPLY_TO_EMAIL || undefined,
       })
       state.sentToday += 1
       state.lastError = null
@@ -208,6 +289,7 @@ export function describeAccounts(): Array<{
   sentToday: number
   exhausted: boolean
   lastError: string | null
+  senderIsProviderLogin: boolean
 }> {
   return readAccounts().map((account) => {
     const state = stateFor(account)
@@ -221,6 +303,7 @@ export function describeAccounts(): Array<{
       sentToday: state.sentToday,
       exhausted: state.exhaustedUntilDay === state.day,
       lastError: state.lastError,
+      senderIsProviderLogin: looksLikeProviderLogin(account.from),
     }
   })
 }
