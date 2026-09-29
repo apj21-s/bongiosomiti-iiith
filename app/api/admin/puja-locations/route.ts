@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
 import { requireAdmin } from '@/utils/auth/require-admin'
 import { createServiceRoleClient } from '@/utils/supabase/server'
+import { getPujaLocations } from '@/utils/data/puja-locations-server'
 import {
-  getPujaLocations,
   readLocationInput,
   toDatabaseRow,
   toPujaLocation,

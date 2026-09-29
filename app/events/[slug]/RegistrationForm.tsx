@@ -1023,7 +1023,7 @@ function PaymentStep({ event, draft, updateDraft, prevStage, transitionTo, total
           <span className="upi-label">Pay via UPI</span>
           <div className="upi-qr-row">
              <div className="reg-qr">
-               <QRCodeSVG value={deepLink} size={76} />
+               <QRCodeSVG value={deepLink} size={54} />
              </div>
              <div className="upi-details-col">
                <span className="scan-label">Scan the QR code or use the UPI ID below</span>

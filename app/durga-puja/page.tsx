@@ -1,4 +1,4 @@
-import { getPujaLocations } from '@/utils/data/puja-locations'
+import { getPujaLocations } from '@/utils/data/puja-locations-server'
 import DurgaPujaClient, { type MapPuja } from './DurgaPujaClient'
 
 // The pins are edited from /admin/map-locations, so the page cannot be built

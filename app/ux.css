@@ -224,7 +224,7 @@
 .reg-pay-top { display: grid; grid-template-columns: 1fr 1.3fr; gap: 6px; margin-bottom: 6px; width: 100%; box-sizing: border-box; }
 .reg-pay-bottom { display: grid; grid-template-columns: 1.3fr 1fr; gap: 6px; margin-bottom: 8px; width: 100%; box-sizing: border-box; }
 
-.reg-pay-box { background: #F8F0DF; border: 1px solid #D5B18A; border-radius: 6px; padding: 6px 8px; box-shadow: inset 0 0 10px rgba(255,255,255,0.5); box-sizing: border-box; }
+.reg-pay-box { background: #F8F0DF; border: 1px solid #D5B18A; border-radius: 6px; padding: 4px 6px; box-shadow: inset 0 0 10px rgba(255,255,255,0.5); box-sizing: border-box; }
 .reg-pay-box.amount-box { display: flex; flex-direction: column; align-items: center; justify-content: center; }
 
 .amount-label { font-weight: 700; color: #4A2921; font-size: 11px; margin-bottom: 2px; font-family: 'Playfair Display', serif; }
@@ -246,31 +246,31 @@
 .reg-coupon-msg { font-size: 10px; margin-bottom: 4px; display: flex; align-items: center; gap: 2px; }
 .reg-coupon-msg.success { color: #2E7D32; font-weight: 600; }
 
-.upi-label { font-family: 'Playfair Display', serif; font-size: 14px; font-weight: 700; color: #96351E; display: block; margin-bottom: 8px; }
+.upi-label { font-family: 'Playfair Display', serif; font-size: 13px; font-weight: 700; color: #96351E; display: block; margin-bottom: 4px; }
 .upi-qr-row { display: flex; gap: 8px; }
-.reg-qr { background: white; padding: 3px; border: 1px solid #D5B18A; border-radius: 4px; display: flex; align-items: center; justify-content: center; width: 68px; height: 68px; flex-shrink: 0; }
+.reg-qr { background: white; padding: 3px; border: 1px solid #D5B18A; border-radius: 4px; display: flex; align-items: center; justify-content: center; width: 60px; height: 60px; flex-shrink: 0; }
 .reg-qr svg { width: 100%; height: 100%; }
 .upi-details-col { display: flex; flex-direction: column; flex-grow: 1; justify-content: space-between; gap: 4px; }
-.scan-label { font-size: 9px; color: #4A2921; line-height: 1.1; font-weight: 500; }
-.upi-copy-row { display: flex; gap: 4px; margin: 2px 0; }
-.upi-copy-row .reg-input { height: 22px; font-size: 10px; font-weight: 600; padding: 0 4px; flex-grow: 1; min-width: 0; border: 1px solid #D5B18A; border-radius: 3px; }
-.upi-copy-row .reg-btn-copy { height: 22px; background: #B36B46; color: white; border: none; border-radius: 3px; font-size: 9px; font-weight: 700; padding: 0 6px; cursor: pointer; transition: 0.2s; white-space: nowrap; }
+.scan-label { font-size: 8.5px; color: #4A2921; line-height: 1.1; font-weight: 500; }
+.upi-copy-row { display: flex; gap: 4px; margin: 1px 0; }
+.upi-copy-row .reg-input { height: 20px; font-size: 9px; font-weight: 600; padding: 0 4px; flex-grow: 1; min-width: 0; border: 1px solid #D5B18A; border-radius: 3px; }
+.upi-copy-row .reg-btn-copy { height: 20px; background: #B36B46; color: white; border: none; border-radius: 3px; font-size: 8.5px; font-weight: 700; padding: 0 6px; cursor: pointer; transition: 0.2s; white-space: nowrap; }
 .upi-copy-row .reg-btn-copy:hover { background: #96351E; }
 
-.upi-deeplink-btn { display: flex; gap: 8px; align-items: center; justify-content: center; text-decoration: none; background: linear-gradient(135deg, #1f7d43, #155d31); color: white; border-radius: 4px; padding: 6px 10px; transition: 0.2s; border: 1px solid #0f4021; box-shadow: 0 4px 10px rgba(31, 125, 67, 0.3); margin-top: 4px; }
+.upi-deeplink-btn { display: flex; gap: 8px; align-items: center; justify-content: center; text-decoration: none; background: linear-gradient(135deg, #1f7d43, #155d31); color: white; border-radius: 4px; padding: 4px 8px; transition: 0.2s; border: 1px solid #0f4021; box-shadow: 0 4px 10px rgba(31, 125, 67, 0.3); margin-top: 2px; }
 .upi-deeplink-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 14px rgba(31, 125, 67, 0.4); }
 .deeplink-btn-text { font-size: 10px; font-weight: 800; letter-spacing: 0.05em; font-family: 'Playfair Display', serif; }
 .upi-icons-prominent { display: flex; align-items: center; background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 12px; }
-.upi-icons-prominent img { height: 16px; width: 16px; border-radius: 50%; border: 1.5px solid #1a6838; background: white; object-fit: contain; padding: 1px; position: relative; z-index: 1; }
+.upi-icons-prominent img { height: 14px; width: 14px; border-radius: 50%; border: 1.5px solid #1a6838; background: white; object-fit: contain; padding: 1px; position: relative; z-index: 1; }
 .upi-icons-prominent img:nth-child(1) { z-index: 1; }
 .upi-icons-prominent img:nth-child(2) { z-index: 2; }
 .upi-icons-prominent img:nth-child(3) { z-index: 3; }
 .upi-icons-prominent img + img { margin-left: -6px; }
 
-.steps-label { font-weight: 700; font-size: 11px; color: #4A2921; display: block; margin-bottom: 8px; font-family: 'Playfair Display', serif; }
-.reg-steps-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; counter-reset: step-counter; }
-.reg-steps-list li { display: flex; align-items: flex-start; gap: 6px; font-size: 9px; color: #4A2921; font-weight: 500; line-height: 1.2; }
-.reg-steps-list li::before { content: counter(step-counter); counter-increment: step-counter; background: #B36B46; color: white; width: 14px; height: 14px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; flex-shrink: 0; }
+.steps-label { font-weight: 700; font-size: 10px; color: #4A2921; display: block; margin-bottom: 4px; font-family: 'Playfair Display', serif; }
+.reg-steps-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px; counter-reset: step-counter; }
+.reg-steps-list li { display: flex; align-items: flex-start; gap: 4px; font-size: 8.5px; color: #4A2921; font-weight: 500; line-height: 1.15; }
+.reg-steps-list li::before { content: counter(step-counter); counter-increment: step-counter; background: #B36B46; color: white; width: 12px; height: 12px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 700; flex-shrink: 0; }
 
 .reg-btn-back-text { background: none; border: none; color: #96351E; font-size: 15px; font-weight: 700; cursor: pointer; padding: 0; font-family: 'Playfair Display', serif; transition: 0.2s; }
 .reg-btn-back-text:hover { color: #4A2921; }
@@ -712,7 +712,6 @@
   a fixed object with a scrolling panel, not as a scrolling page.
 */
 .reg-shell {
-  max-height: min(92vh, 900px);
   display: flex;
   flex-direction: column;
 }
@@ -720,24 +719,10 @@
 .reg-content-wrapper { min-height: 0; }
 
 .reg-step-container {
-  overflow-y: auto;
-  overflow-x: hidden;
-  /* Without this a flex child refuses to shrink below its content, and the
-     overflow lands on the card again instead of here. */
+  overflow-y: visible;
+  overflow-x: visible;
   min-height: 0;
-  overscroll-behavior: contain;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(143, 50, 31, 0.45) transparent;
-  padding-right: 2px;
 }
-
-.reg-step-container::-webkit-scrollbar { width: 6px; }
-.reg-step-container::-webkit-scrollbar-track { background: transparent; }
-.reg-step-container::-webkit-scrollbar-thumb {
-  background: rgba(143, 50, 31, 0.35);
-  border-radius: 999px;
-}
-.reg-step-container::-webkit-scrollbar-thumb:hover { background: rgba(143, 50, 31, 0.6); }
 
 /* ── THE FLOATING NOTICE ────────────────────────────────────────────────── */
 /*
@@ -912,9 +897,9 @@
 /* The ordering advisory under the UPI selector. Quiet: it is a request, not a
    rule, and the list is already in the order it recommends. */
 .upi-advisory {
-  margin: 6px 0 0;
-  font-size: 10px;
-  line-height: 1.45;
+  margin: 4px 0 0;
+  font-size: 8.5px;
+  line-height: 1.3;
   color: #806052;
   font-style: italic;
 }
@@ -922,9 +907,9 @@
 /* The ordering advisory under the UPI selector. Quiet: it is a request, not a
    rule, and the list is already in the order it recommends. */
 .upi-advisory {
-  margin: 6px 0 0;
-  font-size: 10px;
-  line-height: 1.45;
+  margin: 4px 0 0;
+  font-size: 8.5px;
+  line-height: 1.3;
   color: #806052;
   font-style: italic;
 }

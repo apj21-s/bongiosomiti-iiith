@@ -8554,6 +8554,7 @@ video::cue {
   .utsav-footer__content {
     border-radius: 0;
     margin-top: -6px;
+    padding: 16px 16px 12px;
   }
 }
 
@@ -8574,7 +8575,7 @@ video::cue {
 @media (max-width: 540px) {
   .utsav-footer__grid {
     grid-template-columns: 1fr;
-    gap: 14px;
+    gap: 8px;
   }
 }
 
@@ -8701,7 +8702,7 @@ video::cue {
   .utsav-footer__links a {
     display: inline-flex;
     align-items: center;
-    min-height: 44px;
+    min-height: 26px;
     padding: 0;
   }
 
@@ -8713,8 +8714,8 @@ video::cue {
   .utsav-footer__contact a,
   .utsav-footer__copyright a {
     display: inline-block;
-    padding: 12px 6px;
-    margin: -12px -6px;
+    padding: 6px 6px;
+    margin: -6px -6px;
   }
 }
 
@@ -11657,11 +11658,8 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
   margin-left: calc(50% - 50vw);
   box-sizing: border-box;
   /* Deeper at the bottom than the top on purpose: the chonga mic and its
-     countdown hang out of the events section above their own image, and with
-     even padding they came to rest level with the subtitle and read as one
-     stray row. The text keeps the upper half of the band; they get the lower.
-     */
-  padding: clamp(44px, 9vh, 104px) clamp(16px, 4vw, 48px) clamp(96px, 15vh, 160px);
+     countdown hang out of the events section above their own image. */
+  padding: clamp(12px, 3vh, 32px) clamp(16px, 4vw, 48px) clamp(36px, 6vh, 64px);
 }
 
 .home-interlude__title {
@@ -11682,7 +11680,7 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
   display: block;
   width: clamp(34px, 5vw, 58px);
   height: 2px;
-  margin-bottom: clamp(14px, 2.4vh, 26px);
+  margin-bottom: clamp(8px, 1.5vh, 16px);
   border-radius: 2px;
   background: var(--brand, #b65a3c);
 }
@@ -11691,7 +11689,7 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
    holding opposite margins is what makes the band read as a spread rather
    than as a heading with a caption under it. */
 .home-interlude__subtitle {
-  margin: clamp(10px, 1.6vh, 18px) 0 0 auto;
+  margin: clamp(4px, 1vh, 12px) 0 0 auto;
   max-width: 36ch;
   text-align: right;
   color: #6b5b4c;

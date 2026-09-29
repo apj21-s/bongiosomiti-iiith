@@ -165,46 +165,6 @@ export function readLocationInput(
   }
 }
 
-/**
- * Every puja on the map, in display order.
- *
- * `onlyActive` is what the public map asks for; the admin list wants the
- * inactive ones too so they can be switched back on.
- *
- * An unreachable database returns an empty list rather than throwing: the
- * Durga Puja page is mostly text and a map, and a map with no pins is a
- * better page than a 500.
- */
-export async function getPujaLocations(
-  { onlyActive = true }: { onlyActive?: boolean } = {}
-): Promise<PujaLocation[]> {
-  try {
-    // Imported here rather than at the top of the file so that the parsing and
-    // validation above stay free of Next's "@/" alias. scripts/seed-puja-
-    // locations.js runs this module under bare node, which cannot resolve it.
-    const { createServiceRoleClient } = await import('@/utils/supabase/server')
-
-    const supabase = await createServiceRoleClient()
-    let query = supabase
-      .from('puja_locations')
-      .select('id,name,address,lat,lng,status,sort_order')
-      .order('sort_order', { ascending: true })
-      .order('name', { ascending: true })
-
-    if (onlyActive) query = query.eq('status', 'active')
-
-    const { data, error } = await query
-    if (error) {
-      console.error('Could not read puja_locations:', error.message)
-      return []
-    }
-
-    return (data || []).map(toPujaLocation)
-  } catch (e) {
-    console.error('Could not read puja_locations:', e instanceof Error ? e.message : e)
-    return []
-  }
-}
 
 /** The shape the table takes, from the shape everything else uses. */
 export function toDatabaseRow(input: LocationInput, updatedBy?: string) {
