@@ -22,7 +22,7 @@ export const registerSchema = z.object({
   // Where /api/receipts stored the uploaded receipt. Its shape is checked
   // again on arrival; a client-supplied path is not filed as-is.
   receiptPath: z.string().max(200).optional(),
-  numPasses: z.number().int().min(1).max(6).optional(),
+  numPasses: z.number().int().min(1).max(20).optional(),
   foodPref: z.string().max(200).optional(),
   // How many of each configured pass type. The form used to send only a
   // joined summary of this ("1 Breakfast Veg, 2 Lunch Non-Veg"), which is
@@ -30,7 +30,14 @@ export const registerSchema = z.object({
   // flat rate and charged a different total from the one on screen. The
   // counts arrive structured now. They are still only a request: the route
   // prices them against the event's own table and ignores any amount.
-  passSelections: z.record(z.string().max(120), z.number().int().min(0).max(10)).optional(),
+  //
+  // Bounded on both sides: a key long enough to be a payload is not a pass
+  // name, and no single type can exceed the cap on numPasses above.
+  passSelections: z.record(z.string().max(120), z.number().int().min(0).max(20)).optional(),
+  // Only sent by events with no pass types, where the split is a plain count
+  // of veg against non-veg rather than a basket.
+  vegCount: z.number().int().min(0).optional(),
+  nonVegCount: z.number().int().min(0).optional(),
   isIiit: z.boolean().optional(),
   couponCode: z.string().max(40).optional(),
   // NOTE: the discount is resolved from the event's own coupon list on the

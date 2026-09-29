@@ -155,6 +155,13 @@ export async function POST(request: Request) {
       from a field in the body - the same reasoning as the claim check above,
       one step further: it decides not just whether an institute rate applies
       but which one.
+
+      This supersedes the same fix arrived at independently on origin/dev,
+      which summed pass types inline. The difference that matters is the key:
+      that version looked selections up by pt.name, and two plates named "Veg"
+      under different meals are one key - so a breakfast and a lunch shared a
+      counter. quote() keys on meal+name. It also carries the per-audience
+      prices, which an inline sum of pt.price cannot.
     */
     const audience = audienceFor(verifiedEmail, claimsIiit)
     const priced = quote(
@@ -210,30 +217,36 @@ export async function POST(request: Request) {
       The amount is the plate's own too. Dividing the total evenly is only
       right while every plate costs the same, and it stopped being right the
       moment breakfast and lunch could be priced apart.
+
+      Rounding and the pass count both come from the version of this written
+      on origin/dev: money in whole rupees, and a count taken from what was
+      actually priced rather than from numPasses in the body, which could
+      disagree with the basket and issue the wrong number of tickets.
     */
     const issued = expandToPasses(event, { selections: data.passSelections, numPasses }, audience)
+    const passCount = issued.length > 0 ? issued.length : numPasses
 
     // Coupons apply to the booking, not to a plate, so the discount is shared
     // out in proportion to what each plate cost.
     const discountFor = (price: number) =>
-      subtotal > 0 ? (discountAmount * price) / subtotal : discountAmount / Math.max(1, numPasses)
+      subtotal > 0 ? (discountAmount * price) / subtotal : discountAmount / Math.max(1, passCount)
 
-    const ticketsData = Array.from({ length: numPasses }).map((_, i) => ({
+    const ticketsData = Array.from({ length: passCount }).map((_, i) => ({
       token: `${registrationId}_${generatePassCode(prefix)}`,
       event_id: event.id,
-      participant_name: data.participantName + (numPasses > 1 && i > 0 ? ` (Pass ${i + 1})` : ''),
+      participant_name: data.participantName + (passCount > 1 && i > 0 ? ` (Pass ${i + 1})` : ''),
       college_id: data.collegeId,
       email: data.email,
       phone: data.phone,
       utr: normaliseUtr(data.utr) || (nothingToPay ? 'FREE-PASS' : ''),
-      amount: issued[i] ? Math.max(0, issued[i].price - discountFor(issued[i].price)) : amount / numPasses,
+      amount: Math.round(issued[i] ? Math.max(0, issued[i].price - discountFor(issued[i].price)) : amount / passCount),
       payment_status: paymentStatus,
       status,
       num_passes: 1,
       food_pref: issued[i]
         ? issued[i].label
-        : (data as any).vegCount !== undefined && (data as any).nonVegCount !== undefined
-          ? (i < (data as any).vegCount ? 'Veg' : 'Non-Veg')
+        : data.vegCount !== undefined && data.nonVegCount !== undefined
+          ? (i < data.vegCount ? 'Veg' : 'Non-Veg')
           : data.foodPref,
       receiver_upi: receiverUpi,
       // Every pass in one booking points at the same receipt.
@@ -244,7 +257,7 @@ export async function POST(request: Request) {
       is_iiit: audience !== 'guest',
       coupon_code: coupon ? coupon.code : null,
       // Shared out the same way the amount above is, so the two agree per pass.
-      discount_amount: issued[i] ? discountFor(issued[i].price) : discountAmount / numPasses,
+      discount_amount: Math.round(issued[i] ? discountFor(issued[i].price) : discountAmount / passCount),
     }))
 
     const { data: tickets, error: ticketError } = await supabase
