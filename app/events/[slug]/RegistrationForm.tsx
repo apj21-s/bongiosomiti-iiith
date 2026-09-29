@@ -282,10 +282,17 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
   const discount = draft.appliedCoupon ? draft.appliedCoupon.discount : 0
   const total = Math.max(0, subtotal - discount)
 
-  const applyCoupon = () => {
+  /**
+   * Asks the server what the code is worth.
+   *
+   * This used to read event.config.coupons and decide here. A coupon can now
+   * depend on the basket clearing a threshold, or on this being one of the
+   * first N registrations - and the browser cannot know the second at all, or
+   * be trusted about the first. So the same function the register route uses
+   * answers, and the form shows whatever it says.
+   */
+  const applyCoupon = async () => {
     const code = draft.couponInput.trim().toUpperCase()
-    const coupons = event.config?.coupons || []
-    const foundCoupon = coupons.find((c: any) => c.code.toUpperCase() === code)
 
     // An empty box is not a wrong code, and saying so sends people hunting for
     // a typo in something they never typed.
@@ -295,23 +302,39 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
       return
     }
 
-    if (foundCoupon) {
-      updateDraft({ appliedCoupon: { code, discount: foundCoupon.discount } })
-      // The tick is added by the renderer; putting one here too printed two.
-      setCouponMsg({ type: 'success', text: `Coupon ${code} applied (-₹${foundCoupon.discount})` })
-      return
-    }
-
     // Losing a discount silently is worse than being told the new code is bad,
-    // so say which of the two just happened.
+    // so the refusals below say which of the two just happened.
     const hadOne = Boolean(draft.appliedCoupon)
-    updateDraft({ appliedCoupon: null })
-    setCouponMsg({
-      type: 'error',
-      text: hadOne
-        ? `"${code}" is not a valid coupon — the earlier discount has been removed.`
-        : `"${code}" is not a valid coupon for this event.`,
-    })
+
+    try {
+      const res = await fetch(`/api/events/${event.slug}/coupon`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, subtotal }),
+      })
+      const verdict = await res.json()
+
+      if (verdict?.ok) {
+        updateDraft({ appliedCoupon: { code: verdict.code, discount: verdict.discount } })
+        // The tick is added by the renderer; putting one here too printed two.
+        setCouponMsg({ type: 'success', text: `Coupon ${verdict.code} applied (-₹${verdict.discount})` })
+        return
+      }
+
+      updateDraft({ appliedCoupon: null })
+      setCouponMsg({
+        type: 'error',
+        text: hadOne
+          ? `${verdict?.reason || `"${code}" is not a valid coupon.`} The earlier discount has been removed.`
+          : (verdict?.reason || `"${code}" is not a valid coupon for this event.`),
+      })
+    } catch {
+      // A coupon that cannot be checked is not applied. The register route
+      // would refuse it anyway, and showing a discount that later vanishes is
+      // worse than saying the check did not happen.
+      updateDraft({ appliedCoupon: null })
+      setCouponMsg({ type: 'error', text: 'Could not check that coupon just now. Please try again.' })
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {

@@ -103,6 +103,21 @@ export function promptFor(options: {
 export default function SiteNotifications() {
   const [toasts, setToasts] = useState<Toast[]>([])
   const [dialog, setDialog] = useState<DialogRequest | null>(null)
+  /**
+   * Whether this has mounted in a browser.
+   *
+   * The portal cannot be drawn during hydration. Guarding on
+   * `typeof document === 'undefined'` looks like it does the job, but it
+   * answers differently on the two renders that have to agree: the server has
+   * no document and renders nothing, while the client's very first render -
+   * the one React matches against the server's HTML - does have one and
+   * renders the portal. React then finds a <div class="site-toasts"> where
+   * the server put <main>, and throws the tree away.
+   *
+   * A state flag set in an effect is false on both of those renders, so they
+   * match, and the portal appears on the commit after.
+   */
+  const [mounted, setMounted] = useState(false)
   const [value, setValue] = useState('')
   const nextId = useRef(1)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -113,6 +128,10 @@ export default function SiteNotifications() {
   }, [])
 
   useEffect(() => {
+    // Effects do not run on the server and run after the first client render,
+    // which is exactly when the portal becomes safe to draw.
+    setMounted(true)
+
     listener = {
       toast: (t) => {
         const id = nextId.current++
@@ -152,7 +171,7 @@ export default function SiteNotifications() {
     return () => { document.removeEventListener('keydown', onKey); clearTimeout(focus) }
   }, [dialog, close])
 
-  if (typeof document === 'undefined') return null
+  if (!mounted) return null
 
   return createPortal(
     <>

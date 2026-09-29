@@ -13,6 +13,8 @@ import {
   verifyProof,
 } from '@/utils/email-verification'
 import { audienceFor, expandToPasses, quote } from '@/utils/pricing'
+import { resolveCoupon } from '@/utils/coupons'
+import { countRegistrations } from '@/utils/data/registrations'
 
 // Registration sends mail to the address in the request, so it is throttled per
 // address. Deliberately not per IP: an entire campus shares a handful of them.
@@ -27,24 +29,6 @@ function generatePassCode(prefix: string) {
   const p = (prefix || 'UTS').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 3)
   const rand = Math.random().toString(36).substring(2, 8).toUpperCase() // 6 chars
   return `${p}${rand}`.slice(0, 9).padEnd(9, 'X') // 9 chars total
-}
-
-// The discount is whatever the event's own coupon list says it is. Trusting the
-// amount from the request body let a caller name their own price.
-function resolveCoupon(event: any, submittedCode: string | undefined) {
-  if (!submittedCode) return null
-
-  const code = submittedCode.trim().toUpperCase()
-  if (!code) return null
-
-  const coupons = Array.isArray(event?.config?.coupons) ? event.config.coupons : []
-  const match = coupons.find((c: any) => String(c?.code || '').trim().toUpperCase() === code)
-  if (!match) return null
-
-  const discount = Number(match.discount)
-  if (!Number.isFinite(discount) || discount <= 0) return null
-
-  return { code: String(match.code), discount: Math.floor(discount) }
 }
 
 export async function POST(request: Request) {
@@ -170,7 +154,20 @@ export async function POST(request: Request) {
       audience
     )
     const subtotal = priced.subtotal
-    const coupon = resolveCoupon(event, data.couponCode)
+    /*
+      The coupon is resolved here and nowhere else that matters.
+
+      A code can be conditional - on the basket being above a threshold, or on
+      this being one of the first N registrations - so it needs the subtotal
+      this route just worked out and a count of what already exists. Both are
+      read on the server. The form asks the same question of
+      /api/events/<slug>/coupon so it can show the discount before submitting,
+      but that answer is only a preview: whatever it said, the booking is
+      priced by this call.
+    */
+    const registrationsSoFar = await countRegistrations(event.id)
+    const couponVerdict = resolveCoupon(event, data.couponCode, { subtotal, registrationsSoFar })
+    const coupon = couponVerdict.ok ? couponVerdict : null
     const discountAmount = coupon ? Math.min(coupon.discount, subtotal) : 0
     const amount = Math.max(0, subtotal - discountAmount)
 

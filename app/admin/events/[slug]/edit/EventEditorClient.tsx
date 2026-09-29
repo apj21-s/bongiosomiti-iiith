@@ -4,6 +4,8 @@ import { useState } from 'react'
 // The same shape the registration form prices from, so the editor cannot save
 // a pass type the form does not understand.
 import type { PassType } from '@/utils/pricing'
+// The same shape and the same wording the registration form resolves against.
+import { describeCoupon, type Coupon } from '@/utils/coupons'
 import { useRouter } from 'next/navigation'
 import { notifyError, notifySuccess } from '@/components/site-notifications'
 
@@ -26,7 +28,7 @@ export default function EventEditorClient({ event }: { event: any }) {
   const [passTypes, setPassTypes] = useState<PassType[]>(
     event.config?.pass_types || [{ name: 'Standard Pass', price: event.price || 0 }]
   )
-  const [coupons, setCoupons] = useState<{code: string, discount: number}[]>(
+  const [coupons, setCoupons] = useState<Coupon[]>(
     event.config?.coupons || []
   )
 
@@ -228,18 +230,77 @@ export default function EventEditorClient({ event }: { event: any }) {
       {/* Coupons */}
       <div>
         <h3 style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '8px', marginBottom: '16px' }}>Coupons</h3>
-        {coupons.map((c, i) => (
-          <div key={i} style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-            <input type="text" className="form-control" placeholder="Enter Code" value={c.code} onChange={e => {
-              const newC = [...coupons]; newC[i].code = e.target.value.toUpperCase(); setCoupons(newC)
-            }} required />
-            <input type="number" className="form-control" style={{ width: '150px' }} placeholder="Enter Discount" value={c.discount} onChange={e => {
-              const newC = [...coupons]; newC[i].discount = Number(e.target.value); setCoupons(newC)
-            }} required min="0" />
-            <button type="button" className="btn btn-sm btn-danger" onClick={() => setCoupons(coupons.filter((_, idx) => idx !== i))}>&times;</button>
-          </div>
-        ))}
-        <button type="button" className="btn btn-sm btn-secondary" onClick={() => setCoupons([...coupons, { code: '', discount: 0 }])}>+ Add Coupon</button>
+        <p className="text-muted" style={{ marginBottom: '4px' }}>
+          A coupon takes off either a flat number of rupees or a percentage of the
+          basket. <strong>Percentage</strong> coupons can carry a cap so a large
+          booking cannot run away with it.
+        </p>
+        <p className="text-muted" style={{ marginBottom: '14px', fontSize: '0.85rem' }}>
+          The two conditions are <strong>alternatives, not requirements</strong>: a code
+          with both applies to a basket over the threshold <em>or</em> to one of the first
+          N registrations, whichever is true. Leave both blank and it applies to anyone
+          who types it. A threshold of 0 means any basket that costs something.
+          &ldquo;Registrations&rdquo; counts bookings, not passes &mdash; one person
+          buying four plates is one.
+        </p>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr 100px 110px 130px 130px 40px', gap: '8px', alignItems: 'end', marginBottom: '6px' }}>
+          {['Code', 'Discount', 'Amount', 'Cap ₹', 'Basket over ₹', 'First N bookings', ''].map((h) => (
+            <label key={h} className="text-muted" style={{ fontSize: '0.78rem' }}>{h}</label>
+          ))}
+        </div>
+
+        {coupons.map((c, i) => {
+          const kind = c.kind === 'percent' ? 'percent' : 'fixed'
+          const amount = c.value !== undefined && c.value !== null ? c.value : (c.discount ?? 0)
+          const set = (patch: Partial<Coupon>) => {
+            const next = [...coupons]
+            next[i] = { ...next[i], ...patch }
+            setCoupons(next)
+          }
+          // Blank means "no condition", which is not the same as 0 - a
+          // threshold of 0 is a real setting. Empty string round-trips as null.
+          const num = (v: string) => (v.trim() === '' ? null : Number(v))
+
+          return (
+            <div key={i}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr 100px 110px 130px 130px 40px', gap: '8px', marginBottom: '4px' }}>
+                <input type="text" className="form-control" placeholder="Enter Code" value={c.code}
+                  onChange={e => set({ code: e.target.value.toUpperCase() })} required />
+
+                <select className="form-control" value={kind}
+                  onChange={e => set({ kind: e.target.value as 'fixed' | 'percent', value: amount, discount: undefined })}>
+                  <option value="fixed">Flat ₹</option>
+                  <option value="percent">Percent %</option>
+                </select>
+
+                <input type="number" className="form-control" placeholder="Enter Amount" min="0"
+                  max={kind === 'percent' ? 100 : undefined}
+                  value={amount} onChange={e => set({ value: Number(e.target.value), discount: undefined })} required />
+
+                <input type="number" className="form-control" placeholder="Enter Cap" min="0"
+                  disabled={kind !== 'percent'}
+                  value={c.maxDiscount ?? ''} onChange={e => set({ maxDiscount: num(e.target.value) })} />
+
+                <input type="number" className="form-control" placeholder="Enter Threshold" min="0"
+                  value={c.minSubtotal ?? ''} onChange={e => set({ minSubtotal: num(e.target.value) })} />
+
+                <input type="number" className="form-control" placeholder="Enter N" min="0"
+                  value={c.firstN ?? ''} onChange={e => set({ firstN: num(e.target.value) })} />
+
+                <button type="button" className="btn btn-sm btn-danger"
+                  onClick={() => setCoupons(coupons.filter((_, idx) => idx !== i))}>&times;</button>
+              </div>
+              {/* Says back what was just configured, in the words a visitor
+                  would meet, so a wrong box is obvious before saving. */}
+              <p className="text-muted" style={{ margin: '0 0 12px', fontSize: '0.8rem' }}>
+                {c.code ? describeCoupon(c) : 'Unnamed coupon'}
+              </p>
+            </div>
+          )
+        })}
+        <button type="button" className="btn btn-sm btn-secondary"
+          onClick={() => setCoupons([...coupons, { code: '', kind: 'fixed', value: 0, minSubtotal: null, firstN: null }])}>+ Add Coupon</button>
       </div>
 
       <div style={{ marginTop: '10px' }}>
