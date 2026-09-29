@@ -1091,6 +1091,34 @@ function PaymentCompletedStep({ event, prevStage, handleSubmit, draft, updateDra
     ? allowedUpiIds
     : (event?.config?.upi_ids || (event?.config?.upi_id ? [event.config.upi_id] : []))
 
+  /**
+   * Starts the payee on whichever id was chosen on the payment screen.
+   *
+   * That is the id they were shown and paid, so asking for it again is asking
+   * a question already answered - and the answer was one field away on the
+   * previous step. It is still a dropdown they can change, for the person who
+   * paid a different id from the one on screen.
+   *
+   * `|| receivers[0]` matters: the payment screen displays the first id as
+   * selected but only writes selectedUpiId when the visitor *changes* it, so
+   * anybody who paid the id they were shown left it empty. Reading the same
+   * default the screen displayed is what makes accepting it count as a choice.
+   *
+   * Once only, guarded by the ref rather than by the field being empty:
+   * uploading a receipt clears the payee before the scan fills it, and a
+   * condition on emptiness would race the OCR to write the same value.
+   */
+  const prefilledPayee = useRef(false)
+  useEffect(() => {
+    // The list arrives from /api/upi-ids, so the first renders have none.
+    if (prefilledPayee.current || receivers.length === 0) return
+    prefilledPayee.current = true
+
+    if (draft.receiverUpi) return
+    const chosen = receivers.includes(draft.selectedUpiId) ? draft.selectedUpiId : receivers[0]
+    if (chosen) updateDraft({ receiverUpi: chosen, receiverUpiFromOcr: false })
+  }, [receivers, draft.selectedUpiId, draft.receiverUpi, updateDraft])
+
   async function handleReceipt(file: File) {
     updateDraft({ screenshot: file.name, receiptPath: '', utr: '', receiverUpi: '', utrFromOcr: false, receiverUpiFromOcr: false })
     setScreenshotPreview(URL.createObjectURL(file))
