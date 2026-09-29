@@ -32,6 +32,16 @@ rather than a crash on the first request.
 | `node run.mjs --dummy` | Local mock store instead of Supabase; no `.env.local` needed |
 | `node run.mjs --fresh` | **Deletes all registration data** first, then starts |
 | `node run.mjs --fresh --flush-only` | Deletes it and stops there |
+| `node run.mjs --stop` | Stops the running site; starts nothing |
+
+Every launch is a restart. Before starting, it stops a copy of the site already
+running from this folder — one it started itself (recorded in `.run.pid`, which
+also covers `--prod`), or a `next dev` started any other way (found through
+Next's own `.next/dev/lock`), including one on the other side of Windows/WSL,
+reached through `wsl.exe` / `taskkill.exe`. Each process is checked to be this
+site's before it is stopped, so a stale pid that now belongs to something else
+is left alone. If the port is held by an unrelated program, it says so and
+exits rather than killing it.
 
 `--fresh` clears what visitors and staff create — `tickets`, `checkins`,
 `email_verifications` and every file in the `receipts` storage bucket (with
