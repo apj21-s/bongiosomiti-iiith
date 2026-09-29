@@ -18,14 +18,17 @@
  * stopped on a guess: each process is checked to be this site's before it is
  * touched, and a port held by some unrelated program is reported, not killed.
  *
- * What --fresh clears is what visitors and staff create, and nothing else:
+ * What --fresh clears is a season's worth of people and money:
  *
- *   tickets, checkins, email_verifications, and every uploaded receipt in the
- *   `receipts` storage bucket - or, with --dummy, the local mock store.
+ *   tickets (registrations and their payments), checkins, email_verifications,
+ *   manager_profiles, and every uploaded receipt in the `receipts` storage
+ *   bucket - or, with --dummy, the tickets and check-ins in the local mock
+ *   store.
  *
- * What it keeps is the site's setup: events, admin and manager accounts, map
- * locations and the homepage playlist. Wiping those would leave a site that
- * cannot take a booking, and manager passwords cannot be recovered.
+ * It never deletes from or writes to `events`, `puja_locations` (the map) or
+ * `site_playlist` (the homepage playlist). They are on a protected list the
+ * delete step refuses, and all three are fingerprinted before and after every
+ * flush to prove they came through identical.
  *
  * The Supabase project is shared by every deployment pointed at it - possibly
  * including the live site - so a flush shows what it is about to delete and
@@ -34,6 +37,7 @@
 
 import { spawn, spawnSync } from 'node:child_process'
 import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { createHash } from 'node:crypto'
 import { createRequire } from 'node:module'
 import net from 'node:net'
 import path from 'node:path'
@@ -55,12 +59,14 @@ is stopped first.
   --port <n>     Port to listen on (default 3000)
   --dummy        Use the local mock store (local_db.json) instead of Supabase.
                  Needs no .env.local.
-  --fresh        Delete all registration data before starting:
-                   Supabase: tickets, checkins, email_verifications and the
-                             files in the 'receipts' storage bucket
-                   --dummy:  local_db.json
-                 Events, admin/manager accounts, map locations and the
-                 playlist are kept. Asks for confirmation first.
+  --fresh        Delete registrations, payments and managers before starting:
+                   Supabase: tickets, checkins, email_verifications,
+                             manager_profiles and the files in the
+                             'receipts' storage bucket
+                   --dummy:  tickets and check-ins in local_db.json
+                 Never touches events, puja_locations (map locations) or
+                 site_playlist (playlist); they are checked to be identical
+                 afterwards. Asks first.
   --yes          With --fresh, skip the confirmation (for scripts).
   --flush-only   With --fresh, clear the data and exit without starting.
   --stop         Stop the running site and exit without starting it again.
@@ -181,18 +187,40 @@ async function loadEnv(opts) {
 // --------------------------------------------------------------------------
 // --fresh
 
-// Deleted in this order: checkins point at tickets.
-const TABLES = ['checkins', 'tickets', 'email_verifications']
+// The only tables a flush deletes from, in this order: checkins point at
+// tickets, and tickets point at manager_profiles (assigned_manager_id,
+// allocation_flagged_by), so managers go after the tickets that name them.
+// A deleted manager who is still signed in is refused by getPaymentScope.
+const TABLES = ['checkins', 'tickets', 'email_verifications', 'manager_profiles']
 const BUCKET = 'receipts'
 
+// Never deleted from and never written to: the events every ticket points at,
+// the map, and the homepage playlist. Each is read in full before and after
+// every flush to prove it came through identical - which also rules out what
+// this file cannot see, such as a trigger in the database.
+const PROTECTED_TABLES = ['events', 'puja_locations', 'site_playlist']
+
+/**
+ * The mock store keeps events next to tickets in local_db.json. Only the
+ * registrations are emptied; the file is not deleted, which would have reset
+ * its events to their seed values.
+ */
 function flushDummy() {
   const file = path.join(ROOT, 'local_db.json')
-  if (existsSync(file)) {
-    rmSync(file)
-    console.log('  Deleted local_db.json. The mock store starts again from its seed data on the next request.')
-  } else {
-    console.log('  local_db.json does not exist; the mock store is already fresh.')
+  if (!existsSync(file)) {
+    console.log('  local_db.json does not exist yet, so the mock store has no registrations.')
+    return
   }
+  let db
+  try {
+    db = JSON.parse(readFileSync(file, 'utf8'))
+  } catch {
+    fail('local_db.json is not valid JSON, so it was left exactly as it is. Fix or remove it by hand.')
+  }
+  const tickets = Array.isArray(db.tickets) ? db.tickets.length : 0
+  const checkins = Array.isArray(db.checkins) ? db.checkins.length : 0
+  writeFileSync(file, JSON.stringify({ ...db, tickets: [], checkins: [] }, null, 2))
+  console.log(`  Cleared ${tickets} ticket(s) and ${checkins} check-in(s) from local_db.json. Its events were not touched.`)
 }
 
 const isMissingTable = (error) => /does not exist|could not find the table|PGRST205|42P01/i.test(`${error?.code} ${error?.message}`)
@@ -209,6 +237,36 @@ async function countRows(supabase, table) {
   // which the client reports as no error and no count. An existing table,
   // even an empty one, always comes back with a count.
   return count ?? null
+}
+
+/**
+ * Everything in a protected table, reduced to a row count and a hash of the
+ * rows in id order. Read in pages, since Supabase caps a single read. Null
+ * when the table does not exist here.
+ */
+async function fingerprint(supabase, table) {
+  const hash = createHash('sha256')
+  let rows = 0
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await supabase.from(table).select('*').order('id').range(from, from + 999)
+    if (error) {
+      if (isMissingTable(error)) return null
+      throw new Error(`Could not read ${table}: ${error.message}`)
+    }
+    if (!Array.isArray(data)) return null
+    for (const row of data) hash.update(JSON.stringify(row))
+    rows += data.length
+    if (data.length < 1000) return { rows, hash: hash.digest('hex') }
+  }
+}
+
+/** The one place a row is ever deleted. */
+async function clearTable(supabase, table) {
+  if (PROTECTED_TABLES.includes(table) || !TABLES.includes(table)) {
+    fail(`Refusing to delete from ${table}: only ${TABLES.join(', ')} are ever cleared.`)
+  }
+  // PostgREST refuses a DELETE with no filter; every row has an id.
+  return supabase.from(table).delete().not('id', 'is', null)
 }
 
 /** Every object name at the top of the bucket - where /api/receipts puts them. */
@@ -228,6 +286,11 @@ async function listReceipts(supabase) {
 }
 
 async function flushSupabase(env, opts) {
+  // Before any request: a protected table added to TABLES by mistake stops
+  // the flush here, not halfway through it.
+  const clash = TABLES.filter((table) => PROTECTED_TABLES.includes(table))
+  if (clash.length) fail(`run.mjs is set to delete from ${clash.join(', ')}, which must never be deleted from. Nothing was touched.`)
+
   const { createClient } = await import('@supabase/supabase-js')
   const url = env.NEXT_PUBLIC_SUPABASE_URL
   const supabase = createClient(url, env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } })
@@ -245,7 +308,8 @@ async function flushSupabase(env, opts) {
     console.log(`    ${table.padEnd(20)} ${counts[table] === null ? 'table not found, skipped' : `${counts[table]} row(s)`}`)
   }
   console.log(`    ${(BUCKET + ' (storage)').padEnd(20)} ${receipts === null ? 'bucket not found, skipped' : `${receipts.length} file(s)`}`)
-  console.log('  Kept: events, admin_profiles, manager_profiles, puja_locations, site_playlist.')
+  console.log('  Never touched: events, puja_locations (map), site_playlist (playlist) - checked afterwards.')
+  console.log('  Also left as they are: admin_profiles (tied to Supabase sign-in accounts).')
 
   const total = TABLES.reduce((n, t) => n + (counts[t] || 0), 0) + (receipts?.length || 0)
   if (total === 0) {
@@ -266,10 +330,15 @@ async function flushSupabase(env, opts) {
     if (answer !== project) fail('Did not match. Nothing was deleted.')
   }
 
+  // Taken after the confirmation, right before deleting, so an edit someone
+  // makes on the live site while this waits for an answer is not mistaken for
+  // damage done by the flush.
+  const before = {}
+  for (const table of PROTECTED_TABLES) before[table] = await fingerprint(supabase, table)
+
   for (const table of TABLES) {
     if (counts[table] === null || counts[table] === 0) continue
-    // PostgREST refuses a DELETE with no filter; every row has an id.
-    const { error } = await supabase.from(table).delete().not('id', 'is', null)
+    const { error } = await clearTable(supabase, table)
     if (error) fail(`Could not clear ${table}: ${error.message}. Tables after it were left alone.`)
     console.log(`  Cleared ${table}.`)
   }
@@ -292,6 +361,22 @@ async function flushSupabase(env, opts) {
   }
   if (left.length) fail(`Some rows are still there (${left.join(', ')}).`)
   console.log('  Verified: every cleared table is empty.')
+
+  for (const table of PROTECTED_TABLES) {
+    const after = await fingerprint(supabase, table)
+    const was = before[table]
+    if (was === null && after === null) {
+      console.log(`  ${table}: not in this database.`)
+    } else if (was && after && was.rows === after.rows && was.hash === after.hash) {
+      console.log(`  Verified: ${table} is exactly as it was (${after.rows} row(s)).`)
+    } else {
+      fail(
+        `${table} changed while the flush ran (${was ? was.rows : 'none'} row(s) before, ${after ? after.rows : 'none'} after).\n` +
+        '  Nothing in run.mjs writes to it, so something in the database did - a trigger on\n' +
+        `  ${TABLES.join(', ')} is the likely cause. Look at it before flushing again.`
+      )
+    }
+  }
 }
 
 // --------------------------------------------------------------------------

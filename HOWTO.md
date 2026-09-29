@@ -43,10 +43,14 @@ site's before it is stopped, so a stale pid that now belongs to something else
 is left alone. If the port is held by an unrelated program, it says so and
 exits rather than killing it.
 
-`--fresh` clears what visitors and staff create — `tickets`, `checkins`,
-`email_verifications` and every file in the `receipts` storage bucket (with
-`--dummy`, it deletes `local_db.json`). It keeps the setup: events, admin and
-manager accounts, map locations and the playlist. It prints the counts, then
+`--fresh` clears a season's registrations, payments and managers — `tickets`,
+`checkins`, `email_verifications`, `manager_profiles` and every file in the
+`receipts` storage bucket (with `--dummy`, the tickets and check-ins in
+`local_db.json`). It never deletes from or writes to `events`, `puja_locations`
+(the map) or `site_playlist` (the homepage playlist): those are on a protected
+list the delete step refuses, and all three are read in full before and after
+the flush, which fails loudly unless they are identical. `admin_profiles` is
+left as it is too. It prints the counts, then
 asks you to type the Supabase project name before deleting anything, because
 that project may be the one the live site uses. `--yes` skips the question for
 scripts; without a terminal and without `--yes` it refuses.
