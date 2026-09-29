@@ -24,7 +24,7 @@ export const registerSchema = z.object({
   receiptPath: z.string().max(200).optional(),
   numPasses: z.number().int().min(1).max(20).optional(),
   foodPref: z.string().max(200).optional(),
-  passSelections: z.record(z.number().int().min(0)).optional(),
+  passSelections: z.record(z.string(), z.number().int().min(0)).optional(),
   vegCount: z.number().int().min(0).optional(),
   nonVegCount: z.number().int().min(0).optional(),
   isIiit: z.boolean().optional(),
