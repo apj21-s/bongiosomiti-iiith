@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import ScrollReveal from "@/components/scroll-reveal";
+import SiteNotifications from "@/components/site-notifications";
 import UtsavLoader from "@/components/utsav-loader";
 import { getHomepagePlaylists } from "@/utils/data/site-playlist";
 import HeroPlaylist from "@/components/hero-playlist";
@@ -35,6 +36,9 @@ export default async function RootLayout({
       </head>
       <body>
         <UtsavLoader />
+        {/* Mounted once so any screen can raise a message without the browser
+            drawing it. Replaces alert/confirm/prompt. */}
+        <SiteNotifications />
         <ScrollReveal />
         {children}
         <HeroPlaylist playlists={playlists} />

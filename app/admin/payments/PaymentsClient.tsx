@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { confirmAction, notifyError, notifySuccess, promptFor } from '@/components/site-notifications'
 
 export default function PaymentsClient() {
   const [payments, setPayments] = useState<any[]>([])
@@ -61,7 +62,11 @@ export default function PaymentsClient() {
   }, [])
 
   async function handleApprove(token: string) {
-    if (!confirm(`Approve payment for pass ${token}?`)) return
+    if (!(await confirmAction({
+      title: 'Approve this payment?',
+      message: `Pass ${token} will be marked paid and its QR pass sent out.`,
+      confirmLabel: 'Approve',
+    }))) return
     try {
       const res = await fetch(`/api/admin/payments/${token}/approve`, { method: 'POST' })
       if (!res.ok) {
@@ -70,7 +75,7 @@ export default function PaymentsClient() {
       }
       fetchPayments()
     } catch (e: any) {
-      alert(e.message)
+      notifyError(e)
     }
   }
 
@@ -83,10 +88,12 @@ export default function PaymentsClient() {
    * vouch for should not resolve either way while it waits.
    */
   async function handleWrongAllocation(token: string) {
-    const reason = prompt(
-      'Reporting this payment as wrongly allocated. It will leave your list and go to a super admin.\n\n' +
-      'Anything useful to add? (optional)'
-    )
+    const reason = await promptFor({
+      title: 'Report a wrong allocation',
+      message: 'This payment will leave your list and go to a super admin to reroute. Anything useful to add?',
+      placeholder: 'Enter Reason (optional)',
+      confirmLabel: 'Report',
+    })
     if (reason === null) return
 
     try {
@@ -97,15 +104,20 @@ export default function PaymentsClient() {
       })
       const d = await res.json()
       if (!res.ok) throw new Error(d.error || 'Could not report this payment.')
-      alert('Reported. A super admin will route it to the right collector.')
+      notifySuccess('Reported. A super admin will route it to the right collector.')
       fetchPayments()
     } catch (e: any) {
-      alert(e.message)
+      notifyError(e)
     }
   }
 
   async function handleReject(token: string) {
-    if (!confirm(`Reject payment for pass ${token}?`)) return
+    if (!(await confirmAction({
+      title: 'Reject this payment?',
+      message: `Pass ${token} will be marked rejected and the registrant told.`,
+      confirmLabel: 'Reject',
+      tone: 'danger',
+    }))) return
     try {
       const res = await fetch(`/api/admin/payments/${token}/reject`, { method: 'POST' })
       if (!res.ok) {
@@ -114,7 +126,7 @@ export default function PaymentsClient() {
       }
       fetchPayments()
     } catch (e: any) {
-      alert(e.message)
+      notifyError(e)
     }
   }
 

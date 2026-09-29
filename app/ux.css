@@ -198,6 +198,95 @@
 .reg-counter-val { font-size: 13px; font-weight: 700; color: #4A2921; width: 32px; text-align: center; }
 .reg-counter-label { font-size: 13px; font-weight: 600; color: #4A2921; flex-grow: 1; }
 
+/*
+  Breakfast and Lunch, side by side in the space the single list used to have.
+
+  auto-fit rather than two fixed columns: an event with one meal gets one
+  full-width section instead of a column of empty space, and on a phone both
+  drop to full width and stack, which is the only thing that fits there.
+*/
+.reg-meal-sections {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.reg-meal-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.reg-meal-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8F321F;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(213, 177, 138, 0.7);
+}
+
+.reg-meal-counters { display: flex; flex-direction: column; gap: 8px; }
+
+.reg-counter-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+
+/* Two counters in half the width: the control keeps its size and the label
+   gives up the difference rather than pushing it off the row. */
+.reg-meal-sections .reg-counter { width: 116px; flex: 0 0 116px; }
+.reg-meal-sections .reg-counter-label { font-size: 12px; min-width: 0; }
+
+/* Name over price, rather than "Veg (₹250)" on one line: at this width the
+   bracketed form was the first thing to wrap, and the price is the part
+   somebody is looking for. */
+.reg-counter-label { display: flex; flex-direction: column; gap: 1px; }
+.reg-plate-name { font-size: 13px; font-weight: 600; color: #4A2921; }
+.reg-plate-price { font-size: 11px; font-weight: 600; color: #8F321F; }
+/* The running line for this plate. Hidden on the narrowest screens, where the
+   per-plate price and the total below it are enough. */
+.reg-plate-line { color: #7a5c48; font-weight: 500; }
+
+.reg-plate-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(213, 177, 138, 0.7);
+  font-size: 12px;
+  font-weight: 600;
+  color: #4A2921;
+}
+.reg-plate-total strong { font-size: 15px; color: #8F321F; }
+
+@media (max-width: 420px) {
+  .reg-plate-line { display: none; }
+}
+
+/*
+  The counters are the most-tapped control in the form, and at 28x30 they were
+  the smallest. They were narrowed to fit two sections across; on a phone the
+  sections stack full width, so the room is there and there is no reason to
+  keep the squeeze.
+*/
+@media (max-width: 767px) {
+  .reg-meal-sections .reg-counter,
+  .reg-counter {
+    width: 140px;
+    flex: 0 0 140px;
+    height: 44px;
+  }
+
+  .reg-counter button {
+    width: 44px;
+    min-height: 44px;
+  }
+}
+
 .reg-error { color: #8F321F; font-size: 11px; text-align: center; font-weight: bold; margin-top: 10px; }
 
 /* Payment specific (Native CSS) */

@@ -24,6 +24,13 @@ export const registerSchema = z.object({
   receiptPath: z.string().max(200).optional(),
   numPasses: z.number().int().min(1).max(6).optional(),
   foodPref: z.string().max(200).optional(),
+  // How many of each configured pass type. The form used to send only a
+  // joined summary of this ("1 Breakfast Veg, 2 Lunch Non-Veg"), which is
+  // unreadable to the pricing code - so the route priced every pass at one
+  // flat rate and charged a different total from the one on screen. The
+  // counts arrive structured now. They are still only a request: the route
+  // prices them against the event's own table and ignores any amount.
+  passSelections: z.record(z.string().max(120), z.number().int().min(0).max(10)).optional(),
   isIiit: z.boolean().optional(),
   couponCode: z.string().max(40).optional(),
   // NOTE: the discount is resolved from the event's own coupon list on the

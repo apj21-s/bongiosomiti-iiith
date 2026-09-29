@@ -103,7 +103,15 @@ function getLogoAttachment() {
   }
 }
 
-export async function sendQRPassEmail(email: string, participantName: string, eventName: string, tokens: string | string[]) {
+/**
+ * The QR passes, one per plate.
+ *
+ * `labels` says what each token admits its holder to - "Breakfast · Veg" -
+ * in the same order as `tokens`. A pass that does not say which meal it is
+ * for is one the person on the counter has to ask about, and the holder has
+ * to remember. Optional, so a caller with nothing to say still works.
+ */
+export async function sendQRPassEmail(email: string, participantName: string, eventName: string, tokens: string | string[], labels?: string[]) {
   if (!mailIsConfigured()) {
     console.warn('SMTP credentials missing. Skipping email send to:', email)
     return
@@ -133,6 +141,8 @@ export async function sendQRPassEmail(email: string, participantName: string, ev
     })
 
     const passNumber = (i + 1).toString().padStart(2, '0')
+    // Which plate this particular QR is good for.
+    const mealLabel = labels && labels[i] ? labels[i] : ''
 
     qrImagesHtml += `
       <tr>
@@ -140,11 +150,12 @@ export async function sendQRPassEmail(email: string, participantName: string, ev
           <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 320px; border: 1px solid #C5A66B; border-radius: 8px;" class="bg-panel border-gold">
             <tr>
               <td align="center" style="padding: 16px;">
-                <div style="font-family: Arial, sans-serif; font-size: 13px; font-weight: bold; color: #8C3026; letter-spacing: 2px; margin-bottom: 12px;" class="text-otp">PASS ${passNumber}</div>
+                <div style="font-family: Arial, sans-serif; font-size: 13px; font-weight: bold; color: #8C3026; letter-spacing: 2px; margin-bottom: 4px;" class="text-otp">PASS ${passNumber}</div>
+                ${mealLabel ? `<div style="font-family: Arial, sans-serif; font-size: 15px; font-weight: bold; color: #281208; margin-bottom: 12px;" class="text-body">${mealLabel}</div>` : '<div style="margin-bottom: 8px;"></div>'}
                 <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="border-radius: 4px; padding: 8px; margin-bottom: 12px;">
                   <tr>
                     <td align="center">
-                      <img src="cid:${cid}" alt="QR Pass ${passNumber}" width="200" height="200" style="display: block; width: 200px; height: 200px;">
+                      <img src="cid:${cid}" alt="QR Pass ${passNumber}${mealLabel ? ' - ' + mealLabel : ''}" width="200" height="200" style="display: block; width: 200px; height: 200px;">
                     </td>
                   </tr>
                 </table>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { confirmAction, notifyError } from '@/components/site-notifications'
 
 export default function CheckinsClient() {
   const [checkins, setCheckins] = useState<any[]>([])
@@ -32,12 +33,16 @@ export default function CheckinsClient() {
   const canUseActions = tier >= 3
 
   async function handleUndo(id: string) {
-    if (!confirm('Undo this checkin? The pass will become valid for entry again.')) return
+    if (!(await confirmAction({
+      title: 'Undo this check-in?',
+      message: 'The pass will become valid for entry again.',
+      confirmLabel: 'Undo check-in',
+    }))) return
     try {
       await fetch(`/api/admin/checkins/${id}/undo`, { method: 'POST' })
       fetchCheckins()
     } catch (e: any) {
-      alert(e.message)
+      notifyError(e)
     }
   }
 

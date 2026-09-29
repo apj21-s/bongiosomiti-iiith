@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import { confirmAction } from '@/components/site-notifications'
 
 type Manager = {
   id: string
@@ -84,7 +85,12 @@ export default function ManagersClient() {
   }
 
   async function remove(manager: Manager) {
-    if (!confirm(`Delete the profile "${manager.username}"? They will no longer be able to sign in.`)) return
+    if (!(await confirmAction({
+      title: 'Delete this manager profile?',
+      message: `"${manager.username}" will no longer be able to sign in.`,
+      confirmLabel: 'Delete profile',
+      tone: 'danger',
+    }))) return
     await fetch(`/api/admin/managers/${manager.id}`, { method: 'DELETE' })
     load()
   }

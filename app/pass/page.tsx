@@ -6,6 +6,7 @@ import { notFound } from 'next/navigation'
 import SiteHeader from '@/components/site-header'
 import SiteFooter from '@/components/site-footer'
 import { QRCodeSVG } from 'qrcode.react'
+import { notifyError, notifySuccess } from '@/components/site-notifications'
 
 type Ticket = {
   token: string
@@ -76,9 +77,9 @@ export default function PassVerifyPage() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to resend')
-      alert(data.message)
+      notifySuccess(data.message)
     } catch (err: any) {
-      alert(err.message)
+      notifyError(err)
     } finally {
       setLoading(false)
     }

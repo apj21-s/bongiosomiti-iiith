@@ -12,6 +12,8 @@ import {
 // The same rule the register route applies, so the form and the server cannot
 // disagree about what counts as an institute address.
 import { isIiitEmail } from '@/utils/email-verification'
+// ...and the same one it prices with, for the same reason.
+import { audienceFor, groupByMeal, keyOf, priceOf, quote, type PassType } from '@/utils/pricing'
 
 type RegistrationFormProps = { event: any }
 
@@ -257,12 +259,26 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
   }
   const prevStage = () => { setError(null); transitionTo({ stage: draft.stage - 1 }) }
 
-  const subtotal = useMemo(() => {
-    if (passTypes) return passTypes.reduce((sum: number, pt: any) => sum + (draft.passSelections[pt.name] || 0) * pt.price, 0)
-    const isFree = event.price === 0
-    const passPrice = isFree ? 0 : draft.isIiit === 'yes' ? 250 : 350
-    return draft.numPasses * passPrice
-  }, [passTypes, draft.passSelections, draft.isIiit, event.price, draft.numPasses])
+  /**
+   * Who the prices on screen are for.
+   *
+   * Only the confirmed address counts, which is why this reads verifiedEmail
+   * rather than the field being typed into: until a code has come back, the
+   * visitor is a guest here. The route decides this again from its own copy
+   * of the proof, so nothing about the price rests on the browser agreeing.
+   */
+  const audience = useMemo(
+    () => audienceFor(draft.verifiedEmail, draft.isIiit === 'yes'),
+    [draft.verifiedEmail, draft.isIiit]
+  )
+
+  // The same function the register route prices with. They disagreed before -
+  // the form summed each pass type, the route charged one flat rate per pass -
+  // and the number people saw was not the number that was recorded.
+  const subtotal = useMemo(
+    () => quote(event, { selections: draft.passSelections, numPasses: draft.numPasses }, audience).subtotal,
+    [event, draft.passSelections, draft.numPasses, audience]
+  )
   const discount = draft.appliedCoupon ? draft.appliedCoupon.discount : 0
   const total = Math.max(0, subtotal - discount)
 
@@ -330,6 +346,10 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
           receiverUpi: draft.receiverUpi || undefined,
           receiptPath: draft.receiptPath || undefined,
           numPasses: calculatedNumPasses,
+          // Sent structured as well as summarised. The summary is what goes on
+          // the pass and into the admin lists; these counts are what the route
+          // prices, against the event's own table rather than anything here.
+          passSelections: passTypes ? draft.passSelections : undefined,
           foodPref: passTypes ? Object.entries(draft.passSelections).filter(([_, v]) => v > 0).map(([k, v]) => `${v} ${k}`).join(', ') : (draft.numPasses === 1 ? draft.foodPref : `${draft.vegCount} Veg, ${draft.nonVegCount} Non-Veg`),
           vegCount: passTypes ? undefined : (draft.numPasses === 1 ? (draft.foodPref === 'Veg' ? 1 : 0) : draft.vegCount),
           nonVegCount: passTypes ? undefined : (draft.numPasses === 1 ? (draft.foodPref === 'Non-Veg' ? 1 : 0) : draft.nonVegCount),
@@ -348,7 +368,7 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
 
   if (!isLoaded) return <div>Loading...</div>
 
-  const stepProps = { event, draft, updateDraft, nextStage, prevStage, error, setError, total, subtotal, discount, applyCoupon, couponMsg, setCouponMsg, handleSubmit, loading, confirmation, setScreenshotPreview, screenshotPreview, transitionTo, allowedUpiIds, sendOtp, checkOtp, onEmailChange, otpBusy, otpNote, emailIsVerified }
+  const stepProps = { event, draft, updateDraft, nextStage, prevStage, error, setError, total, subtotal, discount, applyCoupon, couponMsg, setCouponMsg, handleSubmit, loading, confirmation, setScreenshotPreview, screenshotPreview, transitionTo, allowedUpiIds, sendOtp, checkOtp, onEmailChange, otpBusy, otpNote, emailIsVerified, audience }
 
   if (event?.status !== 'OPEN') {
     if (event?.slug !== 'mahalaya') {
@@ -669,39 +689,85 @@ function DetailsStep({ draft, updateDraft, nextStage, prevStage, transitionTo, e
   )
 }
 
-function PassDetailsStep({ event, draft, updateDraft, nextStage, prevStage, error }: any) {
-  const passTypes = event.config?.pass_types || null
+function PassDetailsStep({ event, draft, updateDraft, nextStage, prevStage, error, audience }: any) {
+  const passTypes: PassType[] | null = event.config?.pass_types || null
+
+  /*
+    Pass types carrying a `meal` are shown as a section each - Breakfast beside
+    Lunch - with the same Veg and Non-Veg counters in both. Anything without
+    one falls into a single unnamed section, which is how an event configured
+    before the split still renders as the one list it always was.
+
+    The price shown is the one this visitor pays and no other. There is no
+    "student rate" label and no struck-through comparison anywhere on the page:
+    somebody paying the guest price has no way to tell from this screen that
+    another price exists.
+  */
+  const sections = passTypes ? groupByMeal(passTypes) : []
+  const totalChosen = Object.values(draft.passSelections as Record<string, number>)
+    .reduce((a: number, b: number) => a + b, 0)
+
+  const setCount = (name: string, next: number) =>
+    updateDraft({ passSelections: { ...draft.passSelections, [name]: next } })
 
   return (
     <div className="reg-pass">
       <TypewriterHeading lines={['CHOOSE YOUR PASS']} />
       <p className="reg-p">Select your pass and meal preference</p>
-      
+
       <div className="reg-grid">
         {passTypes ? (
           <div className="reg-field" style={{ gridColumn: '1 / -1' }}>
             <label>Select Passes *</label>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '8px' }}>
-              {passTypes.map((pt: any) => {
-                const count = draft.passSelections[pt.name] || 0
-                return (
-                  <div className="reg-counter-row" key={pt.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span className="reg-counter-label">{pt.name} (₹{pt.price})</span>
-                    <div className="reg-counter">
-                       <button type="button" onClick={() => {
-                         updateDraft({ passSelections: { ...draft.passSelections, [pt.name]: Math.max(0, count - 1) } })
-                       }}>&minus;</button>
-                       <span className="reg-counter-val">{count}</span>
-                       <button type="button" onClick={() => {
-                         const currentTotal = Object.values(draft.passSelections).reduce((a: any, b: any) => a + b, 0) as number
-                         if (currentTotal >= 10) return // Max 10 passes total
-                         updateDraft({ passSelections: { ...draft.passSelections, [pt.name]: count + 1 } })
-                       }}>+</button>
-                    </div>
+            <div className="reg-meal-sections">
+              {sections.map((section) => (
+                <div className="reg-meal-section" key={section.meal ?? 'all'}>
+                  {section.meal && <span className="reg-meal-title">{section.meal}</span>}
+                  <div className="reg-meal-counters">
+                    {section.types.map((pt) => {
+                      // Keyed by meal+name, so "Veg" under Breakfast and
+                      // "Veg" under Lunch are two counters, not one.
+                      const key = keyOf(pt)
+                      const count = draft.passSelections[key] || 0
+                      const each = priceOf(pt, audience)
+                      return (
+                        <div className="reg-counter-row" key={pt.name}>
+                          <span className="reg-counter-label">
+                            <span className="reg-plate-name">{pt.name}</span>
+                            {/* The price of one plate, said plainly rather than
+                                left to be worked out at the payment step. */}
+                            <span className="reg-plate-price">
+                              {each > 0 ? `${formatCurrency(each)} each` : 'Free'}
+                              {count > 0 && each > 0 && (
+                                <span className="reg-plate-line"> &middot; {count} × {formatCurrency(each)} = {formatCurrency(count * each)}</span>
+                              )}
+                            </span>
+                          </span>
+                          <div className="reg-counter">
+                            <button type="button" aria-label={`One fewer ${pt.name}`}
+                              onClick={() => setCount(key, Math.max(0, count - 1))}>&minus;</button>
+                            <span className="reg-counter-val">{count}</span>
+                            <button type="button" aria-label={`One more ${pt.name}`}
+                              onClick={() => { if (totalChosen < 10) setCount(key, count + 1) }}>+</button>
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
-                )
-              })}
+                </div>
+              ))}
             </div>
+
+            {/* What the chosen plates come to. The payment step showed the
+                first figure until now, which meant adding up plate prices in
+                your head to know what you were agreeing to. Same function the
+                payment step and the register route use, so all three agree. */}
+            {totalChosen > 0 && (
+              <div className="reg-plate-total">
+                <span>{totalChosen} {totalChosen === 1 ? 'plate' : 'plates'}</span>
+                <strong>{formatCurrency(quote(event, { selections: draft.passSelections }, audience).subtotal)}</strong>
+              </div>
+            )}
           </div>
         ) : (
           <>

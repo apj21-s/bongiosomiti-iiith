@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import initialConfig from '@/components/radio-buttons.json'
+import { notifyError, notifySuccess } from '@/components/site-notifications'
 
 type ButtonConfig = { left: number; width: number; height: number; top: number; iconSize?: number; iconColor?: string; iconOffsetX?: number; iconOffsetY?: number }
 type ConfigMap = Record<string, ButtonConfig>
@@ -117,10 +118,10 @@ export default function RadioAlignerClient() {
         body: JSON.stringify(config)
       })
       if (!res.ok) throw new Error('Failed to save')
-      alert('Saved successfully! The live radio will now use these coordinates.')
+      notifySuccess('Saved. The live radio will use these coordinates.')
     } catch (err) {
       console.error(err)
-      alert('Error saving config')
+      notifyError('Could not save the config.')
     } finally {
       setIsSaving(false)
     }
@@ -134,7 +135,7 @@ export default function RadioAlignerClient() {
 
   const exportJSON = () => {
     navigator.clipboard.writeText(JSON.stringify(config, null, 2))
-    alert('JSON copied to clipboard')
+    notifySuccess('JSON copied to clipboard.')
   }
 
   const exportCSS = () => {
@@ -142,7 +143,7 @@ export default function RadioAlignerClient() {
       `.vp-frame-${key} { left: ${val.left}%; width: ${val.width}%; height: ${val.height}%; top: ${val.top}%; }`
     ).join('\n')
     navigator.clipboard.writeText(css)
-    alert('CSS copied to clipboard')
+    notifySuccess('CSS copied to clipboard.')
   }
 
   return (

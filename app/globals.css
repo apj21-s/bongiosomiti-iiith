@@ -11698,3 +11698,179 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
   font-size: clamp(1rem, 1.9vw, 1.42rem);
   line-height: 1.5;
 }
+
+/* ── THE SITE'S OWN NOTIFICATIONS ───────────────────────────────────────── */
+/*
+  Replaces alert(), confirm() and prompt() across the admin screens. Those
+  freeze the page, cannot be styled, and on a phone arrive as a system sheet
+  with the host name on it. See components/site-notifications.tsx.
+
+  Toasts stack at the bottom on a phone and the top right on a desktop: the
+  bottom is where a thumb already is, and the top right is out of the way of
+  the tables these mostly appear over.
+*/
+.site-toasts {
+  position: fixed;
+  z-index: 100000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+  inset: auto 12px calc(12px + env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 768px) {
+  .site-toasts {
+    inset: 16px 16px auto auto;
+    width: min(380px, calc(100vw - 32px));
+  }
+}
+
+.site-toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 11px 13px;
+  border-radius: 11px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #fffaf2;
+  background: linear-gradient(180deg, #4a4038, #3a322b);
+  box-shadow: 0 10px 28px rgba(28, 16, 9, 0.34);
+  pointer-events: auto;
+  animation: site-toast-in 0.3s cubic-bezier(0.22, 1.2, 0.4, 1) both;
+}
+
+.site-toast--error   { background: linear-gradient(180deg, #a8391f, #8F321F); }
+.site-toast--success { background: linear-gradient(180deg, #35794a, #2c6640); }
+
+.site-toast__icon {
+  flex: 0 0 auto;
+  width: 17px;
+  height: 17px;
+  margin-top: 1px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(255, 250, 242, 0.22);
+}
+
+.site-toast__text { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+
+.site-toast__close {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* Comfortable to hit without moving the row: the padding grows and the
+     negative margin gives the space back. */
+  min-width: 34px;
+  min-height: 34px;
+  margin: -9px -8px -9px 0;
+  padding: 0;
+  background: none;
+  border: none;
+  color: inherit;
+  opacity: 0.75;
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+}
+.site-toast__close:hover { opacity: 1; }
+
+@keyframes site-toast-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.site-dialog-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 100001;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(28, 16, 9, 0.5);
+  backdrop-filter: blur(2px);
+  animation: site-dialog-fade 0.18s ease both;
+}
+
+@keyframes site-dialog-fade { from { opacity: 0 } to { opacity: 1 } }
+
+.site-dialog {
+  width: min(430px, 100%);
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  padding: 22px;
+  border-radius: 16px;
+  background: #fdf7ea;
+  color: #3c2c1e;
+  box-shadow: 0 24px 60px rgba(28, 16, 9, 0.45);
+  animation: site-dialog-rise 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes site-dialog-rise {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.site-dialog__title {
+  margin: 0 0 8px;
+  font-family: "Tiro Bangla", Georgia, serif;
+  font-size: 1.15rem;
+  color: #1d1712;
+}
+
+.site-dialog__message { margin: 0; font-size: 0.94rem; line-height: 1.5; }
+
+.site-dialog__input {
+  width: 100%;
+  margin-top: 14px;
+  padding: 11px 12px;
+  border: 1px solid #D5B18A;
+  border-radius: 8px;
+  /* 16px exactly: iOS zooms the viewport on any focused input below it. */
+  font-size: 16px;
+  font-family: inherit;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.site-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.site-dialog__btn {
+  min-height: 42px;
+  padding: 0 16px;
+  border-radius: 9px;
+  border: 1px solid #D5B18A;
+  background: transparent;
+  color: #4A2921;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.site-dialog__btn--go { background: #4A2921; border-color: #4A2921; color: #fdf7ea; }
+.site-dialog__btn--go.is-danger { background: #8F321F; border-color: #8F321F; }
+.site-dialog__btn:hover { filter: brightness(1.08); }
+
+@media (max-width: 480px) {
+  /* Full-width buttons, confirm on top: the thumb reaches the bottom of the
+     sheet first, and that is where Cancel should be. */
+  .site-dialog__actions { flex-direction: column-reverse; }
+  .site-dialog__btn { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-toast, .site-dialog, .site-dialog-layer { animation: none; }
+}

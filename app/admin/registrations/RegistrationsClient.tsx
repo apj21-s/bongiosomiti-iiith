@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { confirmAction, notifyError } from '@/components/site-notifications'
 
 export default function RegistrationsClient({ initialEvents }: { initialEvents: any[] }) {
   const [registrations, setRegistrations] = useState<any[]>([])
@@ -36,19 +37,24 @@ export default function RegistrationsClient({ initialEvents }: { initialEvents: 
     const msg = reg.num_passes > 1 
       ? `Are you sure you want to delete this registration AND all ${reg.num_passes} passes associated with it?`
       : `Are you sure you want to delete registration ${reg.token}?`
-    if (!confirm(msg)) return
+    if (!(await confirmAction({
+      title: 'Delete this registration?',
+      message: msg,
+      confirmLabel: 'Delete',
+      tone: 'danger',
+    }))) return
     
     try {
       await Promise.all(reg._tokens.map((t: string) => fetch(`/api/admin/registrations/${t}`, { method: 'DELETE' })))
       fetchRegs()
     } catch (e: any) {
-      alert(e.message)
+      notifyError(e)
     }
   }
 
   function handleExportCSV() {
     if (registrations.length === 0) {
-      alert('No registrations to export.')
+      notifyError('No registrations to export.')
       return
     }
     const headers = ['Token', 'Name', 'College ID', 'Email', 'Phone', 'Event', 'Amount', 'Status', 'Payment Status', 'Date']

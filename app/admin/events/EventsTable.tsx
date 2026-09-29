@@ -2,17 +2,23 @@
 
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { confirmAction, notifyError } from '@/components/site-notifications'
 
 export default function EventsTable({ events }: { events: any[] }) {
   const router = useRouter()
 
   async function handleDelete(slug: string) {
-    if (!confirm(`Are you sure you want to delete ${slug}?`)) return
+    if (!(await confirmAction({
+      title: 'Delete this event?',
+      message: `"${slug}" and its settings will be removed. This cannot be undone.`,
+      confirmLabel: 'Delete event',
+      tone: 'danger',
+    }))) return
     try {
       await fetch(`/api/admin/events/${slug}`, { method: 'DELETE' })
       router.refresh()
     } catch (e: any) {
-      alert(e.message)
+      notifyError(e)
     }
   }
 
@@ -28,7 +34,7 @@ export default function EventsTable({ events }: { events: any[] }) {
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'Failed to change status')
       router.refresh()
     } catch (e: any) {
-      alert(e.message)
+      notifyError(e)
     }
   }
 
@@ -74,8 +80,12 @@ export default function EventsTable({ events }: { events: any[] }) {
                     type="button"
                     className="btn btn-sm btn-danger"
                     title="Registrations have ended for good"
-                    onClick={() => {
-                      if (confirm(`Close "${evt.name}"? It will stop taking registrations and show as finished. You can reopen it later.`)) {
+                    onClick={async () => {
+                      if (await confirmAction({
+                        title: 'Close this event?',
+                        message: `"${evt.name}" will stop taking registrations and show as finished. You can reopen it later.`,
+                        confirmLabel: 'Close event',
+                      })) {
                         handleToggleStatus(evt.slug, 'CLOSED')
                       }
                     }}
