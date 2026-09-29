@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import SignOutAction from '@/app/admin/SignOutAction'
 
 function TypewriterBrand() {
   const chars = ["ব", "ঙ্গী", "য়", ".", "S", "A", "M", "I", "T", "I"]
@@ -119,7 +120,9 @@ export default function SiteHeader({ variant = 'public' }: SiteHeaderProps) {
             {/* Super admin only; the page itself redirects a lower tier. */}
             <Link className="home-strip__link" href="/admin/map-locations">MAP</Link>
           </nav>
-          <Link className="home-strip__action" href="/admin/login">SIGN OUT</Link>
+          {/* Ends the session. It used to be a link to the sign-in form,
+              which left the previous admin still signed in behind it. */}
+          <SignOutAction className="home-strip__action" />
         </div>
       </header>
     )

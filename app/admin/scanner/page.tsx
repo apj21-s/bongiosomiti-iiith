@@ -178,7 +178,7 @@ export default function ScannerPage() {
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <input 
                     type="text" 
-                    placeholder="Enter pass code..." 
+                    placeholder="Enter Pass Code" 
                     value={manualToken}
                     onChange={e => setManualToken(e.target.value)}
                     style={{ flex: 1, padding: '10px', borderRadius: '6px', border: '1px solid #444', background: '#222', color: 'white' }}

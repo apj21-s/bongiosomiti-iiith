@@ -36,7 +36,7 @@ export default function LookupForm() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
       <form className="pass-lookup-form" style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }} onSubmit={handleLookup}>
         <label htmlFor="pass-lookup-input" style={{ fontWeight: 600, fontSize: '0.9rem' }}>Lookup Another Pass:</label>
-        <input id="pass-lookup-input" name="query" placeholder="Enter Token ID or College ID..." style={{ flex: 1, minWidth: '220px', padding: '8px 14px', borderRadius: '12px', border: '1px solid var(--border)', background: '#fff' }} required />
+        <input id="pass-lookup-input" name="query" placeholder="Enter Token ID or College ID" style={{ flex: 1, minWidth: '220px', padding: '8px 14px', borderRadius: '12px', border: '1px solid var(--border)', background: '#fff' }} required />
         <button className="btn btn-secondary" type="submit" disabled={loading}>{loading ? 'Searching...' : 'Find Pass'}</button>
       </form>
       {error && (

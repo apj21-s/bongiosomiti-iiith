@@ -180,7 +180,7 @@ export default function PlaylistClient() {
             className="input"
             value={link}
             onChange={(e) => setLink(e.target.value)}
-            placeholder="https://www.youtube.com/playlist?list=PL..."
+            placeholder="Enter Playlist URL"
             autoComplete="off"
             spellCheck={false}
           />
@@ -188,7 +188,7 @@ export default function PlaylistClient() {
             className="input"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="What to call it, e.g. Agomoni"
+            placeholder="Enter Name"
             maxLength={48}
           />
           <button type="submit" className="btn btn-primary" disabled={busy !== null || link.trim() === ''}>

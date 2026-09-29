@@ -32,12 +32,12 @@ export default function AdminLoginPage() {
         <form id="login-form" className="section" action={handleSubmit} style={{padding: '0', }}>
           <div className="field" style={{marginBottom: '1.25rem', }}>
             <label htmlFor="email" style={{fontWeight: '600', display: 'block', marginBottom: '6px', }}>Email or manager username</label>
-            <input id="email" name="email" type="text" autoComplete="username" spellCheck={false} placeholder="you@example.com or a username" style={{width: '100%', padding: '12px 16px', borderRadius: '14px', border: '1px solid var(--border)', fontSize: '1rem', }} required />
+            <input id="email" name="email" type="text" autoComplete="username" spellCheck={false} placeholder="Enter your Email or Username" style={{width: '100%', padding: '12px 16px', borderRadius: '14px', border: '1px solid var(--border)', fontSize: '1rem', }} required />
           </div>
           
           <div className="field" style={{marginBottom: '1.25rem', }}>
             <label htmlFor="password" style={{fontWeight: '600', display: 'block', marginBottom: '6px', }}>Password</label>
-            <input id="password" name="password" type="password" placeholder="••••••••" style={{width: '100%', padding: '12px 16px', borderRadius: '14px', border: '1px solid var(--border)', fontSize: '1rem', }} required />
+            <input id="password" name="password" type="password" placeholder="Enter your Password" style={{width: '100%', padding: '12px 16px', borderRadius: '14px', border: '1px solid var(--border)', fontSize: '1rem', }} required />
           </div>
 
           <div className="row-actions" style={{display: 'flex', flexDirection: 'column', gap: '10px', }}>

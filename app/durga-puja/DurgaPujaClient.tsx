@@ -318,7 +318,7 @@ export default function DurgaPujaClient({ pujas: pujasRawData }: { pujas: MapPuj
             <div className="dp-map-search">
               <input
                 type="text"
-                placeholder="Search puja, locality..."
+                placeholder="Search"
                 className="dp-search-input"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}

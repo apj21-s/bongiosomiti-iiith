@@ -92,7 +92,7 @@ export default function RegistrationsClient({ initialEvents }: { initialEvents: 
     <div className="grid" style={{ padding: 'clamp(12px, 3vw, 24px) clamp(12px, 3vw, 28px)' }}>
       <div className="filter-bar" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '12px', alignItems: 'center', background: 'rgba(255,255,255,0.6)', padding: '14px 18px', borderRadius: '16px', border: '1px solid var(--border)' }}>
         <div style={{ flex: '1 1 min(100%, 240px)' }}>
-          <input placeholder="🔍 Search by name, College ID, phone, email, or token..." style={{ width: '100%', padding: '10px 14px', borderRadius: '12px', border: '1px solid var(--border)', background: '#fff' }} value={query} onChange={(e) => setQuery(e.target.value)} />
+          <input placeholder="Search" style={{ width: '100%', padding: '10px 14px', borderRadius: '12px', border: '1px solid var(--border)', background: '#fff' }} value={query} onChange={(e) => setQuery(e.target.value)} />
         </div>
         <div style={{ flex: 1, minWidth: '160px' }}>
           <select style={{ width: '100%', padding: '10px 14px', borderRadius: '12px', border: '1px solid var(--border)', background: '#fff' }} value={eventSlug} onChange={(e) => setEventSlug(e.target.value)}>

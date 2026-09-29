@@ -100,25 +100,25 @@ export default function ManagersClient() {
         <form onSubmit={handleCreate} style={{ display: 'grid', gap: '14px', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', alignItems: 'end' }}>
           <div className="field">
             <label htmlFor="mgr-username" style={{ fontWeight: 600, display: 'block', marginBottom: '6px' }}>Username *</label>
-            <input id="mgr-username" className="reg-input" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="e.g. arka" required
+            <input id="mgr-username" className="reg-input" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Enter Username" required
               style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border)' }} />
           </div>
 
           <div className="field">
             <label htmlFor="mgr-password" style={{ fontWeight: 600, display: 'block', marginBottom: '6px' }}>Password *</label>
-            <input id="mgr-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 8 characters" required minLength={8}
+            <input id="mgr-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter Password" required minLength={8}
               style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border)' }} />
           </div>
 
           <div className="field">
             <label htmlFor="mgr-upi" style={{ fontWeight: 600, display: 'block', marginBottom: '6px' }}>UPI ID *</label>
-            <input id="mgr-upi" value={upiId} onChange={(e) => setUpiId(e.target.value)} placeholder="name@bank" required
+            <input id="mgr-upi" value={upiId} onChange={(e) => setUpiId(e.target.value)} placeholder="Enter UPI ID" required
               style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border)' }} />
           </div>
 
           <div className="field">
             <label htmlFor="mgr-email" style={{ fontWeight: 600, display: 'block', marginBottom: '6px' }}>Email *</label>
-            <input id="mgr-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@example.com" required
+            <input id="mgr-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Enter Email" required
               style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border)' }} />
             <p style={{ margin: '6px 0 0', fontSize: '0.78rem', color: '#718096' }}>
               Where their digest goes: how many payments came to them, how many are verified,
@@ -129,7 +129,7 @@ export default function ManagersClient() {
           
           <div className="field">
             <label htmlFor="mgr-name" style={{ fontWeight: 600, display: 'block', marginBottom: '6px' }}>Display name</label>
-            <input id="mgr-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Optional"
+            <input id="mgr-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter Name"
               style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border)' }} />
           </div>
 

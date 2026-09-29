@@ -109,7 +109,7 @@ export default function PassVerifyPage() {
               <form className="verification-form" onSubmit={handleSubmit} noValidate>
                 <div className="verification-field">
                   <label htmlFor="verification-query"><span>Phone Number or Reference Number <span className="required-star">*</span></span></label>
-                  <input type="text" id="verification-query" name="query" className="verification-input" placeholder="e.g. 9876543210 or UTSAV-XYZ-123" required autoComplete="off" value={query} onChange={(e) => setQuery(e.target.value)} />
+                  <input type="text" id="verification-query" name="query" className="verification-input" placeholder="Enter your Phone Number or Token ID" required autoComplete="off" value={query} onChange={(e) => setQuery(e.target.value)} />
                   <span className="verification-hint">Enter the information you provided during your event pass registration.</span>
                 </div>
 

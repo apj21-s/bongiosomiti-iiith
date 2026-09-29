@@ -1204,7 +1204,7 @@ function PlaylistPicker({
           inputMode="url"
           autoComplete="off"
           spellCheck={false}
-          placeholder="https://www.youtube.com/playlist?list=..."
+          placeholder="Enter Playlist URL"
           value={link}
           onChange={(e) => {
             setLink(e.currentTarget.value)

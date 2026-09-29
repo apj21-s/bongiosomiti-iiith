@@ -137,10 +137,10 @@ export default function EventEditorClient({ event }: { event: any }) {
         
         {passTypes.map((pt, i) => (
           <div key={i} style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-            <input type="text" className="form-control" placeholder="Pass Name (e.g. Veg Thali)" value={pt.name} onChange={e => {
+            <input type="text" className="form-control" placeholder="Enter Pass Name" value={pt.name} onChange={e => {
               const newPts = [...passTypes]; newPts[i].name = e.target.value; setPassTypes(newPts)
             }} required />
-            <input type="number" className="form-control" style={{ width: '150px' }} placeholder="Price (₹)" value={pt.price} onChange={e => {
+            <input type="number" className="form-control" style={{ width: '150px' }} placeholder="Enter Price" value={pt.price} onChange={e => {
               const newPts = [...passTypes]; newPts[i].price = Number(e.target.value); setPassTypes(newPts)
             }} required min="0" />
             <button type="button" className="btn btn-sm btn-danger" onClick={() => setPassTypes(passTypes.filter((_, idx) => idx !== i))}>&times;</button>
@@ -157,7 +157,7 @@ export default function EventEditorClient({ event }: { event: any }) {
           <p className="text-muted" style={{ marginBottom: '8px', fontSize: '0.85rem' }}>Add one or more UPI IDs. Users can select which one to pay to.</p>
           {upiIds.map((id, i) => (
             <div key={i} style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-              <input type="text" className="form-control" placeholder="yourname@bank" value={id} onChange={e => {
+              <input type="text" className="form-control" placeholder="Enter UPI ID" value={id} onChange={e => {
                 const newIds = [...upiIds]; newIds[i] = e.target.value; setUpiIds(newIds)
               }} required />
               {upiIds.length > 1 && (
@@ -181,10 +181,10 @@ export default function EventEditorClient({ event }: { event: any }) {
         <h3 style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '8px', marginBottom: '16px' }}>Coupons</h3>
         {coupons.map((c, i) => (
           <div key={i} style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-            <input type="text" className="form-control" placeholder="Code (e.g. EARLY10)" value={c.code} onChange={e => {
+            <input type="text" className="form-control" placeholder="Enter Code" value={c.code} onChange={e => {
               const newC = [...coupons]; newC[i].code = e.target.value.toUpperCase(); setCoupons(newC)
             }} required />
-            <input type="number" className="form-control" style={{ width: '150px' }} placeholder="Discount (₹)" value={c.discount} onChange={e => {
+            <input type="number" className="form-control" style={{ width: '150px' }} placeholder="Enter Discount" value={c.discount} onChange={e => {
               const newC = [...coupons]; newC[i].discount = Number(e.target.value); setCoupons(newC)
             }} required min="0" />
             <button type="button" className="btn btn-sm btn-danger" onClick={() => setCoupons(coupons.filter((_, idx) => idx !== i))}>&times;</button>

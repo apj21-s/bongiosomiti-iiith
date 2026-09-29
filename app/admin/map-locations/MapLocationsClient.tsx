@@ -182,21 +182,21 @@ export default function MapLocationsClient() {
           <div style={{ gridColumn: '1 / -1' }}>
             <label style={label} htmlFor="loc-name">Name</label>
             <input id="loc-name" style={input} value={draft.name} required maxLength={160}
-              placeholder="Bani Sangha Alwal Durga Puja"
+              placeholder="Enter Name"
               onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))} />
           </div>
 
           <div style={{ gridColumn: '1 / -1' }}>
             <label style={label} htmlFor="loc-address">One-line address</label>
             <input id="loc-address" style={input} value={draft.address} required maxLength={300}
-              placeholder="Bani Sangha, Alwal, Secunderabad"
+              placeholder="Enter One-line Address"
               onChange={(e) => setDraft((d) => ({ ...d, address: e.target.value }))} />
           </div>
 
           <div>
             <label style={label} htmlFor="loc-lat">Latitude</label>
             <input id="loc-lat" style={input} value={draft.lat} required inputMode="decimal"
-              placeholder="17.5097379992666"
+              placeholder="Enter Latitude"
               onChange={(e) => onLatChange(e.target.value)} />
             <small style={{ color: '#718096', fontSize: '0.74rem' }}>
               Paste &ldquo;lat, lng&rdquo; or a Maps link here and both boxes fill.
@@ -206,7 +206,7 @@ export default function MapLocationsClient() {
           <div>
             <label style={label} htmlFor="loc-lng">Longitude</label>
             <input id="loc-lng" style={input} value={draft.lng} required inputMode="decimal"
-              placeholder="78.51180961749529"
+              placeholder="Enter Longitude"
               onChange={(e) => setDraft((d) => ({ ...d, lng: e.target.value }))} />
           </div>
 
@@ -254,7 +254,7 @@ export default function MapLocationsClient() {
         </h2>
         <input
           style={{ ...input, maxWidth: '280px' }}
-          placeholder="Search name or address"
+          placeholder="Search"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />

@@ -145,7 +145,7 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
     if (draft.isIiit === 'yes' && !isIiitEmail(email)) {
       setOtpNote({
         type: 'error',
-        text: 'Use your institute address — name@students.iiit.ac.in, or research, staff, faculty, alumni, or plain iiit.ac.in. If you are not from IIIT Hyderabad, go back and register as a guest.',
+        text: 'Use your institute address — name@students.iiit.ac.in, or research, staff, faculty, alumni, or plain iiit.ac.in. If you are not from IIIT Hyderabad, please go back and register as a guest.',
       })
       return
     }
@@ -231,7 +231,7 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
         return setError('Confirm your email address first.')
       }
       if (draft.isIiit === 'yes' && !isIiitEmail(draft.email)) {
-        return setError('The institute rate needs a confirmed @iiit.ac.in address — students, research, staff, faculty or alumni. Go back and register as a guest, or use your institute email.')
+        return setError('The institute rate needs a confirmed @iiit.ac.in address — students, research, staff, faculty or alumni. Please go back and register as a guest, or use your institute email.')
       }
     }
     if (draft.stage === 3) {
@@ -579,7 +579,7 @@ function DetailsStep({ draft, updateDraft, nextStage, prevStage, transitionTo, e
               beside the Send button and read as belonging to it. */}
           <span className="reg-field__control">
             <input {...fieldProps(nameState)} className={`reg-input ${fieldProps(nameState).className}`}
-              value={draft.fullName} onChange={e => updateDraft({ fullName: e.target.value })} placeholder="Enter your full name" />
+              value={draft.fullName} onChange={e => updateDraft({ fullName: e.target.value })} placeholder="Enter your Full Name" />
             {nameState.tone && <span className={`reg-field__mark reg-field__mark--${nameState.tone === "ok" ? "ok" : "bad"}`} aria-hidden="true">{nameState.tone === "ok" ? "✓" : "!"}</span>}
           </span>
         </div>
@@ -591,7 +591,7 @@ function DetailsStep({ draft, updateDraft, nextStage, prevStage, transitionTo, e
             className={`reg-input ${fieldProps(emailState).className}`}
             value={draft.email}
             onChange={e => onEmailChange(e.target.value)}
-            placeholder={draft.isIiit === 'yes' ? 'first.last@students.iiit.ac.in' : 'Enter your email address'}
+            placeholder="Enter your Email Address"
             autoComplete="email"
             inputMode="email"
           />
@@ -599,7 +599,6 @@ function DetailsStep({ draft, updateDraft, nextStage, prevStage, transitionTo, e
           {/* Said before they type, not after the code has been spent. */}
           {draft.isIiit === 'yes' && (
             <span className="reg-read__note">
-              name@students.iiit.ac.in — or research, staff, faculty, alumni, or plain iiit.ac.in
             </span>
           )}
 
@@ -620,7 +619,7 @@ function DetailsStep({ draft, updateDraft, nextStage, prevStage, transitionTo, e
                     className="reg-input reg-otp-input"
                     value={draft.otpInput}
                     onChange={e => updateDraft({ otpInput: e.target.value.replace(/\D/g, '').slice(0, 6) })}
-                    placeholder="6-digit code"
+                    placeholder="Enter Confirmation Code"
                     inputMode="numeric"
                     autoComplete="one-time-code"
                     maxLength={6}
@@ -642,7 +641,7 @@ function DetailsStep({ draft, updateDraft, nextStage, prevStage, transitionTo, e
           <div className="reg-phone-wrapper">
              <span className="reg-phone-prefix">+91</span>
              <input {...fieldProps(phoneState)} className={`reg-input ${fieldProps(phoneState).className}`}
-               type="tel" value={draft.phone} onChange={e => updateDraft({ phone: e.target.value })} placeholder="Enter your phone number" />
+               type="tel" value={draft.phone} onChange={e => updateDraft({ phone: e.target.value })} placeholder="Enter your Phone Number" />
           </div>
         </div>
         {/* No roll number. A confirmed @iiit.ac.in address is what establishes
@@ -656,7 +655,7 @@ function DetailsStep({ draft, updateDraft, nextStage, prevStage, transitionTo, e
               className={`reg-input ${fieldProps(cityState).className}`}
               value={draft.city}
               onChange={e => updateDraft({ city: e.target.value })}
-              placeholder="City"
+              placeholder="Enter your City"
             />
           </div>
         )}
@@ -1006,7 +1005,7 @@ function PaymentStep({ event, draft, updateDraft, prevStage, transitionTo, total
                value={draft.couponInput}
                onChange={e => { updateDraft({ couponInput: e.target.value }); setCouponMsg(null) }}
                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); applyCoupon() } }}
-               placeholder="Coupon code"
+               placeholder="Enter Coupon Code"
                aria-invalid={couponMsg?.type === 'error'}
              />
              <button type="button" className="reg-btn-apply" onClick={applyCoupon}>APPLY</button>
@@ -1060,13 +1059,18 @@ function PaymentStep({ event, draft, updateDraft, prevStage, transitionTo, total
           </div>
         </div>
 
+        {/* These describe what the screen actually asks for now, which had
+            drifted. There is a list of ids to choose from rather than one to
+            copy, the way back is a named button, and the receipt is what
+            carries the transaction id - it is read off the image, and typing
+            it is the fallback, not the instruction. */}
         <div className="reg-pay-box steps-box">
           <span className="steps-label">Steps to complete:</span>
           <ol className="reg-steps-list">
-            <li><span>Scan or copy UPI ID</span></li>
-            <li><span>Make the payment</span></li>
-            <li><span>Return here</span></li>
-            <li><span>Enter UTR and upload receipt</span></li>
+            <li><span>{upiIds.length > 1 ? 'Choose a UPI ID, then scan or copy it' : 'Scan the QR or copy the UPI ID'}</span></li>
+            <li><span>Pay {formatCurrency(total)} from your UPI app</span></li>
+            <li><span>Return here and tap &ldquo;I have made the payment&rdquo;</span></li>
+            <li><span>Upload the receipt &mdash; the transaction ID is read from it</span></li>
           </ol>
         </div>
       </div>
@@ -1212,7 +1216,7 @@ function PaymentCompletedStep({ event, prevStage, handleSubmit, draft, updateDra
   return (
     <div className="reg-payment-done">
       <TypewriterHeading lines={['VERIFYING PAYMENT']} />
-      <p className="reg-p reg-p--tight">Please provide your transaction details</p>
+      <p className="reg-p reg-p--tight">Please provide your transaction details and check their correctness</p>
 
       {/* Two panels side by side, the way the payment step is built. The
           receipt feeds the fields beside it, so they belong on one screen:
@@ -1295,7 +1299,7 @@ function PaymentCompletedStep({ event, prevStage, handleSubmit, draft, updateDra
           className={`reg-input ${fieldProps(utrState).className}`}
           value={draft.utr}
           onChange={e => updateDraft({ utr: e.target.value, utrFromOcr: false })}
-          placeholder="e.g. 429810294812"
+          placeholder="Enter your UPI Transaction ID"
           inputMode="text"
           autoComplete="off"
         />

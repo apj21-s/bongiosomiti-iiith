@@ -63,16 +63,16 @@ export default function NewEventPage() {
       <div className="grid" style={{ padding: '24px 28px' }}>
         <form className="section" style={{ padding: 0 }} onSubmit={handleSubmit}>
           <div className="field-grid">
-            <div className="field"><label htmlFor="event_name">Event Name *</label><input id="event_name" name="name" placeholder="e.g. Bijoya Sammelani 2026" required /></div>
-            <div className="field"><label htmlFor="event_slug">URL Slug *</label><input id="event_slug" name="slug" placeholder="e.g. bijoya-sammelani" required /></div>
-            <div className="field"><label htmlFor="event_category">Category / Tag</label><input id="event_category" name="category" placeholder="e.g. Autumn Gathering / Music Evening" /></div>
+            <div className="field"><label htmlFor="event_name">Event Name *</label><input id="event_name" name="name" placeholder="Enter Event Name" required /></div>
+            <div className="field"><label htmlFor="event_slug">URL Slug *</label><input id="event_slug" name="slug" placeholder="Enter URL Slug" required /></div>
+            <div className="field"><label htmlFor="event_category">Category / Tag</label><input id="event_category" name="category" placeholder="Enter Category" /></div>
             <div className="field"><label htmlFor="event_date">Event Date *</label><input id="event_date" name="event_date" type="date" required /></div>
-            <div className="field"><label htmlFor="event_venue">Venue *</label><input id="event_venue" name="venue" placeholder="e.g. Main Auditorium / Courtyard" required /></div>
-            <div className="field"><label htmlFor="event_capacity">Max Ticket Capacity *</label><input id="event_capacity" name="capacity" type="number" min="1" max="5000" placeholder="150" required defaultValue="100" /></div>
-            <div className="field"><label htmlFor="event_price">Pass Price (INR) *</label><input id="event_price" name="price" type="number" min="0" placeholder="0 for free, or enter amount in ₹" required defaultValue="0" /></div>
+            <div className="field"><label htmlFor="event_venue">Venue *</label><input id="event_venue" name="venue" placeholder="Enter Venue" required /></div>
+            <div className="field"><label htmlFor="event_capacity">Max Ticket Capacity *</label><input id="event_capacity" name="capacity" type="number" min="1" max="5000" placeholder="Enter Max Ticket Capacity" required defaultValue="100" /></div>
+            <div className="field"><label htmlFor="event_price">Pass Price (INR) *</label><input id="event_price" name="price" type="number" min="0" placeholder="Enter Pass Price" required defaultValue="0" /></div>
             <div className="field" style={{ gridColumn: '1 / -1' }}>
               <label htmlFor="event_description">Description / Narrative</label>
-              <textarea id="event_description" name="description" rows={3} placeholder="Describe the cultural event, food, traditions, and schedule..." style={{ width: '100%', padding: '12px', borderRadius: '14px', border: '1px solid var(--border)' }}></textarea>
+              <textarea id="event_description" name="description" rows={3} placeholder="Enter Description" style={{ width: '100%', padding: '12px', borderRadius: '14px', border: '1px solid var(--border)' }}></textarea>
             </div>
           </div>
           <div className="row-actions" style={{ marginTop: '1.5rem', display: 'flex', gap: '12px' }}>

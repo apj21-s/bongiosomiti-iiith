@@ -284,8 +284,27 @@
 .upload-text small { color: #8F321F; text-decoration: underline; }
 .reg-upload-preview { display: flex; flex-direction: column; align-items: center; gap: 12px; }
 .reg-upload-preview-img { max-height: 100px; max-width: 100%; border-radius: 4px; border: 1px solid #D5B18A; }
-.reg-upload-actions { display: flex; gap: 12px; }
-.reg-btn-change, .reg-btn-remove { font-size: 12px; font-weight: 700; cursor: pointer; background: none; border: none; }
+/*
+  "Change" is a <label> (it drives the file input) and "Remove" is a <button>,
+  so they arrive with different boxes. The button keeps the browser's own
+  padding - 1px 6px in Chrome - and centres its contents, which sat "Remove"
+  one pixel below "Change" and shifted it sideways. Resetting the padding and
+  giving both the same inline-flex box puts the two words on one line.
+*/
+.reg-upload-actions { display: flex; align-items: center; gap: 12px; }
+.reg-btn-change, .reg-btn-remove {
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  background: none;
+  border: none;
+}
 .reg-btn-change { color: #8F321F; text-decoration: underline; }
 .reg-btn-remove { color: #666; }
 
@@ -575,30 +594,105 @@
   actually is.
 
   So the step's content gets a veil of the paper colour between it and the art.
-  Not a box: the large same-colour spread on the shadow feathers the edge out,
-  so the decoration still shows around the card and nothing gains a visible
-  border. The art is untouched, no other page is affected, and nothing scrolls.
+
+  It has to stop being a rectangle. A flat fill with a spread shadow ends on a
+  straight line, and at this size the blur was too tight to hide it: the veil
+  read as a pale panel laid over the pampas grass with a visible crease down
+  its right edge and along its top. The eye finds that border before it finds
+  the text the veil exists to protect.
+
+  So the alpha is feathered instead. Two gradients - one across, one down -
+  are intersected as a mask, which fades all four sides and takes the corners
+  down twice as fast, so there is nowhere a straight edge can form.
+
+  It hangs off .reg-content-wrapper rather than .reg-step-container, and that
+  is the whole reason the first attempt still showed a seam: the step
+  container scrolls, and asking for overflow-y: auto makes the browser clip
+  the other axis too. Its ::before was being cut off at the padding box, so
+  the fade ended in a straight line no matter how gently it was drawn. The
+  wrapper does not clip, and is wider and taller than the scrolling box, which
+  is the room the fade needs.
 
   z-index -1 keeps it behind the step's own text while staying above the
   decoration, because .reg-content-wrapper is a stacking context of its own.
 */
-.reg-step-container::before {
+.reg-content-wrapper::before {
   content: "";
   position: absolute;
-  inset: -6px -12px 0;
+  inset: 0;
   z-index: -1;
-  border-radius: 14px;
-  background: rgba(247, 238, 219, 0.82);
-  box-shadow: 0 0 26px 20px rgba(247, 238, 219, 0.82);
+  background: rgba(247, 238, 219, 0.88);
   pointer-events: none;
+
+  /* The slack between this wrapper and the text inside it: about 24px at the
+     sides, far more above and below. The fade lives in that slack, so the
+     band is sized per axis rather than shared. */
+  --veil-x: 34px;
+  --veil-y: 52px;
+
+  -webkit-mask-image:
+    linear-gradient(to right,
+      transparent 0,
+      rgba(0, 0, 0, 0.35) calc(var(--veil-x) * 0.4),
+      rgba(0, 0, 0, 0.78) calc(var(--veil-x) * 0.7),
+      #000 var(--veil-x),
+      #000 calc(100% - var(--veil-x)),
+      rgba(0, 0, 0, 0.78) calc(100% - var(--veil-x) * 0.7),
+      rgba(0, 0, 0, 0.35) calc(100% - var(--veil-x) * 0.4),
+      transparent 100%),
+    linear-gradient(to bottom,
+      transparent 0,
+      rgba(0, 0, 0, 0.35) calc(var(--veil-y) * 0.4),
+      rgba(0, 0, 0, 0.78) calc(var(--veil-y) * 0.7),
+      #000 var(--veil-y),
+      #000 calc(100% - var(--veil-y)),
+      rgba(0, 0, 0, 0.78) calc(100% - var(--veil-y) * 0.7),
+      rgba(0, 0, 0, 0.35) calc(100% - var(--veil-y) * 0.4),
+      transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(to right,
+      transparent 0,
+      rgba(0, 0, 0, 0.35) calc(var(--veil-x) * 0.4),
+      rgba(0, 0, 0, 0.78) calc(var(--veil-x) * 0.7),
+      #000 var(--veil-x),
+      #000 calc(100% - var(--veil-x)),
+      rgba(0, 0, 0, 0.78) calc(100% - var(--veil-x) * 0.7),
+      rgba(0, 0, 0, 0.35) calc(100% - var(--veil-x) * 0.4),
+      transparent 100%),
+    linear-gradient(to bottom,
+      transparent 0,
+      rgba(0, 0, 0, 0.35) calc(var(--veil-y) * 0.4),
+      rgba(0, 0, 0, 0.78) calc(var(--veil-y) * 0.7),
+      #000 var(--veil-y),
+      #000 calc(100% - var(--veil-y)),
+      rgba(0, 0, 0, 0.78) calc(100% - var(--veil-y) * 0.7),
+      rgba(0, 0, 0, 0.35) calc(100% - var(--veil-y) * 0.4),
+      transparent 100%);
+  mask-composite: intersect;
+}
+
+/* Without mask-composite there is no way to fade both axes at once, so fall
+   back to the softest thing a shadow can do: several passes at falling alpha
+   rather than one hard spread. */
+@supports not ((mask-composite: intersect) or (-webkit-mask-composite: source-in)) {
+  .reg-content-wrapper::before {
+    inset: 8px;
+    border-radius: 16px;
+    background: rgba(247, 238, 219, 0.82);
+    box-shadow:
+      0 0 14px 4px rgba(247, 238, 219, 0.70),
+      0 0 30px 14px rgba(247, 238, 219, 0.46),
+      0 0 52px 26px rgba(247, 238, 219, 0.24),
+      0 0 78px 40px rgba(247, 238, 219, 0.09);
+  }
 }
 
 /* The boxed steps bring their own opaque panels, so a veil behind them would
    only dull the decoration for nothing. */
-.reg-step-container:has(.reg-payment)::before,
-.reg-step-container:has(.reg-payment-done)::before {
+.reg-content-wrapper:has(.reg-payment)::before,
+.reg-content-wrapper:has(.reg-payment-done)::before {
   background: rgba(247, 238, 219, 0.55);
-  box-shadow: 0 0 22px 16px rgba(247, 238, 219, 0.55);
 }
 
 /* A label still carries a faint halo of its own, so a stray leaf behind it
