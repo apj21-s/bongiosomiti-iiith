@@ -6,22 +6,22 @@
     "top": -11.08
   },
   "prev": {
-    "left": 38.95,
-    "width": 6.76,
-    "height": 115.81,
-    "top": -12.75
+    "left": 38.74,
+    "width": 6.98,
+    "height": 116.83,
+    "top": -12.81
   },
   "play": {
-    "left": 47.4,
+    "left": 47.3,
     "width": 7.7,
     "height": 117.06,
-    "top": -11.19
+    "top": -14.49
   },
   "next": {
-    "left": 56.48,
+    "left": 56.45,
     "width": 7.26,
     "height": 120.49,
-    "top": -13.69
+    "top": -15.52
   },
   "repeat": {
     "left": 65.23,

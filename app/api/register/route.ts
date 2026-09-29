@@ -143,8 +143,15 @@ export async function POST(request: Request) {
       )
     }
     const isIiit = claimsIiit && isIiitEmail(verifiedEmail)
-    const passPrice = isFree ? 0 : isIiit ? event.price : 350
-    const subtotal = numPasses * passPrice
+    const passTypes = event.config?.pass_types || null
+    let subtotal = 0
+    if (passTypes && data.passSelections) {
+      subtotal = passTypes.reduce((sum: number, pt: any) => sum + (data.passSelections![pt.name] || 0) * pt.price, 0)
+    } else {
+      const passPrice = isFree ? 0 : isIiit ? event.price : 350
+      subtotal = numPasses * passPrice
+    }
+
     const coupon = resolveCoupon(event, data.couponCode)
     const discountAmount = coupon ? Math.min(coupon.discount, subtotal) : 0
     const amount = Math.max(0, subtotal - discountAmount)
@@ -180,28 +187,64 @@ export async function POST(request: Request) {
     const paymentStatus = isFree ? 'APPROVED' : 'PENDING'
     const status = isFree ? 'UNUSED' : 'PENDING_PAYMENT'
 
-    const ticketsData = Array.from({ length: numPasses }).map((_, i) => ({
-      token: `${registrationId}_${generatePassCode(prefix)}`,
-      event_id: event.id,
-      participant_name: data.participantName + (numPasses > 1 && i > 0 ? ` (Pass ${i + 1})` : ''),
-      college_id: data.collegeId,
-      email: data.email,
-      phone: data.phone,
-      utr: normaliseUtr(data.utr) || (nothingToPay ? 'FREE-PASS' : ''),
-      amount: amount / numPasses,
-      payment_status: paymentStatus,
-      status,
-      num_passes: 1,
-      food_pref: (data as any).vegCount !== undefined && (data as any).nonVegCount !== undefined 
-        ? (i < (data as any).vegCount ? 'Veg' : 'Non-Veg')
-        : data.foodPref,
-      receiver_upi: receiverUpi,
-      // Every pass in one booking points at the same receipt.
-      payment_proof_url: nothingToPay ? null : ((data.receiptPath as string) || null),
-      is_iiit: isIiit,
-      coupon_code: coupon ? coupon.code : null,
-      discount_amount: discountAmount / numPasses,
-    }))
+    const ticketsData: any[] = []
+    let currentTicketIndex = 0
+
+    if (passTypes && data.passSelections) {
+      for (const [passName, count] of Object.entries(data.passSelections)) {
+        if (typeof count !== 'number') continue
+        for (let j = 0; j < count; j++) {
+           const pt = passTypes.find((p: any) => p.name === passName)
+           const price = pt ? pt.price : 0
+           const passDiscount = (discountAmount > 0 && subtotal > 0) ? discountAmount * (price / subtotal) : 0
+           
+           ticketsData.push({
+              token: `${registrationId}_${generatePassCode(prefix)}`,
+              event_id: event.id,
+              participant_name: data.participantName + (numPasses > 1 ? ` (Pass ${currentTicketIndex + 1})` : ''),
+              college_id: data.collegeId,
+              email: data.email,
+              phone: data.phone,
+              utr: normaliseUtr(data.utr) || (nothingToPay ? 'FREE-PASS' : ''),
+              amount: Math.round(price - passDiscount),
+              payment_status: paymentStatus,
+              status,
+              num_passes: 1,
+              food_pref: passName,
+              receiver_upi: receiverUpi,
+              payment_proof_url: nothingToPay ? null : ((data.receiptPath as string) || null),
+              is_iiit: isIiit,
+              coupon_code: coupon ? coupon.code : null,
+              discount_amount: Math.round(passDiscount),
+           })
+           currentTicketIndex++
+        }
+      }
+    } else {
+      for (let i = 0; i < numPasses; i++) {
+        ticketsData.push({
+          token: `${registrationId}_${generatePassCode(prefix)}`,
+          event_id: event.id,
+          participant_name: data.participantName + (numPasses > 1 ? ` (Pass ${i + 1})` : ''),
+          college_id: data.collegeId,
+          email: data.email,
+          phone: data.phone,
+          utr: normaliseUtr(data.utr) || (nothingToPay ? 'FREE-PASS' : ''),
+          amount: Math.round(amount / numPasses),
+          payment_status: paymentStatus,
+          status,
+          num_passes: 1,
+          food_pref: data.vegCount !== undefined && data.nonVegCount !== undefined 
+            ? (i < data.vegCount ? 'Veg' : 'Non-Veg')
+            : data.foodPref,
+          receiver_upi: receiverUpi,
+          payment_proof_url: nothingToPay ? null : ((data.receiptPath as string) || null),
+          is_iiit: isIiit,
+          coupon_code: coupon ? coupon.code : null,
+          discount_amount: Math.round(discountAmount / numPasses),
+        })
+      }
+    }
 
     const { data: tickets, error: ticketError } = await supabase
       .from('tickets')

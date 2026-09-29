@@ -334,6 +334,7 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
           vegCount: passTypes ? undefined : (draft.numPasses === 1 ? (draft.foodPref === 'Veg' ? 1 : 0) : draft.vegCount),
           nonVegCount: passTypes ? undefined : (draft.numPasses === 1 ? (draft.foodPref === 'Non-Veg' ? 1 : 0) : draft.nonVegCount),
           isIiit: draft.isIiit === 'yes',
+          passSelections: passTypes ? draft.passSelections : undefined,
           couponCode: draft.appliedCoupon?.code || undefined,
           discountAmount: draft.appliedCoupon?.discount || 0
         }),

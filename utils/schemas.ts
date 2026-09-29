@@ -22,8 +22,11 @@ export const registerSchema = z.object({
   // Where /api/receipts stored the uploaded receipt. Its shape is checked
   // again on arrival; a client-supplied path is not filed as-is.
   receiptPath: z.string().max(200).optional(),
-  numPasses: z.number().int().min(1).max(6).optional(),
+  numPasses: z.number().int().min(1).max(20).optional(),
   foodPref: z.string().max(200).optional(),
+  passSelections: z.record(z.number().int().min(0)).optional(),
+  vegCount: z.number().int().min(0).optional(),
+  nonVegCount: z.number().int().min(0).optional(),
   isIiit: z.boolean().optional(),
   couponCode: z.string().max(40).optional(),
   // NOTE: the discount is resolved from the event's own coupon list on the
