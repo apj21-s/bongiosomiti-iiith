@@ -288,6 +288,11 @@ Supabase project that points at — check it before running anything.
 | `test_email.js` | Send a test email to verify SMTP |
 | `dummy-reset.js` | Reset the local mock store (`npm run dummy:reset`) |
 
+To start from a clean slate, prefer `node run.mjs --fresh --flush-only` (repo root)
+over `truncate_db.js`: it also clears `email_verifications` and the `receipts`
+bucket, shows the counts, and asks for the project name before deleting. See
+HOWTO §1.
+
 ---
 
 ## 9. Verifying a build

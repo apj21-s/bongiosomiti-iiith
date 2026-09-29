@@ -16,10 +16,30 @@ the expected output shown is what it actually produced.
 
 ```bash
 node --version          # needs 20.9+, developed on 24
-npm install
 cp .env.example .env.local
-npm run dev             # http://localhost:3000
+node run.mjs            # installs dependencies if needed, then http://localhost:3000
 ```
+
+`run.mjs` is the one runner (also `npm run site -- <options>`). It checks
+`.env.local` before Next starts, so a missing Supabase value is a clear message
+rather than a crash on the first request.
+
+| Command | What it does |
+|---|---|
+| `node run.mjs` | Dev server on port 3000 |
+| `node run.mjs --port 4000` | Another port |
+| `node run.mjs --prod` | `next build`, then `next start` |
+| `node run.mjs --dummy` | Local mock store instead of Supabase; no `.env.local` needed |
+| `node run.mjs --fresh` | **Deletes all registration data** first, then starts |
+| `node run.mjs --fresh --flush-only` | Deletes it and stops there |
+
+`--fresh` clears what visitors and staff create — `tickets`, `checkins`,
+`email_verifications` and every file in the `receipts` storage bucket (with
+`--dummy`, it deletes `local_db.json`). It keeps the setup: events, admin and
+manager accounts, map locations and the playlist. It prints the counts, then
+asks you to type the Supabase project name before deleting anything, because
+that project may be the one the live site uses. `--yes` skips the question for
+scripts; without a terminal and without `--yes` it refuses.
 
 Fill in `.env.local` before anything that touches the database. The minimum to
 see the public site is the three Supabase values; without them the public pages
