@@ -58,6 +58,17 @@ export async function PUT(
     const safeUpdates = { ...(updates || {}) }
     delete safeUpdates.slug
     delete safeUpdates.id
+
+    // Coupons are written by /admin/coupons alone. The editor sends the whole
+    // config it loaded, coupons included, so an editor tab opened before a
+    // coupon was added would otherwise put the old list back on save.
+    if (safeUpdates.config && typeof safeUpdates.config === 'object') {
+      const onFile = events[eventIndex]?.config?.coupons
+      safeUpdates.config = { ...safeUpdates.config }
+      if (onFile === undefined) delete safeUpdates.config.coupons
+      else safeUpdates.config.coupons = onFile
+    }
+
     updated = { ...events[eventIndex], ...safeUpdates }
     events[eventIndex] = updated
 

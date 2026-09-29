@@ -31,7 +31,7 @@ export const TIER_PERMISSIONS = {
   },
   3: {
     label: 'Super Admin',
-    sidebar: ['overview', 'registrations', 'payments', 'check-ins', 'events', 'scanner'],
+    sidebar: ['overview', 'registrations', 'payments', 'check-ins', 'events', 'coupons', 'scanner'],
     overview: ['registrations', 'checkins', 'stats'],
     canAccessRegistrations: true,
     canAccessPayments: true,

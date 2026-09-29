@@ -37,6 +37,12 @@ export type Coupon = {
   firstN?: number | null
   /** Optional ceiling on a percentage discount, in rupees. */
   maxDiscount?: number | null
+  /**
+   * Switched off from /admin/coupons without being deleted, so the code and
+   * the bookings that used it stay on record. Absent means on, which is what
+   * every coupon written before the switch existed should be.
+   */
+  active?: boolean
 }
 
 export type CouponContext = {
@@ -84,6 +90,13 @@ export function findCoupon(event: { config?: { coupons?: unknown } | null }, sub
  */
 export function valueOf(coupon: Coupon, context: CouponContext): CouponVerdict {
   const code = String(coupon.code ?? '').trim()
+
+  // Checked before the conditions: a switched-off code is off whatever the
+  // basket, and saying so is kinder than a threshold it can never meet.
+  if (coupon.active === false) {
+    return { ok: false, code, reason: `${code} is not active right now.` }
+  }
+
   const subtotal = Math.max(0, money(context.subtotal) ?? 0)
 
   const threshold = whole(coupon.minSubtotal)
@@ -176,4 +189,101 @@ export function describeCoupon(coupon: Coupon): string {
   if (firstN !== null) when.push(`first ${firstN}`)
 
   return when.length === 0 ? what : `${what} — ${when.join(' or ')}`
+}
+
+/** The characters a code may use. The same rule the admin form hints at. */
+export const COUPON_CODE_PATTERN = /^[A-Z0-9_-]{2,40}$/
+
+export type CouponValidation =
+  | { ok: true; coupon: Coupon }
+  | { ok: false; error: string }
+
+/**
+ * A coupon as the super admin submitted it, checked and put into one shape.
+ *
+ * Everything that writes a coupon goes through this, so the list on disk only
+ * ever holds coupons `valueOf` can price. The rules are the ones the request
+ * set out: a flat or percentage discount, a threshold that is 0 or more, and a
+ * first-N that is at least 1 - "the first 0 registrations" is a coupon nobody
+ * can use, and the switch is the way to say that.
+ *
+ * `others` are the codes already on the event, less the one being edited, so
+ * two coupons cannot answer to the same code.
+ */
+export function validateCoupon(input: unknown, others: readonly string[] = []): CouponValidation {
+  const raw = (input ?? {}) as Record<string, unknown>
+
+  const code = normalise(raw.code)
+  if (!code) return { ok: false, error: 'Enter a code.' }
+  if (!COUPON_CODE_PATTERN.test(code)) {
+    return { ok: false, error: 'A code is 2 to 40 characters: letters, digits, - and _ only.' }
+  }
+  if (others.map(normalise).includes(code)) {
+    return { ok: false, error: `${code} is already a coupon for this event.` }
+  }
+
+  const kind: CouponKind = raw.kind === 'percent' ? 'percent' : 'fixed'
+  if (raw.kind !== undefined && raw.kind !== 'fixed' && raw.kind !== 'percent') {
+    return { ok: false, error: 'The discount is either a flat amount or a percentage.' }
+  }
+
+  // A coupon written before `value` existed carries its amount as `discount`;
+  // reading it here is what lets such a coupon be switched off or edited.
+  const value = Number(raw.value !== undefined && raw.value !== null && raw.value !== '' ? raw.value : raw.discount)
+  if (!Number.isInteger(value) || value <= 0) {
+    return { ok: false, error: 'The discount has to be a whole number above 0.' }
+  }
+  if (kind === 'percent' && value > 100) {
+    return { ok: false, error: 'A percentage discount cannot be more than 100.' }
+  }
+
+  // Blank means "no such condition", which is not the same as 0.
+  const optional = (v: unknown) => (v === null || v === undefined || v === '' ? null : Number(v))
+
+  const minSubtotal = optional(raw.minSubtotal)
+  if (minSubtotal !== null && (!Number.isInteger(minSubtotal) || minSubtotal < 0)) {
+    return { ok: false, error: 'The basket threshold has to be a whole number, 0 or more.' }
+  }
+
+  const firstN = optional(raw.firstN)
+  if (firstN !== null && (!Number.isInteger(firstN) || firstN < 1)) {
+    return { ok: false, error: 'First N has to be a whole number, 1 or more. Switch the coupon off instead of setting 0.' }
+  }
+
+  // A cap only means something on a percentage; kept off flat coupons so the
+  // list does not carry a setting that does nothing.
+  const cap = kind === 'percent' ? optional(raw.maxDiscount) : null
+  if (cap !== null && (!Number.isInteger(cap) || cap < 1)) {
+    return { ok: false, error: 'The cap has to be a whole number of rupees, 1 or more, or left blank.' }
+  }
+
+  const coupon: Coupon = {
+    code,
+    kind,
+    value,
+    minSubtotal,
+    firstN,
+    active: raw.active !== false,
+  }
+  if (cap !== null) coupon.maxDiscount = cap
+
+  return { ok: true, coupon }
+}
+
+/**
+ * An event with its coupon list taken out, for anything a visitor can read.
+ *
+ * The form asks /api/events/<slug>/coupon about one code at a time and never
+ * needs the list. Sending it anyway - in the page payload or from the public
+ * events API - published every code, which matters most for exactly the ones
+ * that are meant to be scarce.
+ */
+export function stripCoupons<T extends { config?: unknown }>(event: T): T {
+  if (!event || typeof event !== 'object') return event
+  const config = event.config
+  if (!config || typeof config !== 'object' || !('coupons' in config)) return event
+
+  const { coupons: _hidden, ...rest } = config as Record<string, unknown>
+  void _hidden
+  return { ...event, config: rest }
 }

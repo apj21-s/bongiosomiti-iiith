@@ -35,7 +35,8 @@ type DraftState = {
   nonVegCount: number
   passSelections: Record<string, number>
   couponInput: string
-  appliedCoupon: { code: string; discount: number } | null
+  /** `subtotal` is the basket the discount was worked out on; see staleCoupon. */
+  appliedCoupon: { code: string; discount: number; subtotal: number } | null
   selectedUpiId: string
   utr: string
   receiverUpi: string
@@ -279,7 +280,8 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
     () => quote(event, { selections: draft.passSelections, numPasses: draft.numPasses }, audience).subtotal,
     [event, draft.passSelections, draft.numPasses, audience]
   )
-  const discount = draft.appliedCoupon ? draft.appliedCoupon.discount : 0
+  // A discount belongs to the basket it was priced on. Only that basket gets it.
+  const discount = draft.appliedCoupon && draft.appliedCoupon.subtotal === subtotal ? draft.appliedCoupon.discount : 0
   const total = Math.max(0, subtotal - discount)
 
   /**
@@ -291,9 +293,9 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
    * be trusted about the first. So the same function the register route uses
    * answers, and the form shows whatever it says.
    */
-  const applyCoupon = async () => {
-    const code = draft.couponInput.trim().toUpperCase()
+  const applyCoupon = () => checkCoupon(draft.couponInput.trim().toUpperCase(), false)
 
+  async function checkCoupon(code: string, recheck: boolean) {
     // An empty box is not a wrong code, and saying so sends people hunting for
     // a typo in something they never typed.
     if (!code) {
@@ -305,19 +307,27 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
     // Losing a discount silently is worse than being told the new code is bad,
     // so the refusals below say which of the two just happened.
     const hadOne = Boolean(draft.appliedCoupon)
+    // Captured now: if the basket moves while this is in flight, the answer is
+    // stored against the old figure and staleCoupon asks again.
+    const pricedOn = subtotal
 
     try {
       const res = await fetch(`/api/events/${event.slug}/coupon`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code, subtotal }),
+        body: JSON.stringify({ code, subtotal: pricedOn }),
       })
       const verdict = await res.json()
 
       if (verdict?.ok) {
-        updateDraft({ appliedCoupon: { code: verdict.code, discount: verdict.discount } })
+        updateDraft({ appliedCoupon: { code: verdict.code, discount: verdict.discount, subtotal: pricedOn } })
         // The tick is added by the renderer; putting one here too printed two.
-        setCouponMsg({ type: 'success', text: `Coupon ${verdict.code} applied (-₹${verdict.discount})` })
+        setCouponMsg({
+          type: 'success',
+          text: recheck
+            ? `Coupon ${verdict.code} re-checked for the new total (-₹${verdict.discount})`
+            : `Coupon ${verdict.code} applied (-₹${verdict.discount})`,
+        })
         return
       }
 
@@ -336,6 +346,27 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
       setCouponMsg({ type: 'error', text: 'Could not check that coupon just now. Please try again.' })
     }
   }
+
+  /*
+    The basket changed after a coupon was applied - passes added or removed,
+    or a verified address moving the price. The old discount is wrong either
+    way: a percentage no longer matches, and a threshold may no longer be met.
+    Nothing is taken off until the server has priced the new basket, so the
+    total on screen is never one the booking will not be recorded at.
+
+    Asked once the visitor is back on the payment step, where the discount is
+    shown and paid - not on every +/- while they are still choosing passes,
+    which would spend the preview endpoint's rate limit for nothing.
+  */
+  const staleCoupon = draft.stage >= 4 && draft.appliedCoupon && draft.appliedCoupon.subtotal !== subtotal
+    ? draft.appliedCoupon.code
+    : null
+  useEffect(() => {
+    if (staleCoupon) void checkCoupon(staleCoupon, true)
+    // checkCoupon is rebuilt every render; the coupon and the basket are what
+    // decide whether to ask again.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [staleCoupon, subtotal])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getEventBySlug } from '@/utils/data/events'
+import { stripCoupons } from '@/utils/coupons'
 
 export async function GET(
   request: Request,
@@ -12,5 +13,7 @@ export async function GET(
     return NextResponse.json({ error: 'Not Found' }, { status: 404 })
   }
 
-  return NextResponse.json(event)
+  // Public: the codes stay on the server. /api/events/<slug>/coupon answers
+  // for one code at a time.
+  return NextResponse.json(stripCoupons(event))
 }

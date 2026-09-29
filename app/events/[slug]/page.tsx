@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import { getEventBySlug } from '@/utils/data/events'
+import { stripCoupons } from '@/utils/coupons'
 import Image from 'next/image'
 import SiteHeader from '@/components/site-header'
 import SiteFooter from '@/components/site-footer'
@@ -113,7 +114,9 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
             </div>
 
             <div className={`${isMahalaya ? 'mahalaya-card__formPane' : 'saraswati-card__formPane'}`} id="registration-form-container">
-              <RegistrationForm event={event} />
+              {/* Without its coupon list: the form asks the server about one code
+                  at a time, and the page payload is readable by anyone. */}
+              <RegistrationForm event={stripCoupons(event)} />
             </div>
           </div>
         </section>

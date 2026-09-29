@@ -53,6 +53,7 @@ Two things that will bite you early:
 | `/admin/registrations` | Every ticket | `app/admin/registrations/` |
 | `/admin/events` | Edit events | `app/admin/events/` |
 | `/admin/managers` | Create manager profiles | `app/admin/managers/` |
+| `/admin/coupons` | Add, edit, switch off and delete coupon codes | `app/admin/coupons/` |
 | `/admin/playlist` | Homepage music | `app/admin/playlist/` |
 
 `/pass` and `/durga-puja` both contain a `should404()`-style gate near the top
