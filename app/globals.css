@@ -11975,3 +11975,125 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
     min-height: 44px;
   }
 }
+
+/* --------------------------------------------------------------------
+   Admin cards on a narrow screen
+
+   A card sitting in a grid or flex container has an automatic minimum size of
+   its own content, so a wide table inside one pushes the card itself wider
+   than the screen. .admin-layout-wrapper then clips what hangs off the edge,
+   and since nothing scrolls, the cut-off half is simply unreachable: on
+   /admin/managers the card measured 835px inside a 430px viewport, with the
+   UPI ID field and three table columns past the right edge and no way to get
+   at them. scrollWidth stays clean throughout, which is why a measurement of
+   it called these pages fine.
+
+   min-width: 0 lets the card shrink back to the screen, and the overflow-x
+   already on .table-responsive can then do its job.
+-------------------------------------------------------------------- */
+.admin-page-content .admin-section-card,
+.admin-page-content .table-responsive {
+  min-width: 0;
+}
+
+/* Fields share a row while each still has room for a label and a value, and
+   drop to one column before they would overflow. min(100%, 240px) is what
+   stops the track demanding 240px on a screen narrower than that. */
+.admin-form-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  align-items: start;
+}
+
+.admin-form-grid > .admin-form-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+@media (max-width: 767px) {
+  .admin-form-grid > .admin-form-actions .btn {
+    width: 100%;
+    min-height: 44px;
+  }
+}
+
+/* A six-column table does not become readable by being scrolled sideways on a
+   phone. Below 700px each row becomes a card and every cell carries its own
+   column heading, which it takes from data-label. */
+@media (max-width: 700px) {
+  .admin-stack-table,
+  .admin-stack-table tbody,
+  .admin-stack-table tr,
+  .admin-stack-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .admin-stack-table thead {
+    display: none;
+  }
+
+  .admin-stack-table tr {
+    background: #fff;
+    border: 1px solid rgba(110, 78, 52, 0.14);
+    border-radius: 14px;
+    padding: 6px 0;
+    margin-bottom: 12px;
+  }
+
+  .admin-stack-table td {
+    display: grid;
+    /* Wide enough for the longest heading, no wider: at 360px the value
+       column is what the Disable/Delete pair needs to stay on one line. */
+    grid-template-columns: minmax(0, 6em) minmax(0, 1fr);
+    gap: 10px;
+    align-items: baseline;
+    padding: 8px 14px;
+    border-bottom: 0;
+    /* UPI ids and e-mail addresses have no spaces to break at. */
+    overflow-wrap: anywhere;
+  }
+
+  .admin-stack-table td::before {
+    content: attr(data-label);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+  }
+
+  /* The loading and empty-state rows span the table and head nothing. */
+  .admin-stack-table td[colspan] {
+    display: block;
+    padding: 14px;
+  }
+
+  .admin-stack-table tr:hover td {
+    background: transparent;
+  }
+
+  /* Grid items stretch by default, which would pull the status pill and the
+     button pair across the whole value column. */
+  .admin-stack-table td > * {
+    justify-self: start;
+  }
+
+  /* Comfortable under a thumb: .btn-sm is 31px tall on the desktop table. */
+  .admin-stack-table .btn-sm {
+    min-height: 40px;
+    padding-inline: 14px;
+  }
+}
+
+/* A hint that belongs to one field but would otherwise set the height of the
+   whole row it sits in, leaving a hole beside its neighbours. */
+.admin-form-grid > .admin-form-note {
+  grid-column: 1 / -1;
+  margin: -4px 0 0;
+  font-size: 0.78rem;
+  color: #718096;
+}

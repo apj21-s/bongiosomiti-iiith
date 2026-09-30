@@ -103,45 +103,43 @@ export default function ManagersClient() {
           A manager signs in with these details and sees only the payments made to their UPI ID.
         </p>
 
-        <form onSubmit={handleCreate} style={{ display: 'grid', gap: '14px', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', alignItems: 'end' }}>
+        <form onSubmit={handleCreate} className="admin-form-grid">
           <div className="field">
-            <label htmlFor="mgr-username" style={{ fontWeight: 600, display: 'block', marginBottom: '6px' }}>Username *</label>
-            <input id="mgr-username" className="reg-input" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Enter Username" required
-              style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border)' }} />
+            <label htmlFor="mgr-username">Username *</label>
+            <input id="mgr-username" className="form-control" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Enter Username" required />
           </div>
 
           <div className="field">
-            <label htmlFor="mgr-password" style={{ fontWeight: 600, display: 'block', marginBottom: '6px' }}>Password *</label>
-            <input id="mgr-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter Password" required minLength={8}
-              style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border)' }} />
+            <label htmlFor="mgr-password">Password *</label>
+            <input id="mgr-password" type="password" className="form-control" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter Password" required minLength={8} />
           </div>
 
           <div className="field">
-            <label htmlFor="mgr-upi" style={{ fontWeight: 600, display: 'block', marginBottom: '6px' }}>UPI ID *</label>
-            <input id="mgr-upi" value={upiId} onChange={(e) => setUpiId(e.target.value)} placeholder="Enter UPI ID" required
-              style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border)' }} />
+            <label htmlFor="mgr-upi">UPI ID *</label>
+            <input id="mgr-upi" className="form-control" value={upiId} onChange={(e) => setUpiId(e.target.value)} placeholder="Enter UPI ID" required />
           </div>
 
           <div className="field">
-            <label htmlFor="mgr-email" style={{ fontWeight: 600, display: 'block', marginBottom: '6px' }}>Email *</label>
-            <input id="mgr-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Enter Email" required
-              style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border)' }} />
-            <p style={{ margin: '6px 0 0', fontSize: '0.78rem', color: '#718096' }}>
-              Where their digest goes: how many payments came to them, how many are verified,
-              how many are waiting, and anything reassigned to them. Sent only when there is
-              something to report.
-            </p>
+            <label htmlFor="mgr-email">Email *</label>
+            <input id="mgr-email" type="email" className="form-control" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Enter Email" required />
           </div>
+
+          <p className="admin-form-note">
+            The email is where their digest goes: how many payments came to them, how many
+            are verified, how many are waiting, and anything reassigned to them. Sent only
+            when there is something to report.
+          </p>
           
           <div className="field">
-            <label htmlFor="mgr-name" style={{ fontWeight: 600, display: 'block', marginBottom: '6px' }}>Display name</label>
-            <input id="mgr-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter Name"
-              style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border)' }} />
+            <label htmlFor="mgr-name">Display name</label>
+            <input id="mgr-name" className="form-control" value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter Name" />
           </div>
 
-          <button className="btn btn-primary" type="submit" disabled={saving} style={{ height: '42px' }}>
-            {saving ? 'Creating…' : 'Create profile'}
-          </button>
+          <div className="admin-form-actions">
+            <button className="btn btn-primary" type="submit" disabled={saving}>
+              {saving ? 'Creating…' : 'Create profile'}
+            </button>
+          </div>
         </form>
 
         {error && <div className="form-status form-status--error" style={{ marginTop: '14px', display: 'block' }}>{error}</div>}
@@ -151,7 +149,7 @@ export default function ManagersClient() {
       <section className="admin-section-card" style={{ marginTop: 0 }}>
         <h3 style={{ marginTop: 0 }}>Manager profiles</h3>
         <div className="table-responsive">
-          <table className="data-table">
+          <table className="data-table admin-stack-table">
             <thead>
               <tr>
                 <th>Username</th><th>Name</th><th>UPI ID</th><th>Status</th><th>Created</th><th>Actions</th>
@@ -164,16 +162,16 @@ export default function ManagersClient() {
               )}
               {!loading && managers.map((manager) => (
                 <tr key={manager.id}>
-                  <td><strong>{manager.username}</strong></td>
-                  <td>{manager.name || '—'}</td>
-                  <td><code>{manager.upiId}</code></td>
-                  <td>
+                  <td data-label="Username"><strong>{manager.username}</strong></td>
+                  <td data-label="Name">{manager.name || '—'}</td>
+                  <td data-label="UPI ID"><code>{manager.upiId}</code></td>
+                  <td data-label="Status">
                     <span className={`badge ${manager.isActive ? '' : 'badge--error'}`}>
                       {manager.isActive ? 'ACTIVE' : 'DISABLED'}
                     </span>
                   </td>
-                  <td>{manager.createdAt ? new Date(manager.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}</td>
-                  <td>
+                  <td data-label="Created">{manager.createdAt ? new Date(manager.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}</td>
+                  <td data-label="Actions">
                     <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                       <button type="button" className="btn btn-sm btn-secondary" onClick={() => toggleActive(manager)}>
                         {manager.isActive ? 'Disable' : 'Enable'}
