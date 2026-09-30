@@ -1224,6 +1224,11 @@ function PaymentCompletedStep({ event, prevStage, handleSubmit, draft, updateDra
   const latestDraft = useRef<DraftState>(draft)
   useEffect(() => { latestDraft.current = draft }, [draft])
 
+  // The payee as it was before a receipt's scan replaced it - chosen by the
+  // visitor, or preselected from the payment screen - so taking the receipt
+  // away (or swapping it for another) can put it back.
+  const payeeBeforeReceipt = useRef('')
+
   const receivers: string[] = (allowedUpiIds && allowedUpiIds.length > 0)
     ? allowedUpiIds
     : (event?.config?.upi_ids || (event?.config?.upi_id ? [event.config.upi_id] : []))
@@ -1256,12 +1261,33 @@ function PaymentCompletedStep({ event, prevStage, handleSubmit, draft, updateDra
     if (chosen) updateDraft({ receiverUpi: chosen, receiverUpiFromOcr: false })
   }, [receivers, draft.selectedUpiId, draft.receiverUpi, updateDraft])
 
+  /**
+   * The payee without any receipt's say in it: the one held before a scan
+   * replaced it, else the id selected on the payment screen, else the first
+   * one that screen showed. '' only when none of them is an id we collect at.
+   */
+  function payeeWithoutReceipt(): string {
+    const allowed = receivers.map((id: string) => normaliseUpi(id))
+    for (const id of [payeeBeforeReceipt.current, draft.selectedUpiId, receivers[0]]) {
+      const candidate = normaliseUpi(id || '')
+      if (candidate && allowed.includes(candidate)) return candidate
+    }
+    return ''
+  }
+
   async function handleReceipt(file: File) {
+    // A payee the previous receipt chose is not this receipt's to keep: it goes
+    // back to what it was before any scan, and this scan starts from there.
+    // One the visitor chose (or never changed) is remembered as that baseline.
+    const before = latestDraft.current
+    if (!before.receiverUpiFromOcr) payeeBeforeReceipt.current = before.receiverUpi
+    const startingPayee = before.receiverUpiFromOcr ? payeeWithoutReceipt() : before.receiverUpi
+
     // The payee is left as it is while the receipt is stored and read, and
     // only replaced once the scan has something to say (below). Clearing it
     // here dropped the dropdown to "Select the UPI ID you paid" for the whole
     // scan - and left it there for good if the upload then failed.
-    updateDraft({ screenshot: file.name, receiptPath: '', utr: '', utrFromOcr: false, receiverUpiFromOcr: false })
+    updateDraft({ screenshot: file.name, receiptPath: '', utr: '', utrFromOcr: false, receiverUpi: startingPayee, receiverUpiFromOcr: false })
     setScreenshotPreview(URL.createObjectURL(file))
     setSeen({ utr: null, upi: null })
 
@@ -1363,7 +1389,12 @@ function PaymentCompletedStep({ event, prevStage, handleSubmit, draft, updateDra
         <label className="reg-verify-label">Payment Receipt *</label>
         <div className="reg-upload-area">
           <input type="file" id="receipt-upload" className="reg-file-input" accept="image/*" onChange={e => {
-            if (e.target.files?.[0]) handleReceipt(e.target.files[0])
+            const file = e.target.files?.[0]
+            // Emptied straight away, or choosing the same screenshot again -
+            // to retry a failed upload, or after Remove - changes nothing and
+            // the browser never says it was chosen.
+            e.target.value = ''
+            if (file) handleReceipt(file)
           }} />
           {!screenshotPreview ? (
             <label htmlFor="receipt-upload" className="reg-upload-label">
@@ -1376,9 +1407,12 @@ function PaymentCompletedStep({ event, prevStage, handleSubmit, draft, updateDra
                <div className="reg-upload-actions">
                   <label htmlFor="receipt-upload" className="reg-btn-change">Change</label>
                   {/* Removing the receipt has to undo everything the receipt
-                      produced. Clearing only `screenshot` left receiptPath,
-                      utr and receiverUpi behind, and the gate reads those - so
-                      the step stayed unlocked with no receipt attached to it. */}
+                      produced. Clearing only `screenshot` left receiptPath
+                      and utr behind, and the gate reads those - so the step
+                      stayed unlocked with no receipt attached to it. The
+                      payee is undone only if the receipt chose it: it goes
+                      back to the id held before the scan (or the payment
+                      screen's), never to "Select the UPI ID you paid". */}
                   <button
                     type="button"
                     className="reg-btn-remove"
@@ -1387,7 +1421,9 @@ function PaymentCompletedStep({ event, prevStage, handleSubmit, draft, updateDra
                         screenshot: null,
                         receiptPath: '',
                         utr: '',
-                        receiverUpi: '',
+                        receiverUpi: draft.receiverUpiFromOcr || !draft.receiverUpi
+                          ? payeeWithoutReceipt()
+                          : draft.receiverUpi,
                         utrFromOcr: false,
                         receiverUpiFromOcr: false,
                       })
