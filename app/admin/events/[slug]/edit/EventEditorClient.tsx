@@ -10,6 +10,23 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { notifyError, notifySuccess } from '@/components/site-notifications'
 
+/** What a plate costs a guest, whichever way its price is configured. */
+function guestRateOf(passType: PassType): number {
+  const perAudience = passType.prices?.guest
+  if (typeof perAudience === 'number' && Number.isFinite(perAudience)) return perAudience
+  return typeof passType.price === 'number' && Number.isFinite(passType.price) ? passType.price : 0
+}
+
+/**
+ * The event's headline price: the first plate's guest rate, or the dearest
+ * plate when that one is free. Zero only when every plate is.
+ */
+function legacyPrice(passTypes: PassType[]): number {
+  const rates = passTypes.map(guestRateOf)
+  if (rates.length === 0) return 0
+  return rates[0] || Math.max(...rates)
+}
+
 export default function EventEditorClient({ event }: { event: any }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -66,8 +83,14 @@ export default function EventEditorClient({ event }: { event: any }) {
         venue,
         description,
         capacity: Number(capacity),
-        // price is legacy, keep it synced to the first pass type for backwards compatibility
-        price: passTypes.length > 0 ? passTypes[0].price : 0,
+        // `price` is legacy - a headline figure a few older screens still
+        // read. It has to be mirrored from the pass types, but it cannot be
+        // allowed to fall to 0 while a plate still costs something: quote()
+        // reads price === 0 as "this event is free" and stops charging for
+        // anything. Pass types that carry per-audience prices have no `price`
+        // of their own, so reading passTypes[0].price alone now yields
+        // undefined - or, worse, a legitimate 0 on a free first plate.
+        price: legacyPrice(passTypes),
         config: {
           ...event.config,
           pass_types: passTypes,

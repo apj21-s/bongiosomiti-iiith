@@ -1,9 +1,19 @@
-import QRCode from 'qrcode'
-import path from 'path'
-import { mailIsConfigured, sendMail } from './mail-transport'
-
-function createEmailLayout(contentHtml: string, title: string) {
-  return `<!DOCTYPE html>
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.plateOrdinals = plateOrdinals;
+exports.sendQRPassEmail = sendQRPassEmail;
+exports.sendRegistrationPendingEmail = sendRegistrationPendingEmail;
+exports.sendPaymentRejectedEmail = sendPaymentRejectedEmail;
+exports.sendVerificationCodeEmail = sendVerificationCodeEmail;
+exports.sendManagerDigestEmail = sendManagerDigestEmail;
+const qrcode_1 = __importDefault(require("qrcode"));
+const path_1 = __importDefault(require("path"));
+const mail_transport_1 = require("./mail-transport");
+function createEmailLayout(contentHtml, title) {
+    return `<!DOCTYPE html>
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
   <meta charset="utf-8">
@@ -94,15 +104,13 @@ function createEmailLayout(contentHtml: string, title: string) {
 </body>
 </html>`;
 }
-
 function getLogoAttachment() {
-  return {
-    filename: 'mahalaya-logo.png',
-    path: path.join(process.cwd(), 'public', 'assets', 'logo.png'),
-    cid: 'mahalaya-logo'
-  }
+    return {
+        filename: 'mahalaya-logo.png',
+        path: path_1.default.join(process.cwd(), 'public', 'assets', 'logo.png'),
+        cid: 'mahalaya-logo'
+    };
 }
-
 /**
  * "Plate 2 of 3" for each pass, where its plate was booked more than once.
  *
@@ -115,23 +123,24 @@ function getLogoAttachment() {
  * Order follows the tokens, so a pass keeps the same number every time the
  * mail is sent as long as the caller passes the tickets in a stable order.
  */
-export function plateOrdinals(labels: readonly string[]): string[] {
-  const total = new Map<string, number>()
-  for (const label of labels) {
-    if (label) total.set(label, (total.get(label) ?? 0) + 1)
-  }
-
-  const seen = new Map<string, number>()
-  return labels.map((label) => {
-    if (!label) return ''
-    const of = total.get(label) ?? 0
-    if (of < 2) return ''
-    const n = (seen.get(label) ?? 0) + 1
-    seen.set(label, n)
-    return `Plate ${n} of ${of}`
-  })
+function plateOrdinals(labels) {
+    const total = new Map();
+    for (const label of labels) {
+        if (label)
+            total.set(label, (total.get(label) ?? 0) + 1);
+    }
+    const seen = new Map();
+    return labels.map((label) => {
+        if (!label)
+            return '';
+        const of = total.get(label) ?? 0;
+        if (of < 2)
+            return '';
+        const n = (seen.get(label) ?? 0) + 1;
+        seen.set(label, n);
+        return `Plate ${n} of ${of}`;
+    });
 }
-
 /**
  * The QR passes, one per plate.
  *
@@ -140,52 +149,46 @@ export function plateOrdinals(labels: readonly string[]): string[] {
  * for is one the person on the counter has to ask about, and the holder has
  * to remember. Optional, so a caller with nothing to say still works.
  */
-export async function sendQRPassEmail(email: string, participantName: string, eventName: string, tokens: string | string[], labels?: string[]) {
-  if (!mailIsConfigured()) {
-    console.warn('SMTP credentials missing. Skipping email send to:', email)
-    return
-  }
-
-  const tokenArray = Array.isArray(tokens) ? tokens : [tokens]
-  // Index by index with the tokens: a caller that knows fewer labels than it
-  // has tokens leaves the rest unlabelled rather than shifting them all up.
-  const labelArray = tokenArray.map((_, i) => (labels && labels[i]) || '')
-  const ordinals = plateOrdinals(labelArray)
-  const attachments: any[] = [getLogoAttachment()]
-  let qrImagesHtml = ''
-
-  for (let i = 0; i < tokenArray.length; i++) {
-    const t = tokenArray[i]
-    const passCode = t.includes('_') ? t.split('_')[1] : t
-    const qrDataUrl = await QRCode.toDataURL(t, {
-      width: 350,
-      margin: 2,
-      color: { dark: '#281208', light: '#ffffff' }
-    })
-    const base64Data = qrDataUrl.split(',')[1]
-    const cid = `qr-code-${i}`
-
-    // A downloaded attachment keeps its name, so the name should say which
-    // plate it is rather than leave four files called qr-pass-N.png.
-    const slug = labelArray[i]
-      ? '-' + labelArray[i].toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
-      : ''
-
-    attachments.push({
-      filename: `qr-pass-${i + 1}${slug}.png`,
-      content: base64Data,
-      encoding: 'base64',
-      cid: cid,
-      path: '' // required by nodemailer types if content is given
-    })
-
-    const passNumber = (i + 1).toString().padStart(2, '0')
-    // Which plate this particular QR is good for, and which of them it is.
-    const mealLabel = labelArray[i]
-    const plateOrdinal = ordinals[i]
-    const altText = [`QR Pass ${passNumber}`, mealLabel, plateOrdinal].filter(Boolean).join(' - ')
-
-    qrImagesHtml += `
+async function sendQRPassEmail(email, participantName, eventName, tokens, labels) {
+    if (!(0, mail_transport_1.mailIsConfigured)()) {
+        console.warn('SMTP credentials missing. Skipping email send to:', email);
+        return;
+    }
+    const tokenArray = Array.isArray(tokens) ? tokens : [tokens];
+    // Index by index with the tokens: a caller that knows fewer labels than it
+    // has tokens leaves the rest unlabelled rather than shifting them all up.
+    const labelArray = tokenArray.map((_, i) => (labels && labels[i]) || '');
+    const ordinals = plateOrdinals(labelArray);
+    const attachments = [getLogoAttachment()];
+    let qrImagesHtml = '';
+    for (let i = 0; i < tokenArray.length; i++) {
+        const t = tokenArray[i];
+        const passCode = t.includes('_') ? t.split('_')[1] : t;
+        const qrDataUrl = await qrcode_1.default.toDataURL(t, {
+            width: 350,
+            margin: 2,
+            color: { dark: '#281208', light: '#ffffff' }
+        });
+        const base64Data = qrDataUrl.split(',')[1];
+        const cid = `qr-code-${i}`;
+        // A downloaded attachment keeps its name, so the name should say which
+        // plate it is rather than leave four files called qr-pass-N.png.
+        const slug = labelArray[i]
+            ? '-' + labelArray[i].toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+            : '';
+        attachments.push({
+            filename: `qr-pass-${i + 1}${slug}.png`,
+            content: base64Data,
+            encoding: 'base64',
+            cid: cid,
+            path: '' // required by nodemailer types if content is given
+        });
+        const passNumber = (i + 1).toString().padStart(2, '0');
+        // Which plate this particular QR is good for, and which of them it is.
+        const mealLabel = labelArray[i];
+        const plateOrdinal = ordinals[i];
+        const altText = [`QR Pass ${passNumber}`, mealLabel, plateOrdinal].filter(Boolean).join(' - ');
+        qrImagesHtml += `
       <tr>
         <td align="center" style="padding-bottom: 16px;">
           <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 320px; border: 1px solid #C5A66B; border-radius: 8px;" class="bg-panel border-gold">
@@ -208,10 +211,9 @@ export async function sendQRPassEmail(email: string, participantName: string, ev
           </table>
         </td>
       </tr>
-    `
-  }
-
-  const contentHtml = `
+    `;
+    }
+    const contentHtml = `
     <tr>
       <td align="center" style="padding-bottom: 12px; font-family: Georgia, 'Times New Roman', serif; font-size: 24px; font-weight: bold; color: #54251F; text-align: center;" class="text-primary">
         Your Digital Pass Is Ready
@@ -238,65 +240,54 @@ export async function sendQRPassEmail(email: string, participantName: string, ev
         For any queries, <a href="mailto:bangiya.samiti.iiith@gmail.com" style="color: #8C3026; text-decoration: underline; font-weight: bold;" class="text-otp">reach out to us</a>.
       </td>
     </tr>
-  `
-
-  const html = createEmailLayout(contentHtml, 'Your Digital Pass is Ready')
-
-  let result
-  try {
-    result = await sendMail({
-      fromName: 'bangiya.samiti.iiith',
-      to: email,
-      subject: `Your Digital Pass for ${eventName}`,
-      text: [
-        `Hello ${participantName},`,
-        ``,
-        `Your pass for ${eventName} is confirmed.`,
-        ``,
-        tokenArray.length > 1 ? `Your ${tokenArray.length} passes:` : `Pass code:`,
-        ...tokenArray.map((t, i) => {
-          const code = t.includes('_') ? t.split('_')[1] : t
-          const said = [labelArray[i], ordinals[i]].filter(Boolean).join(' - ')
-          return tokenArray.length > 1
-            ? `  ${i + 1}. ${code}${said ? `  (${said})` : ''}`
-            : `${code}${said ? `  (${said})` : ''}`
-        }),
-        ``,
-        `The QR code is attached to this email. Show it at the gate, either on`,
-        `your phone or printed. If the image does not load, the pass code above`,
-        `is enough for the gate to find your registration.`,
-        ``,
-        `Bangiya Samiti, IIIT Hyderabad`,
-      ].join('\n'),
-      html,
-      attachments: attachments as any
-    });
-  } catch (error: any) {
-    console.error(`[email] Transporter error: ${error.message}`)
-    throw error;
-  }
-
-  if (!result.ok) {
-    console.error(`[email] Could not send a pass to ${email}: ${result.errors.join('; ')}`)
-    throw new Error('The pass could not be emailed.')
-  }
+  `;
+    const html = createEmailLayout(contentHtml, 'Your Digital Pass is Ready');
+    let result;
+    try {
+        result = await (0, mail_transport_1.sendMail)({
+            fromName: 'bangiya.samiti.iiith',
+            to: email,
+            subject: `Your Digital Pass for ${eventName}`,
+            text: [
+                `Hello ${participantName},`,
+                ``,
+                `Your pass for ${eventName} is confirmed.`,
+                ``,
+                tokenArray.length > 1 ? `Your ${tokenArray.length} passes:` : `Pass code:`,
+                ...tokenArray.map((t, i) => {
+                    const code = t.includes('_') ? t.split('_')[1] : t;
+                    const said = [labelArray[i], ordinals[i]].filter(Boolean).join(' - ');
+                    return tokenArray.length > 1
+                        ? `  ${i + 1}. ${code}${said ? `  (${said})` : ''}`
+                        : `${code}${said ? `  (${said})` : ''}`;
+                }),
+                ``,
+                `The QR code is attached to this email. Show it at the gate, either on`,
+                `your phone or printed. If the image does not load, the pass code above`,
+                `is enough for the gate to find your registration.`,
+                ``,
+                `Bangiya Samiti, IIIT Hyderabad`,
+            ].join('\n'),
+            html,
+            attachments: attachments
+        });
+    }
+    catch (error) {
+        console.error(`[email] Transporter error: ${error.message}`);
+        throw error;
+    }
+    if (!result.ok) {
+        console.error(`[email] Could not send a pass to ${email}: ${result.errors.join('; ')}`);
+        throw new Error('The pass could not be emailed.');
+    }
 }
-
-export async function sendRegistrationPendingEmail(
-  email: string,
-  participantName: string,
-  eventName: string,
-  utr: string,
-  referenceNo: string,
-) {
-  if (!mailIsConfigured()) {
-    console.warn('SMTP credentials missing. Skipping pending email send to:', email)
-    return
-  }
-
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://bangiyasamiti-iiith.vercel.app';
-
-  const contentHtml = `
+async function sendRegistrationPendingEmail(email, participantName, eventName, utr, referenceNo) {
+    if (!(0, mail_transport_1.mailIsConfigured)()) {
+        console.warn('SMTP credentials missing. Skipping pending email send to:', email);
+        return;
+    }
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://bangiyasamiti-iiith.vercel.app';
+    const contentHtml = `
     <tr>
       <td align="center" style="padding-bottom: 12px; font-family: Georgia, 'Times New Roman', serif; font-size: 24px; font-weight: bold; color: #54251F; text-align: center;" class="text-primary">
         Registration Received &mdash; Payment Under Verification
@@ -345,51 +336,41 @@ export async function sendRegistrationPendingEmail(
         You can track your payment status on <a href="https://bangiyasamiti-iiith.vercel.app/" style="color: #8C3026; text-decoration: underline; font-weight: bold;" class="text-otp">our portal</a>.
       </td>
     </tr>
-  `
-
-  const html = createEmailLayout(contentHtml, 'Mahalaya Registration')
-  const attachments = [getLogoAttachment()]
-
-  const result = await sendMail({
-    fromName: 'bangiya.samiti.iiith',
-    to: email,
-    subject: `Registration Pending Verification for ${eventName}`,
-    text: [
-      `Hello ${participantName},`,
-      ``,
-      `We have your registration for ${eventName} and are checking the payment.`,
-      ``,
-      `Reference number: ${referenceNo}`,
-      utr ? `Transaction (UTR): ${utr}` : ``,
-      ``,
-      `Your pass will be emailed as soon as a volunteer has confirmed the`,
-      `payment. Nothing further is needed from you.`,
-      ``,
-      `Bangiya Samiti, IIIT Hyderabad`,
-    ].filter((line, i, all) => !(line === '' && all[i - 1] === '')).join('\n'),
-    html,
-    attachments
-  })
-
-  if (!result.ok) {
-    console.error(`[email] Could not send the pending notice to ${email}: ${result.errors.join('; ')}`)
-    throw new Error('The registration notice could not be emailed.')
-  }
+  `;
+    const html = createEmailLayout(contentHtml, 'Mahalaya Registration');
+    const attachments = [getLogoAttachment()];
+    const result = await (0, mail_transport_1.sendMail)({
+        fromName: 'bangiya.samiti.iiith',
+        to: email,
+        subject: `Registration Pending Verification for ${eventName}`,
+        text: [
+            `Hello ${participantName},`,
+            ``,
+            `We have your registration for ${eventName} and are checking the payment.`,
+            ``,
+            `Reference number: ${referenceNo}`,
+            utr ? `Transaction (UTR): ${utr}` : ``,
+            ``,
+            `Your pass will be emailed as soon as a volunteer has confirmed the`,
+            `payment. Nothing further is needed from you.`,
+            ``,
+            `Bangiya Samiti, IIIT Hyderabad`,
+        ].filter((line, i, all) => !(line === '' && all[i - 1] === '')).join('\n'),
+        html,
+        attachments
+    });
+    if (!result.ok) {
+        console.error(`[email] Could not send the pending notice to ${email}: ${result.errors.join('; ')}`);
+        throw new Error('The registration notice could not be emailed.');
+    }
 }
-
-export async function sendPaymentRejectedEmail(
-  email: string,
-  participantName: string,
-  eventName: string,
-) {
-  if (!mailIsConfigured()) {
-    console.warn('SMTP credentials missing. Skipping rejection email send to:', email)
-    return
-  }
-
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://bangiyasamiti-iiith.vercel.app';
-
-  const contentHtml = `
+async function sendPaymentRejectedEmail(email, participantName, eventName) {
+    if (!(0, mail_transport_1.mailIsConfigured)()) {
+        console.warn('SMTP credentials missing. Skipping rejection email send to:', email);
+        return;
+    }
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://bangiyasamiti-iiith.vercel.app';
+    const contentHtml = `
     <tr>
       <td align="center" style="padding-bottom: 12px; font-family: Georgia, 'Times New Roman', serif; font-size: 24px; font-weight: bold; color: #54251F; text-align: center;" class="text-primary">
         Payment Verification Unsuccessful
@@ -416,49 +397,40 @@ export async function sendPaymentRejectedEmail(
         You can also check your status on <a href="https://bangiyasamiti-iiith.vercel.app/" style="color: #8C3026; text-decoration: underline; font-weight: bold;" class="text-otp">our portal</a>.
       </td>
     </tr>
-  `
-
-  const html = createEmailLayout(contentHtml, 'Payment Rejected')
-  const attachments = [getLogoAttachment()]
-
-  const result = await sendMail({
-    fromName: 'bangiya.samiti.iiith',
-    to: email,
-    subject: `Action Required: Payment Verification Failed for ${eventName}`,
-    text: [
-      `Hello ${participantName},`,
-      ``,
-      `We could not verify the payment for your ${eventName} registration, so`,
-      `no pass has been issued.`,
-      ``,
-      `This is usually a transaction id that does not match the receipt, or a`,
-      `payment made to the wrong UPI id. If you believe the payment went`,
-      `through, reply to this email with the transaction id and we will look`,
-      `again.`,
-      ``,
-      `Bangiya Samiti, IIIT Hyderabad`,
-    ].join('\n'),
-    html,
-    attachments
-  })
-
-  if (!result.ok) {
-    console.error(`[email] Could not send the rejection notice to ${email}: ${result.errors.join('; ')}`)
-    throw new Error('The rejection notice could not be emailed.')
-  }
+  `;
+    const html = createEmailLayout(contentHtml, 'Payment Rejected');
+    const attachments = [getLogoAttachment()];
+    const result = await (0, mail_transport_1.sendMail)({
+        fromName: 'bangiya.samiti.iiith',
+        to: email,
+        subject: `Action Required: Payment Verification Failed for ${eventName}`,
+        text: [
+            `Hello ${participantName},`,
+            ``,
+            `We could not verify the payment for your ${eventName} registration, so`,
+            `no pass has been issued.`,
+            ``,
+            `This is usually a transaction id that does not match the receipt, or a`,
+            `payment made to the wrong UPI id. If you believe the payment went`,
+            `through, reply to this email with the transaction id and we will look`,
+            `again.`,
+            ``,
+            `Bangiya Samiti, IIIT Hyderabad`,
+        ].join('\n'),
+        html,
+        attachments
+    });
+    if (!result.ok) {
+        console.error(`[email] Could not send the rejection notice to ${email}: ${result.errors.join('; ')}`);
+        throw new Error('The rejection notice could not be emailed.');
+    }
 }
-
-export async function sendVerificationCodeEmail(
-  email: string,
-  code: string,
-  minutesValid: number,
-): Promise<{ ok: true } | { ok: false; reason: string }> {
-  if (!mailIsConfigured()) {
-    console.error('[verify] SMTP credentials missing; cannot send a verification code to:', email)
-    return { ok: false, reason: 'mail-not-configured' }
-  }
-
-  const contentHtml = `
+async function sendVerificationCodeEmail(email, code, minutesValid) {
+    if (!(0, mail_transport_1.mailIsConfigured)()) {
+        console.error('[verify] SMTP credentials missing; cannot send a verification code to:', email);
+        return { ok: false, reason: 'mail-not-configured' };
+    }
+    const contentHtml = `
     <tr>
       <td align="center" style="padding-bottom: 12px; font-family: Georgia, 'Times New Roman', serif; font-size: 24px; font-weight: bold; color: #54251F; text-align: center;" class="text-primary">
         Confirm your email
@@ -494,54 +466,42 @@ export async function sendVerificationCodeEmail(
         mistyped their address, and nothing has been created in your name.
       </td>
     </tr>
-  `
-
-  const html = createEmailLayout(contentHtml, 'Your verification code')
-  const attachments = [getLogoAttachment()]
-
-  let result
-  try {
-    result = await sendMail({
-      fromName: 'bangiya.samiti.iiith',
-      to: email,
-      subject: `${code} is your Bangiya Samiti verification code`,
-      text: `Your verification code is ${code}. It is good for ${minutesValid} minutes.`,
-      html,
-      attachments
-    })
-  } catch (e) {
-    console.error('[verify] Could not send a verification code:', e instanceof Error ? e.message : e)
-    return { ok: false, reason: 'send-failed' }
-  }
-
-  if (!result.ok) {
-    console.error('[verify] Could not send a verification code:', result.errors.join('; '))
-    return { ok: false, reason: 'send-failed' }
-  }
-
-  return { ok: true }
+  `;
+    const html = createEmailLayout(contentHtml, 'Your verification code');
+    const attachments = [getLogoAttachment()];
+    let result;
+    try {
+        result = await (0, mail_transport_1.sendMail)({
+            fromName: 'bangiya.samiti.iiith',
+            to: email,
+            subject: `${code} is your Bangiya Samiti verification code`,
+            text: `Your verification code is ${code}. It is good for ${minutesValid} minutes.`,
+            html,
+            attachments
+        });
+    }
+    catch (e) {
+        console.error('[verify] Could not send a verification code:', e instanceof Error ? e.message : e);
+        return { ok: false, reason: 'send-failed' };
+    }
+    if (!result.ok) {
+        console.error('[verify] Could not send a verification code:', result.errors.join('; '));
+        return { ok: false, reason: 'send-failed' };
+    }
+    return { ok: true };
 }
-
-export async function sendManagerDigestEmail(
-  email: string,
-  managerName: string,
-  upiId: string,
-  counts: { total: number; verified: number; pending: number; rejected: number; reallocated: number },
-  subject: string,
-): Promise<{ ok: boolean; reason?: string }> {
-  if (!mailIsConfigured()) {
-    console.warn('[digest] No SMTP account configured; skipping digest to:', email)
-    return { ok: false, reason: 'mail-not-configured' }
-  }
-
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://bangiyasamiti-iiith.vercel.app'
-  const row = (label: string, value: number, accent?: string) => `
+async function sendManagerDigestEmail(email, managerName, upiId, counts, subject) {
+    if (!(0, mail_transport_1.mailIsConfigured)()) {
+        console.warn('[digest] No SMTP account configured; skipping digest to:', email);
+        return { ok: false, reason: 'mail-not-configured' };
+    }
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://bangiyasamiti-iiith.vercel.app';
+    const row = (label, value, accent) => `
     <tr>
       <td style="padding: 7px 0; font-family: Georgia, 'Times New Roman', serif; font-size: 14px; color: #54251F;" class="text-primary">${label}</td>
       <td style="padding: 7px 0; font-family: Georgia, 'Times New Roman', serif; font-size: 16px; font-weight: bold; text-align: right; color: ${accent || '#54251F'};">${value}</td>
-    </tr>`
-
-  const contentHtml = `
+    </tr>`;
+    const contentHtml = `
     <tr>
       <td align="center" style="padding-bottom: 12px; font-family: Georgia, 'Times New Roman', serif; font-size: 24px; font-weight: bold; color: #54251F; text-align: center;" class="text-primary">
         Your payments
@@ -580,33 +540,30 @@ export async function sendManagerDigestEmail(
         ${counts.pending > 0 ? `<a href="${appUrl}/admin/payments" style="color: #8C3026; text-decoration: underline; font-weight: bold;" class="text-otp">Verify them now</a>` : `Nothing is waiting on you. Thank you.`}
       </td>
     </tr>
-  `
-
-  const html = createEmailLayout(contentHtml, 'Your payments')
-  const attachments = [getLogoAttachment()]
-
-  const text = [
-    `Hello ${managerName},`,
-    ``,
-    `Payments collected at ${upiId}:`,
-    ``,
-    `  In total:        ${counts.total}`,
-    `  Verified:        ${counts.verified}`,
-    `  Still to verify: ${counts.pending}`,
-    counts.rejected > 0 ? `  Rejected:        ${counts.rejected}` : '',
-    counts.reallocated > 0
-      ? `\n${counts.reallocated} payment(s) were assigned to you by an administrator.`
-      : '',
-    ``,
-    counts.pending > 0 ? `Verify them at ${appUrl}/admin/payments` : 'Nothing is waiting on you.',
-    ``,
-    `Bangiya Samiti, IIIT Hyderabad`,
-  ].filter((l) => l !== '').join('\n')
-
-  const result = await sendMail({ fromName: 'bangiya.samiti.iiith', to: email, subject, text, html, attachments })
-  if (!result.ok) {
-    console.error(`[digest] Could not send to ${email}: ${result.errors.join('; ')}`)
-    return { ok: false, reason: 'send-failed' }
-  }
-  return { ok: true }
+  `;
+    const html = createEmailLayout(contentHtml, 'Your payments');
+    const attachments = [getLogoAttachment()];
+    const text = [
+        `Hello ${managerName},`,
+        ``,
+        `Payments collected at ${upiId}:`,
+        ``,
+        `  In total:        ${counts.total}`,
+        `  Verified:        ${counts.verified}`,
+        `  Still to verify: ${counts.pending}`,
+        counts.rejected > 0 ? `  Rejected:        ${counts.rejected}` : '',
+        counts.reallocated > 0
+            ? `\n${counts.reallocated} payment(s) were assigned to you by an administrator.`
+            : '',
+        ``,
+        counts.pending > 0 ? `Verify them at ${appUrl}/admin/payments` : 'Nothing is waiting on you.',
+        ``,
+        `Bangiya Samiti, IIIT Hyderabad`,
+    ].filter((l) => l !== '').join('\n');
+    const result = await (0, mail_transport_1.sendMail)({ fromName: 'bangiya.samiti.iiith', to: email, subject, text, html, attachments });
+    if (!result.ok) {
+        console.error(`[digest] Could not send to ${email}: ${result.errors.join('; ')}`);
+        return { ok: false, reason: 'send-failed' };
+    }
+    return { ok: true };
 }

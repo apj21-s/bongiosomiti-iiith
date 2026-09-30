@@ -75,8 +75,13 @@ export async function POST(request: Request) {
     // Pass found, dispatch email
     const event = getEventById(primaryTicket.event_id)
     
-    const tokens = allApprovedTickets.map((t: any) => t.token)
-    await sendQRPassEmail(primaryTicket.email, primaryTicket.participant_name, event?.name || 'Utsav Event', tokens)
+    // Sorted by token so the plate numbers in the mail are the same ones a
+    // later resend will print. None of these queries order, and the first
+    // mail, the approval and the resend all number from this list.
+    const ordered = [...allApprovedTickets].sort((a: any, b: any) => String(a.token).localeCompare(String(b.token)))
+    const tokens = ordered.map((t: any) => t.token)
+    const labels = ordered.map((t: any) => t.food_pref || '')
+    await sendQRPassEmail(primaryTicket.email, primaryTicket.participant_name, event?.name || 'Utsav Event', tokens, labels)
 
     // Hide part of the email for privacy in the response
     const emailParts = String(primaryTicket.email || '').split('@')

@@ -49,12 +49,19 @@ export async function POST(
     return NextResponse.json({ error: error?.message || 'Failed to update tickets' }, { status: 500 })
   }
 
-  const tokens = updatedTickets.map((t: any) => t.token)
-  const primaryTicket = updatedTickets[0]
+  // Sorted by token so the plate numbers in this mail match the ones a
+  // later resend prints; the query does not order.
+  const ordered = [...updatedTickets].sort((a: any, b: any) => String(a.token).localeCompare(String(b.token)))
+  const tokens = ordered.map((t: any) => t.token)
+  // Each QR says which plate it admits to, which the mail could not say
+  // before: this route sent the passes with no labels at all, and it is the
+  // route most registrations actually arrive through.
+  const labels = ordered.map((t: any) => t.food_pref || '')
+  const primaryTicket = ordered[0]
 
   const event = getEventById(primaryTicket.event_id)
   if (event) {
-    await sendQRPassEmail(primaryTicket.email, primaryTicket.participant_name, event.name, tokens).catch(e => {
+    await sendQRPassEmail(primaryTicket.email, primaryTicket.participant_name, event.name, tokens, labels).catch(e => {
       console.error('Failed to send email:', e)
     })
   } else {

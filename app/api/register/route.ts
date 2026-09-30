@@ -266,7 +266,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: ticketError?.message || 'Failed to generate tickets' }, { status: 500 })
     }
 
-    const tokens = tickets.map((t: any) => t.token)
+    // Sorted by token so a resend numbers the plates the way this mail did.
+    const ordered = [...tickets].sort((a: any, b: any) => String(a.token).localeCompare(String(b.token)))
+    const tokens = ordered.map((t: any) => t.token)
 
     if (paymentStatus === 'APPROVED') {
       await sendQRPassEmail(
@@ -274,8 +276,9 @@ export async function POST(request: Request) {
         data.participantName as string,
         event.name as string,
         tokens,
-        // Same order as the tickets, so each QR is captioned with its plate.
-        tickets.map((t: any) => t.food_pref).filter(Boolean),
+        // Same order as the tokens, and index by index with them: dropping
+        // the empty ones would shift every later caption onto the wrong QR.
+        ordered.map((t: any) => t.food_pref || ''),
       ).catch(e => console.error('Failed to send email:', e))
     } else if (paymentStatus === 'PENDING') {
       await sendRegistrationPendingEmail(data.email as string, data.participantName as string, event.name as string, data.utr || '', registrationId).catch(e => console.error('Failed to send pending email:', e))
