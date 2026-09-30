@@ -7,17 +7,59 @@ import LogoutButton from './LogoutButton'
 
 type AdminTier = 1 | 2 | 3
 
+/** 0 is nobody: signed out, or a session the server would not vouch for. */
+type KnownTier = AdminTier | 0
+
 export default function AdminSidebar() {
   const [isOpen, setIsOpen] = useState(false)
-  const [tier, setTier] = useState<AdminTier>(1) // default to lowest until loaded
+  /**
+   * What the server says this session is, or null while it has not said yet.
+   *
+   * Two things went wrong here, and they compounded.
+   *
+   * The fetch ran once, on mount - and this component mounts on the sign-in
+   * page, where nobody is signed in. Signing in is a client-side redirect to
+   * /admin, which does not remount the layout, so the answer from the sign-in
+   * page was the answer it kept. That is why the menu was right only after a
+   * reload: a reload is the one thing that mounts it again. Asking again when
+   * the route changes is the actual fix.
+   *
+   * The second was `d.tier || 3`, which turned the case the endpoint is most
+   * careful about into the worst one: it answers `{ tier: 0 }` when it cannot
+   * vouch for a session, and `0 || 3` is 3. Together these showed the whole
+   * super-admin menu to a signed-out visitor and to gate staff alike.
+   *
+   * Null is not 0 and not a tier to guess at: until an answer arrives nothing
+   * gated is drawn, so nothing appears that then has to be taken away.
+   *
+   * The pages and the API routes were never fooled by any of this; each
+   * checks the tier itself. It was only ever the menu that lied.
+   */
+  const [tier, setTier] = useState<KnownTier | null>(null)
   const pathname = usePathname()
 
   useEffect(() => {
-    fetch('/api/admin/tier')
-      .then(r => r.json())
-      .then(d => setTier(d.tier || 3))
-      .catch(() => setTier(3))
-  }, [])
+    let cancelled = false
+    const settle = (value: KnownTier) => { if (!cancelled) setTier(value) }
+
+    // no-store: the answer is about who is signed in, which changes without
+    // the URL changing, and a cached 0 would outlive the sign-in that fixed it.
+    fetch('/api/admin/tier', { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : { tier: 0 }))
+      .then(d => {
+        const value = Number(d?.tier)
+        settle(value === 1 || value === 2 || value === 3 ? value : 0)
+      })
+      // Whatever went wrong, it is not evidence of privilege.
+      .catch(() => settle(0))
+
+    return () => { cancelled = true }
+    // Re-asked on every route change, which is what carries the answer across
+    // the redirect out of the sign-in page.
+  }, [pathname])
+
+  /** Anything gated waits for a real answer rather than assuming one. */
+  const canSee = (minimum: AdminTier) => tier !== null && tier >= minimum
 
   const isActive = (path: string) => {
     if (path === '/admin' && pathname === '/admin') return true
@@ -28,7 +70,11 @@ export default function AdminSidebar() {
   const toggleDrawer = () => setIsOpen(!isOpen)
   const closeDrawer = () => setIsOpen(false)
 
-  const tierLabel = tier === 1 ? 'Gate Staff' : tier === 2 ? 'Manager' : 'Super Admin'
+  const tierLabel = tier === 1 ? 'Gate Staff' : tier === 2 ? 'Manager' : tier === 3 ? 'Super Admin' : ''
+
+  // The sign-in page has no navigation: the links do not work signed out, and
+  // listing them tells a stranger the shape of the admin area for nothing.
+  if (pathname === '/admin/login') return null
 
   return (
     <>
@@ -65,38 +111,41 @@ export default function AdminSidebar() {
           <nav className="admin-mobile-dropdown">
             <Link href="/" className="admin-nav-link" onClick={closeDrawer}>🌍 Public Website</Link>
             <div className="dropdown-divider"></div>
-            {tier >= 2 && (
+            {canSee(2) && (
               <Link href="/admin" className={`admin-nav-link ${isActive('/admin') ? 'active' : ''}`} onClick={closeDrawer}>📊 Overview</Link>
             )}
             {tier === 1 && (
               <Link href="/admin" className={`admin-nav-link ${isActive('/admin') ? 'active' : ''}`} onClick={closeDrawer}>📊 Check-in Activity</Link>
             )}
-            {tier >= 3 && (
+            {canSee(3) && (
               <Link href="/admin/registrations" className={`admin-nav-link ${isActive('/admin/registrations') ? 'active' : ''}`} onClick={closeDrawer}>👥 Registrations</Link>
             )}
-            {tier >= 2 && (
+            {canSee(2) && (
               <Link href="/admin/payments" className={`admin-nav-link ${isActive('/admin/payments') ? 'active' : ''}`} onClick={closeDrawer}>💳 Payments</Link>
             )}
-            {tier >= 3 && (
+            {canSee(3) && (
               <Link href="/admin/allocations" className={`admin-nav-link ${isActive('/admin/allocations') ? 'active' : ''}`} onClick={closeDrawer}>🔀 Wrong Allocations</Link>
             )}
-            {tier >= 2 && (
+            {canSee(2) && (
               <Link href="/admin/check-ins" className={`admin-nav-link ${isActive('/admin/check-ins') ? 'active' : ''}`} onClick={closeDrawer}>📋 Check-ins</Link>
             )}
-            {tier >= 3 && (
+            {canSee(3) && (
               <Link href="/admin/events" className={`admin-nav-link ${isActive('/admin/events') ? 'active' : ''}`} onClick={closeDrawer}>🎭 Manage Cultural Events</Link>
             )}
-            {tier >= 3 && (
+            {canSee(3) && (
+              <Link href="/admin/coupons" className={`admin-nav-link ${isActive('/admin/coupons') ? 'active' : ''}`} onClick={closeDrawer}>🎟️ Manage Coupons</Link>
+            )}
+            {canSee(3) && (
               <Link href="/admin/managers" className={`admin-nav-link ${isActive('/admin/managers') ? 'active' : ''}`} onClick={closeDrawer}>👥 Manager Profiles</Link>
             )}
-            {tier >= 3 && (
+            {canSee(3) && (
               <Link href="/admin/playlist" className={`admin-nav-link ${isActive('/admin/playlist') ? 'active' : ''}`} onClick={closeDrawer}>🎵 Homepage Music</Link>
             )}
             <div className="dropdown-divider"></div>
             <div style={{ padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#2d3748' }}>{tierLabel}</div>
-                <div style={{ fontSize: '0.7rem', color: '#a0aec0' }}>Tier {tier}</div>
+                {tier ? <div style={{ fontSize: '0.7rem', color: '#a0aec0' }}>Tier {tier}</div> : null}
               </div>
               <LogoutButton />
             </div>
@@ -121,42 +170,49 @@ export default function AdminSidebar() {
             Dashboard
           </div>
           
-          {tier >= 1 && (
+          {canSee(1) && (
             <Link href="/admin" className={`admin-nav-link ${isActive('/admin') ? 'active' : ''}`} onClick={closeDrawer}>
               <span style={{ marginRight: '10px' }}>📊</span> {tier === 1 ? 'Check-in Activity' : 'Overview'}
             </Link>
           )}
-          {tier >= 3 && (
+          {canSee(3) && (
             <Link href="/admin/registrations" className={`admin-nav-link ${isActive('/admin/registrations') ? 'active' : ''}`} onClick={closeDrawer}>
               <span style={{ marginRight: '10px' }}>👥</span> Registrations
             </Link>
           )}
-          {tier >= 2 && (
+          {canSee(2) && (
             <Link href="/admin/payments" className={`admin-nav-link ${isActive('/admin/payments') ? 'active' : ''}`} onClick={closeDrawer}>
               <span style={{ marginRight: '10px' }}>💳</span> Payments
             </Link>
           )}
-          {tier >= 3 && (
+          {canSee(3) && (
             <Link href="/admin/allocations" className={`admin-nav-link ${isActive('/admin/allocations') ? 'active' : ''}`} onClick={closeDrawer}>
               <span style={{ marginRight: '10px' }}>🔀</span> Wrong Allocations
             </Link>
           )}
-          {tier >= 2 && (
+          {canSee(2) && (
             <Link href="/admin/check-ins" className={`admin-nav-link ${isActive('/admin/check-ins') ? 'active' : ''}`} onClick={closeDrawer}>
               <span style={{ marginRight: '10px' }}>📋</span> Check-ins
             </Link>
           )}
-          {tier >= 3 && (
+          {canSee(3) && (
             <Link href="/admin/events" className={`admin-nav-link ${isActive('/admin/events') ? 'active' : ''}`} onClick={closeDrawer}>
               <span style={{ marginRight: '10px' }}>🎭</span> Manage Cultural Events
             </Link>
           )}
-          {tier >= 3 && (
+          {/* The coupon list is edited here and only here; the event editor
+              shows it read-only and links across. */}
+          {canSee(3) && (
+            <Link href="/admin/coupons" className={`admin-nav-link ${isActive('/admin/coupons') ? 'active' : ''}`} onClick={closeDrawer}>
+              <span style={{ marginRight: '10px' }}>🎟️</span> Manage Coupons
+            </Link>
+          )}
+          {canSee(3) && (
             <Link href="/admin/managers" className={`admin-nav-link ${isActive('/admin/managers') ? 'active' : ''}`} onClick={closeDrawer}>
               <span style={{ marginRight: '10px' }}>👥</span> Manager Profiles
             </Link>
           )}
-          {tier >= 3 && (
+          {canSee(3) && (
             <Link href="/admin/playlist" className={`admin-nav-link ${isActive('/admin/playlist') ? 'active' : ''}`} onClick={closeDrawer}>
               <span style={{ marginRight: '10px' }}>🎵</span> Homepage Music
             </Link>
@@ -175,11 +231,11 @@ export default function AdminSidebar() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: tier === 3 ? 'var(--brand)' : tier === 2 ? '#2b6cb0' : '#718096', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold', fontSize: '0.75rem' }}>
-                T{tier}
+                {tier ? `T${tier}` : ''}
               </div>
               <div>
                 <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#2d3748' }}>{tierLabel}</div>
-                <div style={{ fontSize: '0.75rem', color: '#718096' }}>Tier {tier}</div>
+                {tier ? <div style={{ fontSize: '0.75rem', color: '#718096' }}>Tier {tier}</div> : null}
               </div>
             </div>
             <LogoutButton />
