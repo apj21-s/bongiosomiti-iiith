@@ -1257,10 +1257,10 @@ function PaymentCompletedStep({ event, prevStage, handleSubmit, draft, updateDra
   }, [receivers, draft.selectedUpiId, draft.receiverUpi, updateDraft])
 
   async function handleReceipt(file: File) {
-    // The payee is left as it is. It was preselected from the payment screen,
-    // or chosen here, and a receipt only overrules that with a clean reading
-    // (below) - clearing it first blanked the dropdown for the whole scan, and
-    // for good if the upload then failed.
+    // The payee is left as it is while the receipt is stored and read, and
+    // only replaced once the scan has something to say (below). Clearing it
+    // here dropped the dropdown to "Select the UPI ID you paid" for the whole
+    // scan - and left it there for good if the upload then failed.
     updateDraft({ screenshot: file.name, receiptPath: '', utr: '', utrFromOcr: false, receiverUpiFromOcr: false })
     setScreenshotPreview(URL.createObjectURL(file))
     setSeen({ utr: null, upi: null })
@@ -1295,10 +1295,10 @@ function PaymentCompletedStep({ event, prevStage, handleSubmit, draft, updateDra
 
     const utr = isValidUtr(result.transactionId) ? normaliseUtr(result.transactionId) : ''
 
-    // The payee in the dropdown stands unless the receipt is sure of another
-    // (settleReceiver says exactly when). Decided against the draft as it is
-    // now, not as it was before the scan: somebody who changed the dropdown
-    // while the receipt was being read keeps what they chose.
+    // The receipt's guess replaces the payee; with no guess, what the dropdown
+    // holds now stands - read from the draft as it is after the scan, not as
+    // it was before it, so a payee changed while the receipt was being read is
+    // the one kept.
     // `|| selectedUpiId || receivers[0]` is the id the payment screen showed as
     // selected, which it only records once it is *changed*.
     const now = latestDraft.current

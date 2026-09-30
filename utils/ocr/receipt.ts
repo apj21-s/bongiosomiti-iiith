@@ -359,21 +359,18 @@ export type ReceiverResolution = {
 /**
  * The payee the form should show once a receipt has been read.
  *
- * `kept` is what the dropdown holds already - preselected from the payment
- * screen, or chosen by the visitor - as an id we collect at, or '' for none.
- * The receipt overrules it only when it is sure: an exact reading of a
- * different id. A recovered misread or a masked handle ("sa*****@ybl") is not
- * enough, because receipts print the payer's own handle too, often masked, and
- * that matched a collector and moved a correct preselection onto the wrong
- * one. Those weaker readings may only fill a dropdown that is still empty.
+ * The receipt's reading when it produced one - exact, or recovered from a
+ * misread or a masked handle; resolveReceiverUpi already returns nothing when
+ * the receipt is ambiguous - and otherwise `kept`: what the dropdown held
+ * already, preselected from the payment screen or chosen by the visitor, as
+ * an id we collect at, or '' for none. `fromReceipt` puts the "read from your
+ * receipt - correct it if it is wrong" note under a value the scan chose.
  */
 export function settleReceiver(
   kept: string,
   read: ReceiverResolution
 ): { id: string; fromReceipt: boolean } {
-  if (read.id && read.confidence === 'exact' && read.id !== kept) return { id: read.id, fromReceipt: true }
-  if (!kept && read.id) return { id: read.id, fromReceipt: true }
-  return { id: kept, fromReceipt: false }
+  return read.id ? { id: read.id, fromReceipt: true } : { id: kept, fromReceipt: false }
 }
 
 export function resolveReceiverUpi(
