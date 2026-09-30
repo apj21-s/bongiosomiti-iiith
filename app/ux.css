@@ -245,9 +245,10 @@
 .reg-counter-label { display: flex; flex-direction: column; gap: 1px; }
 .reg-plate-name { font-size: 13px; font-weight: 600; color: #4A2921; }
 .reg-plate-price { font-size: 11px; font-weight: 600; color: #8F321F; }
-/* The running line for this plate. Hidden on the narrowest screens, where the
-   per-plate price and the total below it are enough. */
-.reg-plate-line { color: #7a5c48; font-weight: 500; }
+/* A plate: its row, and under it the running sum for that plate -
+   "2 × ₹250 = ₹500" - across the full width of the section, on one line. */
+.reg-plate { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.reg-plate-line { font-size: 11px; color: #7a5c48; font-weight: 500; white-space: nowrap; }
 
 .reg-plate-total {
   display: flex;
@@ -262,10 +263,6 @@
   color: #4A2921;
 }
 .reg-plate-total strong { font-size: 15px; color: #8F321F; }
-
-@media (max-width: 420px) {
-  .reg-plate-line { display: none; }
-}
 
 /*
   The counters are the most-tapped control in the form, and at 28x30 they were

@@ -785,25 +785,33 @@ function PassDetailsStep({ event, draft, updateDraft, nextStage, prevStage, erro
                       const count = draft.passSelections[key] || 0
                       const each = priceOf(pt, audience)
                       return (
-                        <div className="reg-counter-row" key={pt.name}>
-                          <span className="reg-counter-label">
-                            <span className="reg-plate-name">{pt.name}</span>
-                            {/* The price of one plate, said plainly rather than
-                                left to be worked out at the payment step. */}
-                            <span className="reg-plate-price">
-                              {each > 0 ? `${formatCurrency(each)} each` : 'Free'}
-                              {count > 0 && each > 0 && (
-                                <span className="reg-plate-line"> &middot; {count} × {formatCurrency(each)} = {formatCurrency(count * each)}</span>
-                              )}
+                        <div className="reg-plate" key={pt.name}>
+                          <div className="reg-counter-row">
+                            <span className="reg-counter-label">
+                              <span className="reg-plate-name">{pt.name}</span>
+                              {/* The price of one plate, said plainly rather than
+                                  left to be worked out at the payment step. */}
+                              <span className="reg-plate-price">
+                                {each > 0 ? `${formatCurrency(each)} each` : 'Free'}
+                              </span>
                             </span>
-                          </span>
-                          <div className="reg-counter">
-                            <button type="button" aria-label={`One fewer ${pt.name}`}
-                              onClick={() => setCount(key, Math.max(0, count - 1))}>&minus;</button>
-                            <span className="reg-counter-val">{count}</span>
-                            <button type="button" aria-label={`One more ${pt.name}`}
-                              onClick={() => { if (totalChosen < 10) setCount(key, count + 1) }}>+</button>
+                            <div className="reg-counter">
+                              <button type="button" aria-label={`One fewer ${pt.name}`}
+                                onClick={() => setCount(key, Math.max(0, count - 1))}>&minus;</button>
+                              <span className="reg-counter-val">{count}</span>
+                              <button type="button" aria-label={`One more ${pt.name}`}
+                                onClick={() => { if (totalChosen < 10) setCount(key, count + 1) }}>+</button>
+                            </div>
                           </div>
+                          {/* The running sum for this plate, on a line of its own
+                              under the whole row: beside the counter the label
+                              can be under 70px wide, and the sum used to break
+                              mid-equation there. */}
+                          {count > 0 && each > 0 && (
+                            <span className="reg-plate-line">
+                              {count} × {formatCurrency(each)} = {formatCurrency(count * each)}
+                            </span>
+                          )}
                         </div>
                       )
                     })}
