@@ -58,6 +58,9 @@ function TypewriterBrand() {
   )
 }
 
+/** Where REGISTER goes, and the one route where it has to scroll instead. */
+const REGISTER_HREF = '/events/mahalaya'
+
 interface SiteHeaderProps {
   variant?: 'public' | 'admin'
 }
@@ -164,7 +167,22 @@ export default function SiteHeader({ variant = 'public' }: SiteHeaderProps) {
           </div>
         </div>
 
-        <Link className="home-strip__action" href="/events/mahalaya">REGISTER</Link>
+        <Link
+          className="home-strip__action"
+          href={REGISTER_HREF}
+          onClick={(e) => {
+            // Already on the registration page: the router has nowhere to go,
+            // so it does not move, and the visitor is left wherever they had
+            // scrolled to - reading about the team, say. Take them up to the
+            // form themselves.
+            if (pathname === REGISTER_HREF) {
+              e.preventDefault()
+              window.scrollTo({ top: 0, behavior: 'smooth' })
+            }
+          }}
+        >
+          REGISTER
+        </Link>
       </div>
     </header>
   )

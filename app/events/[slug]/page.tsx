@@ -22,8 +22,22 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
   const isFree = event.price === 0
   const heroImage = isMahalaya ? '/assets/mahalaya-bhoj.webp' : '/assets/saraswati-puja.webp'
 
+  /*
+   * One root element, not a fragment.
+   *
+   * On a client-side navigation the router scrolls the new page's top-level
+   * elements into view. With a fragment it did that to each of them in turn
+   * and finished on <SiteHeader />, which is position: fixed and so is always
+   * "in view" - the call that should have corrected the position did nothing,
+   * and the page was left wherever scrolling the footer into view had put it.
+   * Clicking REGISTER from the top of the home page landed two thirds of the
+   * way down this page, in the middle of Meet the team.
+   *
+   * A single wrapper gives the router one element to scroll to, and its top
+   * is the top of the page.
+   */
   return (
-    <>
+    <div className="site-page">
       <SiteHeader />
 
       {!isMahalaya && (
@@ -128,6 +142,6 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
       </main>
 
       <SiteFooter />
-    </>
+    </div>
   )
 }

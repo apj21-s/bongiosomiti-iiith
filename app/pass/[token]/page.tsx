@@ -41,8 +41,12 @@ export default async function PassPage({ params }: { params: Promise<{ token: st
     statusText = 'BLOCKED'
   }
 
+  // One root element, not a fragment: the router scrolls a new page's
+  // top-level elements into view, and a fragment ending on the fixed
+  // header left the page parked wherever the footer had pulled it.
+  // See app/events/[slug]/page.tsx for the whole story.
   return (
-<>
+    <div className="site-page">
       <SiteHeader />
       <main className="pass-world" data-pass-page style={{padding: '1.5rem 1rem 3rem', }}>
       <section className="pass-world__scene panel" style={{maxWidth: '1040px', margin: '0 auto', }}>
@@ -118,6 +122,6 @@ export default async function PassPage({ params }: { params: Promise<{ token: st
       </section>
     </main>
     <SiteFooter />
-    </>
+    </div>
   )
 }

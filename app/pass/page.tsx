@@ -88,8 +88,12 @@ export default function PassVerifyPage() {
   const status = ticket?.payment_status?.toLowerCase()
   const isVerified = status === 'approved' || status === 'verified'
 
+  // One root element, not a fragment: the router scrolls a new page's
+  // top-level elements into view, and a fragment ending on the fixed
+  // header left the page parked wherever the footer had pulled it.
+  // See app/events/[slug]/page.tsx for the whole story.
   return (
-    <>
+    <div className="site-page">
       <SiteHeader />
       <main className="verification-world" data-pass-page id="top">
         <div className="verification-shell">
@@ -199,6 +203,6 @@ export default function PassVerifyPage() {
         </div>
       </main>
       <SiteFooter />
-    </>
+    </div>
   )
 }
