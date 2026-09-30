@@ -187,6 +187,38 @@ export function expandToPasses(event: EventLike, basket: Basket, audience: Audie
 }
 
 /**
+ * A whole number of rupees split across passes in proportion to `weights`,
+ * in whole rupees that add back up to exactly the total.
+ *
+ * Rounding each share on its own does not: a ₹100 coupon over plates of 250,
+ * 250, 250 and 350 is 22.73 three times and 31.82 once, which round to 23,
+ * 23, 23 and 32 - ₹101 off - and the plates then add up to ₹999 on a booking
+ * that was paid ₹1,000. Largest remainder instead: every share is rounded
+ * down, and the rupees left over go one each to the shares that lost the
+ * most, earlier passes first on a tie. All-zero weights split evenly.
+ */
+export function splitWholeRupees(total: number, weights: readonly number[]): number[] {
+  const count = weights.length
+  if (count === 0) return []
+  const whole = Math.max(0, Math.round(total))
+  const clean = weights.map((w) => (Number.isFinite(w) && w > 0 ? Math.round(w) : 0))
+  const sum = clean.reduce((a, w) => a + w, 0)
+  const shares = clean.map((w) => (sum > 0 ? Math.floor((whole * w) / sum) : Math.floor(whole / count)))
+  // In integers, so a share that divides exactly is never a hair short.
+  const remainder = clean.map((w, i) => (sum > 0 ? whole * w - shares[i] * sum : (i < whole % count ? 1 : 0)))
+  let left = whole - shares.reduce((a, b) => a + b, 0)
+  const order = remainder
+    .map((r, i) => ({ r, i }))
+    .sort((a, b) => b.r - a.r || a.i - b.i)
+  for (const { i } of order) {
+    if (left <= 0) break
+    shares[i] += 1
+    left -= 1
+  }
+  return shares
+}
+
+/**
  * What a pass of this type says it is: "Breakfast · Veg", or just "Veg" when
  * the event has no sections - and not "Breakfast · Breakfast Veg" for somebody
  * who put the meal in the name as well as in the field. This is what lands in

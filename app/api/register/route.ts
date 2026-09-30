@@ -12,7 +12,7 @@ import {
   normaliseEmail,
   verifyProof,
 } from '@/utils/email-verification'
-import { audienceFor, expandToPasses, inPassOrder, quote } from '@/utils/pricing'
+import { audienceFor, expandToPasses, inPassOrder, quote, splitWholeRupees } from '@/utils/pricing'
 import { resolveCoupon } from '@/utils/coupons'
 import { countRegistrations } from '@/utils/data/registrations'
 
@@ -224,9 +224,16 @@ export async function POST(request: Request) {
     const passCount = issued.length > 0 ? issued.length : numPasses
 
     // Coupons apply to the booking, not to a plate, so the discount is shared
-    // out in proportion to what each plate cost.
-    const discountFor = (price: number) =>
-      subtotal > 0 ? (discountAmount * price) / subtotal : discountAmount / Math.max(1, passCount)
+    // out in proportion to what each plate cost - in whole rupees that add up
+    // to exactly the discount, so the passes add up to exactly what was paid.
+    // Rounding each pass on its own recorded a ₹1,000 booking as ₹999.
+    const perPass = issued.length > 0
+      ? issued.map((pass) => pass.price)
+      : Array.from({ length: passCount }, () => 1)
+    const discounts = splitWholeRupees(discountAmount, perPass)
+    const amounts = issued.length > 0
+      ? issued.map((pass, i) => pass.price - discounts[i])
+      : splitWholeRupees(amount, perPass)
 
     const ticketsData = Array.from({ length: passCount }).map((_, i) => ({
       token: `${registrationId}_${generatePassCode(prefix)}`,
@@ -236,7 +243,7 @@ export async function POST(request: Request) {
       email: data.email,
       phone: data.phone,
       utr: normaliseUtr(data.utr) || (nothingToPay ? 'FREE-PASS' : ''),
-      amount: Math.round(issued[i] ? Math.max(0, issued[i].price - discountFor(issued[i].price)) : amount / passCount),
+      amount: amounts[i],
       payment_status: paymentStatus,
       status,
       num_passes: 1,
@@ -254,7 +261,7 @@ export async function POST(request: Request) {
       is_iiit: audience !== 'guest',
       coupon_code: coupon ? coupon.code : null,
       // Shared out the same way the amount above is, so the two agree per pass.
-      discount_amount: Math.round(issued[i] ? discountFor(issued[i].price) : discountAmount / passCount),
+      discount_amount: discounts[i],
     }))
 
     const { data: tickets, error: ticketError } = await supabase

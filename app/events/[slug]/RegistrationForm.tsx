@@ -1218,6 +1218,11 @@ function PaymentCompletedStep({ event, prevStage, handleSubmit, draft, updateDra
   // What the receipt said, kept apart from the draft so the reading can be
   // shown even when it was refused for naming the wrong payee.
   const [seen, setSeen] = useState<{ utr: string | null; upi: string | null }>({ utr: null, upi: null })
+  // The draft as it is now. A receipt is read after an await, by which time
+  // the `draft` this handler closed over can be out of date - the visitor may
+  // have changed the payee while the scan ran.
+  const latestDraft = useRef<DraftState>(draft)
+  useEffect(() => { latestDraft.current = draft }, [draft])
 
   const receivers: string[] = (allowedUpiIds && allowedUpiIds.length > 0)
     ? allowedUpiIds
@@ -1252,7 +1257,11 @@ function PaymentCompletedStep({ event, prevStage, handleSubmit, draft, updateDra
   }, [receivers, draft.selectedUpiId, draft.receiverUpi, updateDraft])
 
   async function handleReceipt(file: File) {
-    updateDraft({ screenshot: file.name, receiptPath: '', utr: '', receiverUpi: '', utrFromOcr: false, receiverUpiFromOcr: false })
+    // The payee is left as it is. It was preselected from the payment screen,
+    // or chosen here, and a receipt only overrules that with a clean reading
+    // (below) - clearing it first blanked the dropdown for the whole scan, and
+    // for good if the upload then failed.
+    updateDraft({ screenshot: file.name, receiptPath: '', utr: '', utrFromOcr: false, receiverUpiFromOcr: false })
     setScreenshotPreview(URL.createObjectURL(file))
     setSeen({ utr: null, upi: null })
 
@@ -1281,29 +1290,27 @@ function PaymentCompletedStep({ event, prevStage, handleSubmit, draft, updateDra
     // Exact reading, then a misread recovered character by character, then a
     // partly hidden handle matched against the ids we collect at. Anything
     // ambiguous comes back with no id at all.
-    const { resolveReceiverUpi } = await import('@/utils/ocr/receipt')
+    const { resolveReceiverUpi, settleReceiver } = await import('@/utils/ocr/receipt')
     const payee = resolveReceiverUpi(candidates, allowed)
 
-    // Nothing is filled in on a guess. Where the receipt does not settle it,
-    // the id chosen on the previous screen stands in - the visitor picked it
-    // themselves and it is one we collect at - and failing even that the field
-    // is left empty for them to complete.
-    // `|| receivers[0]` matters: the payment screen shows the first id as the
-    // selected one but only writes selectedUpiId when the visitor *changes*
-    // it, so anybody who simply paid the id they were shown left it empty.
-    // Reading the same default the screen displayed is what makes accepting
-    // that default count as a choice.
-    const chosen = normaliseUpi(draft.selectedUpiId || receivers[0] || '')
-    const fallback = chosen && allowed.includes(chosen) ? chosen : ''
-    const receiver = payee.id || fallback
-
     const utr = isValidUtr(result.transactionId) ? normaliseUtr(result.transactionId) : ''
+
+    // The payee in the dropdown stands unless the receipt is sure of another
+    // (settleReceiver says exactly when). Decided against the draft as it is
+    // now, not as it was before the scan: somebody who changed the dropdown
+    // while the receipt was being read keeps what they chose.
+    // `|| selectedUpiId || receivers[0]` is the id the payment screen showed as
+    // selected, which it only records once it is *changed*.
+    const now = latestDraft.current
+    const current = normaliseUpi(now.receiverUpi || now.selectedUpiId || receivers[0] || '')
+    const settled = settleReceiver(current && allowed.includes(current) ? current : '', payee)
+    const receiver = settled.id
 
     updateDraft({
       utr,
       utrFromOcr: Boolean(utr),
       receiverUpi: receiver,
-      receiverUpiFromOcr: Boolean(payee.id),
+      receiverUpiFromOcr: settled.fromReceipt,
     })
 
     // The only thing worth saying is what could not be read. A success needs no

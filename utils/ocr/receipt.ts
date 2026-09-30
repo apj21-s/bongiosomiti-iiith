@@ -356,6 +356,26 @@ export type ReceiverResolution = {
  * somebody - and a field filled with a plausible guess is harder to notice
  * than one left empty.
  */
+/**
+ * The payee the form should show once a receipt has been read.
+ *
+ * `kept` is what the dropdown holds already - preselected from the payment
+ * screen, or chosen by the visitor - as an id we collect at, or '' for none.
+ * The receipt overrules it only when it is sure: an exact reading of a
+ * different id. A recovered misread or a masked handle ("sa*****@ybl") is not
+ * enough, because receipts print the payer's own handle too, often masked, and
+ * that matched a collector and moved a correct preselection onto the wrong
+ * one. Those weaker readings may only fill a dropdown that is still empty.
+ */
+export function settleReceiver(
+  kept: string,
+  read: ReceiverResolution
+): { id: string; fromReceipt: boolean } {
+  if (read.id && read.confidence === 'exact' && read.id !== kept) return { id: read.id, fromReceipt: true }
+  if (!kept && read.id) return { id: read.id, fromReceipt: true }
+  return { id: kept, fromReceipt: false }
+}
+
 export function resolveReceiverUpi(
   candidates: readonly string[],
   allowed: readonly string[]
