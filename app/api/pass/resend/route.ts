@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/utils/supabase/server'
 import { sendQRPassEmail } from '@/utils/email'
 import { getEventById } from '@/utils/data/events'
+import { inPassOrder } from '@/utils/pricing'
 import { escapeLikePattern, normaliseIdentifier } from '@/utils/db/filters'
 import { rateLimit, tooManyRequests } from '@/utils/rate-limit'
 
@@ -75,10 +76,10 @@ export async function POST(request: Request) {
     // Pass found, dispatch email
     const event = getEventById(primaryTicket.event_id)
     
-    // Sorted by token so the plate numbers in the mail are the same ones a
-    // later resend will print. None of these queries order, and the first
-    // mail, the approval and the resend all number from this list.
-    const ordered = [...allApprovedTickets].sort((a: any, b: any) => String(a.token).localeCompare(String(b.token)))
+    // Grouped by plate and stable, so the plate numbers are the ones the first
+    // mail and the approval printed. None of these queries order, and all
+    // three number from this list.
+    const ordered = inPassOrder(event, allApprovedTickets)
     const tokens = ordered.map((t: any) => t.token)
     const labels = ordered.map((t: any) => t.food_pref || '')
     await sendQRPassEmail(primaryTicket.email, primaryTicket.participant_name, event?.name || 'Utsav Event', tokens, labels)

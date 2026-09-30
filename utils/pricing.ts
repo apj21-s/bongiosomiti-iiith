@@ -174,22 +174,52 @@ export function expandToPasses(event: EventLike, basket: Basket, audience: Audie
 
   for (const line of lines) {
     for (let i = 0; i < line.count; i += 1) {
-      // "Breakfast · Veg", but not "Breakfast · Breakfast Veg" for somebody
-      // who put the meal in the name as well as in the field.
-      const alreadyNamed = line.meal
-        ? line.name.toLowerCase().startsWith(line.meal.toLowerCase())
-        : false
-
       passes.push({
         name: line.name,
         meal: line.meal,
-        label: line.meal && !alreadyNamed ? `${line.meal} · ${line.name}` : line.name,
+        label: passLabel(line),
         price: line.each,
       })
     }
   }
 
   return passes
+}
+
+/**
+ * What a pass of this type says it is: "Breakfast · Veg", or just "Veg" when
+ * the event has no sections - and not "Breakfast · Breakfast Veg" for somebody
+ * who put the meal in the name as well as in the field. This is what lands in
+ * tickets.food_pref, so it is also how a ticket is matched back to its plate.
+ */
+export function passLabel(passType: { name: string; meal?: string | null }): string {
+  const meal = passType.meal && passType.meal.trim() !== '' ? passType.meal : null
+  const alreadyNamed = meal ? passType.name.toLowerCase().startsWith(meal.toLowerCase()) : false
+  return meal && !alreadyNamed ? `${meal} · ${passType.name}` : passType.name
+}
+
+/**
+ * A booking's passes in the order a mail lists them: grouped by plate, in the
+ * order the event offers its plates, then by token.
+ *
+ * Grouped, because "Plate 2 of 3" only reads naturally next to plates 1 and 3;
+ * the tokens are random, and ordering by them alone scattered one booking's
+ * breakfasts between its lunches. Stable, because a ticket's plate and token
+ * never change - so the first mail, the approval and any resend number every
+ * plate the same way. A plate the event no longer offers (renamed since) and
+ * a pass with no plate go last, still in token order.
+ */
+export function inPassOrder<T extends { token?: unknown; food_pref?: unknown }>(
+  event: EventLike | null | undefined,
+  tickets: readonly T[]
+): T[] {
+  const rank = new Map<string, number>()
+  for (const passType of event ? passTypesOf(event) : []) {
+    const label = passLabel(passType)
+    if (!rank.has(label)) rank.set(label, rank.size)
+  }
+  const rankOf = (ticket: T) => rank.get(String(ticket.food_pref ?? '')) ?? rank.size
+  return [...tickets].sort((a, b) => rankOf(a) - rankOf(b) || String(a.token).localeCompare(String(b.token)))
 }
 
 export type Quote = {

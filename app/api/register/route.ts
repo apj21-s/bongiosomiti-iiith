@@ -12,7 +12,7 @@ import {
   normaliseEmail,
   verifyProof,
 } from '@/utils/email-verification'
-import { audienceFor, expandToPasses, quote } from '@/utils/pricing'
+import { audienceFor, expandToPasses, inPassOrder, quote } from '@/utils/pricing'
 import { resolveCoupon } from '@/utils/coupons'
 import { countRegistrations } from '@/utils/data/registrations'
 
@@ -266,8 +266,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: ticketError?.message || 'Failed to generate tickets' }, { status: 500 })
     }
 
-    // Sorted by token so a resend numbers the plates the way this mail did.
-    const ordered = [...tickets].sort((a: any, b: any) => String(a.token).localeCompare(String(b.token)))
+    // Grouped by plate and stable, so a resend numbers the plates the way this
+    // mail did.
+    const ordered = inPassOrder(event, tickets)
     const tokens = ordered.map((t: any) => t.token)
 
     if (paymentStatus === 'APPROVED') {

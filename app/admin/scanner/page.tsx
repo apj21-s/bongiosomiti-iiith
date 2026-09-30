@@ -221,6 +221,11 @@ export default function ScannerPage() {
             
             {result.ticket && (
               <div className="scanner-meta-pills">
+                {/* The plate this QR admits to - a breakfast pass shown at
+                    lunch is only caught if the gate can see which it is. */}
+                {result.ticket.food_pref && (
+                  <span className="pill" style={{ fontWeight: 700 }}>🍽 {result.ticket.food_pref}</span>
+                )}
                 <span className="pill">{result.ticket.event?.name || result.ticket.eventName}</span>
                 <span className="pill">{result.ticket.college_id ? `ID: ${result.ticket.college_id}` : 'Guest'}</span>
                 <span className="pill">{String(result.ticket.token).slice(0, 16)}</span>

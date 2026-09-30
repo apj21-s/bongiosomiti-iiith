@@ -44,6 +44,8 @@ next-env.d.ts
 local_db.json
 # run.mjs: the running launch, so the next one can stop it
 .run.pid
+# scratch builds and previews (e.g. of the pass mail)
+.tmp-*/
 
 # runtime debug logs (may contain attendee data)
 scratch/*.log

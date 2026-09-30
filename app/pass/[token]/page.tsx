@@ -89,6 +89,9 @@ export default async function PassPage({ params }: { params: Promise<{ token: st
               <div className="qr-pass__body">
                 <div className="qr-pass__details">
                   <div><span>Attendee Name</span><strong className="pass-world__attendee">{ticket.participant_name}</strong></div>
+                  {ticket.food_pref && (
+                    <div><span>Plate</span><strong>{ticket.food_pref}</strong></div>
+                  )}
                   <div><span>College ID</span><strong className="pass-world__collegeId">{ticket.college_id}</strong></div>
                   <div><span>Pass Token</span><strong className="pass-world__token" style={{fontFamily: 'monospace', letterSpacing: '0.05em', }}>{ticket.token}</strong></div>
                   <div><span>Issue Date</span><strong className="pass-world__date">{new Date(ticket.created_at).toLocaleDateString()}</strong></div>

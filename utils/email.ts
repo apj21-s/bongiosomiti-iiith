@@ -2,6 +2,23 @@ import QRCode from 'qrcode'
 import path from 'path'
 import { mailIsConfigured, sendMail } from './mail-transport'
 
+/**
+ * Text made safe to put inside the HTML of a mail.
+ *
+ * Names and plate captions come from what a visitor typed - food_pref is free
+ * text for an event with no configured plates - and a mail that pasted them in
+ * raw would let anyone register as `<a href=...>` and have the festival's own
+ * address deliver their link.
+ */
+export function escapeHtml(value: unknown): string {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 function createEmailLayout(contentHtml: string, title: string) {
   return `<!DOCTYPE html>
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
@@ -183,7 +200,7 @@ export async function sendQRPassEmail(email: string, participantName: string, ev
     // Which plate this particular QR is good for, and which of them it is.
     const mealLabel = labelArray[i]
     const plateOrdinal = ordinals[i]
-    const altText = [`QR Pass ${passNumber}`, mealLabel, plateOrdinal].filter(Boolean).join(' - ')
+    const altText = escapeHtml([`QR Pass ${passNumber}`, mealLabel, plateOrdinal].filter(Boolean).join(' - '))
 
     qrImagesHtml += `
       <tr>
@@ -192,8 +209,8 @@ export async function sendQRPassEmail(email: string, participantName: string, ev
             <tr>
               <td align="center" style="padding: 16px;">
                 <div style="font-family: Arial, sans-serif; font-size: 13px; font-weight: bold; color: #8C3026; letter-spacing: 2px; margin-bottom: 4px;" class="text-otp">PASS ${passNumber}</div>
-                ${mealLabel ? `<div style="font-family: Arial, sans-serif; font-size: 15px; font-weight: bold; color: #281208; margin-bottom: ${plateOrdinal ? '2px' : '12px'};" class="text-body">${mealLabel}</div>` : '<div style="margin-bottom: 8px;"></div>'}
-                ${plateOrdinal ? `<div style="font-family: Arial, sans-serif; font-size: 12px; color: #745F4B; margin-bottom: 12px;" class="text-secondary">${plateOrdinal}</div>` : ''}
+                ${mealLabel ? `<div style="font-family: Arial, sans-serif; font-size: 15px; font-weight: bold; color: #281208; margin-bottom: ${plateOrdinal ? '2px' : '12px'};" class="text-body">${escapeHtml(mealLabel)}</div>` : '<div style="margin-bottom: 8px;"></div>'}
+                ${plateOrdinal ? `<div style="font-family: Arial, sans-serif; font-size: 12px; color: #745F4B; margin-bottom: 12px;" class="text-secondary">${escapeHtml(plateOrdinal)}</div>` : ''}
                 <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="border-radius: 4px; padding: 8px; margin-bottom: 12px;">
                   <tr>
                     <td align="center">
@@ -219,12 +236,12 @@ export async function sendQRPassEmail(email: string, participantName: string, ev
     </tr>
     <tr>
       <td align="center" style="padding-bottom: 24px; font-family: 'Tiro Bangla', 'Noto Serif Bengali', 'Bangla MN', Georgia, serif; font-size: 18px; font-weight: bold; color: #54251F; text-align: center;" class="text-primary">
-        ${eventName}
+        ${escapeHtml(eventName)}
       </td>
     </tr>
     <tr>
       <td align="center" style="padding-bottom: 24px; font-family: Georgia, 'Times New Roman', serif; font-size: 15px; line-height: 1.6; color: #745F4B; text-align: center;" class="text-secondary">
-        Dear <strong>${participantName}</strong>, your QR ${tokenArray.length > 1 ? 'passes are' : 'pass is'} ready. Please present ${tokenArray.length > 1 ? 'these' : 'this'} at the gate.
+        Dear <strong>${escapeHtml(participantName)}</strong>, your QR ${tokenArray.length > 1 ? 'passes are' : 'pass is'} ready. Please present ${tokenArray.length > 1 ? 'these' : 'this'} at the gate.
       </td>
     </tr>
     ${qrImagesHtml}
@@ -309,7 +326,7 @@ export async function sendRegistrationPendingEmail(
     </tr>
     <tr>
       <td align="center" style="padding-bottom: 24px; font-family: Georgia, 'Times New Roman', serif; font-size: 15px; line-height: 1.6; color: #745F4B; text-align: center;" class="text-secondary">
-        Thank you for registering for <strong>${eventName}</strong>. We have received your registration details. Your registration is currently awaiting verification by our team.
+        Thank you for registering for <strong>${escapeHtml(eventName)}</strong>. We have received your registration details. Your registration is currently awaiting verification by our team.
       </td>
     </tr>
     <tr>
@@ -317,10 +334,10 @@ export async function sendRegistrationPendingEmail(
         <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 400px; border: 1px solid #C5A66B; border-radius: 8px;" class="bg-panel border-gold">
           <tr>
             <td align="left" style="padding: 16px 24px; font-family: Georgia, 'Times New Roman', serif; font-size: 14px; line-height: 1.6; color: #54251F;" class="text-primary">
-              <strong>Name:</strong> ${participantName}<br/>
-              <strong>Event:</strong> ${eventName}<br/>
-              <strong>Registration Ref:</strong> ${referenceNo}<br/>
-              <strong>Transaction (UTR):</strong> ${utr}
+              <strong>Name:</strong> ${escapeHtml(participantName)}<br/>
+              <strong>Event:</strong> ${escapeHtml(eventName)}<br/>
+              <strong>Registration Ref:</strong> ${escapeHtml(referenceNo)}<br/>
+              <strong>Transaction (UTR):</strong> ${escapeHtml(utr)}
             </td>
           </tr>
         </table>

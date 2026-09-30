@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/utils/supabase/server'
 import { sendQRPassEmail } from '@/utils/email'
 import { getEventById } from '@/utils/data/events'
+import { inPassOrder } from '@/utils/pricing'
 
 export async function POST(
   request: Request,
@@ -49,9 +50,10 @@ export async function POST(
     return NextResponse.json({ error: error?.message || 'Failed to update tickets' }, { status: 500 })
   }
 
-  // Sorted by token so the plate numbers in this mail match the ones a
-  // later resend prints; the query does not order.
-  const ordered = [...updatedTickets].sort((a: any, b: any) => String(a.token).localeCompare(String(b.token)))
+  const event = getEventById(updatedTickets[0].event_id)
+  // Grouped by plate and stable, so the plate numbers in this mail match the
+  // ones a later resend prints; the query does not order.
+  const ordered = inPassOrder(event, updatedTickets as any[])
   const tokens = ordered.map((t: any) => t.token)
   // Each QR says which plate it admits to, which the mail could not say
   // before: this route sent the passes with no labels at all, and it is the
@@ -59,7 +61,6 @@ export async function POST(
   const labels = ordered.map((t: any) => t.food_pref || '')
   const primaryTicket = ordered[0]
 
-  const event = getEventById(primaryTicket.event_id)
   if (event) {
     await sendQRPassEmail(primaryTicket.email, primaryTicket.participant_name, event.name, tokens, labels).catch(e => {
       console.error('Failed to send email:', e)
