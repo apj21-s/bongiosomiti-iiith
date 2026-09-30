@@ -11874,3 +11874,104 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   .site-toast, .site-dialog, .site-dialog-layer { animation: none; }
 }
+
+/* ── ADMIN FORM GRIDS THAT COLLAPSE ─────────────────────────────────────── */
+/*
+  Everything else in the admin area lays out with repeat(auto-fit, minmax(...)),
+  which folds to one column on its own. The event editor was written with fixed
+  tracks in inline styles instead - and an inline style cannot carry a media
+  query, so those rows could never fold. On a phone the pass grid alone asked
+  for 370px of fixed columns before its two flexible ones, and the fields ran
+  off the right edge.
+
+  It went unnoticed because .admin-layout-wrapper sets overflow: hidden, so the
+  spill is clipped rather than turned into a scrollbar: the page measures as
+  though it fits while the right-hand side of it is unreachable.
+*/
+
+/* Two fields side by side, one under the other once there is no room. */
+.admin-field-pair {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 20px;
+}
+
+/* Name, meal and three prices. */
+.admin-pass-grid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr repeat(3, 110px) 40px;
+  gap: 8px;
+}
+
+@media (max-width: 860px) {
+  .admin-pass-grid {
+    /* Wraps into as many columns as fit, so a narrow screen gets a stacked
+       block per pass rather than a row running off the side. */
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
+  }
+
+  /* Column headings belong to a row that no longer exists once it wraps. Every
+     field carries its own placeholder, which is what names it here. */
+  .admin-pass-grid--head {
+    display: none;
+  }
+
+  /* The delete button is a square at the end of a row; on its own line it
+     should not stretch across the width. */
+  .admin-pass-grid > .btn-danger {
+    justify-self: start;
+    min-width: 44px;
+  }
+}
+
+/*
+  .form-control had no rules anywhere.
+
+  The class is used throughout the event editor and the coupons page, on the
+  assumption that something defined it - so every input there fell back to the
+  browser's default size: a fixed ~180px box that ignores the column it sits
+  in, with its label running alongside rather than above it. That is why the
+  editor looked unresponsive however the window was sized; the fields were
+  never asked to fill anything.
+
+  Scoped to .admin-page-content so it cannot reach the public site, which does
+  not use the class.
+*/
+.admin-page-content label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #4a5568;
+}
+
+.admin-page-content .form-control {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 11px;
+  border: 1px solid #cbd5e0;
+  border-radius: 7px;
+  background: #fff;
+  font-family: inherit;
+  font-size: 0.9rem;
+  color: #1a202c;
+}
+
+.admin-page-content .form-control:focus {
+  outline: none;
+  border-color: #8F321F;
+}
+
+.admin-page-content textarea.form-control {
+  resize: vertical;
+  min-height: 84px;
+}
+
+@media (max-width: 767px) {
+  /* 16px exactly: iOS zooms the viewport on any focused input below it, and
+     the admin area is reachable from a phone. */
+  .admin-page-content .form-control {
+    font-size: 16px;
+    min-height: 44px;
+  }
+}

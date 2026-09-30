@@ -100,7 +100,7 @@ export default function EventEditorClient({ event }: { event: any }) {
       {/* Basics */}
       <div>
         <h3 style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '8px', marginBottom: '16px' }}>General Settings</h3>
-        <div className="form-group" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+        <div className="form-group admin-field-pair">
           <div>
             <label>Event Name</label>
             <input type="text" className="form-control" value={name} onChange={e => setName(e.target.value)} required />
@@ -154,7 +154,7 @@ export default function EventEditorClient({ event }: { event: any }) {
           the staff price, and everybody else pays guest.
         </p>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr repeat(3, 110px) 40px', gap: '8px', alignItems: 'end', marginBottom: '6px' }}>
+        <div className="admin-pass-grid admin-pass-grid--head" style={{ alignItems: 'end', marginBottom: '6px' }}>
           <label className="text-muted" style={{ fontSize: '0.78rem' }}>Pass name</label>
           <label className="text-muted" style={{ fontSize: '0.78rem' }}>Meal (optional)</label>
           <label className="text-muted" style={{ fontSize: '0.78rem' }}>Student ₹</label>
@@ -181,7 +181,7 @@ export default function EventEditorClient({ event }: { event: any }) {
           }
 
           return (
-            <div key={i} style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr repeat(3, 110px) 40px', gap: '8px', marginBottom: '10px' }}>
+            <div key={i} className="admin-pass-grid" style={{ marginBottom: '10px' }}>
               <input type="text" className="form-control" placeholder="Enter Pass Name" value={pt.name} onChange={e => {
                 const next = [...passTypes]; next[i] = { ...next[i], name: e.target.value }; setPassTypes(next)
               }} required />
