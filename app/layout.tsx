@@ -4,7 +4,7 @@ import ScrollReveal from "@/components/scroll-reveal";
 import SiteNotifications from "@/components/site-notifications";
 import UtsavLoader from "@/components/utsav-loader";
 import { getHomepagePlaylists } from "@/utils/data/site-playlist";
-import HeroPlaylist from "@/components/hero-playlist";
+import HeroPlaylistMount from "@/components/hero-playlist-mount";
 
 export const metadata: Metadata = {
   title: "বঙ্গীয় সমিতি @ IIITH",
@@ -41,7 +41,8 @@ export default async function RootLayout({
         <SiteNotifications />
         <ScrollReveal />
         {children}
-        <HeroPlaylist playlists={playlists} />
+        {/* Public pages only - the mount keeps it off /admin. */}
+        <HeroPlaylistMount playlists={playlists} />
       </body>
     </html>
   );
