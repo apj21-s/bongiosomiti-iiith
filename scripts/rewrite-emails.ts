@@ -288,8 +288,7 @@ export async function sendRegistrationPendingEmail(
     </tr>
     <tr>
       <td align="center" style="font-family: Georgia, 'Times New Roman', serif; font-size: 14px; line-height: 1.6; color: #745F4B; text-align: center;" class="text-secondary">
-        You will receive another email once your registration has been verified.<br/><br/>
-        You can track your payment status on <a href="\${appUrl}/pass" style="color: #8C3026; text-decoration: underline; font-weight: bold;" class="text-otp">our portal</a>.
+        You will receive another email once your registration has been verified.
       </td>
     </tr>
   \`
@@ -359,8 +358,7 @@ export async function sendPaymentRejectedEmail(
     </tr>
     <tr>
       <td align="center" style="font-family: Georgia, 'Times New Roman', serif; font-size: 14px; line-height: 1.6; color: #745F4B; text-align: center;" class="text-secondary">
-        If you believe this is an error, please <a href="mailto:bangiya.samiti.iiith@gmail.com" style="color: #8C3026; text-decoration: underline; font-weight: bold;" class="text-otp">contact the organizers immediately</a>.<br/><br/>
-        You can also check your status on <a href="\${appUrl}/pass" style="color: #8C3026; text-decoration: underline; font-weight: bold;" class="text-otp">our portal</a>.
+        If you believe this is an error, please <a href="mailto:bangiya.samiti.iiith@gmail.com" style="color: #8C3026; text-decoration: underline; font-weight: bold;" class="text-otp">contact the organizers immediately</a>.
       </td>
     </tr>
   \`
