@@ -251,7 +251,7 @@ export default function DurgaPujaClient({ pujas: pujasRawData }: { pujas: MapPuj
           <div className="dp-eyebrow" style={{ color: 'var(--accent)', textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
             HYDERABAD &middot; SHARODOTSAV 2026
           </div>
-          <h2>60+ PUJAS.<br />ONE CITY.</h2>
+          <h2>50+ PUJAS.<br />ONE CITY.</h2>
           <p>From Gachibowli to Secunderabad, Sharodotsav comes alive across Hyderabad.</p>
           <div style={{ marginTop: '2rem' }}>
             <a href="#explore-map" className="dp-cta-btn">EXPLORE THE MAP &rarr;</a>
