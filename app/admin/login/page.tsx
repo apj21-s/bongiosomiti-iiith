@@ -8,9 +8,11 @@ export default function AdminLoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
-  async function handleSubmit(formData: FormData) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
     setLoading(true)
     setError(null)
+    const formData = new FormData(e.currentTarget)
     const res = await loginAction(formData)
     if (res?.error) {
       setError(res.error)
@@ -64,7 +66,7 @@ export default function AdminLoginPage() {
         </div>
 
         <div className="grid" style={{ padding: '24px 28px' }}>
-          <form id="login-form" className="section" action={handleSubmit} style={{ padding: '0' }}>
+          <form id="login-form" className="section" onSubmit={handleSubmit} style={{ padding: '0' }}>
             <div className="field" style={{ marginBottom: '1.25rem' }}>
               <label htmlFor="email" style={{ fontWeight: '600', display: 'block', marginBottom: '6px' }}>
                 Email or manager username
