@@ -139,6 +139,9 @@ export default function AdminSidebar() {
               <Link href="/admin/managers" className={`admin-nav-link ${isActive('/admin/managers') ? 'active' : ''}`} onClick={closeDrawer}>👥 Manager Profiles</Link>
             )}
             {canSee(3) && (
+              <Link href="/admin/digests" className={`admin-nav-link ${isActive('/admin/digests') ? 'active' : ''}`} onClick={closeDrawer}>📧 Send Digests</Link>
+            )}
+            {canSee(3) && (
               <Link href="/admin/playlist" className={`admin-nav-link ${isActive('/admin/playlist') ? 'active' : ''}`} onClick={closeDrawer}>🎵 Homepage Music</Link>
             )}
             <div className="dropdown-divider"></div>
@@ -210,6 +213,11 @@ export default function AdminSidebar() {
           {canSee(3) && (
             <Link href="/admin/managers" className={`admin-nav-link ${isActive('/admin/managers') ? 'active' : ''}`} onClick={closeDrawer}>
               <span style={{ marginRight: '10px' }}>👥</span> Manager Profiles
+            </Link>
+          )}
+          {canSee(3) && (
+            <Link href="/admin/digests" className={`admin-nav-link ${isActive('/admin/digests') ? 'active' : ''}`} onClick={closeDrawer}>
+              <span style={{ marginRight: '10px' }}>📧</span> Send Digests
             </Link>
           )}
           {canSee(3) && (
