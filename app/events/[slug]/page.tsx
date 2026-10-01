@@ -124,7 +124,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
                     <div className="mahalaya-timeline__item"><div className="mahalaya-timeline__dot"></div><strong className="mahalaya-timeline__title">Programme Schedule</strong>
                       <span className="mahalaya-timeline__desc">
                         <ol style={{ margin: '6px 0 0', paddingLeft: '1.2em', lineHeight: 1.8 }}>
-                          <li><strong>Agomoni Path</strong> — 4:30 AM – 6:00 AM</li>
+                          <li><strong>Mahishasuramardini</strong> — 4:30 AM – 6:00 AM</li>
                           <li><strong>Agomoni r Dhwani</strong> (Cultural Programme) — 9:00 AM – 12:00 PM</li>
                           <li><strong>Breakfast</strong> <span style={{ opacity: 0.7, fontSize: '0.9em' }}>(optional · subject to prior registration)</span> — 8:00 AM – 11:00 AM</li>
                           <li><strong>Lunch</strong> <span style={{ opacity: 0.7, fontSize: '0.9em' }}>(optional · subject to prior registration)</span> — 1:00 PM – 4:00 PM</li>
