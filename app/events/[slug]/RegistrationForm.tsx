@@ -1111,12 +1111,14 @@ function PaymentStep({ event, draft, updateDraft, prevStage, transitionTo, total
     setTimeout(() => setCopied(false), 2000)
   }
 
+  const hasCoupons = event?.config?.coupons && event.config.coupons.length > 0;
+
   return (
     <div className="reg-payment">
       <TypewriterHeading lines={['PAYMENT']} />
       <p className="reg-p" style={{ marginBottom: '4px', marginTop: '-4px' }}>Complete the payment and confirm below</p>
 
-      <div className="reg-pay-top">
+      <div className="reg-pay-top" style={hasCoupons ? {} : { gridTemplateColumns: '1fr' }}>
         <div className="reg-pay-box amount-box">
           <span className="amount-label">Total Amount Due</span>
           <div className="amount-val-wrapper">
@@ -1126,25 +1128,27 @@ function PaymentStep({ event, draft, updateDraft, prevStage, transitionTo, total
           </div>
         </div>
 
-        {/* <div className="reg-pay-box coupon-box">
-          <span className="coupon-label">Coupon code</span>
-          <div className="coupon-input-row">
-            <input
-              className={`reg-input ${couponMsg?.type === 'error' ? 'reg-coupon-input is-invalid' : ''}`}
-              value={draft.couponInput}
-              onChange={e => { updateDraft({ couponInput: e.target.value }); setCouponMsg(null) }}
-              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); applyCoupon() } }}
-              placeholder="Enter Coupon Code"
-              aria-invalid={couponMsg?.type === 'error'}
-            />
-            <button type="button" className="reg-btn-apply" onClick={applyCoupon}>APPLY</button>
+        {hasCoupons && (
+          <div className="reg-pay-box coupon-box">
+            <span className="coupon-label">Coupon code</span>
+            <div className="coupon-input-row">
+              <input
+                className={`reg-input ${couponMsg?.type === 'error' ? 'reg-coupon-input is-invalid' : ''}`}
+                value={draft.couponInput}
+                onChange={e => { updateDraft({ couponInput: e.target.value }); setCouponMsg(null) }}
+                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); applyCoupon() } }}
+                placeholder="Enter Coupon Code"
+                aria-invalid={couponMsg?.type === 'error'}
+              />
+              <button type="button" className="reg-btn-apply" onClick={applyCoupon}>APPLY</button>
+            </div>
+            <div className="coupon-breakdown">
+              <div className="breakdown-row"><span className="label">Original Amount</span><span className="val">₹{subtotal}</span></div>
+              <div className="breakdown-row"><span className="label">&bull; Discount</span><span className="val discount">- ₹{discount}</span></div>
+              <div className="breakdown-row final"><span className="label">Final Amount</span><span className="val">₹{total}</span></div>
+            </div>
           </div>
-          <div className="coupon-breakdown">
-            <div className="breakdown-row"><span className="label">Original Amount</span><span className="val">₹{subtotal}</span></div>
-            <div className="breakdown-row"><span className="label">&bull; Discount</span><span className="val discount">- ₹{discount}</span></div>
-            <div className="breakdown-row final"><span className="label">Final Amount</span><span className="val">₹{total}</span></div>
-          </div>
-        </div> */}
+        )}
       </div>
 
       <div className="reg-pay-bottom">
