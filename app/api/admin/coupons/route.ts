@@ -23,7 +23,7 @@ export async function GET() {
   const guard = await requireAdmin(REQUIRED_TIER)
   if (!guard.ok) return guard.response
 
-  const events = (getEvents() || []) as EventRow[]
+  const events = ((await getEvents()) || []) as EventRow[]
   const stats = await registrationStats(events.map((e) => e.id))
 
   return NextResponse.json(
@@ -61,7 +61,7 @@ export async function POST(request: Request) {
   if (!slug) return NextResponse.json({ error: 'Choose an event.' }, { status: 400 })
 
   let created: Coupon | null = null
-  const result = changeEventCoupons(slug, (current) => {
+  const result = await changeEventCoupons(slug, (current) => {
     const checked = validateCoupon(body.coupon, current.map((c) => String(c.code ?? '')))
     if (!checked.ok) return { error: checked.error }
     created = checked.coupon

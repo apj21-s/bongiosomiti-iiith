@@ -6,7 +6,7 @@ export async function GET() {
   const guard = await requireAdmin(3)
   if (!guard.ok) return guard.response
 
-  return NextResponse.json(getEvents())
+  return NextResponse.json(await getEvents())
 }
 
 export async function POST(request: Request) {

@@ -1,19 +1,16 @@
 import fs from 'fs'
 import path from 'path'
 import type { Coupon } from '@/utils/coupons'
+import { createServiceRoleClient } from '@/utils/supabase/server'
+import { getEvents } from './events'
 
 /**
  * Writing an event's coupon list.
  *
  * Coupons live where they always have, in the event's `config.coupons` inside
- * public/data/events.json - the register route and the coupon preview read
- * them from there through getEventBySlug, so nothing that prices a booking
- * had to change. What changed is who writes them: /admin/coupons, through
- * this, and no longer the event editor's whole-config save.
+ * public/data/events.json or the events table.
  *
- * config is not mirrored to the events table (see event-sync.ts), so there is
- * only the file to write. On a read-only deployment that write fails, and the
- * caller is told so rather than shown a success that did not happen.
+ * We now write the change to the Supabase database.
  */
 
 const EVENTS_FILE = () => path.join(process.cwd(), 'public', 'data', 'events.json')
@@ -26,19 +23,16 @@ export type CouponChange =
  * Reads the event's coupons, hands them to `change`, and writes back what it
  * returns. `change` returns an error string instead to refuse the edit, in
  * which case nothing is written.
- *
- * The read and the write are one synchronous step, so two saves arriving
- * together cannot interleave and drop each other's coupon.
  */
-export function changeEventCoupons(
+export async function changeEventCoupons(
   slug: string,
   change: (current: Coupon[]) => Coupon[] | { error: string; status?: number }
 ): CouponChange {
   let events: Record<string, unknown>[]
   try {
-    events = JSON.parse(fs.readFileSync(EVENTS_FILE(), 'utf8'))
+    events = await getEvents()
   } catch (e) {
-    return { ok: false, status: 500, error: `Could not read the events file: ${e instanceof Error ? e.message : 'unknown'}` }
+    return { ok: false, status: 500, error: `Could not read the events from database: ${e instanceof Error ? e.message : 'unknown'}` }
   }
 
   const index = events.findIndex((e) => e?.slug === slug)
@@ -54,14 +48,24 @@ export function changeEventCoupons(
   events[index] = { ...event, config: { ...config, coupons: next } }
 
   try {
-    fs.writeFileSync(EVENTS_FILE(), JSON.stringify(events, null, 2) + '\n')
+    const supabase = await createServiceRoleClient()
+    const { error } = await supabase
+      .from('events')
+      .update({ config: events[index].config })
+      .eq('slug', slug)
+
+    if (error) throw error
+
+    // Best effort write to local file
+    try {
+      fs.writeFileSync(EVENTS_FILE(), JSON.stringify(events, null, 2) + '\n')
+    } catch (e) {}
   } catch (e) {
     return {
       ok: false,
       status: 500,
       error:
-        `The events file could not be written (${e instanceof Error ? e.message : 'unknown'}). ` +
-        'On a read-only deployment coupons have to be edited in public/data/events.json in the repository.',
+        `The events could not be updated in the database (${e instanceof Error ? e.message : 'unknown'}).`,
     }
   }
 

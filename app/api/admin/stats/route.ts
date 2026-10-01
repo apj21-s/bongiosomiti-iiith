@@ -9,7 +9,8 @@ export async function GET() {
 
   const supabase = await createServiceRoleClient()
 
-  const eventCount = getEvents().length
+  const allEvents = await getEvents()
+  const eventCount = allEvents.length
 
   // Get total tickets
   const { count: ticketCount } = await supabase.from('tickets').select('*', { count: 'exact', head: true })

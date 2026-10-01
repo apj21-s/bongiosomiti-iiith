@@ -11,7 +11,7 @@ export default async function EditEventPage({ params }: { params: Promise<{ slug
   if (tier < 3) redirect('/admin')
   
   const { slug } = await params;
-  const event = getEventBySlug(slug)
+  const event = await getEventBySlug(slug)
 
   if (!event) {
     return (

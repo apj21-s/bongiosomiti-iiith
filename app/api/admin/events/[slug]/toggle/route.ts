@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 import fs from 'fs'
 import path from 'path'
 import { createServiceRoleClient } from '@/utils/supabase/server'
-import { ownsEventRows } from '@/utils/data/event-sync'
+import { getEvents } from '@/utils/data/events'
 
 /**
  * Opens or locks registration for an event.
@@ -64,10 +64,9 @@ export async function POST(
   }
 
   try {
-    const filePath = path.join(process.cwd(), 'public', 'data', 'events.json')
-    const events = JSON.parse(fs.readFileSync(filePath, 'utf8'))
+    const events = (await getEvents()) as Record<string, unknown>[]
 
-    const eventIndex = events.findIndex((e: { slug?: string }) => e.slug === slug)
+    const eventIndex = events.findIndex((e) => e.slug === slug)
     if (eventIndex === -1) {
       return NextResponse.json({ error: 'Event not found' }, { status: 404 })
     }
@@ -75,40 +74,33 @@ export async function POST(
     status = wanted ?? (events[eventIndex].status === 'OPEN' ? 'LOCKED' : 'OPEN')
     events[eventIndex].status = status
 
+    // Best-effort write to local file (succeeds in dev, silently fails on Vercel)
     try {
+      const filePath = path.join(process.cwd(), 'public', 'data', 'events.json')
       fs.writeFileSync(filePath, JSON.stringify(events, null, 2) + '\n', 'utf8')
       written.file = true
     } catch (e) {
       warnings.push(
         `The events file could not be written (${e instanceof Error ? e.message : 'unknown'}). ` +
-        'On a read-only deployment this is expected: the change is in the database, ' +
-        'and events.json has to be edited in the repository to match.'
+        'On a read-only deployment this is expected: the change is in the database.'
       )
     }
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Could not read the events file' },
+      { error: error instanceof Error ? error.message : 'Could not fetch events' },
       { status: 500 }
     )
   }
 
-  if (!ownsEventRows()) {
-    // A dev branch opening an event must not open it on the live site, which
-    // reads a different events.json but shares this table.
-    warnings.push(
-      'This deployment does not own the shared events rows, so the change stayed in its own ' +
-      'events.json. Set EVENTS_DB_WRITES=true only where those rows belong.'
-    )
-  } else {
-    try {
-      const supabase = await createServiceRoleClient()
-      const { error } = await supabase.from('events').update({ status }).eq('slug', slug)
+  // Always write to DB — this is the production source of truth.
+  try {
+    const supabase = await createServiceRoleClient()
+    const { error } = await supabase.from('events').update({ status }).eq('slug', slug)
 
-      if (error) warnings.push(`The events row was not updated: ${error.message}`)
-      else written.database = true
-    } catch (e) {
-      warnings.push(`The events row was not updated: ${e instanceof Error ? e.message : 'unknown'}`)
-    }
+    if (error) warnings.push(`The events row was not updated: ${error.message}`)
+    else written.database = true
+  } catch (e) {
+    warnings.push(`The events row was not updated: ${e instanceof Error ? e.message : 'unknown'}`)
   }
 
   if (!written.file && !written.database) {

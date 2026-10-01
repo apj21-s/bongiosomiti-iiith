@@ -50,7 +50,7 @@ export async function POST(
     return NextResponse.json({ error: error?.message || 'Failed to update tickets' }, { status: 500 })
   }
 
-  const event = getEventById(updatedTickets[0].event_id)
+  const event = await getEventById(updatedTickets[0].event_id)
   // Grouped by plate and stable, so the plate numbers in this mail match the
   // ones a later resend prints; the query does not order.
   const ordered = inPassOrder(event, updatedTickets as any[])

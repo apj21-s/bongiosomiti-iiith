@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/utils/auth/require-admin'
 import { safeUploadFilename } from '@/utils/uploads'
-import fs from 'fs'
-import path from 'path'
+import { createServiceRoleClient } from '@/utils/supabase/server'
 
 export async function POST(request: Request) {
   // Only the event editor uses this, and that page is super-admin only.
@@ -22,17 +21,31 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: safeName.error }, { status: 400 })
     }
 
-    const buffer = Buffer.from(await file.arrayBuffer())
+    const buffer = await file.arrayBuffer()
+    const supabase = await createServiceRoleClient()
     
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads')
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true })
+    // Ensure bucket exists
+    const { data: buckets } = await supabase.storage.listBuckets()
+    if (!buckets?.find(b => b.name === 'uploads')) {
+      await supabase.storage.createBucket('uploads', { public: true })
     }
-    
-    const filePath = path.join(uploadDir, safeName.filename)
-    fs.writeFileSync(filePath, buffer)
 
-    return NextResponse.json({ url: `/uploads/${safeName.filename}` })
+    const { error } = await supabase
+      .storage
+      .from('uploads')
+      .upload(safeName.filename, buffer, { 
+        contentType: file.type, 
+        upsert: true 
+      })
+
+    if (error) {
+      console.error('Supabase upload error:', error)
+      return NextResponse.json({ error: 'Failed to upload to storage' }, { status: 500 })
+    }
+
+    const { data: publicUrlData } = supabase.storage.from('uploads').getPublicUrl(safeName.filename)
+
+    return NextResponse.json({ url: publicUrlData.publicUrl })
   } catch (err: any) {
     console.error(err)
     return NextResponse.json({ error: 'Failed to upload' }, { status: 500 })
