@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/utils/auth/require-admin'
 import { safeUploadFilename } from '@/utils/uploads'
-import { createServiceRoleClient } from '@/utils/supabase/server'
+import { createServerClient } from '@supabase/ssr'
+import fs from 'fs'
+import path from 'path'
 
 export async function POST(request: Request) {
   // Only the event editor uses this, and that page is super-admin only.
@@ -22,11 +24,25 @@ export async function POST(request: Request) {
     }
 
     const buffer = await file.arrayBuffer()
-    const supabase = await createServiceRoleClient()
-    
+
+    // In dummy/dev mode without Supabase storage, write to local public/uploads
+    if (process.env.DUMMY_DB === 'True' || !process.env.NEXT_PUBLIC_SUPABASE_URL) {
+      const uploadDir = path.join(process.cwd(), 'public', 'uploads')
+      if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true })
+      fs.writeFileSync(path.join(uploadDir, safeName.filename), Buffer.from(buffer))
+      return NextResponse.json({ url: `/uploads/${safeName.filename}` })
+    }
+
+    // Production: use Supabase Storage
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { cookies: { getAll: () => [], setAll: () => {} } }
+    )
+
     // Ensure bucket exists
     const { data: buckets } = await supabase.storage.listBuckets()
-    if (!buckets?.find(b => b.name === 'uploads')) {
+    if (!buckets?.find((b: { name: string }) => b.name === 'uploads')) {
       await supabase.storage.createBucket('uploads', { public: true })
     }
 

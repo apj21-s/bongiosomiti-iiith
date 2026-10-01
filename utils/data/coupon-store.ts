@@ -27,7 +27,7 @@ export type CouponChange =
 export async function changeEventCoupons(
   slug: string,
   change: (current: Coupon[]) => Coupon[] | { error: string; status?: number }
-): CouponChange {
+): Promise<CouponChange> {
   let events: Record<string, unknown>[]
   try {
     events = await getEvents()
