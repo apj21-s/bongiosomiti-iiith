@@ -424,7 +424,7 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
 
   const stepProps = { event, draft, updateDraft, nextStage, prevStage, error, setError, total, subtotal, discount, applyCoupon, couponMsg, setCouponMsg, handleSubmit, loading, confirmation, setScreenshotPreview, screenshotPreview, transitionTo, allowedUpiIds, sendOtp, checkOtp, onEmailChange, otpBusy, otpNote, emailIsVerified, audience }
 
-  if (event?.status !== 'OPEN' || event?.slug === 'mahalaya') {
+  if (event?.status !== 'OPEN') {
     if (event?.slug !== 'mahalaya') {
       return (
         <div className="reg-shell is-locked" style={{ overflow: 'hidden', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '600px', backgroundColor: '#fff8f0' }}>
