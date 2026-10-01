@@ -60,7 +60,8 @@ export default function AllocationsClient() {
         type: 'ok',
         text: `Moved to ${data.assignedTo.username} (${data.assignedTo.upiId})${data.moved > 1 ? ` — ${data.moved} passes` : ''}.`,
       })
-      await load()
+      setState('loading')
+      window.location.reload()
     } catch (e: any) {
       setNote({ type: 'bad', text: e.message })
     } finally {

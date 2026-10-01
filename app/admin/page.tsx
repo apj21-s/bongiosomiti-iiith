@@ -1,12 +1,19 @@
 import Link from 'next/link'
 import { createServiceRoleClient } from '@/utils/supabase/server'
-import { getAdminTier } from '@/utils/auth/server'
+import { getAdminIdentity } from '@/utils/auth/server'
+import { getManagerById } from '@/utils/auth/managers'
 
 export const revalidate = 0
 
 export default async function AdminDashboardPage() {
   const supabase = await createServiceRoleClient()
-  const tier = await getAdminTier()
+  const { tier, managerId } = await getAdminIdentity()
+  
+  let managerName = ''
+  if (managerId) {
+    const manager = await getManagerById(managerId)
+    managerName = manager?.name || manager?.username || ''
+  }
 
   const { count: ticketCount } = await supabase.from('tickets').select('*', { count: 'exact', head: true })
 
@@ -41,7 +48,7 @@ export default async function AdminDashboardPage() {
           {tier === 1 ? 'Gate Operations' : tier === 2 ? 'Manager Dashboard' : 'Organiser Operations Center'}
         </p>
         <h1 style={{ fontSize: '2.5rem', margin: '0 0 8px', lineHeight: 1.2, letterSpacing: '-0.03em', color: '#1a202c' }}>
-          {tier === 1 ? 'Gate Check-in Monitor' : 'Event Operations Dashboard'}
+          {tier === 1 ? 'Gate Check-in Monitor' : tier === 2 && managerName ? `Welcome, ${managerName}` : 'Event Operations Dashboard'}
         </h1>
         <p style={{ margin: 0, color: '#718096', fontSize: '1.1rem', maxWidth: '800px' }}>
           {tier === 1 

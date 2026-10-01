@@ -76,7 +76,7 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
   const [loading, setLoading] = useState(false)
   const [isAnimating, setIsAnimating] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [couponMsg, setCouponMsg] = useState<{type: 'success'|'error', text: string} | null>(null)
+  const [couponMsg, setCouponMsg] = useState<{ type: 'success' | 'error', text: string } | null>(null)
   const [confirmation, setConfirmation] = useState<any>(null)
   const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null)
 
@@ -117,7 +117,7 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
         const key = localStorage.key(i)
         if (key && key.startsWith(DRAFT_KEY)) localStorage.removeItem(key)
       }
-    } catch (e) {}
+    } catch (e) { }
     setIsLoaded(true)
   }, [event.slug])
 
@@ -372,7 +372,7 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
     e.preventDefault()
     // The same module the register route uses, so the button and the server
     // cannot disagree about what a complete payment looks like.
-  const gate = checkReceiptDetails({
+    const gate = checkReceiptDetails({
       isFree: total === 0,
       utr: draft.utr,
       receiverUpi: draft.receiverUpi,
@@ -424,7 +424,7 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
 
   const stepProps = { event, draft, updateDraft, nextStage, prevStage, error, setError, total, subtotal, discount, applyCoupon, couponMsg, setCouponMsg, handleSubmit, loading, confirmation, setScreenshotPreview, screenshotPreview, transitionTo, allowedUpiIds, sendOtp, checkOtp, onEmailChange, otpBusy, otpNote, emailIsVerified, audience }
 
-  if (event?.status !== 'OPEN') {
+  if (event?.status !== 'OPEN' || event?.slug === 'mahalaya') {
     if (event?.slug !== 'mahalaya') {
       return (
         <div className="reg-shell is-locked" style={{ overflow: 'hidden', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '600px', backgroundColor: '#fff8f0' }}>
@@ -479,7 +479,7 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
       {/* Decorative Assets - Genuine Artwork Only */}
       <img src="/mahalaya_registration_assets/03_corner_top_left.png" className="reg-corner-tl" alt="" />
       <img src="/mahalaya_registration_assets/04_corner_top_right.png" className="reg-corner-tr" alt="" />
-      
+
       {/* Bottom Landscape & Grass */}
       <div className="reg-bottom-decor">
         <img src="/mahalaya_registration_assets/11_decor_left_grass.png" className="reg-decor-grass-left" alt="" />
@@ -499,9 +499,9 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
         <FormToast
           message={
             error ? { type: 'error' as const, text: error }
-            : couponMsg ? { type: couponMsg.type, text: couponMsg.text }
-            : otpNote ? { type: otpNote.type, text: otpNote.text }
-            : null
+              : couponMsg ? { type: couponMsg.type, text: couponMsg.text }
+                : otpNote ? { type: otpNote.type, text: otpNote.text }
+                  : null
           }
           onDismiss={() => { setError(null); setCouponMsg(null); setOtpNote(null) }}
         />
@@ -568,7 +568,7 @@ function TypewriterHeading({ lines }: { lines: string[] }) {
         return (
           <Fragment key={lineIdx}>
             {lineElements}
-            {lineIdx < lines.length - 1 && <br/>}
+            {lineIdx < lines.length - 1 && <br />}
           </Fragment>
         )
       })}
@@ -581,7 +581,7 @@ function AssociationStep({ draft, updateDraft, nextStage, transitionTo, error }:
     <div className="reg-association">
       <TypewriterHeading lines={['ARE YOU ASSOCIATED WITH', 'IIIT HYDERABAD?']} />
       <p className="reg-p">Students &bull; Faculty &bull; Staff &bull; Alumni</p>
-      
+
       <div className="reg-radio-cards">
         <label className={`reg-radio-card reg-radio-community ${draft.isIiit === 'yes' ? 'selected' : ''}`}>
           <input type="radio" checked={draft.isIiit === 'yes'} onChange={() => updateDraft({ isIiit: 'yes' })} />
@@ -591,10 +591,10 @@ function AssociationStep({ draft, updateDraft, nextStage, transitionTo, error }:
           </div>
           {/* Genuine Artwork embedded in the CSS card */}
           <div className="reg-radio-illustration building-illus">
-            <img src="/mahalaya_registration_assets/09_illustration_iit_building.png" alt=""/>
+            <img src="/mahalaya_registration_assets/09_illustration_iit_building.png" alt="" />
           </div>
         </label>
-        
+
         <label className={`reg-radio-card reg-radio-guest ${draft.isIiit === 'no' ? 'selected' : ''}`}>
           <input type="radio" checked={draft.isIiit === 'no'} onChange={() => updateDraft({ isIiit: 'no' })} />
           <div className="reg-radio-content">
@@ -602,7 +602,7 @@ function AssociationStep({ draft, updateDraft, nextStage, transitionTo, error }:
             Guest
           </div>
           <div className="reg-radio-illustration guest-illus">
-             <img src="/mahalaya_registration_assets/10_illustration_guest_icon.png" alt=""/>
+            <img src="/mahalaya_registration_assets/10_illustration_guest_icon.png" alt="" />
           </div>
         </label>
       </div>
@@ -688,22 +688,25 @@ function DetailsStep({ draft, updateDraft, nextStage, prevStage, transitionTo, e
                   {otpBusy ? 'Sending…' : 'Send confirmation code'}
                 </button>
               ) : (
-                <div className="reg-otp-row">
-                  <input
-                    className="reg-input reg-otp-input"
-                    value={draft.otpInput}
-                    onChange={e => updateDraft({ otpInput: e.target.value.replace(/\D/g, '').slice(0, 6) })}
-                    placeholder="Enter Confirmation Code"
-                    inputMode="numeric"
-                    autoComplete="one-time-code"
-                    maxLength={6}
-                  />
-                  <button type="button" className="reg-otp-btn" onClick={checkOtp} disabled={otpBusy || draft.otpInput.length !== 6}>
-                    {otpBusy ? 'Checking…' : 'Confirm'}
-                  </button>
-                  <button type="button" className="reg-otp-link" onClick={sendOtp} disabled={otpBusy}>
-                    Resend
-                  </button>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div className="reg-otp-row">
+                    <input
+                      className="reg-input reg-otp-input"
+                      value={draft.otpInput}
+                      onChange={e => updateDraft({ otpInput: e.target.value.replace(/\D/g, '').slice(0, 6) })}
+                      placeholder="Enter Confirmation Code"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      maxLength={6}
+                    />
+                    <button type="button" className="reg-otp-btn" onClick={checkOtp} disabled={otpBusy || draft.otpInput.length !== 6}>
+                      {otpBusy ? 'Checking…' : 'Confirm'}
+                    </button>
+                    <button type="button" className="reg-otp-link" onClick={sendOtp} disabled={otpBusy}>
+                      Resend
+                    </button>
+                  </div>
+                  <span className="reg-read__note">Didn't receive the email?<br /> Please check your spam or junk folder.</span>
                 </div>
               )}
             </div>
@@ -713,9 +716,9 @@ function DetailsStep({ draft, updateDraft, nextStage, prevStage, transitionTo, e
         <div className="reg-field">
           <label>Phone Number *</label>
           <div className="reg-phone-wrapper">
-             <span className="reg-phone-prefix">+91</span>
-             <input {...fieldProps(phoneState)} className={`reg-input ${fieldProps(phoneState).className}`}
-               type="tel" value={draft.phone} onChange={e => updateDraft({ phone: e.target.value })} placeholder="Enter your Phone Number" />
+            <span className="reg-phone-prefix">+91</span>
+            <input {...fieldProps(phoneState)} className={`reg-input ${fieldProps(phoneState).className}`}
+              type="tel" value={draft.phone} onChange={e => updateDraft({ phone: e.target.value })} placeholder="Enter your Phone Number" />
           </div>
         </div>
         {/* No roll number. A confirmed @iiit.ac.in address is what establishes
@@ -734,7 +737,7 @@ function DetailsStep({ draft, updateDraft, nextStage, prevStage, transitionTo, e
           </div>
         )}
       </div>
-      
+
       <div className="reg-actions dual">
         <RegButton text="BACK" onClick={prevStage} type="back" />
         <RegButton text="CONTINUE" onClick={nextStage} type="continue" />
@@ -836,15 +839,15 @@ function PassDetailsStep({ event, draft, updateDraft, nextStage, prevStage, erro
             <div className="reg-field">
               <label>Number of Passes *</label>
               <div className="reg-counter">
-                 <button type="button" onClick={() => {
-                   const newNum = Math.max(1, draft.numPasses - 1)
-                   updateDraft({ numPasses: newNum, vegCount: 0, nonVegCount: newNum })
-                 }}>&minus;</button>
-                 <span className="reg-counter-val">{draft.numPasses}</span>
-                 <button type="button" onClick={() => {
-                   const newNum = Math.min(10, draft.numPasses + 1)
-                   updateDraft({ numPasses: newNum, vegCount: 0, nonVegCount: newNum })
-                 }}>+</button>
+                <button type="button" onClick={() => {
+                  const newNum = Math.max(1, draft.numPasses - 1)
+                  updateDraft({ numPasses: newNum, vegCount: 0, nonVegCount: newNum })
+                }}>&minus;</button>
+                <span className="reg-counter-val">{draft.numPasses}</span>
+                <button type="button" onClick={() => {
+                  const newNum = Math.min(10, draft.numPasses + 1)
+                  updateDraft({ numPasses: newNum, vegCount: 0, nonVegCount: newNum })
+                }}>+</button>
               </div>
             </div>
             <div className="reg-field">
@@ -868,29 +871,29 @@ function PassDetailsStep({ event, draft, updateDraft, nextStage, prevStage, erro
                   <div className="reg-counter-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                     <span className="reg-counter-label">Veg Passes</span>
                     <div className="reg-counter">
-                       <button type="button" onClick={() => {
-                         const newVeg = Math.max(0, draft.vegCount - 1)
-                         updateDraft({ vegCount: newVeg, nonVegCount: draft.numPasses - newVeg })
-                       }}>&minus;</button>
-                       <span className="reg-counter-val">{draft.vegCount}</span>
-                       <button type="button" onClick={() => {
-                         const newVeg = Math.min(draft.numPasses, draft.vegCount + 1)
-                         updateDraft({ vegCount: newVeg, nonVegCount: draft.numPasses - newVeg })
-                       }}>+</button>
+                      <button type="button" onClick={() => {
+                        const newVeg = Math.max(0, draft.vegCount - 1)
+                        updateDraft({ vegCount: newVeg, nonVegCount: draft.numPasses - newVeg })
+                      }}>&minus;</button>
+                      <span className="reg-counter-val">{draft.vegCount}</span>
+                      <button type="button" onClick={() => {
+                        const newVeg = Math.min(draft.numPasses, draft.vegCount + 1)
+                        updateDraft({ vegCount: newVeg, nonVegCount: draft.numPasses - newVeg })
+                      }}>+</button>
                     </div>
                   </div>
                   <div className="reg-counter-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span className="reg-counter-label">Non-Veg Passes</span>
                     <div className="reg-counter">
-                       <button type="button" onClick={() => {
-                         const newNon = Math.max(0, draft.nonVegCount - 1)
-                         updateDraft({ nonVegCount: newNon, vegCount: draft.numPasses - newNon })
-                       }}>&minus;</button>
-                       <span className="reg-counter-val">{draft.nonVegCount}</span>
-                       <button type="button" onClick={() => {
-                         const newNon = Math.min(draft.numPasses, draft.nonVegCount + 1)
-                         updateDraft({ nonVegCount: newNon, vegCount: draft.numPasses - newNon })
-                       }}>+</button>
+                      <button type="button" onClick={() => {
+                        const newNon = Math.max(0, draft.nonVegCount - 1)
+                        updateDraft({ nonVegCount: newNon, vegCount: draft.numPasses - newNon })
+                      }}>&minus;</button>
+                      <span className="reg-counter-val">{draft.nonVegCount}</span>
+                      <button type="button" onClick={() => {
+                        const newNon = Math.min(draft.numPasses, draft.nonVegCount + 1)
+                        updateDraft({ nonVegCount: newNon, vegCount: draft.numPasses - newNon })
+                      }}>+</button>
                     </div>
                   </div>
                 </div>
@@ -899,7 +902,7 @@ function PassDetailsStep({ event, draft, updateDraft, nextStage, prevStage, erro
           </>
         )}
       </div>
-      
+
       <div className="reg-actions dual">
         <RegButton text="BACK" onClick={prevStage} type="back" />
         <RegButton text="CONTINUE" onClick={nextStage} type="continue" />
@@ -1011,7 +1014,7 @@ function ReelColumn({ targetDigit, colIndex, cellHeight = 22 }: { targetDigit: n
     if (!strip) return;
 
     strip.style.transition = 'none';
-    const startOffset = currentOffset % 10; 
+    const startOffset = currentOffset % 10;
     strip.style.transform = `translateY(-${startOffset * cellHeight}px)`;
 
     void strip.offsetHeight;
@@ -1023,18 +1026,18 @@ function ReelColumn({ targetDigit, colIndex, cellHeight = 22 }: { targetDigit: n
 
     strip.style.transition = `transform ${duration}ms cubic-bezier(0.16, 1, 0.3, 1) ${stagger}ms`;
     strip.style.transform = `translateY(-${finalOffset * cellHeight}px)`;
-    
+
     let startTime: number | null = null;
     const maxBlur = 3;
     const animateBlur = (timestamp: number) => {
       if (!startTime) startTime = timestamp;
       const elapsed = timestamp - startTime;
-      
+
       if (elapsed < stagger) {
         requestAnimationFrame(animateBlur);
         return;
       }
-      
+
       const progress = (elapsed - stagger) / duration;
       if (progress < 1) {
         const currentBlur = progress < 0.2 ? maxBlur * (progress / 0.2) : maxBlur * (1 - ((progress - 0.2) / 0.8));
@@ -1059,10 +1062,10 @@ function ReelColumn({ targetDigit, colIndex, cellHeight = 22 }: { targetDigit: n
           <feGaussianBlur ref={blurRef} stdDeviation="0 0" />
         </filter>
       </svg>
-      <div 
+      <div
         ref={stripRef}
-        className="t-reel-strip" 
-        style={{ 
+        className="t-reel-strip"
+        style={{
           transform: `translateY(-${(currentOffset % 10) * cellHeight}px)`,
           filter: `url(#reel-blur-${colIndex})`
         }}
@@ -1079,10 +1082,10 @@ function SpinningCounter({ value }: { value: number }) {
   const strVal = value.toString();
   return (
     <div className="t-reel">
-      <span style={{marginRight: '2px', height: '22px', display: 'flex', alignItems: 'center'}}>₹</span>
+      <span style={{ marginRight: '2px', height: '22px', display: 'flex', alignItems: 'center' }}>₹</span>
       {strVal.split('').map((char, i) => {
         if (isNaN(parseInt(char))) {
-          return <span key={i} className="t-reel-digit" style={{width: 'auto'}}>{char}</span>
+          return <span key={i} className="t-reel-digit" style={{ width: 'auto' }}>{char}</span>
         }
         return <ReelColumn key={`${i}-${strVal.length}`} targetDigit={parseInt(char, 10)} colIndex={i} />
       })}
@@ -1101,7 +1104,7 @@ function PaymentStep({ event, draft, updateDraft, prevStage, transitionTo, total
     : (event?.config?.upi_ids || (event?.config?.upi_id ? [event.config.upi_id] : ["bangiya.samiti.iiith@oksbi"]))
   const activeUpiId = upiIds.includes(draft.selectedUpiId) ? draft.selectedUpiId : upiIds[0]
   const deepLink = `upi://pay?pa=${activeUpiId}&pn=BangiyaSomiti&am=${total}&cu=INR`
-  
+
   const handleCopy = () => {
     navigator.clipboard.writeText(activeUpiId)
     setCopied(true)
@@ -1111,79 +1114,77 @@ function PaymentStep({ event, draft, updateDraft, prevStage, transitionTo, total
   return (
     <div className="reg-payment">
       <TypewriterHeading lines={['PAYMENT']} />
-      <p className="reg-p" style={{marginBottom: '4px', marginTop: '-4px'}}>Complete the payment and confirm below</p>
-      
+      <p className="reg-p" style={{ marginBottom: '4px', marginTop: '-4px' }}>Complete the payment and confirm below</p>
+
       <div className="reg-pay-top">
         <div className="reg-pay-box amount-box">
           <span className="amount-label">Total Amount Due</span>
           <div className="amount-val-wrapper">
-             <img src="/mahalaya_registration_assets/06_divider_floral.png" className="tiny-floral" alt=""/>
-             <strong className="amount-val"><SpinningCounter value={total} /></strong>
-             <img src="/mahalaya_registration_assets/06_divider_floral.png" className="tiny-floral flip" alt=""/>
+            <img src="/mahalaya_registration_assets/06_divider_floral.png" className="tiny-floral" alt="" />
+            <strong className="amount-val"><SpinningCounter value={total} /></strong>
+            <img src="/mahalaya_registration_assets/06_divider_floral.png" className="tiny-floral flip" alt="" />
           </div>
         </div>
-        
-        <div className="reg-pay-box coupon-box">
-           <span className="coupon-label">Coupon code</span>
-           <div className="coupon-input-row">
-             {/* onChange clears couponMsg: a verdict on the previous
-                 code says nothing about the one being typed now. */}
-             <input
-               className={`reg-input ${couponMsg?.type === 'error' ? 'reg-coupon-input is-invalid' : ''}`}
-               value={draft.couponInput}
-               onChange={e => { updateDraft({ couponInput: e.target.value }); setCouponMsg(null) }}
-               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); applyCoupon() } }}
-               placeholder="Enter Coupon Code"
-               aria-invalid={couponMsg?.type === 'error'}
-             />
-             <button type="button" className="reg-btn-apply" onClick={applyCoupon}>APPLY</button>
-           </div>
-           <div className="coupon-breakdown">
-             <div className="breakdown-row"><span className="label">Original Amount</span><span className="val">₹{subtotal}</span></div>
-             <div className="breakdown-row"><span className="label">&bull; Discount</span><span className="val discount">- ₹{discount}</span></div>
-             <div className="breakdown-row final"><span className="label">Final Amount</span><span className="val">₹{total}</span></div>
-           </div>
-        </div>
+
+        {/* <div className="reg-pay-box coupon-box">
+          <span className="coupon-label">Coupon code</span>
+          <div className="coupon-input-row">
+            <input
+              className={`reg-input ${couponMsg?.type === 'error' ? 'reg-coupon-input is-invalid' : ''}`}
+              value={draft.couponInput}
+              onChange={e => { updateDraft({ couponInput: e.target.value }); setCouponMsg(null) }}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); applyCoupon() } }}
+              placeholder="Enter Coupon Code"
+              aria-invalid={couponMsg?.type === 'error'}
+            />
+            <button type="button" className="reg-btn-apply" onClick={applyCoupon}>APPLY</button>
+          </div>
+          <div className="coupon-breakdown">
+            <div className="breakdown-row"><span className="label">Original Amount</span><span className="val">₹{subtotal}</span></div>
+            <div className="breakdown-row"><span className="label">&bull; Discount</span><span className="val discount">- ₹{discount}</span></div>
+            <div className="breakdown-row final"><span className="label">Final Amount</span><span className="val">₹{total}</span></div>
+          </div>
+        </div> */}
       </div>
 
       <div className="reg-pay-bottom">
         <div className="reg-pay-box upi-box">
           <span className="upi-label">Pay via UPI</span>
           <div className="upi-qr-row">
-             <div className="reg-qr">
-               <QRCodeSVG value={deepLink} size={54} />
-             </div>
-             <div className="upi-details-col">
-               <span className="scan-label">Scan the QR code or use the UPI ID below</span>
-               <div className="upi-copy-row">
-                 {upiIds.length > 1 ? (
-                   <select className="reg-input" style={{ padding: '0 8px' }} value={activeUpiId} onChange={e => updateDraft({ selectedUpiId: e.target.value })}>
-                     {upiIds.map((id: string) => <option key={id} value={id}>{id}</option>)}
-                   </select>
-                 ) : (
-                   <input className="reg-input readonly" value={activeUpiId} readOnly />
-                 )}
-                 <button className="reg-btn-copy" onClick={handleCopy}>{copied ? 'COPIED' : 'COPY'}</button>
-               </div>
-               {/* The list arrives least-used first, so the top entry is the one that
+            <div className="reg-qr">
+              <QRCodeSVG value={deepLink} size={54} />
+            </div>
+            <div className="upi-details-col">
+              <span className="scan-label">Scan the QR code or use the UPI ID below</span>
+              <div className="upi-copy-row">
+                {upiIds.length > 1 ? (
+                  <select className="reg-input" style={{ padding: '0 8px' }} value={activeUpiId} onChange={e => updateDraft({ selectedUpiId: e.target.value })}>
+                    {upiIds.map((id: string) => <option key={id} value={id}>{id}</option>)}
+                  </select>
+                ) : (
+                  <input className="reg-input readonly" value={activeUpiId} readOnly />
+                )}
+                <button className="reg-btn-copy" onClick={handleCopy}>{copied ? 'COPIED' : 'COPY'}</button>
+              </div>
+              {/* The list arrives least-used first, so the top entry is the one that
                    spreads the load. Saying so turns an invisible ordering into
                    something people can choose to go along with. */}
-               {upiIds.length > 1 && (
-                 <p className="upi-advisory">
-                   Please use the IDs in the order shown — the one at the top has taken the
-                   fewest payments so far, and using it helps us verify everyone&rsquo;s
-                   registration faster.
-                 </p>
-               )}
-               <a href={deepLink} className="upi-deeplink-btn">
-                 <span className="deeplink-btn-text">PAY NOW VIA UPI</span>
-                 <div className="upi-icons-prominent">
-                    <img src="/mahalaya_registration_assets/37_upi_gpay.png" alt="GPay"/>
-                    <img src="/mahalaya_registration_assets/38_upi_phonepe.png" alt="PhonePe"/>
-                    <img src="/mahalaya_registration_assets/39_upi_paytm.png" alt="Paytm"/>
-                 </div>
-               </a>
-             </div>
+              {upiIds.length > 1 && (
+                <p className="upi-advisory">
+                  Please use the IDs in the order shown — the one at the top has taken the
+                  fewest payments so far, and using it helps us verify everyone&rsquo;s
+                  registration faster.
+                </p>
+              )}
+              <a href={deepLink} className="upi-deeplink-btn">
+                <span className="deeplink-btn-text">PAY NOW VIA UPI</span>
+                <div className="upi-icons-prominent">
+                  <img src="/mahalaya_registration_assets/37_upi_gpay.png" alt="GPay" />
+                  <img src="/mahalaya_registration_assets/38_upi_phonepe.png" alt="PhonePe" />
+                  <img src="/mahalaya_registration_assets/39_upi_paytm.png" alt="Paytm" />
+                </div>
+              </a>
+            </div>
           </div>
         </div>
 
@@ -1202,10 +1203,10 @@ function PaymentStep({ event, draft, updateDraft, prevStage, transitionTo, total
           </ol>
         </div>
       </div>
-      
-      <div className="reg-actions dual" style={{marginTop: 'auto', paddingTop: '4px'}}>
+
+      <div className="reg-actions dual" style={{ marginTop: 'auto', paddingTop: '4px' }}>
         <RegButton text="BACK" onClick={prevStage} type="back" />
-        <RegButton text="I HAVE MADE THE PAYMENT" onClick={() => transitionTo({ paymentState: 'COMPLETED' })} type="continue" style={{width: 'auto', padding: '0 16px'}} />
+        <RegButton text="I HAVE MADE THE PAYMENT" onClick={() => transitionTo({ paymentState: 'COMPLETED' })} type="continue" style={{ width: 'auto', padding: '0 16px' }} />
       </div>
     </div>
   )
@@ -1354,7 +1355,7 @@ function PaymentCompletedStep({ event, prevStage, handleSubmit, draft, updateDra
     }
   }
 
-    // The same verdicts the gate reaches, expressed on the fields themselves.
+  // The same verdicts the gate reaches, expressed on the fields themselves.
   const utrState = fieldState(draft.utr, {
     touched: Boolean(draft.screenshot),
     rule: (v) => (isValidUtr(v) ? null : 'That does not look like a transaction id.'),
@@ -1385,26 +1386,26 @@ function PaymentCompletedStep({ event, prevStage, handleSubmit, draft, updateDra
           text sat straight on the decorative background and was hard to read.
           Opaque boxes fix both without touching the background. */}
       <div className="reg-verify-grid">
-      <div className="reg-pay-box reg-verify-box">
-        <label className="reg-verify-label">Payment Receipt *</label>
-        <div className="reg-upload-area">
-          <input type="file" id="receipt-upload" className="reg-file-input" accept="image/*" onChange={e => {
-            const file = e.target.files?.[0]
-            // Emptied straight away, or choosing the same screenshot again -
-            // to retry a failed upload, or after Remove - changes nothing and
-            // the browser never says it was chosen.
-            e.target.value = ''
-            if (file) handleReceipt(file)
-          }} />
-          {!screenshotPreview ? (
-            <label htmlFor="receipt-upload" className="reg-upload-label">
-              <span className="upload-icon">📁</span>
-              <span className="upload-text">Upload payment screenshot<br/><small>Choose File</small></span>
-            </label>
-          ) : (
-            <div className="reg-upload-preview">
-               <img src={screenshotPreview} alt="preview" className="reg-upload-preview-img"/>
-               <div className="reg-upload-actions">
+        <div className="reg-pay-box reg-verify-box">
+          <label className="reg-verify-label">Payment Receipt *</label>
+          <div className="reg-upload-area">
+            <input type="file" id="receipt-upload" className="reg-file-input" accept="image/*" onChange={e => {
+              const file = e.target.files?.[0]
+              // Emptied straight away, or choosing the same screenshot again -
+              // to retry a failed upload, or after Remove - changes nothing and
+              // the browser never says it was chosen.
+              e.target.value = ''
+              if (file) handleReceipt(file)
+            }} />
+            {!screenshotPreview ? (
+              <label htmlFor="receipt-upload" className="reg-upload-label">
+                <span className="upload-icon">📁</span>
+                <span className="upload-text">Upload payment screenshot<br /><small>Choose File</small></span>
+              </label>
+            ) : (
+              <div className="reg-upload-preview">
+                <img src={screenshotPreview} alt="preview" className="reg-upload-preview-img" />
+                <div className="reg-upload-actions">
                   <label htmlFor="receipt-upload" className="reg-btn-change">Change</label>
                   {/* Removing the receipt has to undo everything the receipt
                       produced. Clearing only `screenshot` left receiptPath
@@ -1432,75 +1433,75 @@ function PaymentCompletedStep({ event, prevStage, handleSubmit, draft, updateDra
                       setScan({ state: 'idle', progress: 0 })
                     }}
                   >Remove</button>
-               </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Progress only. Whether a field was read is said by the field being
+            filled or not; a running commentary on the reader is noise, and the
+            one useful message - which field is still blank - goes to the same
+            notice every other part of the form uses. */}
+          {(scan.state === 'uploading' || scan.state === 'reading') && (
+            <div className="reg-scan" aria-live="polite">
+              {scan.state === 'uploading'
+                ? <span>Saving your receipt…</span>
+                : <span>Reading your receipt… {Math.round(scan.progress * 100)}%</span>}
+            </div>
+          )}
+          {scan.state === 'upload-failed' && (
+            <div className="reg-scan reg-scan--partial" aria-live="polite">
+              {scan.detail || 'Could not save the receipt.'} Please try uploading it again -
+              the registration cannot be submitted without it.
             </div>
           )}
         </div>
 
-        {/* Progress only. Whether a field was read is said by the field being
-            filled or not; a running commentary on the reader is noise, and the
-            one useful message - which field is still blank - goes to the same
-            notice every other part of the form uses. */}
-        {(scan.state === 'uploading' || scan.state === 'reading') && (
-          <div className="reg-scan" aria-live="polite">
-            {scan.state === 'uploading'
-              ? <span>Saving your receipt…</span>
-              : <span>Reading your receipt… {Math.round(scan.progress * 100)}%</span>}
-          </div>
-        )}
-        {scan.state === 'upload-failed' && (
-          <div className="reg-scan reg-scan--partial" aria-live="polite">
-            {scan.detail || 'Could not save the receipt.'} Please try uploading it again -
-            the registration cannot be submitted without it.
-          </div>
-        )}
-      </div>
-
-      <div className="reg-pay-box reg-verify-box reg-verify-box--fields">
-      {/* Transaction ID and payee. Filled from the receipt when they can be
+        <div className="reg-pay-box reg-verify-box reg-verify-box--fields">
+          {/* Transaction ID and payee. Filled from the receipt when they can be
           read, and always editable: OCR misreads a digit often enough that
           locking the field just strands people on a value they can see is
           wrong. Nothing is lost by letting them fix it - the receipt image is
           stored alongside, and a verifier checks both against it. Removing the
           image clears these, so a fresh receipt starts from nothing. */}
-      <div className="reg-field full" style={{ marginTop: '2cqw' }}>
-        <label>UPI Transaction ID / UTR *</label>
-        <input
-          {...fieldProps(utrState)}
-          className={`reg-input ${fieldProps(utrState).className}`}
-          value={draft.utr}
-          onChange={e => updateDraft({ utr: e.target.value, utrFromOcr: false })}
-          placeholder="Enter your UPI Transaction ID"
-          inputMode="text"
-          autoComplete="off"
-        />
-        {draft.utrFromOcr && draft.utr && (
-          <span className="reg-read__note">read from your receipt — correct it if it is wrong</span>
-        )}
-      </div>
+          <div className="reg-field full" style={{ marginTop: '2cqw' }}>
+            <label>UPI Transaction ID / UTR *</label>
+            <input
+              {...fieldProps(utrState)}
+              className={`reg-input ${fieldProps(utrState).className}`}
+              value={draft.utr}
+              onChange={e => updateDraft({ utr: e.target.value, utrFromOcr: false })}
+              placeholder="Enter your UPI Transaction ID"
+              inputMode="text"
+              autoComplete="off"
+            />
+            {draft.utrFromOcr && draft.utr && (
+              <span className="reg-read__note">read from your receipt — correct it if it is wrong</span>
+            )}
+          </div>
 
-      <div className="reg-field full" style={{ marginTop: '2cqw' }}>
-        <label>Paid to (UPI ID) *</label>
-        {/* Always a choice from the same list, in the same order the payment
+          <div className="reg-field full" style={{ marginTop: '2cqw' }}>
+            <label>Paid to (UPI ID) *</label>
+            {/* Always a choice from the same list, in the same order the payment
             screen showed - `receivers` comes from the one endpoint, so the two
             cannot drift apart. Never a free text box: a typed handle is either
             one of these or a payment we did not receive, and letting somebody
             invent one only produces a registration nobody can verify. */}
-        <select {...fieldProps(upiState)} className={`reg-input ${fieldProps(upiState).className}`} value={draft.receiverUpi || ''} onChange={e => updateDraft({ receiverUpi: e.target.value, receiverUpiFromOcr: false })}>
-          <option value="" disabled>Select the UPI ID you paid</option>
-          {receivers.map((id: string) => <option key={id} value={id}>{id}</option>)}
-        </select>
-        {receivers.length === 0 && (
-          <span className="reg-read__note">
-            No collection IDs are configured for this event. Please contact the organisers.
-          </span>
-        )}
-        {draft.receiverUpiFromOcr && draft.receiverUpi && (
-          <span className="reg-read__note">read from your receipt — correct it if it is wrong</span>
-        )}
-      </div>
+            <select {...fieldProps(upiState)} className={`reg-input ${fieldProps(upiState).className}`} value={draft.receiverUpi || ''} onChange={e => updateDraft({ receiverUpi: e.target.value, receiverUpiFromOcr: false })}>
+              <option value="" disabled>Select the UPI ID you paid</option>
+              {receivers.map((id: string) => <option key={id} value={id}>{id}</option>)}
+            </select>
+            {receivers.length === 0 && (
+              <span className="reg-read__note">
+                No collection IDs are configured for this event. Please contact the organisers.
+              </span>
+            )}
+            {draft.receiverUpiFromOcr && draft.receiverUpi && (
+              <span className="reg-read__note">read from your receipt — correct it if it is wrong</span>
+            )}
+          </div>
 
-      </div>
+        </div>
       </div>
 
       <div className="reg-actions dual">
@@ -1525,24 +1526,25 @@ function ConfirmationStep({ confirmation }: any) {
 
   return (
     <div className="reg-confirm">
-       {/* Genuine Artwork: Success Icon */}
-       <img src="/mahalaya_registration_assets/34_success_icon.png" alt="Success" className="reg-success-icon" />
-       
-       <TypewriterHeading lines={['REGISTRATION', 'SUCCESSFUL!']} />
-       <div className="reg-verify-msg">
-          <p>Your payment is awaiting verification.</p>
-          <p>Once verified, your digital pass will be sent to your registered email address.</p>
-       </div>
-       
-       <div className="reg-id-box">
-          <span className="id-label">Registration ID</span>
-          <div className="id-val-row">
-             <strong className="id-val">{tokenDisplay}</strong>
-             <button className="reg-btn-copy-small" onClick={handleCopy}>{copied ? '✓' : 'COPY'}</button>
-          </div>
-       </div>
+      {/* Genuine Artwork: Success Icon */}
+      <img src="/mahalaya_registration_assets/34_success_icon.png" alt="Success" className="reg-success-icon" />
 
-       <RegButton text="GO TO HOME" onClick={() => window.location.href = '/'} type="home" />
+      <TypewriterHeading lines={['REGISTRATION', 'SUCCESSFUL!']} />
+      <div className="reg-verify-msg">
+        <p>Your payment is awaiting verification.</p>
+        <p>Once verified, your digital pass will be sent to your registered email address.</p>
+        <p style={{ marginTop: '8px', fontSize: '0.9em', color: '#8b4513', fontStyle: 'italic' }}>Please also check your spam or junk folder if you don't receive the email in your inbox.</p>
+      </div>
+
+      <div className="reg-id-box">
+        <span className="id-label">Registration ID</span>
+        <div className="id-val-row">
+          <strong className="id-val">{tokenDisplay}</strong>
+          <button className="reg-btn-copy-small" onClick={handleCopy}>{copied ? '✓' : 'COPY'}</button>
+        </div>
+      </div>
+
+      <RegButton text="GO TO HOME" onClick={() => window.location.href = '/'} type="home" />
     </div>
   )
 }

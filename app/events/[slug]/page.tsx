@@ -109,7 +109,18 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
                 {isMahalaya ? (
                   <>
                     <div className="mahalaya-timeline__item"><div className="mahalaya-timeline__dot"></div><strong className="mahalaya-timeline__title">Event Date</strong><span className="mahalaya-timeline__desc">{new Date(event.event_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</span></div>
-                    <div className="mahalaya-timeline__item"><div className="mahalaya-timeline__dot"></div><strong className="mahalaya-timeline__title">Venue & Location</strong><span className="mahalaya-timeline__desc">{event.venue}</span></div>
+                    <div className="mahalaya-timeline__item">
+                      <div className="mahalaya-timeline__dot"></div>
+                      <strong className="mahalaya-timeline__title">Venue & Location</strong>
+                      <span className="mahalaya-timeline__desc">
+                        <span style={{ display: 'block', marginBottom: '4px' }}>
+                          <strong>Breakfast:</strong> <a href="https://maps.app.goo.gl/giUCthuqRdgj53bd6?g_st=aw" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline', color: 'inherit', textUnderlineOffset: '2px' }}>Lounge, Floor No: -1, Kohli Research Block (KCIS), IIIT Hyderabad</a>
+                        </span>
+                        <span style={{ display: 'block' }}>
+                          <strong>Lunch:</strong> <a href="https://maps.app.goo.gl/E8wmSWJ1PDgBrSocA?g_st=aw" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline', color: 'inherit', textUnderlineOffset: '2px' }}>North Mess, 1st Floor, Old Boys Hostel, IIIT Hyderabad</a>
+                        </span>
+                      </span>
+                    </div>
                     <div className="mahalaya-timeline__item"><div className="mahalaya-timeline__dot"></div><strong className="mahalaya-timeline__title">Event Details</strong><span className="mahalaya-timeline__desc">{event.description}</span></div>
                   </>
                 ) : (
@@ -138,7 +149,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
         {/* The people running the event, from public/data/team.csv. Renders
             nothing when that file is missing or empty, so an unfinished list
             leaves no gap. */}
-        {isMahalaya && <MeetTheTeam />}
+        {/* {isMahalaya && <MeetTheTeam />} */}
       </main>
 
       <SiteFooter />

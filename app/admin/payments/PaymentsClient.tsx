@@ -67,14 +67,16 @@ export default function PaymentsClient() {
       message: `Pass ${token} will be marked paid and its QR pass sent out.`,
       confirmLabel: 'Approve',
     }))) return
+    setLoading(true)
     try {
       const res = await fetch(`/api/admin/payments/${token}/approve`, { method: 'POST' })
       if (!res.ok) {
         const d = await res.json()
         throw new Error(d.error || 'Failed to approve payment')
       }
-      fetchPayments()
+      window.location.reload()
     } catch (e: any) {
+      setLoading(false)
       notifyError(e)
     }
   }
@@ -96,6 +98,7 @@ export default function PaymentsClient() {
     })
     if (reason === null) return
 
+    setLoading(true)
     try {
       const res = await fetch(`/api/admin/payments/${token}/flag-allocation`, {
         method: 'POST',
@@ -105,8 +108,9 @@ export default function PaymentsClient() {
       const d = await res.json()
       if (!res.ok) throw new Error(d.error || 'Could not report this payment.')
       notifySuccess('Reported. A super admin will route it to the right collector.')
-      fetchPayments()
+      window.location.reload()
     } catch (e: any) {
+      setLoading(false)
       notifyError(e)
     }
   }
@@ -118,14 +122,16 @@ export default function PaymentsClient() {
       confirmLabel: 'Reject',
       tone: 'danger',
     }))) return
+    setLoading(true)
     try {
       const res = await fetch(`/api/admin/payments/${token}/reject`, { method: 'POST' })
       if (!res.ok) {
         const d = await res.json()
         throw new Error(d.error || 'Failed to reject payment')
       }
-      fetchPayments()
+      window.location.reload()
     } catch (e: any) {
+      setLoading(false)
       notifyError(e)
     }
   }
@@ -173,7 +179,7 @@ export default function PaymentsClient() {
             <tr>
               <th>Registration ID</th>
               <th>Participant Name</th>
-              <th>Registered Email</th>
+              <th>Contact Info</th>
               <th>UPI Transaction ID / UTR</th>
               <th>Expected Amount</th>
               <th>Submission Timestamp</th>
@@ -190,7 +196,10 @@ export default function PaymentsClient() {
                 <tr key={pmt.id}>
                   <td><code>{pmt.token.includes('_') ? pmt.token.split('_')[0] : pmt.token}</code> {pmt.num_passes > 1 && <span style={{ fontSize: '0.8rem', color: 'var(--muted)', display: 'block', marginTop: '4px' }}>+{pmt.num_passes - 1} more passes</span>}</td>
                   <td><strong>{pmt.participant_name}</strong><br /><span className="text-muted">{pmt.college_id}</span></td>
-                  <td>{pmt.email}</td>
+                  <td>
+                    <span style={{ fontSize: '0.85rem' }}>{pmt.email}</span><br />
+                    <span className="text-muted" style={{ fontSize: '0.85rem' }}>{pmt.phone || 'No phone'}</span>
+                  </td>
                   <td><strong style={{ fontFamily: 'monospace' }}>{pmt.utr || 'FREE-PASS'}</strong></td>
                   <td>₹{pmt.amount}</td>
                   <td>{new Date(pmt.created_at).toLocaleString()}</td>

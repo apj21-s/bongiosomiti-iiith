@@ -4,8 +4,11 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { confirmAction, notifyError } from '@/components/site-notifications'
 
+import { useState } from 'react'
+
 export default function EventsTable({ events }: { events: any[] }) {
   const router = useRouter()
+  const [loading, setLoading] = useState(false)
 
   async function handleDelete(slug: string) {
     if (!(await confirmAction({
@@ -14,15 +17,18 @@ export default function EventsTable({ events }: { events: any[] }) {
       confirmLabel: 'Delete event',
       tone: 'danger',
     }))) return
+    setLoading(true)
     try {
       await fetch(`/api/admin/events/${slug}`, { method: 'DELETE' })
-      router.refresh()
+      window.location.reload()
     } catch (e: any) {
+      setLoading(false)
       notifyError(e)
     }
   }
 
   async function handleToggleStatus(slug: string, status?: 'OPEN' | 'LOCKED' | 'CLOSED') {
+    setLoading(true)
     try {
       const res = await fetch(`/api/admin/events/${slug}/toggle`, {
         method: 'POST',
@@ -32,11 +38,14 @@ export default function EventsTable({ events }: { events: any[] }) {
         body: JSON.stringify(status ? { status } : {}),
       })
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'Failed to change status')
-      router.refresh()
+      window.location.reload()
     } catch (e: any) {
+      setLoading(false)
       notifyError(e)
     }
   }
+
+  if (loading) return <p className="text-muted">Loading...</p>
 
   return (
     <table className="data-table">

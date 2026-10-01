@@ -76,12 +76,22 @@ export default function ManagersClient() {
   }
 
   async function toggleActive(manager: Manager) {
-    await fetch(`/api/admin/managers/${manager.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ isActive: !manager.isActive }),
-    })
-    load()
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/admin/managers/${manager.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive: !manager.isActive }),
+      })
+      if (!res.ok) {
+        const d = await res.json()
+        throw new Error(d.error || 'Failed to update manager')
+      }
+      window.location.reload()
+    } catch (e: any) {
+      setLoading(false)
+      setError(e.message)
+    }
   }
 
   async function remove(manager: Manager) {
@@ -91,8 +101,18 @@ export default function ManagersClient() {
       confirmLabel: 'Delete profile',
       tone: 'danger',
     }))) return
-    await fetch(`/api/admin/managers/${manager.id}`, { method: 'DELETE' })
-    load()
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/admin/managers/${manager.id}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const d = await res.json()
+        throw new Error(d.error || 'Failed to delete manager. They may have tickets assigned to them.')
+      }
+      window.location.reload()
+    } catch (e: any) {
+      setLoading(false)
+      setError(e.message)
+    }
   }
 
   return (

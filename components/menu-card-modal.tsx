@@ -16,8 +16,8 @@ type Dish = {
 const MAHALAYA_MENU: Dish[] = [
   // BREAKFAST MENU ITEMS
   { nameBn: 'গরম ফুলকো লুচি', nameEn: 'Garam Luchi / Radhaballabhi', description: 'Puffed golden deep-fried puris served piping hot.', type: 'veg', meal: 'breakfast', image: '/assets/menu-luchi.jpg', searchQuery: 'Bengali Luchi puri' },
-  { nameBn: 'হিং দিয়ে আলুর দম', nameEn: 'Classic Hing-Aloor Dom', description: 'Slow-simmered baby potatoes in asafoetida & cumin gravy.', type: 'veg', meal: 'breakfast', image: '/assets/menu-jhuri-aloo.jpg', searchQuery: 'Hing Aloor Dom Bengali dish' },
-  { nameBn: 'নারকেল দিয়ে ছোলার ডাল', nameEn: 'Narkel diye Chholar Dal', description: 'Bengal gram with fried coconut crisps and warm aromatic spices.', type: 'veg', meal: 'breakfast', image: '/assets/menu-chholar-dal.jpg', searchQuery: 'Chholar Dal Bengali dish' },
+  { nameBn: 'আলুর দম', nameEn: 'Classic Aloor Dom', description: 'Slow-simmered baby potatoes in cumin gravy.', type: 'veg', meal: 'breakfast', image: '/assets/menu-jhuri-aloo.jpg', searchQuery: 'Aloor Dom Bengali dish' },
+  { nameBn: 'ছোলার ডাল', nameEn: 'Chholar Dal', description: 'Bengal gram with warm aromatic spices.', type: 'veg', meal: 'breakfast', image: '/assets/menu-chholar-dal.jpg', searchQuery: 'Chholar Dal Bengali dish' },
   { nameBn: 'রসগোল্লা', nameEn: 'Classic Rosogolla', description: 'Soft, spongy cottage cheese balls soaked in light sugar syrup.', type: 'veg', meal: 'breakfast', image: '/assets/menu-rosogolla.jpg', searchQuery: 'Bengali Rosogolla sweet' },
   // LUNCH FEAST (NON-VEG)
   { nameBn: 'লেবু, লবণ ও স্যালাড', nameEn: 'Lemon, Salt & Green Salad', description: 'Fresh cucumber, tomato, onion slices, lemon wedge and sea salt.', type: 'nonveg', meal: 'lunch', image: '/assets/menu-salad.jpg', searchQuery: 'Bengali green salad with lemon' },
@@ -164,12 +164,12 @@ export default function MenuCardModal({ slug, status = 'OPEN' }: { slug: string,
       <AnimatePresence>
         {open && (
           <div className={isMahalaya ? 'mahalaya-menu-modal' : 'saraswati-menu-modal'} role="dialog" aria-modal="true" aria-labelledby={isMahalaya ? 'menu-modal-title' : 'saraswati-menu-modal-title'}>
-            <motion.div 
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }} 
-              exit={{ opacity: 0 }} 
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="mahalaya-menu-modal__backdrop" 
+              className="mahalaya-menu-modal__backdrop"
               onClick={() => setOpen(false)}
             />
             <motion.div
@@ -197,168 +197,168 @@ export default function MenuCardModal({ slug, status = 'OPEN' }: { slug: string,
                 />
               </div>
 
-              <motion.div 
-                initial={{ opacity: 0, filter: 'blur(4px)' }} 
-                animate={{ opacity: 1, filter: 'blur(0px)' }} 
-                exit={{ opacity: 0, filter: 'blur(4px)' }} 
+              <motion.div
+                initial={{ opacity: 0, filter: 'blur(4px)' }}
+                animate={{ opacity: 1, filter: 'blur(0px)' }}
+                exit={{ opacity: 0, filter: 'blur(4px)' }}
                 transition={{ duration: 0.3, delay: 0.1 }}
                 className={isMahalaya ? 'mahalaya-menu-modal__body' : 'saraswati-menu-modal__body'}
               >
-              {status !== 'OPEN' ? (
-                <div style={{ padding: '60px 20px', textAlign: 'center' }}>
-                  <div style={{ fontSize: '48px', marginBottom: '16px' }}>🧑‍🍳</div>
-                  <h3 className={isMahalaya ? 'mahalaya-menu-modal__title' : 'saraswati-menu-modal__title'}>Menu is Cooking...</h3>
-                  <p className={isMahalaya ? 'mahalaya-menu-modal__subtitle' : 'saraswati-menu-modal__subtitle'}>The official menu is currently being prepared and will be revealed soon! Stay tuned.</p>
-                </div>
-              ) : (
-                <>
-              <div className={isMahalaya ? 'mahalaya-menu-modal__header' : 'saraswati-menu-modal__header'}>
-                <span className={isMahalaya ? 'mahalaya-menu-modal__tag' : 'saraswati-menu-modal__tag'}>
-                  {isMahalaya ? <><span className="tag-flourish">❖</span> IIIT HYDERABAD BANGIYA SAMITI <span className="tag-flourish">❖</span></> : '🌼 BASANT PANCHAMI 2027 🌼'}
-                </span>
-                <h3 id={isMahalaya ? 'menu-modal-title' : 'saraswati-menu-modal-title'} className={isMahalaya ? 'mahalaya-menu-modal__title' : 'saraswati-menu-modal__title'}>
-                  {isMahalaya ? 'মহালয়া ভোজ মেনু কার্ড' : 'সরস্বতী পূজা ও খিচুড়ি ভোগ মেনু কার্ড'}
-                </h3>
-                <p className={isMahalaya ? 'mahalaya-menu-modal__subtitle' : 'saraswati-menu-modal__subtitle'}>
-                  {isMahalaya
-                    ? 'Mahalaya Bhoj Menu Card • 10 October 2026 • Community Courtyard'
-                    : 'Grand Sacred Feast • 21 January 2027 • Campus Courtyard & Dining Hall'}
-                </p>
-
-                {isMahalaya && (
-                  <div className="mahalaya-meal-tabs" role="tablist" aria-label="Meal Selection">
-                    <button
-                      type="button"
-                      className={`mahalaya-meal-tab ${activeMeal === 'breakfast' ? 'is-active' : ''}`}
-                      onClick={() => setActiveMeal('breakfast')}
-                      role="tab"
-                      aria-selected={activeMeal === 'breakfast'}
-                    >
-                      <div className="mahalaya-meal-tab__icon-wrap">
-                        <span className="mahalaya-meal-tab__icon">🌅</span>
-                        <span className="mahalaya-meal-tab__sunrays" aria-hidden="true"></span>
-                      </div>
-                      <div className="mahalaya-meal-tab__text">
-                        <span className="mahalaya-meal-tab__bn">প্রাতরাশ</span>
-                        <span className="mahalaya-meal-tab__en">BREAKFAST</span>
-                      </div>
-                    </button>
-                    <span className="mahalaya-meal-tabs__divider" aria-hidden="true">❖</span>
-                    <button
-                      type="button"
-                      className={`mahalaya-meal-tab ${activeMeal === 'lunch' ? 'is-active' : ''}`}
-                      onClick={() => setActiveMeal('lunch')}
-                      role="tab"
-                      aria-selected={activeMeal === 'lunch'}
-                    >
-                      <div className="mahalaya-meal-tab__icon-wrap">
-                        <span className="mahalaya-meal-tab__icon">🍲</span>
-                        <div className="mahalaya-meal-tab__steam" aria-hidden="true">
-                          <span className="steam-wisp steam-wisp--1"></span>
-                          <span className="steam-wisp steam-wisp--2"></span>
-                          <span className="steam-wisp steam-wisp--3"></span>
-                        </div>
-                      </div>
-                      <div className="mahalaya-meal-tab__text">
-                        <span className="mahalaya-meal-tab__bn">মহালয়া ভোজ</span>
-                        <span className="mahalaya-meal-tab__en">LUNCH FEAST</span>
-                      </div>
-                    </button>
+                {status !== 'OPEN' ? (
+                  <div style={{ padding: '60px 20px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '48px', marginBottom: '16px' }}>🧑‍🍳</div>
+                    <h3 className={isMahalaya ? 'mahalaya-menu-modal__title' : 'saraswati-menu-modal__title'}>Menu is Cooking...</h3>
+                    <p className={isMahalaya ? 'mahalaya-menu-modal__subtitle' : 'saraswati-menu-modal__subtitle'}>The official menu is currently being prepared and will be revealed soon! Stay tuned.</p>
                   </div>
-                )}
-              </div>
-
-              {isMahalaya ? (
-                <div className="mahalaya-menu-modal__sections" id="mahalaya-menu-sections">
-                  {vegDishes.length > 0 && (
-                    <div className="mahalaya-menu-diet-section">
-                      <button 
-                        className="mahalaya-menu-diet-section__header mahalaya-menu-diet-section__header--collapsible"
-                        onClick={() => setExpandedDiet(expandedDiet === 'veg' ? null : 'veg')}
-                        aria-expanded={expandedDiet === 'veg'}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <span className="mahalaya-menu-diet-symbol mahalaya-menu-diet-symbol--veg"></span>
-                          <span className="mahalaya-menu-diet-section__label">
-                            <span className="mahalaya-menu-diet-section__label-bn">নিরামিষ</span> · VEGETARIAN
-                          </span>
-                        </div>
-                        <span className="mahalaya-menu-diet-section__chevron">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: expandedDiet === 'veg' ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s ease' }}>
-                            <path d="m6 9 6 6 6-6"/>
-                          </svg>
-                        </span>
-                      </button>
-                      <div className="mahalaya-menu-diet-section__collapse" style={{ display: expandedDiet === 'veg' ? 'block' : 'none' }}>
-                        <div className="mahalaya-menu-dish-grid">{renderMahalayaDishes(vegDishes)}</div>
-                      </div>
-                    </div>
-                  )}
-                  {nonvegDishes.length > 0 && (
-                    <div className="mahalaya-menu-diet-section">
-                      <button 
-                        className="mahalaya-menu-diet-section__header mahalaya-menu-diet-section__header--collapsible"
-                        onClick={() => setExpandedDiet(expandedDiet === 'nonveg' ? null : 'nonveg')}
-                        aria-expanded={expandedDiet === 'nonveg'}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <span className="mahalaya-menu-diet-symbol mahalaya-menu-diet-symbol--nonveg"></span>
-                          <span className="mahalaya-menu-diet-section__label">
-                            <span className="mahalaya-menu-diet-section__label-bn">আমিষ</span> · NON-VEGETARIAN
-                          </span>
-                        </div>
-                        <span className="mahalaya-menu-diet-section__chevron">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: expandedDiet === 'nonveg' ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s ease' }}>
-                            <path d="m6 9 6 6 6-6"/>
-                          </svg>
-                        </span>
-                      </button>
-                      <div className="mahalaya-menu-diet-section__collapse" style={{ display: expandedDiet === 'nonveg' ? 'block' : 'none' }}>
-                        <div className="mahalaya-menu-dish-grid">{renderMahalayaDishes(nonvegDishes)}</div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="saraswati-menu-modal__sections">
-                  {SARASWATI_COURSES.map((course) => (
-                    <div className="saraswati-menu-course" key={course.title}>
-                      <h4 className="saraswati-menu-course__heading">
-                        <span>{course.emoji}</span> {course.title}
-                      </h4>
-                      <ul className="saraswati-menu-course__list">
-                        {course.items.map((item) => (
-                          <li key={item.title}>
-                            <strong>{item.title}</strong>
-                            {item.desc && <> &bull; {item.desc}</>}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <div className={isMahalaya ? 'mahalaya-menu-modal__footer' : 'saraswati-menu-modal__footer'}>
-                {isMahalaya ? (
-                  <>
-                    <p className="mahalaya-menu-modal__footer-timing">
-                      {activeMeal === 'breakfast'
-                        ? <>Feast timings: <strong>8:30 AM – 11:00 AM</strong> &bull; Fresh hot breakfast & morning adda</>
-                        : <>Feast timings: <strong>1:00 PM – 4:30 PM</strong></>}
-                    </p>
-                    <p className="mahalaya-menu-modal__footer-closing">পরম্পরার স্বাদে, একসাথে বসে।</p>
-                  </>
                 ) : (
-                  <p>✨ Sit-down lunch timings: <strong>12:30 PM – 3:30 PM</strong> &bull; Free community feast for all attendees with pass</p>
+                  <>
+                    <div className={isMahalaya ? 'mahalaya-menu-modal__header' : 'saraswati-menu-modal__header'}>
+                      <span className={isMahalaya ? 'mahalaya-menu-modal__tag' : 'saraswati-menu-modal__tag'}>
+                        {isMahalaya ? <><span className="tag-flourish">❖</span> IIIT HYDERABAD BANGIYA SAMITI <span className="tag-flourish">❖</span></> : '🌼 BASANT PANCHAMI 2027 🌼'}
+                      </span>
+                      <h3 id={isMahalaya ? 'menu-modal-title' : 'saraswati-menu-modal-title'} className={isMahalaya ? 'mahalaya-menu-modal__title' : 'saraswati-menu-modal__title'}>
+                        {isMahalaya ? 'মহালয়া ভোজ মেনু কার্ড' : 'সরস্বতী পূজা ও খিচুড়ি ভোগ মেনু কার্ড'}
+                      </h3>
+                      <p className={isMahalaya ? 'mahalaya-menu-modal__subtitle' : 'saraswati-menu-modal__subtitle'}>
+                        {isMahalaya
+                          ? 'Mahalaya Bhoj Menu Card • 10 October 2026 • Community Courtyard'
+                          : 'Grand Sacred Feast • 21 January 2027 • Campus Courtyard & Dining Hall'}
+                      </p>
+
+                      {isMahalaya && (
+                        <div className="mahalaya-meal-tabs" role="tablist" aria-label="Meal Selection">
+                          <button
+                            type="button"
+                            className={`mahalaya-meal-tab ${activeMeal === 'breakfast' ? 'is-active' : ''}`}
+                            onClick={() => setActiveMeal('breakfast')}
+                            role="tab"
+                            aria-selected={activeMeal === 'breakfast'}
+                          >
+                            <div className="mahalaya-meal-tab__icon-wrap">
+                              <span className="mahalaya-meal-tab__icon">🌅</span>
+                              <span className="mahalaya-meal-tab__sunrays" aria-hidden="true"></span>
+                            </div>
+                            <div className="mahalaya-meal-tab__text">
+                              <span className="mahalaya-meal-tab__bn">প্রাতরাশ</span>
+                              <span className="mahalaya-meal-tab__en">BREAKFAST</span>
+                            </div>
+                          </button>
+                          <span className="mahalaya-meal-tabs__divider" aria-hidden="true">❖</span>
+                          <button
+                            type="button"
+                            className={`mahalaya-meal-tab ${activeMeal === 'lunch' ? 'is-active' : ''}`}
+                            onClick={() => setActiveMeal('lunch')}
+                            role="tab"
+                            aria-selected={activeMeal === 'lunch'}
+                          >
+                            <div className="mahalaya-meal-tab__icon-wrap">
+                              <span className="mahalaya-meal-tab__icon">🍲</span>
+                              <div className="mahalaya-meal-tab__steam" aria-hidden="true">
+                                <span className="steam-wisp steam-wisp--1"></span>
+                                <span className="steam-wisp steam-wisp--2"></span>
+                                <span className="steam-wisp steam-wisp--3"></span>
+                              </div>
+                            </div>
+                            <div className="mahalaya-meal-tab__text">
+                              <span className="mahalaya-meal-tab__bn">মহালয়া ভোজ</span>
+                              <span className="mahalaya-meal-tab__en">LUNCH FEAST</span>
+                            </div>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {isMahalaya ? (
+                      <div className="mahalaya-menu-modal__sections" id="mahalaya-menu-sections">
+                        {vegDishes.length > 0 && (
+                          <div className="mahalaya-menu-diet-section">
+                            <button
+                              className="mahalaya-menu-diet-section__header mahalaya-menu-diet-section__header--collapsible"
+                              onClick={() => setExpandedDiet(expandedDiet === 'veg' ? null : 'veg')}
+                              aria-expanded={expandedDiet === 'veg'}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <span className="mahalaya-menu-diet-symbol mahalaya-menu-diet-symbol--veg"></span>
+                                <span className="mahalaya-menu-diet-section__label">
+                                  <span className="mahalaya-menu-diet-section__label-bn">নিরামিষ</span> · VEGETARIAN
+                                </span>
+                              </div>
+                              <span className="mahalaya-menu-diet-section__chevron">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: expandedDiet === 'veg' ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s ease' }}>
+                                  <path d="m6 9 6 6 6-6" />
+                                </svg>
+                              </span>
+                            </button>
+                            <div className="mahalaya-menu-diet-section__collapse" style={{ display: expandedDiet === 'veg' ? 'block' : 'none' }}>
+                              <div className="mahalaya-menu-dish-grid">{renderMahalayaDishes(vegDishes)}</div>
+                            </div>
+                          </div>
+                        )}
+                        {nonvegDishes.length > 0 && (
+                          <div className="mahalaya-menu-diet-section">
+                            <button
+                              className="mahalaya-menu-diet-section__header mahalaya-menu-diet-section__header--collapsible"
+                              onClick={() => setExpandedDiet(expandedDiet === 'nonveg' ? null : 'nonveg')}
+                              aria-expanded={expandedDiet === 'nonveg'}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <span className="mahalaya-menu-diet-symbol mahalaya-menu-diet-symbol--nonveg"></span>
+                                <span className="mahalaya-menu-diet-section__label">
+                                  <span className="mahalaya-menu-diet-section__label-bn">আমিষ</span> · NON-VEGETARIAN
+                                </span>
+                              </div>
+                              <span className="mahalaya-menu-diet-section__chevron">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: expandedDiet === 'nonveg' ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s ease' }}>
+                                  <path d="m6 9 6 6 6-6" />
+                                </svg>
+                              </span>
+                            </button>
+                            <div className="mahalaya-menu-diet-section__collapse" style={{ display: expandedDiet === 'nonveg' ? 'block' : 'none' }}>
+                              <div className="mahalaya-menu-dish-grid">{renderMahalayaDishes(nonvegDishes)}</div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="saraswati-menu-modal__sections">
+                        {SARASWATI_COURSES.map((course) => (
+                          <div className="saraswati-menu-course" key={course.title}>
+                            <h4 className="saraswati-menu-course__heading">
+                              <span>{course.emoji}</span> {course.title}
+                            </h4>
+                            <ul className="saraswati-menu-course__list">
+                              {course.items.map((item) => (
+                                <li key={item.title}>
+                                  <strong>{item.title}</strong>
+                                  {item.desc && <> &bull; {item.desc}</>}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className={isMahalaya ? 'mahalaya-menu-modal__footer' : 'saraswati-menu-modal__footer'}>
+                      {isMahalaya ? (
+                        <>
+                          <p className="mahalaya-menu-modal__footer-timing">
+                            {activeMeal === 'breakfast'
+                              ? <>Feast timings: <strong>8:00 AM – 11:00 AM</strong> &bull; Fresh hot breakfast & morning adda</>
+                              : <>Feast timings: <strong>1:00 PM – 4:00 PM</strong></>}
+                          </p>
+                          <p className="mahalaya-menu-modal__footer-closing">পরম্পরার স্বাদে, একসাথে বসে।</p>
+                        </>
+                      ) : (
+                        <p>✨ Sit-down lunch timings: <strong>12:30 PM – 3:30 PM</strong> &bull; Free community feast for all attendees with pass</p>
+                      )}
+                    </div>
+                  </>
                 )}
-              </div>
-              </>
-              )}
+              </motion.div>
             </motion.div>
-          </motion.div>
-        </div>
-      )}
+          </div>
+        )}
       </AnimatePresence>
     </>
   )

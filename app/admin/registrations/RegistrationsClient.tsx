@@ -44,10 +44,12 @@ export default function RegistrationsClient({ initialEvents }: { initialEvents: 
       tone: 'danger',
     }))) return
     
+    setLoading(true)
     try {
       await Promise.all(reg._tokens.map((t: string) => fetch(`/api/admin/registrations/${t}`, { method: 'DELETE' })))
-      fetchRegs()
+      window.location.reload()
     } catch (e: any) {
+      setLoading(false)
       notifyError(e)
     }
   }
@@ -158,7 +160,11 @@ export default function RegistrationsClient({ initialEvents }: { initialEvents: 
                   <span className={`badge ${reg.status === 'UNUSED' ? '' : 'badge--error'}`}>{reg.status}</span>
                   {reg.payment_status && <span className="text-muted" style={{ fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>Pmt: {reg.payment_status}</span>}
                 </td>
-                <td>{new Date(reg.created_at).toLocaleDateString()}</td>
+                <td>
+                  {new Date(reg.created_at).toLocaleDateString()}
+                  <br />
+                  <span className="text-muted" style={{ fontSize: '0.85rem' }}>{new Date(reg.created_at).toLocaleTimeString()}</span>
+                </td>
                 <td><button type="button" className="btn btn-sm btn-danger" onClick={() => handleDelete(reg)}>Delete</button></td>
               </tr>
             ))}

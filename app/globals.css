@@ -3785,6 +3785,22 @@ video::cue {
   line-height: 1.35;
 }
 
+@media (max-width: 860px) {
+  .mahalaya-timeline {
+    gap: 12px;
+  }
+  .mahalaya-timeline__item {
+    gap: 0px;
+  }
+  .mahalaya-timeline__title {
+    font-size: 0.9rem;
+  }
+  .mahalaya-timeline__desc {
+    font-size: 0.8rem;
+    line-height: 1.3;
+  }
+}
+
 /* Visually Separated Payment Instructions Box */
 .mahalaya-payment-box {
   margin-top: 0;
@@ -3990,6 +4006,7 @@ video::cue {
   position: relative;
   display: flex;
   flex-direction: column;
+  justify-content: flex-end;
   padding: 0;
   background: transparent;
   border: none;
@@ -11355,7 +11372,7 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
 
   .t-morph[data-open="true"] {
     width: 240px;
-    height: 280px;
+    height: 160px;
     border-radius: var(--morph-r-open);
     background: rgba(247, 235, 208, 0.98);
     backdrop-filter: blur(10px);

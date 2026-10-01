@@ -226,6 +226,7 @@ export default async function Home() {
 
       <section id="story" className="story-page" aria-labelledby="story-title">
         <article className="story-card">
+          {/*
           <div className="story-card__intro scroll-reveal">
             <div className="story-card__introMeta">
               <p className="section-label">আমাদের গল্প</p>
@@ -235,7 +236,7 @@ export default async function Home() {
 
           {/* Opens the post at public/assets/blogs/our-story.md. Edit that file
               to change what this says; drop in another .md and point a new
-              slug at it to add one. */}
+              slug at it to add one. *\/}
           <BlogPostModal slug="our-story" label="Read our story" className="story-card__header scroll-reveal scroll-reveal--delay-1">
             <img className="story-card__headerImage" src="/assets/amader-golpo.webp" alt="Bangiya Samiti Story Illustration" width={1536} height={660} loading="lazy" decoding="async" />
             <div className="story-card__sunbeam" aria-hidden="true"></div>
@@ -246,6 +247,7 @@ export default async function Home() {
               <p>Real moments from Bengali community events, gathered in one editable archive.</p>
             </div>
           </BlogPostModal>
+          */}
 
           <div className="story-card__body">
             {/* Read on the server from public/gallery/gallery.csv, so the

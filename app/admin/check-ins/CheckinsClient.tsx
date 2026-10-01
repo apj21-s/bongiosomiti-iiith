@@ -38,10 +38,12 @@ export default function CheckinsClient() {
       message: 'The pass will become valid for entry again.',
       confirmLabel: 'Undo check-in',
     }))) return
+    setLoading(true)
     try {
       await fetch(`/api/admin/checkins/${id}/undo`, { method: 'POST' })
-      fetchCheckins()
+      window.location.reload()
     } catch (e: any) {
+      setLoading(false)
       notifyError(e)
     }
   }
