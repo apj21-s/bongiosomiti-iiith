@@ -67,15 +67,9 @@ export function isPlausibleEmail(value: unknown): boolean {
 }
 
 /**
- * The subdomains the institute actually issues addresses under.
- *
  * An address may also sit directly at iiit.ac.in, with no subdomain at all.
- *
- * Exported and named so that adding one is a single line here rather than a
- * regex somewhere in the form: if the institute starts issuing under another
- * subdomain, every check below follows automatically.
+ * We now accept any subdomain under iiit.ac.in as a valid institute email.
  */
-export const IIIT_SUBDOMAINS = ['students', 'research', 'staff', 'faculty', 'alumni', 'ihub-data'] as const
 
 /**
  * Whether a *verified* address belongs to the institute.
@@ -101,11 +95,7 @@ export function isIiitEmail(value: unknown): boolean {
   const domain = email.slice(email.indexOf('@') + 1)
   if (domain === 'iiit.ac.in') return true
 
-  const sub = domain.endsWith('.iiit.ac.in')
-    ? domain.slice(0, -'.iiit.ac.in'.length)
-    : null
-
-  return sub !== null && (IIIT_SUBDOMAINS as readonly string[]).includes(sub)
+  return domain.endsWith('.iiit.ac.in')
 }
 
 /** A six digit code, drawn from the system's random source rather than Math.random. */

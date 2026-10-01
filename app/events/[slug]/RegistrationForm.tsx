@@ -148,7 +148,7 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
     if (draft.isIiit === 'yes' && !isIiitEmail(email)) {
       setOtpNote({
         type: 'error',
-        text: 'Use your institute address — name@students.iiit.ac.in, or research, staff, faculty, alumni, ihub-data, or plain iiit.ac.in. If you are not from IIIT Hyderabad, please go back and register as a guest.',
+        text: 'Use your institute address — name@students.iiit.ac.in, name@research.iiit.ac.in, or any @*.iiit.ac.in address. If you are not from IIIT Hyderabad, please go back and register as a guest.',
       })
       return
     }
@@ -234,7 +234,7 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
         return setError('Confirm your email address first.')
       }
       if (draft.isIiit === 'yes' && !isIiitEmail(draft.email)) {
-        return setError('The institute rate needs a confirmed @iiit.ac.in address — students, research, staff, faculty, alumni, or ihub-data. Please go back and register as a guest, or use your institute email.')
+        return setError('The institute rate needs a confirmed @iiit.ac.in or @*.iiit.ac.in address. Please go back and register as a guest, or use your institute email.')
       }
     }
     if (draft.stage === 3) {
@@ -625,7 +625,7 @@ function DetailsStep({ draft, updateDraft, nextStage, prevStage, transitionTo, e
     touched: true,
     rule: (v) => {
       if (!v.includes('@') || !v.includes('.')) return 'That does not look like an email address.'
-      if (wantsIiit && !isIiitEmail(v)) return 'The institute rate needs an @iiit.ac.in address — students, research, staff, faculty, alumni, or ihub-data.'
+      if (wantsIiit && !isIiitEmail(v)) return 'The institute rate needs a confirmed @iiit.ac.in or @*.iiit.ac.in address.'
       if (!emailIsVerified) return 'Send yourself a code and confirm this address.'
       return null
     },
