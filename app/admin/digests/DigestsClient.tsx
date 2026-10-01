@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { toast } from 'sonner'
+
 
 export default function DigestsClient({ initialManagers }: { initialManagers: any[] }) {
   const [loadingId, setLoadingId] = useState<string | null>(null)
@@ -16,12 +16,12 @@ export default function DigestsClient({ initialManagers }: { initialManagers: an
       })
       const data = await res.json()
       if (res.ok) {
-        toast.success(`Success: ${data.sent} sent, ${data.skipped} skipped, ${data.failed} failed.`)
+        alert(`Success: ${data.sent} sent, ${data.skipped} skipped, ${data.failed} failed.`)
       } else {
-        toast.error(data.error || 'Failed to send digests')
+        alert(data.error || 'Failed to send digests')
       }
     } catch (err: any) {
-      toast.error(err.message || 'An error occurred')
+      alert(err.message || 'An error occurred')
     } finally {
       setLoadingId(null)
     }
