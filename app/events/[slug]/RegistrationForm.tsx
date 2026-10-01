@@ -1535,9 +1535,9 @@ function ConfirmationStep({ confirmation }: any) {
 
       <TypewriterHeading lines={['REGISTRATION', 'SUCCESSFUL!']} />
       <div className="reg-verify-msg">
-        <p>Your payment is awaiting verification.</p>
-        <p>Once verified, your digital pass will be sent to your registered email address.</p>
-        <p style={{ marginTop: '8px', fontSize: '0.9em', color: '#8b4513', fontStyle: 'italic' }}>Please also check your spam or junk folder if you don't receive the email in your inbox.</p>
+        <p>An automated confirmation email has been sent.</p>
+        <p>Once your payment is verified, your digital pass will be sent to your registered email address.</p>
+        <p style={{ marginTop: '12px', fontSize: '0.95em', color: '#8C3026', fontWeight: 'bold' }}>If you don't see the email in the next few minutes, please check your Spam or Junk folder.</p>
       </div>
 
       <div className="reg-id-box">

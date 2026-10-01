@@ -246,17 +246,17 @@ export async function sendRegistrationPendingEmail(
   const contentHtml = \`
     <tr>
       <td align="center" style="padding-bottom: 12px; font-family: Georgia, 'Times New Roman', serif; font-size: 24px; font-weight: bold; color: #54251F; text-align: center;" class="text-primary">
-        Registration Received &mdash; Payment Under Verification
+        Registration Request Received
       </td>
     </tr>
     <tr>
       <td align="center" style="padding-bottom: 24px; font-family: 'Tiro Bangla', 'Noto Serif Bengali', 'Bangla MN', Georgia, serif; font-size: 18px; font-weight: bold; color: #54251F; text-align: center;" class="text-primary">
-        আপনার নিবন্ধন যাচাইয়ের অপেক্ষায় রয়েছে
+        আপনার নিবন্ধনের অনুরোধ গৃহীত হয়েছে
       </td>
     </tr>
     <tr>
       <td align="center" style="padding-bottom: 24px; font-family: Georgia, 'Times New Roman', serif; font-size: 15px; line-height: 1.6; color: #745F4B; text-align: center;" class="text-secondary">
-        Thank you for registering for <strong>\${eventName}</strong>. We have received your registration details. Your registration is currently awaiting verification by our team.
+        Thank you for registering for <strong>\${eventName}</strong>. We have received your registration details. Your registration is currently being reviewed by our team.
       </td>
     </tr>
     <tr>
@@ -267,7 +267,7 @@ export async function sendRegistrationPendingEmail(
               <strong>Name:</strong> \${participantName}<br/>
               <strong>Event:</strong> \${eventName}<br/>
               <strong>Registration Ref:</strong> \${referenceNo}<br/>
-              <strong>Transaction (UTR):</strong> \${utr}
+              <strong>Reference (UTR):</strong> \${utr}
             </td>
           </tr>
         </table>
@@ -279,7 +279,7 @@ export async function sendRegistrationPendingEmail(
           <tr>
             <td align="center" style="background-color: #FFF8EA; border: 1px solid #C5A66B; border-radius: 99px; padding: 6px 16px;" bgcolor="#FFF8EA" class="bg-panel border-gold">
               <span style="font-family: Arial, sans-serif; font-size: 11px; font-weight: bold; letter-spacing: 1px; color: #8C3026; text-transform: uppercase;" class="text-otp">
-                PENDING VERIFICATION
+                REVIEW IN PROGRESS
               </span>
             </td>
           </tr>
