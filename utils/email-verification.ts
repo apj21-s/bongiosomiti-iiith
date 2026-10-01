@@ -75,7 +75,7 @@ export function isPlausibleEmail(value: unknown): boolean {
  * regex somewhere in the form: if the institute starts issuing under another
  * subdomain, every check below follows automatically.
  */
-export const IIIT_SUBDOMAINS = ['students', 'research', 'staff', 'faculty', 'alumni'] as const
+export const IIIT_SUBDOMAINS = ['students', 'research', 'staff', 'faculty', 'alumni', 'ihub-data'] as const
 
 /**
  * Whether a *verified* address belongs to the institute.
