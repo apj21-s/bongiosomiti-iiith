@@ -49,7 +49,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Event not found' }, { status: 404 })
     }
 
-    if (event.status !== 'OPEN' || data.eventSlug === 'mahalaya') {
+    if (event.status !== 'OPEN') {
       return NextResponse.json({ error: 'Event is closed for registration' }, { status: 400 })
     }
 
