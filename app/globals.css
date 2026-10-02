@@ -8521,11 +8521,11 @@ video::cue {
   border-bottom: none;
 }
 
-/* The strip is 1024x136, and it is a motif with a top and a bottom - so it is
+/* The strip is 948x136, and it is a motif with a top and a bottom - so it is
    shown whole. It used to be capped at 110px and cropped to fill, which took
    the bottom third off on any screen wider than about 830px. Now it keeps its
    own proportions, and stops widening past 1440px so a large monitor gets a
-   centred band rather than a 255px-tall one. */
+   centred band rather than a 275px-tall one. */
 .utsav-footer__bannerImage {
   width: 100%;
   max-width: 1440px;
@@ -8542,9 +8542,14 @@ video::cue {
 
   The numbers have to agree with the image above or the centre copy and the
   tile behind it will not line up: a tile is 1440px wide, the same cap the
-  image has, and `100%` of this block's height is exactly 1440 x 136/1024 =
-  191.25px, which is that tile at its own proportions. Centring the repeat
+  image has, and `100%` of this block's height is exactly 1440 x 136/948 =
+  206.58px, which is that tile at its own proportions. Centring the repeat
   puts the whole motif in the middle and an equal part-tile at each end.
+
+  The strip is cut so that it repeats without a seam: each end stops on the
+  centre line of its corner mandala and of a spike in the scalloped border, so
+  where one copy meets the next the two halves make one whole mandala and one
+  whole spike.
 
   Only above the cap, because below it the image already covers this block and
   a background behind it would be wasted work.
