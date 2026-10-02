@@ -115,27 +115,47 @@ export async function fetchVideoDetailsFor(
   await Promise.all(Array.from({ length: Math.min(concurrency, queue.length) }, worker))
 }
 
+export type PlaylistCheck = {
+  /** Songs not to show or play. */
+  refused: string[]
+  /** Titles for the songs that will play. */
+  titles: Record<string, VideoDetails>
+}
+
 /**
- * The songs, out of these, that YouTube will not play on this site - asked of
- * /api/youtube/playable, which checks them server-side. An empty list when the
- * check cannot be made: the player still skips a refused song when it gets to
- * one, so a failed check costs a skip, not the music.
+ * Which of these songs will not play on this site, and the titles of the ones
+ * that will - asked of /api/youtube/playable, which checks them server-side.
+ * Null when the check cannot be made: the player still drops a refused song
+ * when it gets to one, and the list looks titles up itself, as it used to.
  */
-export async function fetchRefusedVideos(ids: string[], signal?: AbortSignal): Promise<string[]> {
+export async function fetchPlaylistCheck(ids: string[], signal?: AbortSignal): Promise<PlaylistCheck | null> {
   // YouTube embeds the first 200 songs of a playlist, and the route checks no more.
   const asked = new Set(ids.filter(isVideoId).slice(0, 200))
-  if (asked.size === 0) return []
+  if (asked.size === 0) return null
 
   try {
     const query = new URLSearchParams({ ids: [...asked].join(',') })
     const response = await fetch(`/api/youtube/playable?${query}`, { signal })
-    if (!response.ok) return []
+    if (!response.ok) return null
 
-    const data = (await response.json()) as { refused?: unknown }
-    if (!Array.isArray(data.refused)) return []
-    // Only ever ids that were asked about, whatever the answer carried.
-    return data.refused.filter((id): id is string => typeof id === 'string' && asked.has(id))
+    const data = (await response.json()) as { refused?: unknown; titles?: unknown }
+    if (!Array.isArray(data.refused)) return null
+
+    // Only ever ids that were asked about, and titles cleaned again here,
+    // whatever the answer carried.
+    const refused = data.refused.filter((id): id is string => typeof id === 'string' && asked.has(id))
+    const titles: Record<string, VideoDetails> = {}
+    if (data.titles && typeof data.titles === 'object') {
+      for (const [id, value] of Object.entries(data.titles as Record<string, unknown>)) {
+        if (!asked.has(id) || !value || typeof value !== 'object') continue
+        const found = value as { title?: unknown; author?: unknown }
+        const title = sanitiseTitle(found.title)
+        if (title) titles[id] = { id, title, author: sanitiseTitle(found.author) || undefined }
+      }
+    }
+
+    return { refused, titles }
   } catch {
-    return []
+    return null
   }
 }

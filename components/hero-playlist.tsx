@@ -965,8 +965,14 @@ function YouTubePlayer({
   // only ever the songs that will play.
   const [videoIds, setVideoIds] = useState<string[]>([])
   const [queueIndex, setQueueIndex] = useState(0)
+  // Titles from the check made when the playlist loads, so every song in the
+  // list is named without the list looking each one up.
+  const [titles, setTitles] = useState<Record<string, VideoDetails>>({})
 
-  const queue = useMemo<QueueItem[]>(() => videoIds.map((videoId) => ({ videoId })), [videoIds])
+  const queue = useMemo<QueueItem[]>(
+    () => videoIds.map((videoId) => ({ videoId, title: titles[videoId]?.title, artist: titles[videoId]?.author })),
+    [videoIds, titles]
+  )
 
   // Read inside the player's own callbacks, which are set up once per playlist
   // and would otherwise close over whatever repeat was when the player was
@@ -1037,16 +1043,18 @@ function YouTubePlayer({
     }
 
     // Asks once, as soon as YouTube has handed over the playlist, which of its
-    // songs will not play here, so they are gone before anybody presses play.
+    // songs will not play here, so they are gone before anybody presses play,
+    // and what the rest are called, so the list can name every song it shows.
     const checkAhead = () => {
-      fetchRefusedVideos(original, checking.signal).then((ids) => {
+      fetchPlaylistCheck(original, checking.signal).then((check) => {
         const player = playerRef.current
-        if (cancelled || !player || ids.length === 0) return
+        if (cancelled || !player || !check) return
         // Every song refused is far more likely the check going wrong than a
         // playlist with nothing in it that plays. Left to the player, which
         // finds out song by song and says so if it is true.
-        if (original.every((id) => ids.includes(id))) return
-        ids.forEach((id) => refused.add(id))
+        if (original.every((id) => check.refused.includes(id))) return
+        setTitles(check.titles)
+        check.refused.forEach((id) => refused.add(id))
 
         const list = player.getPlaylist?.() || []
         if (!list.some((id) => refused.has(id))) return
@@ -1054,18 +1062,17 @@ function YouTubePlayer({
         const index = player.getPlaylistIndex?.() ?? -1
         const current = list[index]
 
-        // Loading one of them now: YouTube is about to refuse it, and the
-        // error handler drops the rest along with it.
-        if (current && refused.has(current) && wantsPlayRef.current) return
-
         if (current && !refused.has(current)) {
           // Stays on the song it is on, at the point it has reached.
           dropRefused(current, wantsPlayRef.current, player.getCurrentTime() || 0)
           return
         }
 
+        // On one of them, playing or not: moved off it now rather than when
+        // YouTube refuses it, because a song can be left out for having no
+        // title while YouTube would still play it.
         const next = index >= 0 ? nextPlayable(list, index, 1, repeatRef.current === 'all', refused) : -1
-        dropRefused(next >= 0 ? list[next] : null, false)
+        dropRefused(next >= 0 ? list[next] : null, wantsPlayRef.current && next >= 0)
       })
     }
 
@@ -1407,7 +1414,7 @@ function PlaylistPicker({
 }
 
 import {
-  fetchRefusedVideos,
+  fetchPlaylistCheck,
   fetchVideoDetailsFor,
   isVideoId,
   type VideoDetails,
@@ -1432,8 +1439,11 @@ function PlaylistContents({
   const [details, setDetails] = useState<Record<string, VideoDetails>>({})
 
   useEffect(() => {
+    // Only what the player's own check has not already named - normally
+    // nothing, unless that check could not be made.
     const ids = queue
       .slice(0, MAX_ROWS)
+      .filter((item) => !item.title)
       .map((item) => item.videoId)
       .filter(isVideoId)
 

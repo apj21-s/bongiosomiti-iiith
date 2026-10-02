@@ -1,41 +1,48 @@
-import { isVideoId, watchUrl } from './youtube-video'
+import { isVideoId, sanitiseTitle, watchUrl, type VideoDetails } from './youtube-video'
 
 /**
- * Which songs in a playlist YouTube will not play on this site, asked before
- * the player gets to them.
+ * Which songs in a playlist can be played on this site, and what they are
+ * called, asked before the player or the song list gets to them.
  *
- * YouTube's oEmbed endpoint answers 401 or 404 for a video that cannot be
- * embedded - its owner has turned off playing it on other sites, or it is
- * private or gone - which are the songs the embedded player stops on with
- * "Video unavailable". It needs no API key. It is asked from the server because there the status is always readable;
- * in the browser an error answer can arrive without the headers that would let
- * the page see which error it was.
+ * The rule is the one the song list needs: a song is shown, and played, only
+ * if YouTube's oEmbed endpoint answers for it with a title. That is the same
+ * request the list used to make from the browser for each row, and the songs
+ * it fails for - the ones that showed as "Track 7" - are the ones the embedded
+ * player will not play here: their owner has turned off playing them on other
+ * sites, or they are private or gone. This used to look for a 401 or a 404
+ * only, and songs still reached the list as "Track" rows, so now it is the
+ * title that decides, not a particular status.
+ *
+ * Asked from the server, where every answer is readable and one check serves
+ * every visitor; the titles come back with it, so the list needs no requests
+ * of its own.
  *
  * Not everything is caught this way: a song blocked by a rights holder rather
- * than by its uploader still answers 200 here. The player finds those when it
- * reaches them and skips them then, so this is a head start, not the only
- * line of defence.
+ * than by its uploader still answers with a title. The player finds those when
+ * it reaches them and drops them then.
  */
 
 /** YouTube embeds the first 200 songs of a playlist, so that is all there is to check. */
 export const MAX_IDS = 200
 
-// The answers that mean the embedded player will refuse the song. Anything
-// else - a timeout, a 5xx, a rate limit - says nothing about the song, so it
-// is left to play and the player decides. That includes 403, which is what a
-// proxy or a block on the server's own address answers with: counting it would
-// take every song off the site the day YouTube stops answering this server.
-const REFUSED = new Set([401, 404])
-
-// A playable song's answer is cached by Next for a day. Refusals are not,
-// because Next only caches a 200, so the route's own Cache-Control is what
-// keeps those from being asked again on every visit.
 const DAY = 60 * 60 * 24
 
-/** Whether YouTube says this video can be embedded: true, false, or null for no clear answer. */
-export async function isEmbeddable(videoId: string, fetcher: typeof fetch = fetch): Promise<boolean | null> {
+/**
+ * What YouTube said about one song. `unknown` is an answer that says nothing
+ * about the song itself - rate limited, a server error, a timeout - after a
+ * second try.
+ */
+export type VideoCheck =
+  | { status: 'playable'; details: VideoDetails }
+  | { status: 'refused' }
+  | { status: 'unknown' }
+
+// Worth asking again: these are about YouTube's state, not the song's.
+const TRY_AGAIN = new Set([408, 429])
+
+async function askOnce(videoId: string, fetcher: typeof fetch): Promise<VideoCheck> {
   const watch = watchUrl(videoId)
-  if (!watch) return null
+  if (!watch) return { status: 'refused' }
 
   const endpoint = new URL('https://www.youtube.com/oembed')
   endpoint.searchParams.set('format', 'json')
@@ -43,39 +50,82 @@ export async function isEmbeddable(videoId: string, fetcher: typeof fetch = fetc
 
   try {
     const response = await fetcher(endpoint.toString(), {
+      // Next caches a 200 for a day; nothing else is cached here.
       next: { revalidate: DAY },
       signal: AbortSignal.timeout(5000),
     })
-    if (response.ok) return true
-    return REFUSED.has(response.status) ? false : null
+
+    if (response.ok) {
+      const data = (await response.json()) as { title?: unknown; author_name?: unknown }
+      const title = sanitiseTitle(data.title)
+      // Without a title it would be a "Track 7" row, which is what this is for.
+      if (!title) return { status: 'refused' }
+      return { status: 'playable', details: { id: videoId, title, author: sanitiseTitle(data.author_name) || undefined } }
+    }
+
+    if (response.status >= 500 || TRY_AGAIN.has(response.status)) return { status: 'unknown' }
+    return { status: 'refused' }
   } catch {
-    return null
+    return { status: 'unknown' }
   }
 }
 
+/** One song, asked twice if the first answer says nothing about the song. */
+export async function checkVideo(videoId: string, fetcher: typeof fetch = fetch): Promise<VideoCheck> {
+  const first = await askOnce(videoId, fetcher)
+  if (first.status !== 'unknown') return first
+  await new Promise((resolve) => setTimeout(resolve, 300))
+  return askOnce(videoId, fetcher)
+}
+
+export type PlaylistCheck = {
+  /** Songs not to show or play, in the order asked. */
+  refused: string[]
+  /** Titles of the songs that will play. */
+  titles: Record<string, { title: string; author?: string }>
+  /** Whether every song got an answer about itself, so the result can be kept. */
+  complete: boolean
+}
+
 /**
- * The ids YouTube refuses, out of those given, a few at a time. Ids that are
- * not the shape of a video id are dropped rather than sent anywhere.
+ * Every song given, a few at a time. Ids that are not the shape of a video id
+ * are dropped rather than sent anywhere. A song with no clear answer is left
+ * out too - there is no title to show for it - but the result is then marked
+ * incomplete, so it is asked again rather than remembered.
  */
-export async function findRefusedVideos(
+export async function checkVideos(
   ids: string[],
   fetcher: typeof fetch = fetch,
   concurrency = 8
-): Promise<string[]> {
+): Promise<PlaylistCheck> {
   const queue = Array.from(new Set(ids.filter(isVideoId))).slice(0, MAX_IDS)
-  const refused = new Set<string>()
+  const answers = new Map<string, VideoCheck>()
   let cursor = 0
 
   const worker = async () => {
     while (cursor < queue.length) {
       const id = queue[cursor]
       cursor += 1
-      if ((await isEmbeddable(id, fetcher)) === false) refused.add(id)
+      answers.set(id, await checkVideo(id, fetcher))
     }
   }
 
   await Promise.all(Array.from({ length: Math.min(concurrency, queue.length) }, worker))
 
+  const titles: PlaylistCheck['titles'] = {}
+  const refused: string[] = []
+  let complete = true
+
   // In the order asked, so the answer for one playlist is always the same.
-  return queue.filter((id) => refused.has(id))
+  for (const id of queue) {
+    const answer = answers.get(id)
+    if (answer?.status === 'playable') {
+      titles[id] = { title: answer.details.title, ...(answer.details.author ? { author: answer.details.author } : {}) }
+    } else {
+      refused.push(id)
+      if (answer?.status !== 'refused') complete = false
+    }
+  }
+
+  return { refused, titles, complete }
 }
