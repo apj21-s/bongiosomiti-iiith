@@ -114,3 +114,28 @@ export async function fetchVideoDetailsFor(
 
   await Promise.all(Array.from({ length: Math.min(concurrency, queue.length) }, worker))
 }
+
+/**
+ * The songs, out of these, that YouTube will not play on this site - asked of
+ * /api/youtube/playable, which checks them server-side. An empty list when the
+ * check cannot be made: the player still skips a refused song when it gets to
+ * one, so a failed check costs a skip, not the music.
+ */
+export async function fetchRefusedVideos(ids: string[], signal?: AbortSignal): Promise<string[]> {
+  // YouTube embeds the first 200 songs of a playlist, and the route checks no more.
+  const asked = new Set(ids.filter(isVideoId).slice(0, 200))
+  if (asked.size === 0) return []
+
+  try {
+    const query = new URLSearchParams({ ids: [...asked].join(',') })
+    const response = await fetch(`/api/youtube/playable?${query}`, { signal })
+    if (!response.ok) return []
+
+    const data = (await response.json()) as { refused?: unknown }
+    if (!Array.isArray(data.refused)) return []
+    // Only ever ids that were asked about, whatever the answer carried.
+    return data.refused.filter((id): id is string => typeof id === 'string' && asked.has(id))
+  } catch {
+    return []
+  }
+}
