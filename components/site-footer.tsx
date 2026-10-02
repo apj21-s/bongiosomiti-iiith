@@ -11,7 +11,7 @@ export default function SiteFooter({ variant = 'public' }: SiteFooterProps) {
                 <img
                     className="utsav-footer__bannerImage"
                     src="/assets/footer-banner.webp"
-                    alt="BANGIYA.SAMITI.IIITH Bengali Cultural Alpona & Lotus Motif"
+                    alt="BANGIYA.SAMITI.IIITH Bengali cultural alpona and conch motif"
                     width="1024"
                     height="136"
                     loading="lazy"

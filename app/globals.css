@@ -8535,6 +8535,30 @@ video::cue {
 }
 
 /*
+  Past 1440px the strip stops widening, and what used to fill the space either
+  side of it was the footer's flat colour - the alpona simply stopped, twice,
+  with a hard edge. The same artwork is tiled behind it instead, so the band
+  reads as one continuous border however wide the screen is.
+
+  The numbers have to agree with the image above or the centre copy and the
+  tile behind it will not line up: a tile is 1440px wide, the same cap the
+  image has, and `100%` of this block's height is exactly 1440 x 136/1024 =
+  191.25px, which is that tile at its own proportions. Centring the repeat
+  puts the whole motif in the middle and an equal part-tile at each end.
+
+  Only above the cap, because below it the image already covers this block and
+  a background behind it would be wasted work.
+*/
+@media (min-width: 1440px) {
+  .utsav-footer__banner {
+    background-image: url('/assets/footer-banner.webp');
+    background-repeat: repeat-x;
+    background-position: center top;
+    background-size: 1440px 100%;
+  }
+}
+
+/*
   The panel is lifted off the alpona rather than printed on it.
   
   The banner above is a drawn motif, and the footer text used to sit flat on the
