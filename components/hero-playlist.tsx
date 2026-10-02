@@ -1120,9 +1120,6 @@ function YouTubePlayer({
               if (event.data === YT.PlayerState.PLAYING) {
                 setIsPlaying(true)
                 wantsPlayRef.current = true
-                // Whatever was stepped past on the way here, the playlist
-                // itself moves forward from now on.
-                stepRef.current = 1
               }
               if (event.data === YT.PlayerState.PAUSED) {
                 setIsPlaying(false)
@@ -1133,6 +1130,11 @@ function YouTubePlayer({
                 // playlist, so repeating one song means putting it back.
                 if (repeatRef.current === 'one') playerRef.current?.seekTo(0, true)
                 else setIsPlaying(false)
+                // Moving on by itself is forward, whichever way the visitor
+                // last stepped. Not reset on PLAYING: pressing previous twice
+                // quickly can bring the first song's PLAYING after the second
+                // press, which would turn a step back into a step forward.
+                stepRef.current = 1
               }
 
               // A playlist advances on its own, so the title and length are
