@@ -11,8 +11,9 @@ import { checkVideos, MAX_IDS } from '@/utils/data/youtube-playable'
  * Public, like the player. It only ever asks YouTube about ids that are the
  * shape of a video id, at most MAX_IDS of them. A complete answer is cached at
  * the edge for a day - the same playlist asks with the same ids, so most visits
- * never reach YouTube - but one where YouTube could not be asked about every
- * song is not kept, so the next visit asks again.
+ * never reach YouTube. One where some song got no clear answer is kept for five
+ * minutes only: long enough that a block on this server is not asked about
+ * hundreds of songs on every visit, short enough to recover soon after.
  */
 export async function GET(request: NextRequest) {
   const ids = (request.nextUrl.searchParams.get('ids') || '').split(',').slice(0, MAX_IDS)
@@ -22,7 +23,9 @@ export async function GET(request: NextRequest) {
     { refused, titles },
     {
       headers: {
-        'Cache-Control': complete ? 'public, s-maxage=86400, stale-while-revalidate=604800' : 'no-store',
+        'Cache-Control': complete
+          ? 'public, s-maxage=86400, stale-while-revalidate=604800'
+          : 'public, s-maxage=300',
       },
     }
   )

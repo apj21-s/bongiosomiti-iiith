@@ -28,17 +28,20 @@ export const MAX_IDS = 200
 const DAY = 60 * 60 * 24
 
 /**
- * What YouTube said about one song. `unknown` is an answer that says nothing
- * about the song itself - rate limited, a server error, a timeout - after a
- * second try.
+ * What YouTube said about one song. `unknown` is an answer that may not be
+ * about the song at all - a 403, which is also what a block on the server's
+ * own address looks like, a rate limit, a server error, a timeout - after a
+ * second try. It leaves the song out just the same, since there is no title to
+ * show, but it is not remembered.
  */
 export type VideoCheck =
   | { status: 'playable'; details: VideoDetails }
   | { status: 'refused' }
   | { status: 'unknown' }
 
-// Worth asking again: these are about YouTube's state, not the song's.
-const TRY_AGAIN = new Set([408, 429])
+// The answers that are about the song: bad id, cannot be embedded, private,
+// gone. Anything else gets a second try.
+const REFUSED = new Set([400, 401, 404, 410])
 
 async function askOnce(videoId: string, fetcher: typeof fetch): Promise<VideoCheck> {
   const watch = watchUrl(videoId)
@@ -63,8 +66,7 @@ async function askOnce(videoId: string, fetcher: typeof fetch): Promise<VideoChe
       return { status: 'playable', details: { id: videoId, title, author: sanitiseTitle(data.author_name) || undefined } }
     }
 
-    if (response.status >= 500 || TRY_AGAIN.has(response.status)) return { status: 'unknown' }
-    return { status: 'refused' }
+    return REFUSED.has(response.status) ? { status: 'refused' } : { status: 'unknown' }
   } catch {
     return { status: 'unknown' }
   }
@@ -91,7 +93,7 @@ export type PlaylistCheck = {
  * Every song given, a few at a time. Ids that are not the shape of a video id
  * are dropped rather than sent anywhere. A song with no clear answer is left
  * out too - there is no title to show for it - but the result is then marked
- * incomplete, so it is asked again rather than remembered.
+ * incomplete, so it is asked again soon rather than remembered for a day.
  */
 export async function checkVideos(
   ids: string[],
