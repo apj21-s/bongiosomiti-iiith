@@ -2,6 +2,16 @@
 
 import { useEffect, useState } from "react"
 import { usePathname } from "next/navigation"
+import { HERO_VIDEO_READY } from "./hero-video"
+
+// The longest the loader waits for the homepage video before giving way to its
+// first frame, counted from when the page started loading.
+const HERO_VIDEO_WAIT_CAP = 5000
+
+// The page the visit started on. Until the visitor moves within the site, the
+// wait is counted from the start of the page load, which has been going for a
+// while by the time this runs; after a move, each page starts its own clock.
+let landingPath: string | null = null
 
 export default function UtsavLoader({ message, inline = false }: { message?: string, inline?: boolean }) {
   const [loading, setLoading] = useState(true)
@@ -10,19 +20,42 @@ export default function UtsavLoader({ message, inline = false }: { message?: str
 
   useEffect(() => {
     if (inline) return;
-    
+
     setLoading(true);
-    
-    const timer = setTimeout(() => {
-      setLoading(false)
-    }, 900)
-    
-    // Attempt early hide if document is already loaded, only on initial load
-    if (document.readyState === "complete" && loading === true) {
-      // Keep the minimum time so it doesn't just flash
+
+    // A page with the hero video keeps the loader up until that video is
+    // downloaded and playing, so the first thing seen is the scene moving.
+    // Capped at five seconds, so a slow connection does not hold the whole site
+    // behind the loader: the video's first frame is showing by then, and the
+    // video takes over from it whenever it does arrive.
+    const video = document.querySelector<HTMLVideoElement>("video[data-hero-video]")
+    let videoReady = !video || Boolean(video.dataset.ready)
+    let minimumShown = false
+
+    const finish = () => {
+      if (minimumShown && videoReady) setLoading(false)
+    }
+    const onVideoReady = () => {
+      videoReady = true
+      finish()
     }
 
-    return () => clearTimeout(timer)
+    // The minimum, so it doesn't just flash.
+    const timer = setTimeout(() => {
+      minimumShown = true
+      finish()
+    }, 900)
+    if (landingPath === null) landingPath = pathname
+    else if (pathname !== landingPath) landingPath = ""
+    const alreadyWaited = pathname === landingPath ? performance.now() : 0
+    const cap = videoReady ? undefined : setTimeout(onVideoReady, Math.max(0, HERO_VIDEO_WAIT_CAP - alreadyWaited))
+    if (!videoReady) window.addEventListener(HERO_VIDEO_READY, onVideoReady)
+
+    return () => {
+      clearTimeout(timer)
+      clearTimeout(cap)
+      window.removeEventListener(HERO_VIDEO_READY, onVideoReady)
+    }
   }, [pathname, inline])
 
   if (!inline && !loading) return null

@@ -32,7 +32,7 @@ export default async function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Noto+Serif+Bengali:wght@500;700&family=Tiro+Bangla:ital@0;1&display=swap"
           rel="stylesheet"
         />
-        <link rel="preload" as="image" href="/assets/autumn-landscape.webp" fetchPriority="high" />
+        <link rel="preload" as="image" href="/assets/apu-durga-poster.webp" fetchPriority="high" />
       </head>
       <body>
         <UtsavLoader />

@@ -6917,7 +6917,10 @@ video::cue {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: right 45%;
+  /* Pinned to the video's bottom-left corner: Apu, Durga and the kash flowers
+     are at the foot and on the left, and the top is plain sky. A short screen
+     loses sky, a narrow one loses the right-hand end of the train. */
+  object-position: left bottom;
   filter: saturate(0.99) contrast(0.99);
 }
 
@@ -6926,10 +6929,21 @@ video::cue {
    ------------------------------------------------------------------------- */
 .home-hero__sun-glow {
   position: absolute;
-  left: clamp(28%, 34vw, 36%);
-  top: clamp(28%, 36%, 42%);
-  width: clamp(140px, 16vw, 220px);
-  height: clamp(140px, 16vw, 220px);
+  /* On the sun in the video, which sits 26% across and 38% down the frame.
+     The frame is drawn to cover the scene from its bottom-left corner, so its
+     drawn size is the larger of the scene's width and its height at 16:9, and
+     these place the glow on that frame wherever the scene crops it. The scene
+     is the size container (cqw, cqh) - see .home-hero__scene. */
+  --sun-x: calc(0.26 * max(100cqw, 100cqh * 16 / 9));
+  --sun-y: calc(100cqh - 0.62 * max(100cqw * 9 / 16, 100cqh));
+  /* Never so big that the rays (35% past the box, blurred 10px) reach above the
+     top of the video: the screen blend has only the video to lighten, so over
+     the flat sky the glow turned into an orange band with a hard lower edge. */
+  --sun-room: calc((var(--sun-y) - 10px) / 0.85);
+  left: var(--sun-x);
+  top: var(--sun-y);
+  width: min(clamp(140px, 16vw, 220px), var(--sun-room));
+  height: min(clamp(140px, 16vw, 220px), var(--sun-room));
   transform: translate(-50%, -50%);
   pointer-events: none;
   z-index: 2;
@@ -6938,10 +6952,8 @@ video::cue {
 
 @media (max-width: 768px) {
   .home-hero__sun-glow {
-    left: 82%;
-    top: 10%;
-    width: 180px;
-    height: 180px;
+    width: min(180px, var(--sun-room));
+    height: min(180px, var(--sun-room));
   }
 }
 
@@ -7407,17 +7419,6 @@ video::cue {
   transition: transform 0.15s ease-out;
 }
 
-/* Invisible shoulder perch anchor — calibrated dynamically to the
-   bicycle man's right shoulder in autumn-landscape.webp */
-.hero-shoulder-perch {
-  position: absolute;
-  left: 84.23%;
-  top: 39.90%;
-  width: 2px;
-  height: 2px;
-  pointer-events: none;
-}
-
 /* Wing flapping when flying */
 .hero-landing-bird.is-flying .bird-wing-left {
   animation: utsav-wing-flap-left 0.12s ease-in-out infinite alternate;
@@ -7619,6 +7620,7 @@ video::cue {
 }
 
 .home-hero__layer>img,
+.home-hero__layer>video,
 .events-scene__hero>img,
 .events-scene__hero>video,
 .events-scene__card-media>img,
@@ -11542,24 +11544,26 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
 
 /* ============================================================
    Full-screen hero
-   The hero fills the viewport on load, with the landscape held
-   at the bottom and its sky continued upward as a flat fill in
-   the artwork's own sky colour (#f3e2c1, sampled from the top
-   rows of autumn-landscape.webp). The navbar uses the same
-   colour so the two read as one surface.
+   The hero fills the viewport on load, with the video held at
+   the bottom and its sky continued upward as a flat fill in the
+   video's own sky colour (#fae2ba, sampled from the top rows of
+   apu-durga-loop.mp4 across the whole loop - it does not drift
+   as the smoke and grass move). The navbar uses the same colour
+   so the two read as one surface.
    ============================================================ */
 
 :root {
-  --hero-sky: #f3e2c1;
-  /* autumn-landscape.webp is 1792x592 */
-  --hero-art-ratio: 3.0270;
-  /* How much of the screen the painting occupies. Its own ratio on a laptop;
-     on a narrow phone that alone would leave a 137px sliver under a screen of
-     flat sky, so it holds at least 42vh and the image crops instead. The crop
-     keeps the right of the frame (object-position: right 45%), which is where
-     the cyclist the bird lands on rides. One value, used by both the scene and
+  --hero-sky: #fae2ba;
+  /* Room kept above the video for the navbar and the title, so the title sits
+     in plain sky and never over the smoke or the train. */
+  --hero-title-room: clamp(190px, 26vh, 300px);
+  /* How much of the screen the video occupies. The whole 16:9 frame when the
+     screen has room for it and the title; otherwise the frame is cropped from
+     the top, which is plain sky down to the smoke. On a narrow phone that alone
+     would leave a sliver under a screen of flat sky, so it holds at least 42vh
+     and crops from the right instead. One value, used by both the scene and
      the text above it, so the two cannot drift apart. */
-  --hero-art-height: max(calc(100vw / var(--hero-art-ratio)), 42vh);
+  --hero-art-height: max(min(calc(100vw * 9 / 16), calc(100dvh - var(--hero-title-room))), 42vh);
 }
 
 .home-hero {
@@ -11571,35 +11575,40 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
   background: var(--hero-sky);
 }
 
-/* Bottom-anchored and held at the artwork's aspect ratio, so the sun glow and
-   the bird's landing perch - both positioned as a percentage of this box -
-   stay registered to the painting however tall the hero becomes. */
+/* Bottom-anchored. A size container, so the sun glow can be placed on the
+   video's own sun in units of this box (cqw, cqh), however it is cropped. */
 .home-hero__scene {
   position: absolute;
   inset: auto 0 0 0;
   height: min(var(--hero-art-height), 100%);
+  container-type: size;
 }
 
-/* The painting's top row is not perfectly flat - it runs from #f3e0be to
-   #f8e8ce across the width, which shows as a seam against a single flat
-   colour. A short fade hides the join. The transparent stop repeats the
-   colour so the gradient does not run through grey. */
+/* The video's top row is not perfectly flat - it runs from #f9e4be to
+   #f9e0b5 across the width - and on a shorter screen the top of the frame is
+   cropped away through the smoke. A long fade hides the join and lets the cut
+   smoke thin out into the sky instead of ending on a line. There used to be a
+   blur over the join as well, for the painting's brushwork; on the video it
+   only smeared the smoke into a band, and the colours already match. The
+   transparent stop repeats the colour so the gradient does not run through
+   grey. */
 .home-hero__scene::before {
   content: "";
   position: absolute;
   inset: 0 0 auto 0;
-  height: clamp(28px, 7%, 72px);
-  background: linear-gradient(180deg, var(--hero-sky) 0%, rgba(243, 226, 193, 0) 100%);
+  height: clamp(48px, 16%, 150px);
+  background: linear-gradient(180deg, var(--hero-sky) 0%, rgba(250, 226, 186, 0) 100%);
   z-index: 2;
   pointer-events: none;
 }
 
-/* The title, subtitle and tagline sit in the sky, low enough that the landing
-   bird's run across the highlighted letters and down onto the cyclist's
-   shoulder stays a short, readable arc rather than a dive across the screen. */
+/* The title, subtitle and tagline sit in the plain sky between the navbar and
+   the top of the video - centred in that space, not in the whole hero, which
+   on most screens would put them over the smoke and the train. The video
+   leaves --hero-title-room for exactly this. */
 .home-hero__content {
-  top: 0;
-  bottom: 0;
+  top: var(--hero-nav-room, 56px);
+  bottom: min(var(--hero-art-height), 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -11619,10 +11628,8 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
    Anchored to the scene's bottom edge and given the hero's height, it now
    reaches from the navbar down to the horizon.
 
-   Safe to enlarge because nothing here is a hand-placed percentage: the
-   animator derives the shoulder from the image's rendered rect within this box
-   (getCoverImageRect) and writes .hero-shoulder-perch itself, so the landing
-   point follows the painting at any size. */
+   Safe to enlarge because nothing here is a hand-placed percentage: every
+   point the bird flies to is a letter of the title, measured live. */
 .home-hero__birds-sky {
   inset: auto 0 0 0;
   height: 100vh;
@@ -11634,52 +11641,6 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
 .home-strip {
   background: var(--hero-sky);
   border-bottom-color: transparent;
-}
-
-/* The perch marker lives in the sky box, where 39.9% down fell on the cyclist
-   while that box was the painting. Measured up from the bottom instead, it
-   stays on him now that the sky reaches the navbar. The animator overwrites
-   both offsets before the bird lands - inline top wins over this bottom - so
-   this is what holds before the first flight. */
-.hero-shoulder-perch {
-  top: auto;
-  bottom: calc(min(var(--hero-art-height), 100%) * 0.601);
-}
-
-/* The join between the flat fill and the painted sky, blurred.
-
-   The gradient above fades the colours into each other; this softens the
-   pixels themselves, so the last row of brushwork dissolves into the fill
-   instead of ending on a line. It is a band straddling the seam: the half
-   above it sits over flat colour, where a blur changes nothing, so there is
-   no edge where the effect begins. The mask fades the blur out downwards for
-   the same reason at the bottom.
-
-   Sits at z-index 2 - over the painting, under the birds and the title, so
-   neither of those goes soft. Browsers without backdrop-filter simply get the
-   gradient, which is what they had before. */
-.home-hero::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: calc(min(var(--hero-art-height), 100%) - clamp(20px, 4.5vh, 46px));
-  height: clamp(40px, 9vh, 92px);
-  z-index: 2;
-  pointer-events: none;
-  /* A plain length on purpose: a clamp() inside blur() is dropped by the
-     CSS pipeline, which silently left the band doing nothing. */
-  backdrop-filter: blur(var(--hero-seam-blur, 10px));
-  -webkit-mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 1) 34%, rgba(0, 0, 0, 1) 52%, rgba(0, 0, 0, 0) 100%);
-  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 1) 34%, rgba(0, 0, 0, 1) 52%, rgba(0, 0, 0, 0) 100%);
-}
-
-/* A narrow screen shows a shorter slice of the painting, so the smear that
-   reads as soft on a laptop reads as a smudge on a phone. */
-@media (max-width: 560px) {
-  .home-hero {
-    --hero-seam-blur: 7px;
-  }
 }
 
 /* ============================================================

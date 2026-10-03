@@ -6,6 +6,7 @@ import SiteFooter from '@/components/site-footer'
 import PhotoAlbum from '@/components/photo-album'
 import CrossfadeVideo from '@/components/crossfade-video'
 import HeroBirdsAnimator from '@/components/hero-birds-animator'
+import HeroVideo from '@/components/hero-video'
 import BlogPostModal from '@/components/blog-post-modal'
 
 export const revalidate = 0
@@ -21,7 +22,7 @@ export default async function Home() {
       <section id="home" className="home-hero" aria-labelledby="home-hero-title">
         <div className="home-hero__scene" aria-hidden="true">
           <div className="home-hero__layer home-hero__layer--landscape">
-            <img className="home-hero__image home-hero__image--landscape" src="/assets/autumn-landscape.webp" alt="" width={1792} height={592} fetchPriority="high" loading="eager" decoding="async" />
+            <HeroVideo />
           </div>
 
           <div className="home-hero__sun-glow">
@@ -122,8 +123,6 @@ export default async function Home() {
             </svg>
           </div>
 
-          {/* Invisible anchor at the man's right shoulder in the autumn landscape */}
-          <div className="hero-shoulder-perch" aria-hidden="true"></div>
         </div>
 
         <div className="home-hero__content scroll-reveal">
