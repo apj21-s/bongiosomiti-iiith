@@ -6898,6 +6898,7 @@ video::cue {
 .home-hero__scene {
   inset: 0;
   z-index: 1;
+  opacity: 0.85;
 }
 
 .home-hero__layer {
@@ -7511,13 +7512,13 @@ video::cue {
 .home-hero__title span {
   display: inline-block;
   transform-origin: center bottom;
-  transition: color 0.3s ease, text-shadow 0.3s ease;
+  transition: -webkit-text-fill-color 0.3s ease, filter 0.3s ease;
 }
 
 .home-hero__title span.is-thrilled {
   animation: letter-thrill 0.6s cubic-bezier(0.25, 1, 0.5, 1) both;
-  color: #c97d4c !important;
-  text-shadow: 0 0 8px rgba(212, 136, 6, 0.45);
+  -webkit-text-fill-color: #ffe8b3 !important;
+  filter: drop-shadow(0 0 8px rgba(255, 180, 50, 0.8));
 }
 
 .home-hero__content {
@@ -7533,13 +7534,17 @@ video::cue {
 
 .home-hero__title {
   margin: 0;
-  color: #1d1712;
-  font-family: "Times New Roman", Georgia, serif;
+  font-family: "Playfair Display", "Times New Roman", Georgia, serif;
   font-size: clamp(2.5rem, 4.2vw, 3.8rem);
-  line-height: 0.5;
-  font-weight: 700;
+  line-height: 1.1;
+  font-weight: 900;
   letter-spacing: 0.03em;
-  text-shadow: 0 1px 0 rgba(255, 249, 237, 0.28);
+  background: linear-gradient(180deg, #ffffff 0%, #fadb8a 35%, #9c4c0b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(1px 1px 0px rgba(29, 23, 18, 0.95)) drop-shadow(2px 2px 0px rgba(29, 23, 18, 0.6));
 }
 
 .home-hero__subtitle {
@@ -11612,26 +11617,17 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
    lower lines sit over the top of the smoke. */
 .home-hero__content {
   top: var(--hero-nav-room);
-  bottom: calc(var(--hero-frame-height) * 0.87);
+  bottom: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   padding: 0 8%;
   z-index: 4;
 }
 
-.home-hero__content > :first-child {
-  margin-top: auto;
-}
-
-.home-hero__content > :last-child {
-  margin-bottom: auto;
-}
-
 /* A halo in the sky's own colour: invisible against the sky, it is only seen
    where a letter crosses the smoke, and it keeps the letter readable there. */
-.home-hero__title,
 .home-hero__subtitle {
   text-shadow:
     0 1px 0 rgba(255, 249, 237, 0.28),

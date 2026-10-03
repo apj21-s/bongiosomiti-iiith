@@ -96,9 +96,14 @@ export default function HeroBirdsAnimator() {
 
       // If it's the Y character, sit on the left arm of Y (approx 18% width mark)
       const horizontalOffset = (element === charY) ? (elemRect.width * 0.18) : (elemRect.width / 2);
+      
+      // line-height is 1.1, so the bounding box is taller than the glyph. 
+      // We push the bird down by ~27% of the box height to land on the actual text.
+      const verticalOffset = elemRect.height * 0.27;
+      
       return {
         x: elemRect.left - skyRect.left + horizontalOffset - (birdW / 2),
-        y: elemRect.top - skyRect.top - birdH + 1
+        y: elemRect.top - skyRect.top - birdH + 1 + verticalOffset
       };
     }
 
