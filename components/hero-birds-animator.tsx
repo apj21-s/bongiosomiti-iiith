@@ -71,6 +71,22 @@ export default function HeroBirdsAnimator() {
       return 300;
     }
 
+    // The highest the bird may fly: just under the navbar, which is drawn
+    // above it. With the title sitting right under the navbar on a wide
+    // screen, the hops between the letters and the climb after the T rose
+    // behind it and the bird vanished mid-flight. Measured each time, because
+    // the navbar slides away on scroll. The margin is for the pitch: nose up
+    // at its steepest (30 degrees, at 1.25x) a wingtip rises about a third of
+    // the sprite's width above its own box.
+    function ceilingY() {
+      const strip = $("header.home-strip");
+      if (!strip) return 0;
+      const bottom = strip.getBoundingClientRect().bottom - sky.getBoundingClientRect().top;
+      const birdW = parseFloat(getComputedStyle(bird).width) || 22;
+      return Math.max(0, bottom) + Math.ceil(birdW * 0.4) + 2;
+    }
+    const belowNav = (y) => Math.max(y, ceilingY());
+
     // Real-time dynamic target coordinate getter
     function getCoords(element) {
       const skyRect = sky.getBoundingClientRect();
@@ -124,7 +140,7 @@ export default function HeroBirdsAnimator() {
       currentX = -50;
       bird.style.transition = "none";
       bird.style.left = "-50px";
-      bird.style.top = "30px";
+      bird.style.top = `${belowNav(30)}px`;
       bird.style.transform = pose(25, 1.15);
       bird.style.display = "block";
       bird.classList.remove("is-resting", "is-thrilled", "is-thrilled-y");
@@ -222,7 +238,7 @@ export default function HeroBirdsAnimator() {
             bird.style.transition = "left 0.7s cubic-bezier(0.25, 1, 0.5, 1), top 0.35s cubic-bezier(0.22, 0.61, 0.36, 1), transform 0.35s ease";
             bird.style.transform = pose(-14, 1.05);
             bird.style.left = `${coordsY.x}px`;
-            bird.style.top = `${coordsY.y - arcY}px`;
+            bird.style.top = `${belowNav(coordsY.y - arcY)}px`;
 
             // Over the top of the arc and down. left is restated unchanged, so
             // the transition already running on it is left alone.
@@ -265,7 +281,7 @@ export default function HeroBirdsAnimator() {
                 bird.style.transition = "left 0.7s cubic-bezier(0.25, 1, 0.5, 1), top 0.35s cubic-bezier(0.22, 0.61, 0.36, 1), transform 0.35s ease";
                 bird.style.transform = pose(-14, 1.05);
                 bird.style.left = `${coordsS.x}px`;
-                bird.style.top = `${coordsS.y - arcS}px`;
+                bird.style.top = `${belowNav(coordsS.y - arcS)}px`;
 
                 // Over the top of the arc and down. left is restated unchanged, so
                 // the transition already running on it is left alone.
@@ -308,7 +324,7 @@ export default function HeroBirdsAnimator() {
                     bird.style.transition = "left 0.65s cubic-bezier(0.25, 1, 0.5, 1), top 0.325s cubic-bezier(0.22, 0.61, 0.36, 1), transform 0.325s ease";
                     bird.style.transform = pose(-14, 1.05);
                     bird.style.left = `${coordsT.x}px`;
-                    bird.style.top = `${coordsT.y - arcT}px`;
+                    bird.style.top = `${belowNav(coordsT.y - arcT)}px`;
 
                     // Over the top of the arc and down. left is restated unchanged, so
                     // the transition already running on it is left alone.
@@ -349,7 +365,7 @@ export default function HeroBirdsAnimator() {
                         bird.style.transition = "left 1.0s cubic-bezier(0.4, 0, 0.2, 1), top 1.0s cubic-bezier(0.4, 0, 0.2, 1), transform 1.0s ease";
                         bird.style.transform = pose(-26, 1.18);
                         bird.style.left = `${climbX}px`;
-                        bird.style.top = `${coordsTCurrent.y - Math.round(80 * scaleFactor)}px`;
+                        bird.style.top = `${belowNav(coordsTCurrent.y - Math.round(80 * scaleFactor))}px`;
 
                         // STEP B: on and away. It used to bank round here and come down
                         // onto the cyclist's shoulder in the painting; the video has no
@@ -365,7 +381,7 @@ export default function HeroBirdsAnimator() {
                             bird.style.transition = "left 2.4s cubic-bezier(0.25, 1, 0.5, 1), top 2.4s cubic-bezier(0.4, 0, 0.2, 1), transform 2.4s ease";
                             bird.style.transform = pose(-14, 1.12);
                             bird.style.left = `${exitX}px`;
-                            bird.style.top = `${skyHeight * 0.15}px`;
+                            bird.style.top = `${belowNav(skyHeight * 0.15)}px`;
 
                             // Pitch up to climbing glory halfway
                             after(() => {
