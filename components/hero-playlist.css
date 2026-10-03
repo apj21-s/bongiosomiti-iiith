@@ -8,11 +8,11 @@
 /* Floating Launcher */
 .vintage-launcher {
   position: fixed;
-  /* Always the bottom left, on every page and at every scroll position. It is
+  /* Always the bottom right, on every page and at every scroll position. It is
      the player at rest, so it has one home and stays in it. */
   bottom: 24px;
-  left: 24px;
-  right: auto;
+  right: 24px;
+  left: auto;
   z-index: 50;
   background: transparent;
   border: none;
