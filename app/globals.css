@@ -11554,16 +11554,19 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
 
 :root {
   --hero-sky: #fae2ba;
-  /* Room kept above the video for the navbar and the title, so the title sits
-     in plain sky and never over the smoke or the train. */
-  --hero-title-room: clamp(190px, 26vh, 300px);
-  /* How much of the screen the video occupies. The whole 16:9 frame when the
-     screen has room for it and the title; otherwise the frame is cropped from
-     the top, which is plain sky down to the smoke. On a narrow phone that alone
-     would leave a sliver under a screen of flat sky, so it holds at least 42vh
-     and crops from the right instead. One value, used by both the scene and
-     the text above it, so the two cannot drift apart. */
-  --hero-art-height: max(min(calc(100vw * 9 / 16), calc(100dvh - var(--hero-title-room))), 42vh);
+  /* How much of the screen the video occupies: its whole 16:9 frame, so all of
+     the smoke shows. It lies on top of the flat sky rather than below it - its
+     own top is plain sky in the same colour, so the two meet without a line.
+     On a narrow phone the frame alone would leave a sliver under a screen of
+     flat sky, so it holds at least 42vh and crops from the right instead. */
+  --hero-art-height: max(calc(100vw * 9 / 16), 42vh);
+  /* The drawn height of that frame: the larger of the box and the width at
+     16:9, the box being capped at the hero's height on a screen wider than
+     16:9. The smoke starts 13% down it. */
+  --hero-frame-height: max(min(var(--hero-art-height), 100%), calc(100vw * 9 / 16));
+  /* Where the title block may start: below the 45px navbar, with room for the
+     capitals, which rise above the heading's own box. */
+  --hero-nav-room: 68px;
 }
 
 .home-hero {
@@ -11585,40 +11588,56 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
 }
 
 /* The video's top row is not perfectly flat - it runs from #f9e4be to
-   #f9e0b5 across the width - and on a shorter screen the top of the frame is
-   cropped away through the smoke. A long fade hides the join and lets the cut
-   smoke thin out into the sky instead of ending on a line. There used to be a
-   blur over the join as well, for the painting's brushwork; on the video it
-   only smeared the smoke into a band, and the colours already match. The
-   transparent stop repeats the colour so the gradient does not run through
-   grey. */
+   #f9e0b5 across the width - so a short fade blends it into the flat sky.
+   Short on purpose: it covers only the plain sky at the top of the frame,
+   never the smoke, which starts 13% down. There used to be a blur over the
+   join as well, for the painting's brushwork; on the video it only smeared
+   the smoke. The transparent stop repeats the colour so the gradient does not
+   run through grey. */
 .home-hero__scene::before {
   content: "";
   position: absolute;
   inset: 0 0 auto 0;
-  height: clamp(48px, 16%, 150px);
+  height: clamp(12px, 4%, 40px);
   background: linear-gradient(180deg, var(--hero-sky) 0%, rgba(250, 226, 186, 0) 100%);
   z-index: 2;
   pointer-events: none;
 }
 
 /* The title, subtitle and tagline sit in the plain sky between the navbar and
-   the top of the video - centred in that space, not in the whole hero, which
-   on most screens would put them over the smoke and the train. The video
-   leaves --hero-title-room for exactly this. */
+   the top of the smoke - centred in that space where it is tall enough. On a
+   16:9 screen it is not: the frame fills the hero and the smoke rises to just
+   below the navbar. The auto margins then collapse, which holds the title
+   under the navbar instead of letting centring push it up behind it, and the
+   lower lines sit over the top of the smoke. */
 .home-hero__content {
-  top: var(--hero-nav-room, 56px);
-  bottom: min(var(--hero-art-height), 100%);
+  top: var(--hero-nav-room);
+  bottom: calc(var(--hero-frame-height) * 0.87);
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   padding: 0 8%;
   z-index: 4;
 }
 
-.home-hero__title {
-  margin-top: 0;
+.home-hero__content > :first-child {
+  margin-top: auto;
+}
+
+.home-hero__content > :last-child {
+  margin-bottom: auto;
+}
+
+/* A halo in the sky's own colour: invisible against the sky, it is only seen
+   where a letter crosses the smoke, and it keeps the letter readable there. */
+.home-hero__title,
+.home-hero__subtitle {
+  text-shadow:
+    0 1px 0 rgba(255, 249, 237, 0.28),
+    0 0 6px var(--hero-sky),
+    0 0 14px var(--hero-sky),
+    0 0 26px var(--hero-sky);
 }
 
 /* The bird's canvas covers the whole hero, not just the strip over the
