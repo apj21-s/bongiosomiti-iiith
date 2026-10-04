@@ -8548,29 +8548,59 @@ video::cue {
 /*
   Past 1440px the strip stops widening, and what used to fill the space either
   side of it was the footer's flat colour - the alpona simply stopped, twice,
-  with a hard edge. The same artwork is tiled behind it instead, so the band
-  reads as one continuous border however wide the screen is.
+  with a hard edge. The gaps are filled with the same artwork, reflected.
 
-  The numbers have to agree with the image above or the centre copy and the
-  tile behind it will not line up: a tile is 1440px wide, the same cap the
-  image has, and `100%` of this block's height is exactly 1440 x 136/948 =
-  206.58px, which is that tile at its own proportions. Centring the repeat
-  puts the whole motif in the middle and an equal part-tile at each end.
+  Repeating it end to end does not work, and cutting the strip to make the ends
+  meet only gets close. The scalloped border is not a regular pattern: the gap
+  between crowns runs from 36.5px to 52px, median 38.5px, so no width is a
+  whole number of arches. With the strip cut to 948px the gap across the join
+  came out 54.5px - 42% of an arch too wide - which reads as a stutter in the
+  rhythm at every seam, however well the corner mandalas line up.
 
-  The strip is cut so that it repeats without a seam: each end stops on the
-  centre line of its corner mandala and of a spike in the scalloped border, so
-  where one copy meets the next the two halves make one whole mandala and one
-  whole spike.
+  A reflection has no such condition to satisfy. The column against the join is
+  the same column on both sides of it, so the scallops, the rule under them,
+  the band and the mandala all run straight through, whatever the artwork does.
+  It also makes the border symmetric about the middle of the page, which is
+  what an alpona border wants to be anyway.
 
-  Only above the cap, because below it the image already covers this block and
-  a background behind it would be wasted work.
+  How each side is anchored: both gaps are flipped with scaleX(-1), so a point
+  painted at local u lands u from the gap's inner edge. The left gap anchors
+  its background left, which puts column 0 against the image's left edge - the
+  same column the image starts with. The right gap anchors right, which puts
+  the last column against the image's right edge, which is the column the image
+  ends with. Either way the join is a doubled column rather than a cut.
+
+  The tile is 1440px wide, the cap the image has, and `100%` of this block's
+  height is exactly 1440 x 136/948 = 206.58px, so the reflection is at the same
+  scale as the image and never stretched.
+
+  A gap wider than 1440px - a screen past about 4300px - repeats beyond the
+  first reflection and picks the plain join up again out there. Nothing on a
+  desk reaches it.
 */
 @media (min-width: 1440px) {
-  .utsav-footer__banner {
+  .utsav-footer__banner::before,
+  .utsav-footer__banner::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    /* Clamped at 0 by CSS when the screen is narrower than the cap. */
+    width: calc((100% - 1440px) / 2);
     background-image: url('/assets/footer-banner.webp');
     background-repeat: repeat-x;
-    background-position: center top;
     background-size: 1440px 100%;
+    transform: scaleX(-1);
+  }
+
+  .utsav-footer__banner::before {
+    left: 0;
+    background-position: left top;
+  }
+
+  .utsav-footer__banner::after {
+    right: 0;
+    background-position: right top;
   }
 }
 
