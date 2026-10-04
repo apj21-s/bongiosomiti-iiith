@@ -8082,9 +8082,6 @@ video::cue {
   }
 
   .home-hero__content {
-    top: 12%;
-    bottom: auto;
-    transform: translateY(-50%);
     padding: clamp(14px, 3vw, 24px) 12px 16px;
     width: 100%;
     box-sizing: border-box;
@@ -10465,9 +10462,6 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
   }
 
   .home-hero__content {
-    top: 12%;
-    bottom: auto;
-    transform: translateY(-50%);
     padding: 12px 8px 14px;
     justify-content: center;
   }
@@ -11645,21 +11639,57 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
   pointer-events: none;
 }
 
-/* The title, subtitle and tagline sit in the plain sky between the navbar and
-   the top of the smoke - centred in that space where it is tall enough. On a
-   16:9 screen it is not: the frame fills the hero and the smoke rises to just
-   below the navbar. The auto margins then collapse, which holds the title
-   under the navbar instead of letting centring push it up behind it, and the
-   lower lines sit over the top of the smoke. */
+/* Where the words may stand, read off the loop rather than guessed.
+   Twelve frames of apu-durga-loop.mp4 at 1920x1080, measured against the flat
+   sky colour:
+
+     sky     clear in every column down to 11% of the frame
+     smoke   from 11% at its highest, drifting right
+     train   funnel at 43%, carriages 47-58%, running off the right edge
+     field   kash from 58% down, full width
+     Durga   x 21-27%, from 60% to the bottom
+     Apu     x 4-9%, 66-80%
+
+   So there are two places text can go and not cross the train or either
+   figure: above 11%, or below 60%. Below 60% it also has to stay right of
+   30%, which a centred line does on its own - the title is about 38% of the
+   width, so it spans 31% to 69%, and the widest figure ends at 27%.
+
+   The frame is drawn bottom-anchored at --hero-frame-height, so a frame
+   fraction f is (100% - frame-height x (1 - f)) down the hero. That is where
+   the numbers below come from: 0.40 is 1 - 0.60, and 0.18 is 1 - 0.82.
+
+   The field is the default because it is the common case. On anything 16:9 or
+   wider the frame fills the hero and is cropped at the top, so the clear sky
+   is gone before the navbar has taken its 68px: at 1920x1080 it leaves 51px,
+   at 1366x768 it leaves 16px. That is what used to push the title down onto
+   the smoke and the locomotive. */
 .home-hero__content {
-  top: var(--hero-nav-room);
-  bottom: 0;
+  top: calc(100% - var(--hero-frame-height) * 0.40);
+  bottom: calc(var(--hero-frame-height) * 0.18);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 0 8%;
   z-index: 4;
+}
+
+/* Taller than 4:3 - every phone, tablets, and 4:3 and 5:4 desktops - and
+   there is real sky to work in: 187px at 1024x768, 315px at 1280x1024, 514px
+   on a 430x930 phone. The block's foot sits at 10% of the frame, just clear
+   of the 11% the smoke reaches.
+
+   4:3 is the switch because the condition it stands in for - height >= half
+   the width plus 218px - is not something a media query can be given, viewport
+   units being circular inside one. It errs towards the field, which is the
+   safe side: being in the kash when the sky would have done is a pity, the
+   other way round is the bug. */
+@media (max-aspect-ratio: 4/3) {
+  .home-hero__content {
+    top: var(--hero-nav-room);
+    bottom: calc(var(--hero-frame-height) * 0.90);
+  }
 }
 
 /* A halo in the sky's own colour: invisible against the sky, it is only seen
@@ -12156,13 +12186,3 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
   font-size: 0.78rem;
   color: #718096;
 }
-
-@media (max-width: 760px) {
-  .home-hero__content {
-    top: 45% !important;
-    bottom: auto !important;
-    transform: translateY(-50%) !important;
-    justify-content: center !important;
-  }
-}
-
