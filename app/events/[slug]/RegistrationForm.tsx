@@ -999,7 +999,10 @@ function RegButton({ text, onClick, type = 'continue', disabled = false, loading
   )
 }
 
-function ReelColumn({ targetDigit, colIndex, cellHeight = 22 }: { targetDigit: number, colIndex: number, cellHeight?: number }) {
+/** How far to wind the strip, in whole cells, whatever a cell measures. */
+const reelOffset = (cells: number) => `translateY(calc(var(--reel-cell) * -${cells}))`
+
+function ReelColumn({ targetDigit, colIndex }: { targetDigit: number, colIndex: number }) {
   const stripRef = useRef<HTMLDivElement>(null);
   const blurRef = useRef<SVGFEGaussianBlurElement>(null);
   const [currentOffset, setCurrentOffset] = useState(targetDigit);
@@ -1015,7 +1018,7 @@ function ReelColumn({ targetDigit, colIndex, cellHeight = 22 }: { targetDigit: n
 
     strip.style.transition = 'none';
     const startOffset = currentOffset % 10;
-    strip.style.transform = `translateY(-${startOffset * cellHeight}px)`;
+    strip.style.transform = reelOffset(startOffset);
 
     void strip.offsetHeight;
 
@@ -1025,7 +1028,7 @@ function ReelColumn({ targetDigit, colIndex, cellHeight = 22 }: { targetDigit: n
     const duration = 1400;
 
     strip.style.transition = `transform ${duration}ms cubic-bezier(0.16, 1, 0.3, 1) ${stagger}ms`;
-    strip.style.transform = `translateY(-${finalOffset * cellHeight}px)`;
+    strip.style.transform = reelOffset(finalOffset);
 
     let startTime: number | null = null;
     const maxBlur = 3;
@@ -1051,7 +1054,7 @@ function ReelColumn({ targetDigit, colIndex, cellHeight = 22 }: { targetDigit: n
 
     setCurrentOffset(finalOffset);
 
-  }, [targetDigit, colIndex, cellHeight]);
+  }, [targetDigit, colIndex]);
 
   const stripNumbers = Array.from({ length: 30 }, (_, i) => i % 10);
 
@@ -1066,7 +1069,7 @@ function ReelColumn({ targetDigit, colIndex, cellHeight = 22 }: { targetDigit: n
         ref={stripRef}
         className="t-reel-strip"
         style={{
-          transform: `translateY(-${(currentOffset % 10) * cellHeight}px)`,
+          transform: reelOffset(currentOffset % 10),
           filter: `url(#reel-blur-${colIndex})`
         }}
       >
@@ -1082,7 +1085,7 @@ function SpinningCounter({ value }: { value: number }) {
   const strVal = value.toString();
   return (
     <div className="t-reel">
-      <span style={{ marginRight: '2px', height: '22px', display: 'flex', alignItems: 'center' }}>₹</span>
+      <span style={{ marginRight: '2px', height: 'var(--reel-cell)', display: 'flex', alignItems: 'center' }}>₹</span>
       {strVal.split('').map((char, i) => {
         if (isNaN(parseInt(char))) {
           return <span key={i} className="t-reel-digit" style={{ width: 'auto' }}>{char}</span>
