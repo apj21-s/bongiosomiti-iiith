@@ -7512,13 +7512,13 @@ video::cue {
 .home-hero__title span {
   display: inline-block;
   transform-origin: center bottom;
-  transition: -webkit-text-fill-color 0.3s ease, filter 0.3s ease;
+  transition: color 0.3s ease, text-shadow 0.3s ease;
 }
 
 .home-hero__title span.is-thrilled {
   animation: letter-thrill 0.6s cubic-bezier(0.25, 1, 0.5, 1) both;
-  -webkit-text-fill-color: #ffe8b3 !important;
-  filter: drop-shadow(0 0 8px rgba(255, 180, 50, 0.8));
+  color: #c97d4c !important;
+  text-shadow: 0 0 8px rgba(212, 136, 6, 0.45);
 }
 
 .home-hero__content {
@@ -7534,17 +7534,15 @@ video::cue {
 
 .home-hero__title {
   margin: 0;
-  font-family: "Playfair Display", "Times New Roman", Georgia, serif;
+  color: #1d1712;
+  font-family: "Times New Roman", Georgia, serif;
   font-size: clamp(2.5rem, 4.2vw, 3.8rem);
+  /* 1.1, not the 0.5 of that commit: that number went with the old
+     flex-start hero layout, and the layout is the part being kept. */
   line-height: 1.1;
-  font-weight: 900;
+  font-weight: 700;
   letter-spacing: 0.03em;
-  background: linear-gradient(180deg, #ffffff 0%, #fadb8a 35%, #9c4c0b 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(1px 1px 0px rgba(29, 23, 18, 0.95)) drop-shadow(2px 2px 0px rgba(29, 23, 18, 0.6));
+  text-shadow: 0 1px 0 rgba(255, 249, 237, 0.28);
 }
 
 .home-hero__subtitle {
@@ -8097,7 +8095,7 @@ video::cue {
   .home-hero__title {
     margin: clamp(1.6rem, 5vw, 3.2rem) 0 0;
     font-size: clamp(1.45rem, 6.4vw, 3.2rem);
-    letter-spacing: clamp(0.12em, 1.2vw, 0.25em);
+    letter-spacing: clamp(0.01em, 0.4vw, 0.05em);
     line-height: 1.05;
     max-width: 96vw;
     text-align: center;
@@ -10477,7 +10475,7 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
   .home-hero__title {
     margin: 1.4rem 0 0;
     font-size: clamp(1.35rem, 6.2vw, 2.2rem);
-    letter-spacing: clamp(0.12em, 1.5vw, 0.25em);
+    letter-spacing: 0.01em;
     line-height: 1.05;
     max-width: 98vw;
   }
@@ -11666,6 +11664,7 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
 
 /* A halo in the sky's own colour: invisible against the sky, it is only seen
    where a letter crosses the smoke, and it keeps the letter readable there. */
+.home-hero__title,
 .home-hero__subtitle {
   text-shadow:
     0 1px 0 rgba(255, 249, 237, 0.28),
