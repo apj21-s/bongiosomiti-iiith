@@ -8,7 +8,7 @@ import HeroPlaylistMount from "@/components/hero-playlist-mount";
 
 export const metadata: Metadata = {
   title: "বঙ্গীয় সমিতি @ IIITH",
-  description: "আমরা বাঙ্গালি জাতি",
+  description: "আমরা বাঙালি জাতি",
 };
 
 export default async function RootLayout({
