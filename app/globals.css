@@ -11182,13 +11182,30 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
 }
 
 /* Sidebar (Desktop) */
+/*
+  Held to the viewport, so the tab list scrolls inside itself.
+
+  It had no height of its own, and a flex item with no height is as tall as
+  its content: with thirteen links the sidebar came to 933px, which made the
+  wrapper 933px, which made the document scroll - 33px at 1440x900, 293px at
+  1440x640. The main area was already pinned at 100dvh with its own scrollbar,
+  so that document scroll moved the whole shell past the top of the screen and
+  the sign-out footer sat below the fold. The nav's overflow-y: auto never had
+  a chance to do anything, because nothing was ever asking it to be shorter
+  than its contents.
+
+  vh first for anything without dvh, matching .home-hero.
+*/
 .admin-sidebar {
   width: 260px;
+  height: 100vh;
+  height: 100dvh;
   background: #ffffff;
   border-right: 1px solid rgba(0,0,0,0.06);
   display: flex;
   flex-direction: column;
-  position: relative;
+  position: sticky;
+  top: 0;
   z-index: 10;
   box-shadow: 4px 0 24px rgba(0,0,0,0.02);
   flex-shrink: 0;
@@ -11209,11 +11226,39 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
 
 .admin-sidebar-nav {
   flex: 1;
+  /* The half of overflow-y: auto that is easy to leave out. A column flex
+     item's automatic minimum size is its content, so without this the nav
+     refuses to be shorter than its links and overflows the sidebar instead
+     of scrolling inside it. */
+  min-height: 0;
   padding: 24px 12px;
   display: flex;
   flex-direction: column;
   gap: 6px;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  /* Its own scrollbar, drawn slim so the list reads as a scroller rather than
+     as a column that happens to be cut off. */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(143, 50, 31, 0.35) transparent;
+}
+
+.admin-sidebar-nav::-webkit-scrollbar {
+  width: 8px;
+}
+
+.admin-sidebar-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-sidebar-nav::-webkit-scrollbar-thumb {
+  background: rgba(143, 50, 31, 0.28);
+  border-radius: 999px;
+  border: 2px solid #ffffff;
+}
+
+.admin-sidebar-nav:hover::-webkit-scrollbar-thumb {
+  background: rgba(143, 50, 31, 0.45);
 }
 
 .admin-nav-link {
@@ -11370,6 +11415,14 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
     flex-direction: column;
     padding: 8px 0;
     z-index: 100;
+    /* Thirteen links at ~44px is taller than a phone. Scroll the list rather
+       than run it off the bottom of the screen, and keep that scroll out of
+       the page behind it. */
+    max-height: calc(100dvh - 72px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(143, 50, 31, 0.35) transparent;
   }
   
   .dropdown-divider {
