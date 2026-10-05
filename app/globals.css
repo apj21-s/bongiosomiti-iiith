@@ -12192,3 +12192,80 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
   font-size: 0.78rem;
   color: #718096;
 }
+
+/* --------------------------------------------------------------------
+   Statistics
+-------------------------------------------------------------------- */
+.admin-stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 20px;
+  margin-bottom: 28px;
+}
+
+/* Two readings per cell: how many plates, and what they came to. The count
+   leads because the grid is first of all a count.
+
+   One element around the pair, because the stacked table makes each cell a
+   two-column grid - label, value - and two loose children put the money in
+   the next row's label column rather than under its own count. */
+.stats-cell {
+  display: block;
+}
+
+.stats-cell__money {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.78rem;
+  color: #718096;
+  font-variant-numeric: tabular-nums;
+}
+
+.stats-cell__zero {
+  color: #cbd5e0;
+}
+
+.stats-grid th[scope="row"] {
+  text-align: left;
+  font-weight: 700;
+  color: #2d3748;
+  white-space: nowrap;
+}
+
+.stats-grid__totals td,
+.stats-grid__totals th {
+  background: rgba(143, 50, 31, 0.045);
+  border-top: 2px solid var(--border);
+}
+
+/* Wider than the card on a small screen, and that is what the scroll is for -
+   a bar chart squeezed to fit stops being readable before it stops fitting. */
+.stats-plot {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.stats-plot svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  font-family: inherit;
+}
+
+.stats-plot__key {
+  margin: 10px 0 0;
+  font-size: 0.8rem;
+  color: #a0aec0;
+}
+
+/* The stacked table turns each row into a card; a row header is that card's
+   title rather than another labelled line. */
+@media (max-width: 700px) {
+  .admin-stack-table tbody th[scope="row"] {
+    display: block;
+    width: 100%;
+    padding: 10px 14px 2px;
+    border-bottom: 0;
+    font-size: 0.95rem;
+  }
+}
