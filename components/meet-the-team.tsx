@@ -23,8 +23,8 @@ export default function MeetTheTeam() {
         <h2 id="team-title">Points of contact</h2>
         <p className="team-section__lede">
           If something about your registration needs a person rather than a form
-          &mdash; a payment that has not been confirmed, a pass that has not
-          arrived, a plate to change &mdash; message any of us on WhatsApp.
+          &mdash; UPI Issues, a payment that has not been confirmed, a pass that has not
+          arrived, a plate to change &mdash; please feel free to reach out to us!.
         </p>
       </div>
 
