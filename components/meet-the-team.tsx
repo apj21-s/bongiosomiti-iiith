@@ -2,7 +2,7 @@ import { getTeam, whatsappLink } from '@/utils/data/team'
 import './meet-the-team.css'
 
 /**
- * The people behind the festival.
+ * The people to contact about a registration.
  *
  * A server component: the list comes from public/data/team.csv at request
  * time, so editing that file is the whole of "changing the team".
@@ -19,12 +19,12 @@ export default function MeetTheTeam() {
   return (
     <section id="team" className="team-section" aria-labelledby="team-title">
       <div className="team-section__intro scroll-reveal">
-        <p className="section-label">আমাদের দল</p>
-        <h2 id="team-title">Meet the team</h2>
+        <p className="section-label">যোগাযোগ</p>
+        <h2 id="team-title">Points of contact</h2>
         <p className="team-section__lede">
-          The students who put the festival together. If something about your
-          registration needs a person rather than a form, message whoever is
-          closest to it.
+          If something about your registration needs a person rather than a form
+          &mdash; a payment that has not been confirmed, a pass that has not
+          arrived, a plate to change &mdash; message any of us on WhatsApp.
         </p>
       </div>
 
@@ -47,7 +47,7 @@ export default function MeetTheTeam() {
               <div className="team-card__body">
                 <h3 className="team-card__name">{member.name}</h3>
                 {member.role && <p className="team-card__role">{member.role}</p>}
-                <p className="team-card__course">{member.course}</p>
+                {member.course && <p className="team-card__course">{member.course}</p>}
 
                 {link ? (
                   <a

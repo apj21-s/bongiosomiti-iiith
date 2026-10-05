@@ -20,8 +20,18 @@ export type TeamMember = {
   role?: string
 }
 
-/** Columns the file is expected to carry. Order in the file does not matter. */
-const REQUIRED = ['name', 'course', 'whatsapp', 'photo'] as const
+/**
+ * What a row cannot do without: somebody to ask for, and a way to reach them.
+ *
+ * Course and photo used to be required too, which meant a row missing either
+ * was dropped from the page without a word - and the people here are points of
+ * contact, not a prospectus. A missing photo falls back to the placeholder
+ * below; a missing course simply is not shown.
+ */
+const REQUIRED = ['name', 'whatsapp'] as const
+
+/** Stands in until somebody's own picture is dropped into public/assets/team. */
+const NO_PHOTO = '/assets/team/placeholder.svg'
 
 /**
  * A small CSV reader: quoted fields, escaped quotes, commas inside quotes.
@@ -119,7 +129,7 @@ export function getTeam(): TeamMember[] {
       name: row.name,
       course: row.course,
       whatsapp: row.whatsapp,
-      photo: row.photo,
+      photo: row.photo || NO_PHOTO,
       role: row.role || undefined,
     }))
 }

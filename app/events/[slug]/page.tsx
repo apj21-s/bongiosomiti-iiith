@@ -155,10 +155,10 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
           </div>
         </section>
 
-        {/* The people running the event, from public/data/team.csv. Renders
-            nothing when that file is missing or empty, so an unfinished list
-            leaves no gap. */}
-        {/* {isMahalaya && <MeetTheTeam />} */}
+        {/* Who to message about a registration, from public/data/team.csv.
+            Renders nothing when that file is missing or empty, so an unfinished
+            list leaves no gap. */}
+        {isMahalaya && <MeetTheTeam />}
       </main>
 
       <SiteFooter />

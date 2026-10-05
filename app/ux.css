@@ -366,6 +366,19 @@
 .upi-icons-prominent img + img { margin-left: -6px; }
 
 .steps-label { font-weight: 700; font-size: 10px; color: #4A2921; display: block; margin-bottom: 4px; font-family: 'Playfair Display', serif; }
+/* Said here because this is where somebody is deciding how to pay. Warm rather
+   than alarming - it is a recommendation, not a failure - and it borrows the
+   amount box's own ink so it reads as part of the card. */
+.steps-note {
+  margin: 6px 0 0;
+  padding: 5px 7px;
+  border-left: 2px solid #B36B46;
+  background: rgba(179, 107, 70, 0.08);
+  border-radius: 0 3px 3px 0;
+  font-size: 8.5px;
+  line-height: 1.35;
+  color: #4A2921;
+}
 .reg-steps-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px; counter-reset: step-counter; }
 .reg-steps-list li { display: flex; align-items: flex-start; gap: 4px; font-size: 8.5px; color: #4A2921; font-weight: 500; line-height: 1.15; }
 .reg-steps-list li::before { content: counter(step-counter); counter-increment: step-counter; background: #B36B46; color: white; width: 12px; height: 12px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 700; flex-shrink: 0; }

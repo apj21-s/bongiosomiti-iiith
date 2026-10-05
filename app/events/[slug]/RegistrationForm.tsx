@@ -1208,6 +1208,11 @@ function PaymentStep({ event, draft, updateDraft, prevStage, transitionTo, total
             <li><span>Return here and tap &ldquo;I have made the payment&rdquo;</span></li>
             <li><span>Upload the receipt &mdash; the transaction ID is read from it</span></li>
           </ol>
+          <p className="steps-note">
+            We have faced some ongoing issues with direct payment through scanning
+            the QR code, so it is highly recommended to copy the UPI ID of your
+            choice and pay using your UPI app.
+          </p>
         </div>
       </div>
 
