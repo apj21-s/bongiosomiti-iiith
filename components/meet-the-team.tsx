@@ -24,7 +24,7 @@ export default function MeetTheTeam() {
         <p className="team-section__lede">
           If something about your registration needs a person rather than a form
           &mdash; UPI Issues, a payment that has not been confirmed, a pass that has not
-          arrived, a plate to change &mdash; please feel free to reach out to us!.
+          arrived, a plate to change &mdash; please feel free to reach out to us!
         </p>
       </div>
 
