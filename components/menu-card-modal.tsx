@@ -239,7 +239,7 @@ export default function MenuCardModal({ slug, status = 'OPEN' }: { slug: string,
                               <span className="mahalaya-meal-tab__sunrays" aria-hidden="true"></span>
                             </div>
                             <div className="mahalaya-meal-tab__text">
-                              <span className="mahalaya-meal-tab__bn">প্রাতঃরাশ</span>
+                              <span className="mahalaya-meal-tab__bn">প্রাতরাশ</span>
                               <span className="mahalaya-meal-tab__en">BREAKFAST</span>
                             </div>
                           </button>
