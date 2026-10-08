@@ -12456,3 +12456,12 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
   .pc-search .btn,
   .pc-raise .btn { width: 100%; min-height: 44px; }
 }
+
+/* What a payment was for, under the name it belongs to. */
+.pay-plates {
+  display: block;
+  margin-top: 3px;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: var(--brand);
+}

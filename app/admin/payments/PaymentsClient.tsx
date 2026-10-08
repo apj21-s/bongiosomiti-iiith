@@ -140,16 +140,35 @@ export default function PaymentsClient() {
 
   const groupedPayments = filteredPayments.reduce((acc: any[], pmt: any) => {
     const key = (pmt.utr && pmt.utr !== 'FREE-PASS') ? pmt.utr : pmt.token
+    const plate = String(pmt.food_pref || '').trim() || 'No plate'
     const existing = acc.find((p: any) => p._groupKey === key)
     if (existing) {
       existing.amount += pmt.amount
       existing.num_passes = (existing.num_passes || 1) + 1
       existing._tokens.push(pmt.token)
+      existing._plates[plate] = (existing._plates[plate] || 0) + 1
     } else {
-      acc.push({ ...pmt, _groupKey: key, num_passes: 1, _tokens: [pmt.token] })
+      acc.push({ ...pmt, _groupKey: key, num_passes: 1, _tokens: [pmt.token], _plates: { [plate]: 1 } })
     }
     return acc
   }, [])
+
+  /**
+   * "1 x Breakfast, 2 x Lunch - Non-Veg".
+   *
+   * What the money being verified was actually for. The row already shows the
+   * booking's total, because the grouping above sums it, but a receipt for
+   * Rs 950 says nothing about whether that was three lunches or a breakfast
+   * and two dinners - and that is the thing somebody checking a payment, or
+   * answering a phone call about one, actually needs.
+   */
+  function describePlates(plates: Record<string, number> | undefined) {
+    if (!plates) return ''
+    return Object.entries(plates)
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+      .map(([label, count]) => `${count} × ${label}`)
+      .join(', ')
+  }
 
   function renderStatus(raw: string) {
     if (raw === 'APPROVED' || raw === 'VERIFIED') return 'VERIFIED'
@@ -195,7 +214,11 @@ export default function PaymentsClient() {
               return (
                 <tr key={pmt.id}>
                   <td><code>{pmt.token.includes('_') ? pmt.token.split('_')[0] : pmt.token}</code> {pmt.num_passes > 1 && <span style={{ fontSize: '0.8rem', color: 'var(--muted)', display: 'block', marginTop: '4px' }}>+{pmt.num_passes - 1} more passes</span>}</td>
-                  <td><strong>{pmt.participant_name}</strong><br /><span className="text-muted">{pmt.college_id}</span></td>
+                  <td>
+                    <strong>{pmt.participant_name}</strong><br />
+                    <span className="text-muted">{pmt.college_id}</span>
+                    <span className="pay-plates">{describePlates(pmt._plates)}</span>
+                  </td>
                   <td>
                     <span style={{ fontSize: '0.85rem' }}>{pmt.email}</span><br />
                     <span className="text-muted" style={{ fontSize: '0.85rem' }}>{pmt.phone || 'No phone'}</span>
@@ -244,7 +267,8 @@ export default function PaymentsClient() {
                   <tr><td>Phone Number</td><td>{reviewing.phone || 'N/A'}</td></tr>
                   <tr><td>Event</td><td>{reviewing.event?.name}</td></tr>
                   <tr><td>UPI Transaction UTR</td><td><strong style={{ letterSpacing: '0.05em' }}>{reviewing.utr || 'N/A'}</strong></td></tr>
-                  <tr><td>Expected Amount</td><td>₹{reviewing.amount}</td></tr>
+                  <tr><td>Expected Amount</td><td>₹{reviewing.amount}{reviewing.num_passes > 1 ? ` for ${reviewing.num_passes} passes` : ''}</td></tr>
+                  <tr><td>Plates</td><td>{describePlates(reviewing._plates) || 'None recorded'}</td></tr>
                   <tr><td>Submitted At</td><td>{new Date(reviewing.created_at).toLocaleString()}</td></tr>
                   <tr><td>Paid To (UPI)</td><td><strong style={{ fontFamily: 'monospace' }}>{reviewing.receiver_upi || 'N/A'}</strong></td></tr>
                   <tr><td>Payment Status</td><td><span className="badge">{renderStatus(reviewing.payment_status)}</span></td></tr>
