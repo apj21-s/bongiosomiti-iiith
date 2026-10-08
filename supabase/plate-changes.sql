@@ -1,54 +1,57 @@
--- Changing a pass from one plate to another, and the money that moves with it.
+-- Changing a registration, and the money that moves with it.
 --
--- Run this in the Supabase SQL editor before deploying the plate-change
--- feature. It is additive and safe to re-run.
+-- Run this in the Supabase SQL editor before using the Plate Changes page.
+-- It is additive and safe to re-run.
 --
--- A change is never applied the moment it is asked for. Swapping a veg lunch
--- for a non-veg one is a different price, so somebody has to send somebody
--- money first - the participant to the collector, or the collector back to the
--- participant - and only a super admin who has seen the receipt may say that
--- happened. This table is that waiting room: one row per change, carrying what
--- it was, what it is becoming, who owes whom, and who settled it.
+-- A change is never applied the moment it is asked for. Moving a veg lunch to a
+-- non-veg one is a different price, so somebody has to send somebody money
+-- outside the site first - the participant to the collector, or the collector
+-- back to the participant - and only a super admin who has seen the receipt may
+-- say that happened. This table is that waiting room. The tickets themselves
+-- are not touched until the row reaches APPROVED, so the passes already in
+-- somebody's inbox stay true until then.
 --
--- The ticket itself is not touched until the row reaches APPROVED. Until then
--- the pass in somebody's inbox is still true.
+-- One row per change, not per pass. A registration is one booking, one payment
+-- and one person, and somebody rearranging it - this plate up, that one down,
+-- a third left alone - is doing one thing that is settled with one transfer and
+-- described in one email. `passes` carries the per-pass detail.
 
 create table if not exists plate_changes (
   id uuid primary key default gen_random_uuid(),
 
-  -- The one pass being changed. A booking of three plates is three tickets,
-  -- and a change applies to exactly one of them.
-  ticket_id uuid not null references tickets(id) on delete cascade,
+  -- The booking: the part of a ticket token before the underscore, which is
+  -- how the register route builds it. Text rather than a foreign key because
+  -- it is not a row anywhere - it is the name a group of tickets shares.
+  registration_id text not null,
   event_id uuid references events(id),
 
-  -- Plate labels as they are written into tickets.food_pref: the string
-  -- passLabel() produces, e.g. "Lunch · Veg".
-  from_plate text not null,
-  to_plate text not null,
-
-  -- What the pass cost, and what it will cost. Whole rupees, like tickets.amount.
-  from_amount int not null,
-  to_amount int not null,
-  -- to_amount - from_amount. Positive: the participant owes. Negative: the
-  -- collector owes a refund. Zero: a swap at the same price, nothing to send.
-  delta int not null,
-
-  -- Who sends the money, and who therefore has to produce the receipt - which
-  -- is the other one, the party that receives it.
-  --   PARTICIPANT  the participant pays the collector
-  --   COLLECTOR    the collector refunds the participant
-  --   NOBODY       same price either way
-  payer text not null check (payer in ('PARTICIPANT', 'COLLECTOR', 'NOBODY')),
-
-  -- Where the money goes, and who to tell. Copied at the time rather than
-  -- looked up later, so the record still reads correctly after a manager
-  -- profile is renamed or removed.
+  -- Copied at the time rather than looked up later, so the record still reads
+  -- correctly after a name, an address or a manager profile changes.
+  participant_name text,
+  participant_email text,
   collector_upi text,
   collector_email text,
   collector_name text,
 
+  -- What is being done, one entry per pass that moves:
+  --   [{ "ticketId": uuid, "token": text, "fromPlate": text, "toPlate": text,
+  --      "fromAmount": int, "toAmount": int }]
+  -- A pass left alone is simply not in here.
+  passes jsonb not null,
+
+  -- What actually has to be sent, and which way. The super admin sets both:
+  -- the per-pass amounts above are what the booking will say afterwards, and
+  -- this is what changes hands, which is not always the same thing - a plate
+  -- swapped as a goodwill fix moves no money at all.
+  --   PARTICIPANT  the participant pays the collector
+  --   COLLECTOR    the collector refunds the participant
+  --   NOBODY       nothing to send
+  delta int not null default 0,
+  payer text not null default 'NOBODY'
+    check (payer in ('PARTICIPANT', 'COLLECTOR', 'NOBODY')),
+
   --   AWAITING_TRANSFER  asked for, money not yet confirmed
-  --   APPROVED           a super admin saw the receipt; the ticket is updated
+  --   APPROVED           a super admin saw the receipt; the tickets are updated
   --   CANCELLED          called off before it was settled
   status text not null default 'AWAITING_TRANSFER'
     check (status in ('AWAITING_TRANSFER', 'APPROVED', 'CANCELLED')),
@@ -68,13 +71,13 @@ create table if not exists plate_changes (
 
 -- The list a super admin works from is "what is still waiting", newest first.
 create index if not exists plate_changes_status_idx on plate_changes (status, initiated_at desc);
-create index if not exists plate_changes_ticket_idx on plate_changes (ticket_id);
+create index if not exists plate_changes_registration_idx on plate_changes (registration_id);
 
--- One pass cannot be in two unsettled changes at once: two rows waiting would
--- each be priced against from_amount, and approving both would charge the
--- difference twice while the pass only changed once.
-create unique index if not exists plate_changes_one_open_per_ticket
-  on plate_changes (ticket_id)
+-- One booking cannot be in two unsettled changes at once. Both would be priced
+-- against the plates the passes have now, and approving the second would write
+-- its own idea of "before" over the first one's result.
+create unique index if not exists plate_changes_one_open_per_registration
+  on plate_changes (registration_id)
   where status = 'AWAITING_TRANSFER';
 
 alter table plate_changes enable row level security;

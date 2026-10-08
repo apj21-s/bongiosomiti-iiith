@@ -12405,3 +12405,54 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
   color: #718096;
   overflow-wrap: anywhere;
 }
+
+/* Plate changes: the lookup, and the registration being edited. */
+.pc-search {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.pc-results {
+  display: grid;
+  gap: 8px;
+}
+
+.pc-result {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+  font: inherit;
+  color: #1a202c;
+}
+
+.pc-result:hover { border-color: var(--brand); }
+.pc-result.is-chosen { border-color: var(--brand); background: rgba(143, 50, 31, 0.05); }
+
+.pc-transfer {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.pc-raise {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 18px;
+}
+
+@media (max-width: 640px) {
+  .pc-search { grid-template-columns: minmax(0, 1fr); }
+  .pc-search .btn,
+  .pc-raise .btn { width: 100%; min-height: 44px; }
+}

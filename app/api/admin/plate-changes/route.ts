@@ -39,19 +39,34 @@ export async function POST(request: Request) {
   }
 
   const input = (body ?? {}) as Record<string, unknown>
-  const ticketId = typeof input.ticketId === 'string' ? input.ticketId.trim() : ''
-  const toPlate = typeof input.toPlate === 'string' ? input.toPlate.trim() : ''
+  const registrationId = typeof input.registrationId === 'string' ? input.registrationId.trim() : ''
   const reason = typeof input.reason === 'string' ? input.reason.trim().slice(0, 500) : null
+  const payer = input.payer === 'COLLECTOR' ? 'COLLECTOR' : input.payer === 'NOBODY' ? 'NOBODY' : 'PARTICIPANT'
 
-  if (!UUID.test(ticketId)) return NextResponse.json({ error: 'Choose a pass to change.' }, { status: 400 })
-  if (!toPlate) return NextResponse.json({ error: 'Choose the plate to change to.' }, { status: 400 })
+  if (!registrationId) {
+    return NextResponse.json({ error: 'Choose a registration to change.' }, { status: 400 })
+  }
+
+  const passes = Array.isArray(input.passes)
+    ? input.passes
+        .map((p) => (p ?? {}) as Record<string, unknown>)
+        .filter((p) => UUID.test(String(p.ticketId ?? '')))
+        .map((p) => ({
+          ticketId: String(p.ticketId),
+          toPlate: String(p.toPlate ?? '').slice(0, 120),
+          toAmount: p.toAmount,
+        }))
+    : []
+
+  if (passes.length === 0) {
+    return NextResponse.json({ error: 'Nothing was changed on this registration.' }, { status: 400 })
+  }
 
   const result = await raisePlateChange({
-    ticketId,
-    toPlate,
-    // Left undefined unless it was actually typed, so the price table decides
-    // by default and a blank box does not read as "no difference".
-    delta: input.delta === '' || input.delta === null || input.delta === undefined ? undefined : input.delta,
+    registrationId,
+    passes,
+    delta: input.delta,
+    payer: payer as 'PARTICIPANT' | 'COLLECTOR' | 'NOBODY',
     reason,
     actor: String(guard.user.email || guard.user.id),
   })

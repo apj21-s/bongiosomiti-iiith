@@ -1,47 +1,56 @@
 /**
- * The waiting room for a plate change: raising one, listing them, settling one.
+ * Finding a registration, changing it, and settling the money that follows.
  *
  * The sequencing is the point of this file. A change is money that moves
  * outside the site - one person sends another a UPI transfer - so the booking
- * must not follow until somebody has seen that happen. Every function here
- * keeps to that: raising a change writes a row and sends mail and touches no
- * ticket; approving one re-reads the ticket, checks it is still the booking
- * that was quoted, and only then rewrites it.
+ * must not follow until somebody has seen that happen. Raising a change writes
+ * a row and sends mail and touches no ticket; approving one re-reads every
+ * pass, checks each is still what was quoted, and only then rewrites them.
  *
- * Pricing lives in plate-changes.ts, which has no database in it and is
- * tested on its own.
+ * What a change may say is deliberately not constrained. The plate can be any
+ * text, the amount any number, and the direction is chosen rather than
+ * derived - a super admin fixing somebody's booking at a desk knows things the
+ * price table does not, and the suggestion in plate-changes.ts is there to be
+ * overridden. What is constrained is the order of events, which is the part
+ * that protects the participant.
  */
 
 import { createServiceRoleClient } from '@/utils/supabase/server'
 import { getEventById } from '@/utils/data/events'
-import { getManagerByUpi } from '@/utils/auth/managers'
-import {
-  quoteChange,
-  isQuoteFailure,
-  type ChangeQuote,
-  type Payer,
-} from '@/utils/data/plate-changes'
+import { getManagerByUpi, listManagers } from '@/utils/auth/managers'
 import {
   sendPlateChangeRequestedEmail,
   sendPlateChangeCollectorEmail,
   sendPlateChangeApprovedEmail,
   sendQRPassEmail,
   type PlateChangeMail,
+  type PlateMove,
 } from '@/utils/email'
+
+export type Payer = 'PARTICIPANT' | 'COLLECTOR' | 'NOBODY'
+
+/** One pass moving, as stored in plate_changes.passes. */
+export type PassChange = {
+  ticketId: string
+  token: string
+  fromPlate: string
+  toPlate: string
+  fromAmount: number
+  toAmount: number
+}
 
 export type PlateChangeRow = {
   id: string
-  ticket_id: string
+  registration_id: string
   event_id: string | null
-  from_plate: string
-  to_plate: string
-  from_amount: number
-  to_amount: number
-  delta: number
-  payer: Payer
+  participant_name: string | null
+  participant_email: string | null
   collector_upi: string | null
   collector_email: string | null
   collector_name: string | null
+  passes: PassChange[]
+  delta: number
+  payer: Payer
   status: 'AWAITING_TRANSFER' | 'APPROVED' | 'CANCELLED'
   reason: string | null
   settlement_note: string | null
@@ -49,20 +58,19 @@ export type PlateChangeRow = {
   initiated_at: string
   settled_by: string | null
   settled_at: string | null
+  eventName?: string | null
 }
 
-/** A row with enough of its ticket attached to be shown without a second trip. */
-export type PlateChangeListing = PlateChangeRow & {
-  ticket: {
-    token: string
-    participant_name: string
-    email: string | null
-    food_pref: string | null
-    amount: number
-    payment_status: string
-    event_id: string | null
-  } | null
+/** A booking as the super admin needs to see it before touching anything. */
+export type FoundRegistration = {
+  id: string
+  eventId: string | null
   eventName: string | null
+  participantName: string
+  participantEmail: string
+  collector: { upi: string | null; email: string | null; name: string }
+  total: number
+  passes: { id: string; token: string; plate: string; amount: number; paymentStatus: string }[]
 }
 
 export type Failure = { error: string; status: number }
@@ -72,95 +80,221 @@ const isMissingTable = (message: unknown) =>
   /plate_changes/i.test(String(message ?? '')) || String(message ?? '').includes('PGRST205')
 
 /** The registration a ticket belongs to: its token up to the underscore. */
-function registrationIdOf(token: string): string {
-  const underscore = token.indexOf('_')
-  return underscore === -1 ? token : token.slice(0, underscore)
+export function registrationIdOf(token: unknown): string {
+  const value = String(token ?? '')
+  const underscore = value.indexOf('_')
+  return underscore === -1 ? value : value.slice(0, underscore)
 }
 
-async function loadTicket(supabase: any, ticketId: string) {
-  const { data } = await supabase
+const money = (v: unknown) => {
+  const n = Number(v)
+  return Number.isFinite(n) ? Math.round(n) : 0
+}
+
+/**
+ * Find a booking by whatever the super admin has to hand.
+ *
+ * Any of: the participant's address or name, the registration number, a single
+ * pass code, or the collector's address - which is matched by resolving it to
+ * the UPI id that manager collects at, because that is what the tickets
+ * actually carry. Somebody ringing up about a change rarely has the one
+ * identifier a system would have chosen.
+ */
+export async function findRegistrations(query: string): Promise<FoundRegistration[] | Failure> {
+  const q = String(query ?? '').trim()
+  if (q.length < 2) return fail('Type at least two characters to search for.')
+
+  const supabase = await createServiceRoleClient()
+  const like = `%${q.replace(/[%,()]/g, '')}%`
+
+  // A collector is searched for by their own address, but tickets only know
+  // the UPI id the money went to.
+  const managers = await listManagers()
+  const collectorUpis = managers
+    .filter((m) => (m.email || '').toLowerCase().includes(q.toLowerCase()) ||
+                   (m.name || '').toLowerCase().includes(q.toLowerCase()) ||
+                   m.username.toLowerCase().includes(q.toLowerCase()))
+    .map((m) => m.upiId)
+
+  const filters = [
+    `email.ilike.${like}`,
+    `participant_name.ilike.${like}`,
+    `token.ilike.${like}`,
+  ]
+  if (collectorUpis.length > 0) {
+    filters.push(...collectorUpis.map((upi) => `receiver_upi.ilike.%${upi.replace(/[%,()]/g, '')}%`))
+  }
+
+  const { data, error } = await supabase
     .from('tickets')
-    .select('id, token, participant_name, email, is_iiit, food_pref, amount, payment_status, receiver_upi, event_id')
-    .eq('id', ticketId)
-    .maybeSingle()
-  return data
+    .select('id, token, participant_name, email, food_pref, amount, payment_status, receiver_upi, event_id')
+    .or(filters.join(','))
+    .limit(400)
+
+  if (error) return fail(error.message, 500)
+
+  const rows = (data || []) as any[]
+  if (rows.length === 0) return []
+
+  // One booking may have matched on only one of its passes; pull the rest in
+  // so the super admin is looking at the whole thing.
+  const ids = Array.from(new Set(rows.map((r) => registrationIdOf(r.token)))).filter(Boolean).slice(0, 40)
+  const { data: siblings } = await supabase
+    .from('tickets')
+    .select('id, token, participant_name, email, food_pref, amount, payment_status, receiver_upi, event_id')
+    .or(ids.map((id) => `token.ilike.${id.replace(/[%,()]/g, '')}%`).join(','))
+    .limit(800)
+
+  const all = (siblings && siblings.length > 0 ? siblings : rows) as any[]
+
+  const grouped = new Map<string, any[]>()
+  for (const row of all) {
+    const id = registrationIdOf(row.token)
+    if (!id || !ids.includes(id)) continue
+    const bucket = grouped.get(id)
+    if (bucket) bucket.push(row)
+    else grouped.set(id, [row])
+  }
+
+  const eventNames = new Map<string, string>()
+  const out: FoundRegistration[] = []
+
+  for (const [id, group] of grouped) {
+    const ordered = group.sort((a, b) => String(a.token).localeCompare(String(b.token)))
+    const first = ordered[0]
+
+    const eventId = first.event_id || null
+    if (eventId && !eventNames.has(eventId)) {
+      const event = await getEventById(eventId)
+      eventNames.set(eventId, event?.name || '')
+    }
+
+    const manager = await getManagerByUpi(first.receiver_upi)
+    out.push({
+      id,
+      eventId,
+      eventName: eventId ? eventNames.get(eventId) || null : null,
+      participantName: String(first.participant_name || '').trim() || 'Unknown',
+      participantEmail: String(first.email || '').trim(),
+      collector: {
+        upi: manager?.upiId ?? (first.receiver_upi || null),
+        email: manager?.email ?? null,
+        name: manager?.name || manager?.username || 'the organisers',
+      },
+      total: ordered.reduce((sum, t) => sum + money(t.amount), 0),
+      passes: ordered.map((t) => ({
+        id: t.id,
+        token: t.token,
+        plate: String(t.food_pref || '').trim(),
+        amount: money(t.amount),
+        paymentStatus: String(t.payment_status || ''),
+      })),
+    })
+  }
+
+  return out.sort((a, b) => a.participantName.localeCompare(b.participantName))
 }
 
-/** Everything the three mails need, assembled once. */
 function mailDetails(
-  ticket: any,
+  row: Pick<PlateChangeRow,
+    'participant_name' | 'participant_email' | 'registration_id' | 'delta' | 'payer' |
+    'collector_name' | 'collector_email' | 'collector_upi' | 'reason' | 'passes'>,
   eventName: string,
-  quote: Pick<ChangeQuote, 'fromPlate' | 'toPlate' | 'delta' | 'payer' | 'receiptFrom'>,
-  collector: { name: string; email: string | null; upi: string | null },
-  reason?: string | null,
 ): PlateChangeMail {
+  const moves: PlateMove[] = row.passes.map((p) => ({ fromPlate: p.fromPlate, toPlate: p.toPlate }))
   return {
-    participantName: ticket.participant_name,
-    participantEmail: ticket.email,
+    participantName: row.participant_name || 'there',
+    participantEmail: row.participant_email || '',
     eventName,
-    fromPlate: quote.fromPlate,
-    toPlate: quote.toPlate,
-    delta: quote.delta,
-    payer: quote.payer,
-    receiptFrom: quote.receiptFrom,
-    collectorName: collector.name,
-    collectorEmail: collector.email,
-    collectorUpi: collector.upi,
-    reference: ticket.token,
-    reason: reason ?? null,
+    moves,
+    delta: row.delta,
+    payer: row.payer,
+    receiptFrom: row.payer === 'NOBODY' || row.delta === 0
+      ? null
+      : row.payer === 'PARTICIPANT' ? 'COLLECTOR' : 'PARTICIPANT',
+    collectorName: row.collector_name || 'the organisers',
+    collectorEmail: row.collector_email,
+    collectorUpi: row.collector_upi,
+    reference: row.registration_id,
+    reason: row.reason,
   }
 }
 
 /**
- * Raise a change: price it, record it, tell both sides.
+ * Raise a change: record what is wanted, tell both sides.
  *
- * No ticket is touched. If the mail fails the row is removed again, because a
- * change nobody was told about is one that will sit in the queue forever
+ * No ticket is touched. If the participant could not be told, the row is taken
+ * back out - a change nobody was told about would sit in the queue forever
  * waiting for a receipt that was never asked for.
  */
 export async function raisePlateChange(input: {
-  ticketId: string
-  toPlate: string
-  delta?: unknown
+  registrationId: string
+  /** Only the passes that actually move. */
+  passes: { ticketId: string; toPlate: string; toAmount: unknown }[]
+  delta: unknown
+  payer: Payer
   reason?: string | null
   actor: string
 }): Promise<{ change: PlateChangeRow } | Failure> {
   const supabase = await createServiceRoleClient()
 
-  const ticket = await loadTicket(supabase, input.ticketId)
-  if (!ticket) return fail('That pass does not exist.', 404)
-  if (!ticket.email) return fail('That pass has no email address, so nobody could be told about the change.')
-  if (ticket.payment_status !== 'APPROVED') {
-    return fail('That registration is not approved yet. Settle the payment before changing the plate.')
+  if (input.passes.length === 0) return fail('Nothing was changed on this registration.')
+
+  const { data: ticketRows } = await supabase
+    .from('tickets')
+    .select('id, token, participant_name, email, food_pref, amount, payment_status, receiver_upi, event_id')
+    .in('id', input.passes.map((p) => p.ticketId))
+
+  const tickets = (ticketRows || []) as any[]
+  if (tickets.length !== input.passes.length) return fail('One of those passes could not be found.', 404)
+
+  const stray = tickets.find((t) => registrationIdOf(t.token) !== input.registrationId)
+  if (stray) return fail('Those passes are not all from the same registration.')
+
+  const passes: PassChange[] = []
+  for (const wanted of input.passes) {
+    const ticket = tickets.find((t) => t.id === wanted.ticketId)
+    const toPlate = String(wanted.toPlate ?? '').trim()
+    if (!toPlate) return fail('Every pass being changed needs a plate.')
+
+    const fromPlate = String(ticket.food_pref || '').trim()
+    const toAmount = money(wanted.toAmount)
+    if (toAmount < 0) return fail('A pass cannot be set below zero.')
+
+    if (toPlate === fromPlate && toAmount === money(ticket.amount)) continue
+
+    passes.push({
+      ticketId: ticket.id,
+      token: ticket.token,
+      fromPlate,
+      toPlate,
+      fromAmount: money(ticket.amount),
+      toAmount,
+    })
   }
 
-  const event = ticket.event_id ? await getEventById(ticket.event_id) : null
-  if (!event) return fail('The event for that pass could not be found.', 404)
+  if (passes.length === 0) return fail('Nothing was changed on this registration.')
 
-  const quote = quoteChange(event, ticket, input.toPlate, input.delta)
-  if (isQuoteFailure(quote)) return fail(quote.error)
+  const first = tickets[0]
+  const event = first.event_id ? await getEventById(first.event_id) : null
+  const manager = await getManagerByUpi(first.receiver_upi)
 
-  const manager = await getManagerByUpi(ticket.receiver_upi)
-  const collector = {
-    name: manager?.name || manager?.username || 'the organisers',
-    email: manager?.email ?? null,
-    upi: manager?.upiId ?? (ticket.receiver_upi || null),
-  }
+  const delta = money(input.delta)
+  const payer: Payer = delta === 0 ? 'NOBODY' : input.payer === 'COLLECTOR' ? 'COLLECTOR' : 'PARTICIPANT'
 
   const { data, error } = await supabase
     .from('plate_changes')
     .insert({
-      ticket_id: ticket.id,
-      event_id: ticket.event_id,
-      from_plate: quote.fromPlate,
-      to_plate: quote.toPlate,
-      from_amount: quote.fromAmount,
-      to_amount: quote.toAmount,
-      delta: quote.delta,
-      payer: quote.payer,
-      collector_upi: collector.upi,
-      collector_email: collector.email,
-      collector_name: collector.name,
+      registration_id: input.registrationId,
+      event_id: first.event_id,
+      participant_name: first.participant_name,
+      participant_email: first.email,
+      collector_upi: manager?.upiId ?? (first.receiver_upi || null),
+      collector_email: manager?.email ?? null,
+      collector_name: manager?.name || manager?.username || 'the organisers',
+      passes,
+      delta: Math.abs(delta),
+      payer,
       reason: input.reason || null,
       initiated_by: input.actor,
     })
@@ -168,44 +302,39 @@ export async function raisePlateChange(input: {
     .single()
 
   if (error || !data) {
-    if (isMissingTable(error?.message)) {
-      return fail('Run supabase/plate-changes.sql first.', 503)
-    }
-    // The partial unique index: one unsettled change per pass.
-    if (/plate_changes_one_open_per_ticket/i.test(error?.message || '')) {
-      return fail('That pass already has a change waiting. Settle or cancel it first.', 409)
+    if (isMissingTable(error?.message)) return fail('Run supabase/plate-changes.sql first.', 503)
+    if (/one_open_per_registration/i.test(error?.message || '')) {
+      return fail('This registration already has a change waiting. Settle or cancel it first.', 409)
     }
     return fail(error?.message || 'The change could not be recorded.', 500)
   }
 
-  const details = mailDetails(ticket, event.name, quote, collector, input.reason)
+  const row = data as PlateChangeRow
+  if (!row.participant_email) {
+    await supabase.from('plate_changes').delete().eq('id', row.id)
+    return fail('That registration has no email address, so nobody could be told about the change.')
+  }
+
+  const details = mailDetails(row, event?.name || 'the event')
 
   try {
     await sendPlateChangeRequestedEmail(details)
   } catch (e) {
-    // Nobody was told, so there is nothing to wait for. Take the row back out
-    // rather than leave a change hanging over a pass.
-    await supabase.from('plate_changes').delete().eq('id', data.id)
+    await supabase.from('plate_changes').delete().eq('id', row.id)
     return fail(e instanceof Error ? e.message : 'The participant could not be emailed, so nothing was changed.', 502)
   }
 
-  // Best effort: the participant's mail already copies them in, so a failure
-  // here is a missing nudge rather than a missing notice.
   await sendPlateChangeCollectorEmail(details).catch((e) =>
     console.error('[plate-change] collector notice failed:', e instanceof Error ? e.message : e))
 
-  return { change: data as PlateChangeRow }
+  return { change: row }
 }
 
-/** The queue, newest first, with each row's ticket and event attached. */
-export async function listPlateChanges(status?: string): Promise<PlateChangeListing[] | Failure> {
+/** The queue, newest first. */
+export async function listPlateChanges(status?: string): Promise<PlateChangeRow[] | Failure> {
   const supabase = await createServiceRoleClient()
 
-  let query = supabase
-    .from('plate_changes')
-    .select('*, ticket:tickets(token, participant_name, email, food_pref, amount, payment_status, event_id)')
-    .order('initiated_at', { ascending: false })
-
+  let query = supabase.from('plate_changes').select('*').order('initiated_at', { ascending: false })
   if (status) query = query.eq('status', status)
 
   const { data, error } = await query
@@ -214,7 +343,7 @@ export async function listPlateChanges(status?: string): Promise<PlateChangeList
     return fail(error.message, 500)
   }
 
-  const rows = (data || []) as PlateChangeListing[]
+  const rows = (data || []) as PlateChangeRow[]
   const names = new Map<string, string>()
   for (const row of rows) {
     const id = row.event_id
@@ -228,12 +357,12 @@ export async function listPlateChanges(status?: string): Promise<PlateChangeList
 }
 
 /**
- * Settle a change: apply it to the ticket and tell everyone.
+ * Settle a change: apply every pass in it and tell everyone.
  *
- * The ticket is re-read and checked against what was quoted before anything is
- * written. Between raising a change and approving it somebody may have changed
- * the same pass another way, and applying a stale quote would overwrite that
- * silently and charge against a plate the pass no longer has.
+ * Each ticket is re-read and checked against what was recorded before anything
+ * is written. Between raising a change and approving it somebody may have
+ * altered the same booking another way, and applying a stale record would
+ * overwrite that silently.
  */
 export async function approvePlateChange(input: {
   id: string
@@ -248,32 +377,51 @@ export async function approvePlateChange(input: {
     return fail(`That change is already ${String(change.status).toLowerCase().replace('_', ' ')}.`, 409)
   }
 
-  const ticket = await loadTicket(supabase, change.ticket_id)
-  if (!ticket) return fail('The pass this change belongs to no longer exists.', 404)
-
-  if (String(ticket.food_pref ?? '') !== change.from_plate) {
-    return fail(
-      `This pass is now ${ticket.food_pref || 'without a plate'}, not ${change.from_plate}. ` +
-      'Cancel this change and raise it again against what the pass actually has.',
-      409,
-    )
-  }
-  if (Number(ticket.amount) !== Number(change.from_amount)) {
-    return fail(
-      `This pass is now ₹${ticket.amount}, not the ₹${change.from_amount} this change was priced against. ` +
-      'Cancel it and raise it again.',
-      409,
-    )
-  }
-
-  const { error: ticketError } = await supabase
+  const passes = (change.passes || []) as PassChange[]
+  const { data: current } = await supabase
     .from('tickets')
-    .update({ food_pref: change.to_plate, amount: change.to_amount })
-    .eq('id', ticket.id)
+    .select('id, token, food_pref, amount, participant_name, email, event_id')
+    .in('id', passes.map((p) => p.ticketId))
 
-  if (ticketError) return fail(ticketError.message || 'The pass could not be updated.', 500)
+  const tickets = (current || []) as any[]
 
-  const { data: settled, error } = await supabase
+  for (const pass of passes) {
+    const ticket = tickets.find((t) => t.id === pass.ticketId)
+    if (!ticket) {
+      return fail(`One of the passes in this change no longer exists (${pass.token}). Cancel it and raise it again.`, 409)
+    }
+    if (String(ticket.food_pref || '') !== pass.fromPlate || money(ticket.amount) !== pass.fromAmount) {
+      return fail(
+        `${pass.token} has changed since this was raised - it is now ${ticket.food_pref || 'without a plate'} ` +
+        `at ₹${money(ticket.amount)}, not ${pass.fromPlate || 'without a plate'} at ₹${pass.fromAmount}. ` +
+        'Cancel this change and raise it again against what the booking actually has.',
+        409,
+      )
+    }
+  }
+
+  // Applied one by one; if one fails the ones already done are put back, so a
+  // booking is never left half changed.
+  const applied: PassChange[] = []
+  for (const pass of passes) {
+    const { error } = await supabase
+      .from('tickets')
+      .update({ food_pref: pass.toPlate, amount: pass.toAmount })
+      .eq('id', pass.ticketId)
+
+    if (error) {
+      for (const done of applied) {
+        await supabase
+          .from('tickets')
+          .update({ food_pref: done.fromPlate, amount: done.fromAmount })
+          .eq('id', done.ticketId)
+      }
+      return fail(error.message || 'The booking could not be updated; nothing was changed.', 500)
+    }
+    applied.push(pass)
+  }
+
+  const { data: settled, error: settleError } = await supabase
     .from('plate_changes')
     .update({
       status: 'APPROVED',
@@ -285,49 +433,35 @@ export async function approvePlateChange(input: {
     .select()
     .single()
 
-  if (error) {
-    // The ticket moved but the row did not. Put the ticket back, so the two
-    // cannot disagree about what this pass admits to.
-    await supabase
-      .from('tickets')
-      .update({ food_pref: change.from_plate, amount: change.from_amount })
-      .eq('id', ticket.id)
-    return fail(error.message || 'The change could not be marked settled; the pass was put back.', 500)
+  if (settleError) {
+    for (const done of applied) {
+      await supabase
+        .from('tickets')
+        .update({ food_pref: done.fromPlate, amount: done.fromAmount })
+        .eq('id', done.ticketId)
+    }
+    return fail(settleError.message || 'The change could not be marked settled; the booking was put back.', 500)
   }
 
   const event = change.event_id ? await getEventById(change.event_id) : null
-  const details = mailDetails(
-    ticket,
-    event?.name || 'the event',
-    {
-      fromPlate: change.from_plate,
-      toPlate: change.to_plate,
-      delta: change.delta,
-      payer: change.payer,
-      receiptFrom: change.payer === 'NOBODY' ? null : change.payer === 'PARTICIPANT' ? 'COLLECTOR' : 'PARTICIPANT',
-    },
-    { name: change.collector_name || 'the organisers', email: change.collector_email, upi: change.collector_upi },
-    change.reason,
-  )
+  const details = mailDetails(change as PlateChangeRow, event?.name || 'the event')
 
   await sendPlateChangeApprovedEmail({ ...details, settlementNote: input.note || null })
     .catch((e) => console.error('[plate-change] confirmation failed:', e instanceof Error ? e.message : e))
 
-  // The passes in their inbox are captioned with the old plate, so send the
-  // set again now that one of them admits to something else.
-  await resendPassesFor(supabase, ticket.token, event?.name || 'the event')
+  // The passes in their inbox are captioned with the old plates.
+  await resendPasses(supabase, change.registration_id, event?.name || 'the event')
     .catch((e) => console.error('[plate-change] pass resend failed:', e instanceof Error ? e.message : e))
 
   return { change: settled as PlateChangeRow }
 }
 
 /** Every pass in this booking, re-sent with the captions it has now. */
-async function resendPassesFor(supabase: any, token: string, eventName: string) {
-  const registration = registrationIdOf(token)
+async function resendPasses(supabase: any, registrationId: string, eventName: string) {
   const { data } = await supabase
     .from('tickets')
     .select('token, participant_name, email, food_pref')
-    .like('token', `${registration}_%`)
+    .like('token', `${registrationId}_%`)
     .eq('payment_status', 'APPROVED')
 
   const tickets = (data || []) as { token: string; participant_name: string; email: string; food_pref: string | null }[]
