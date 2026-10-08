@@ -32,7 +32,7 @@ export function ownsEventRows(): boolean {
   return process.env.EVENTS_DB_WRITES === 'true'
 }
 
-/** The columns the events table actually has. config and created_at are file-only. */
+/** The columns the events table actually has. created_at is file-only. */
 export const MIRRORED_FIELDS = [
   'id',
   'slug',
@@ -60,13 +60,27 @@ export function toDatabaseRow(event: EventRecord): Record<string, unknown> {
   return row
 }
 
+/** A value as a string that does not depend on the order of object keys. */
+function canonical(value: unknown): string {
+  if (Array.isArray(value)) return '[' + value.map(canonical).join(',') + ']'
+  if (value && typeof value === 'object') {
+    const record = value as Record<string, unknown>
+    return '{' + Object.keys(record).sort()
+      .map((k) => JSON.stringify(k) + ':' + canonical(record[k]))
+      .join(',') + '}'
+  }
+  return JSON.stringify(value === undefined ? null : value)
+}
+
 function same(a: unknown, b: unknown): boolean {
   // Dates arrive from Postgres as YYYY-MM-DD and from the file the same way,
   // but a timestamp would not match on its string alone.
   if (a instanceof Date) a = a.toISOString().slice(0, 10)
   if (b instanceof Date) b = b.toISOString().slice(0, 10)
   if (typeof a === 'object' && a !== null && typeof b === 'object' && b !== null) {
-    return JSON.stringify(a) === JSON.stringify(b)
+    // Key order, not content: jsonb hands the config back rearranged, and a
+    // plain stringify would call it different on every single comparison.
+    return canonical(a) === canonical(b)
   }
   if (typeof a === 'string' && typeof b === 'string') return a === b
   if (a === null || a === undefined) return b === null || b === undefined

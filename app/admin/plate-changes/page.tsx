@@ -14,12 +14,17 @@ export default async function AdminPlateChangesPage() {
 
   const events = await getEvents()
 
-  // Suggestions only. A change may name any plate - the super admin is the
-  // authority here, and an event whose config never made it into the database
-  // must not stop them fixing somebody's booking.
-  const platesByEvent: Record<string, string[]> = {}
+  // The plates each event offers, with the meal kept separate so the picker can
+  // group by it. Offered, not enforced: a change may still name a plate that is
+  // not on this list, because the super admin is the authority here and an
+  // event whose config never made it into the database must not stop them
+  // fixing somebody's booking.
+  const platesByEvent: Record<string, { meal: string; label: string }[]> = {}
   for (const event of events as any[]) {
-    platesByEvent[event.id] = passTypesOf(event).map(passLabel)
+    platesByEvent[event.id] = passTypesOf(event).map((pt) => ({
+      meal: (pt.meal || '').trim(),
+      label: passLabel(pt),
+    }))
   }
 
   return (

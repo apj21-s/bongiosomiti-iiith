@@ -59,10 +59,12 @@ function direction(c: Pick<Change, 'payer' | 'delta' | 'collector_name'>): strin
 /** The editable copy of one pass. */
 type Draft = { toPlate: string; toAmount: string }
 
+type PlateOption = { meal: string; label: string }
+
 export default function PlateChangesClient({
   platesByEvent,
 }: {
-  platesByEvent: Record<string, string[]>
+  platesByEvent: Record<string, PlateOption[]>
 }) {
   const [query, setQuery] = useState('')
   const [searching, setSearching] = useState(false)
@@ -70,6 +72,8 @@ export default function PlateChangesClient({
 
   const [chosen, setChosen] = useState<Found | null>(null)
   const [drafts, setDrafts] = useState<Record<string, Draft>>({})
+  /** Passes whose plate is being typed rather than picked. */
+  const [typing, setTyping] = useState<Record<string, boolean>>({})
   const [delta, setDelta] = useState('0')
   const [payer, setPayer] = useState<'PARTICIPANT' | 'COLLECTOR' | 'NOBODY'>('NOBODY')
   const [reason, setReason] = useState('')
@@ -114,12 +118,33 @@ export default function PlateChangesClient({
   function choose(reg: Found) {
     setChosen(reg)
     setDrafts(Object.fromEntries(reg.passes.map((p) => [p.id, { toPlate: p.plate, toAmount: String(p.amount) }])))
+    setTyping({})
     setDelta('0')
     setPayer('NOBODY')
     setReason('')
   }
 
-  const suggestions = chosen?.eventId ? platesByEvent[chosen.eventId] || [] : []
+  const suggestions: PlateOption[] = chosen?.eventId ? platesByEvent[chosen.eventId] || [] : []
+
+  /**
+   * The plates on offer, grouped by meal, so moving a breakfast to a lunch is
+   * picking from a different group rather than retyping a label by hand.
+   * Meal-less plates fall into one unnamed group, which is how an event that
+   * never used sections still lists.
+   */
+  const byMeal = useMemo(() => {
+    const groups: { meal: string; plates: PlateOption[] }[] = []
+    for (const plate of suggestions) {
+      const existing = groups.find((g) => g.meal === plate.meal)
+      if (existing) existing.plates.push(plate)
+      else groups.push({ meal: plate.meal, plates: [plate] })
+    }
+    return groups
+  }, [suggestions])
+
+  /** A plate the event does not list - typed in, or left over from before. */
+  const isOffList = (value: string) =>
+    value.trim() !== '' && !suggestions.some((p) => p.label === value)
 
   /** What the edits add up to, which is only a suggestion for the transfer. */
   const edited = useMemo(() => {
@@ -262,10 +287,46 @@ export default function PlateChangesClient({
                         </span>
                       </td>
                       <td data-label="Plate">
-                        <input className="form-control" list="pc-plates"
-                          value={drafts[pass.id]?.toPlate ?? ''}
-                          onChange={(e) => setDrafts((d) => ({ ...d, [pass.id]: { ...d[pass.id], toPlate: e.target.value } }))}
-                          placeholder="Enter Plate" />
+                        {suggestions.length > 0 ? (
+                          <>
+                            <select className="form-control"
+                              value={isOffList(drafts[pass.id]?.toPlate ?? '') ? '__other' : (drafts[pass.id]?.toPlate ?? '')}
+                              onChange={(e) => {
+                                const picked = e.target.value
+                                setDrafts((d) => ({
+                                  ...d,
+                                  // "Other" keeps the box empty rather than
+                                  // leaving the last plate selected underneath.
+                                  [pass.id]: { ...d[pass.id], toPlate: picked === '__other' ? '' : picked },
+                                }))
+                                if (picked === '__other') setTyping((t) => ({ ...t, [pass.id]: true }))
+                                else setTyping((t) => ({ ...t, [pass.id]: false }))
+                              }}>
+                              <option value="">No plate</option>
+                              {byMeal.map((group) => (
+                                group.meal ? (
+                                  <optgroup key={group.meal} label={group.meal}>
+                                    {group.plates.map((p) => <option key={p.label} value={p.label}>{p.label}</option>)}
+                                  </optgroup>
+                                ) : (
+                                  group.plates.map((p) => <option key={p.label} value={p.label}>{p.label}</option>)
+                                )
+                              ))}
+                              <option value="__other">Something else&hellip;</option>
+                            </select>
+                            {(typing[pass.id] || isOffList(drafts[pass.id]?.toPlate ?? '')) && (
+                              <input className="form-control" style={{ marginTop: '6px' }}
+                                value={drafts[pass.id]?.toPlate ?? ''}
+                                onChange={(e) => setDrafts((d) => ({ ...d, [pass.id]: { ...d[pass.id], toPlate: e.target.value } }))}
+                                placeholder="Enter Plate" />
+                            )}
+                          </>
+                        ) : (
+                          <input className="form-control"
+                            value={drafts[pass.id]?.toPlate ?? ''}
+                            onChange={(e) => setDrafts((d) => ({ ...d, [pass.id]: { ...d[pass.id], toPlate: e.target.value } }))}
+                            placeholder="Enter Plate" />
+                        )}
                       </td>
                       <td data-label="Amount">
                         <input className="form-control" type="number" step="1" min="0"
@@ -278,9 +339,6 @@ export default function PlateChangesClient({
                 </tbody>
               </table>
             </div>
-            <datalist id="pc-plates">
-              {suggestions.map((p) => <option key={p} value={p} />)}
-            </datalist>
 
             <div className="pc-transfer">
               <div className="field">

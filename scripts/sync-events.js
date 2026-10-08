@@ -29,6 +29,12 @@ const path = require('path')
 const MIRRORED_FIELDS = [
   'id', 'slug', 'name', 'event_date', 'venue', 'capacity',
   'price', 'category', 'description', 'image_url', 'status',
+  // The pass types and their prices, the coupons, the UPI ids. The table had
+  // no column for it and this list did not carry it, so the config lived only
+  // in the file - while utils/data/events.ts reads the table first. Every read
+  // came back with no config at all, which is why the registration form had no
+  // plates to offer and no coupon could resolve.
+  'config',
 ]
 
 function loadEnv() {
@@ -71,13 +77,41 @@ function toRow(event) {
   return row
 }
 
+/**
+ * A value as a string that does not depend on key order.
+ *
+ * jsonb does not keep the order keys were written in, so the config coming
+ * back from Postgres is the same object with its keys rearranged. Comparing
+ * JSON.stringify output directly called every one of them different, every
+ * time, and a reconciler that always reports drift is one nobody reads.
+ */
+function canonical(value) {
+  if (Array.isArray(value)) return '[' + value.map(canonical).join(',') + ']'
+  if (value && typeof value === 'object') {
+    return '{' + Object.keys(value).sort()
+      .map((k) => JSON.stringify(k) + ':' + canonical(value[k]))
+      .join(',') + '}'
+  }
+  return JSON.stringify(value === undefined ? null : value)
+}
+
+/** Two values that mean the same thing, objects included. */
+function same(a, b) {
+  if (a && b && typeof a === 'object' && typeof b === 'object') {
+    // String() on an object is "[object Object]", so the old comparison called
+    // every config identical to every other one.
+    return canonical(a) === canonical(b)
+  }
+  return String(a) === String(b)
+}
+
 function drift(event, row) {
   const out = []
   for (const field of MIRRORED_FIELDS) {
     if (event[field] === undefined) continue
     const a = event[field]
     const b = row[field] === undefined ? null : row[field]
-    if (String(a) !== String(b)) out.push({ field, file: a, database: b })
+    if (!same(a, b)) out.push({ field, file: a, database: b })
   }
   return out
 }
