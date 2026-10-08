@@ -136,6 +136,9 @@ export default function AdminSidebar() {
               <Link href="/admin/coupons" className={`admin-nav-link ${isActive('/admin/coupons') ? 'active' : ''}`} onClick={closeDrawer}>🎟️ Manage Coupons</Link>
             )}
             {canSee(3) && (
+              <Link href="/admin/plate-changes" className={`admin-nav-link ${isActive('/admin/plate-changes') ? 'active' : ''}`} onClick={closeDrawer}>🍽️ Plate Changes</Link>
+            )}
+            {canSee(3) && (
               <Link href="/admin/statistics" className={`admin-nav-link ${isActive('/admin/statistics') ? 'active' : ''}`} onClick={closeDrawer}>📈 Statistics</Link>
             )}
             {canSee(3) && (
@@ -215,6 +218,13 @@ export default function AdminSidebar() {
           )}
           {/* Money across every collector, so super admin only - the page
               redirects a lower tier on its own. */}
+          {/* Rewrites a booking and moves money, so super admin only; the
+              page redirects a lower tier itself. */}
+          {canSee(3) && (
+            <Link href="/admin/plate-changes" className={`admin-nav-link ${isActive('/admin/plate-changes') ? 'active' : ''}`} onClick={closeDrawer}>
+              <span style={{ marginRight: '10px' }}>🍽️</span> Plate Changes
+            </Link>
+          )}
           {canSee(3) && (
             <Link href="/admin/statistics" className={`admin-nav-link ${isActive('/admin/statistics') ? 'active' : ''}`} onClick={closeDrawer}>
               <span style={{ marginRight: '10px' }}>📈</span> Statistics

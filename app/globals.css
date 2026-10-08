@@ -12322,3 +12322,86 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
     font-size: 0.95rem;
   }
 }
+
+/* --------------------------------------------------------------------
+   Plate changes
+-------------------------------------------------------------------- */
+.pc-selected {
+  grid-column: 1 / -1;
+  padding: 10px 12px;
+  border-left: 3px solid var(--brand);
+  background: rgba(143, 50, 31, 0.05);
+  border-radius: 0 6px 6px 0;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  color: #2d3748;
+}
+
+/* One waiting change, as a card: it carries more than a table row can hold
+   without the money being squeezed into a column of its own. */
+.pc-card {
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  border-radius: 14px;
+  padding: 16px;
+  margin-top: 14px;
+  background: #fff;
+}
+
+.pc-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.pc-card__move {
+  margin: 0 0 4px;
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: #1a202c;
+}
+
+.pc-card__money {
+  margin: 0 0 6px;
+  font-weight: 700;
+  color: var(--brand);
+}
+
+.pc-card__sub {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: #718096;
+}
+
+.pc-card__actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 8px;
+  align-items: center;
+  margin-top: 12px;
+}
+
+@media (max-width: 640px) {
+  .pc-card__actions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pc-card__actions .btn {
+    width: 100%;
+    min-height: 44px;
+  }
+}
+
+/* The address under a name in the bookings list: present when it helps, never
+   competing with the name it belongs to. */
+.stats-booking__sub {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.78rem;
+  color: #718096;
+  overflow-wrap: anywhere;
+}

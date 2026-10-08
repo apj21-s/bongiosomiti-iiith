@@ -27,6 +27,7 @@ export type StatTicket = {
   is_iiit?: unknown
   food_pref?: unknown
   amount?: unknown
+  participant_name?: unknown
 }
 
 /** In the order they are shown, which is cheapest rate first. */
@@ -165,4 +166,85 @@ export function paymentHistogram(tickets: readonly StatTicket[]): PaymentBar[] {
   return [...counts.entries()]
     .map(([value, count]) => ({ value, count, amount: value * count }))
     .sort((a, b) => a.value - b.value)
+}
+
+/** One booking: who it was, what plates were in it, what it came to. */
+export type RegistrationRow = {
+  id: string
+  participantName: string
+  email: string
+  audience: Audience
+  /** Plates in the order the event offers them, then anything else. */
+  plates: { label: string; count: number }[]
+  passes: number
+  amount: number
+}
+
+/**
+ * What each person actually ordered.
+ *
+ * The grid above says how many lunches were veg; this says that Rupa ordered
+ * one breakfast and two non-veg lunches, which is the question somebody
+ * serving food or answering the phone actually has. Grouped by registration,
+ * because a booking is one payment and one person even when it is four rows.
+ *
+ * The name and address come from the booking's first pass by token, the same
+ * ordering the mail numbers plates in, so a booking always reads the same way
+ * however the rows come back from the database. Later passes in a booking are
+ * stamped "(Pass 2)" and so on, so taking the first is also what gets the
+ * plain name rather than a numbered one.
+ */
+export function registrationRows(
+  tickets: readonly StatTicket[],
+  plateOrder: readonly string[] = [],
+): RegistrationRow[] {
+  const byRegistration = new Map<string, StatTicket[]>()
+
+  for (const ticket of tickets) {
+    const id = registrationIdOf(ticket.token)
+    if (!id) continue
+    const bucket = byRegistration.get(id)
+    if (bucket) bucket.push(ticket)
+    else byRegistration.set(id, [ticket])
+  }
+
+  const rank = (label: string) => {
+    const i = plateOrder.indexOf(label)
+    return i === -1 ? plateOrder.length : i
+  }
+
+  const rows: RegistrationRow[] = []
+
+  for (const [id, group] of byRegistration) {
+    const ordered = [...group].sort((a, b) => String(a.token ?? '').localeCompare(String(b.token ?? '')))
+    const first = ordered[0] as StatTicket & { participant_name?: unknown }
+
+    const counts = new Map<string, number>()
+    let amount = 0
+    for (const ticket of ordered) {
+      amount += money(ticket.amount)
+      const plate = String(ticket.food_pref ?? '').trim() || 'No plate'
+      counts.set(plate, (counts.get(plate) ?? 0) + 1)
+    }
+
+    rows.push({
+      id,
+      participantName: String(first.participant_name ?? '').trim() || 'Unknown',
+      email: String(first.email ?? '').trim(),
+      audience: audienceFor(first.email, Boolean(first.is_iiit)),
+      plates: [...counts.entries()]
+        .map(([label, count]) => ({ label, count }))
+        .sort((a, b) => rank(a.label) - rank(b.label) || a.label.localeCompare(b.label)),
+      passes: ordered.length,
+      amount,
+    })
+  }
+
+  // Biggest bookings first: the ones most worth checking at a glance.
+  return rows.sort((a, b) => b.amount - a.amount || a.participantName.localeCompare(b.participantName))
+}
+
+/** "1 x Breakfast . Veg, 2 x Lunch . Non-Veg" */
+export function describePlates(row: RegistrationRow): string {
+  return row.plates.map((p) => `${p.count} × ${p.label}`).join(', ')
 }

@@ -7,7 +7,9 @@ import {
   AUDIENCES,
   AUDIENCE_LABEL,
   breakdown,
+  describePlates,
   paymentHistogram,
+  registrationRows,
   type PaymentBar,
   type StatTicket,
 } from '@/utils/data/statistics'
@@ -108,7 +110,7 @@ export default async function AdminStatisticsPage({
 
   const { data: allTickets } = await supabase
     .from('tickets')
-    .select('token, email, is_iiit, food_pref, amount, payment_status, event_id')
+    .select('token, participant_name, email, is_iiit, food_pref, amount, payment_status, event_id')
 
   const tickets = (allTickets || []) as (StatTicket & { payment_status?: string; event_id?: string })[]
 
@@ -140,6 +142,8 @@ export default async function AdminStatisticsPage({
   const grid = breakdown(event, approved)
   const pendingGrid = breakdown(event, pending)
   const bars = paymentHistogram(approved)
+  // The plates behind each payment, in the order the event offers them.
+  const bookings = registrationRows(approved, grid.plates)
   const registrations = bars.reduce((sum, b) => sum + b.count, 0)
 
   return (
@@ -274,6 +278,42 @@ export default async function AdminStatisticsPage({
           one amount paid once.
         </p>
         <PaymentPlot bars={bars} />
+      </section>
+
+      <section className="admin-section-card">
+        <h3 style={{ marginTop: 0 }}>Every booking</h3>
+        <p className="text-muted" style={{ marginTop: 0 }}>
+          What each payment was actually made up of. The chart above says how many
+          payments came to a figure; this says which plates that figure was.
+        </p>
+
+        {bookings.length === 0 ? (
+          <p className="text-muted" style={{ margin: 0 }}>No approved bookings yet.</p>
+        ) : (
+          <div className="table-responsive">
+            <table className="data-table admin-stack-table">
+              <thead>
+                <tr>
+                  <th>Participant</th><th>Rate</th><th>Plates</th><th>Passes</th><th>Paid</th>
+                </tr>
+              </thead>
+              <tbody>
+                {bookings.map((booking) => (
+                  <tr key={booking.id}>
+                    <td data-label="Participant">
+                      <strong>{booking.participantName}</strong>
+                      {booking.email ? <span className="stats-booking__sub">{booking.email}</span> : null}
+                    </td>
+                    <td data-label="Rate">{AUDIENCE_LABEL[booking.audience]}</td>
+                    <td data-label="Plates">{describePlates(booking)}</td>
+                    <td data-label="Passes">{booking.passes}</td>
+                    <td data-label="Paid">{rupees(booking.amount)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
     </main>
   )

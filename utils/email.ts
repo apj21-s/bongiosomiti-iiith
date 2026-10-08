@@ -625,3 +625,273 @@ export async function sendManagerDigestEmail(
   }
   return { ok: true }
 }
+
+/* ------------------------------------------------------------------ *
+ * Changing a plate
+ *
+ * Three messages around one change, because three people have to agree
+ * about money that moves outside the site. The participant and the
+ * collector are told the same figures in the same words, and whichever
+ * of them RECEIVES the money is the one asked for the receipt. A payer
+ * can only say they sent it; the receiver can show it arrived, and it is
+ * the receiver's own account that proves it.
+ *
+ * Nothing in these mails changes a booking. The pass in somebody's inbox
+ * stays true until a super admin has seen the receipt and approved it.
+ * ------------------------------------------------------------------ */
+
+export type PlateChangeMail = {
+  participantName: string
+  participantEmail: string
+  eventName: string
+  fromPlate: string
+  toPlate: string
+  /** Signed: positive means the participant owes it. */
+  delta: number
+  payer: 'PARTICIPANT' | 'COLLECTOR' | 'NOBODY'
+  receiptFrom: 'PARTICIPANT' | 'COLLECTOR' | null
+  collectorName: string
+  collectorEmail?: string | null
+  collectorUpi?: string | null
+  /** The pass this is about, so a reply can be matched to it. */
+  reference: string
+  reason?: string | null
+}
+
+const inr = (n: number) => `₹${Math.abs(Math.round(n)).toLocaleString('en-IN')}`
+
+/** The money sentence, in the second person for whoever is being written to. */
+function moneyLine(d: PlateChangeMail, reader: 'PARTICIPANT' | 'COLLECTOR'): string {
+  if (d.payer === 'NOBODY') return 'Both plates cost the same, so there is nothing to send either way.'
+
+  const participantPays = d.payer === 'PARTICIPANT'
+  if (reader === 'PARTICIPANT') {
+    return participantPays
+      ? `${inr(d.delta)} is payable by you to ${d.collectorName}${d.collectorUpi ? ` at ${d.collectorUpi}` : ''}.`
+      : `${inr(d.delta)} is refundable to you by ${d.collectorName}.`
+  }
+  return participantPays
+    ? `${inr(d.delta)} is payable to you by ${d.participantName}${d.collectorUpi ? `, at ${d.collectorUpi}` : ''}.`
+    : `${inr(d.delta)} is refundable by you to ${d.participantName}.`
+}
+
+/** What the reader has to do next, which depends on which side of it they are. */
+function askLine(d: PlateChangeMail, reader: 'PARTICIPANT' | 'COLLECTOR'): string {
+  if (d.payer === 'NOBODY') return 'Nothing needs to be sent. The change will be confirmed shortly.'
+  if (d.receiptFrom === reader) {
+    return 'Once the money reaches you, please reply to this email with a screenshot of the UPI receipt showing it received. The change is applied once an organiser has checked it.'
+  }
+  return 'Please send it at your convenience. The other party will reply here with the receipt, and the change is applied once an organiser has checked it.'
+}
+
+function plateChangePanel(d: PlateChangeMail, reader: 'PARTICIPANT' | 'COLLECTOR'): string {
+  return `
+    <tr>
+      <td align="center" style="padding-bottom: 24px;">
+        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 420px; border: 1px solid #C5A66B; border-radius: 8px;" class="bg-panel border-gold">
+          <tr>
+            <td align="left" style="padding: 16px 24px; font-family: Georgia, 'Times New Roman', serif; font-size: 14px; line-height: 1.7; color: #54251F;" class="text-primary">
+              <strong>Participant:</strong> ${escapeHtml(d.participantName)}<br/>
+              <strong>Event:</strong> ${escapeHtml(d.eventName)}<br/>
+              <strong>From:</strong> ${escapeHtml(d.fromPlate)}<br/>
+              <strong>To:</strong> ${escapeHtml(d.toPlate)}<br/>
+              <strong>Pass:</strong> ${escapeHtml(d.reference)}${d.reason ? `<br/><strong>Note:</strong> ${escapeHtml(d.reason)}` : ''}
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td align="center" style="padding-bottom: 20px; font-family: Georgia, 'Times New Roman', serif; font-size: 15px; font-weight: bold; line-height: 1.6; color: #8C3026; text-align: center;" class="text-otp">
+        ${escapeHtml(moneyLine(d, reader))}
+      </td>
+    </tr>
+    <tr>
+      <td align="center" style="padding-bottom: 24px; font-family: Georgia, 'Times New Roman', serif; font-size: 14px; line-height: 1.6; color: #745F4B; text-align: center;" class="text-secondary">
+        ${escapeHtml(askLine(d, reader))}
+      </td>
+    </tr>`
+}
+
+function plateChangeText(d: PlateChangeMail, reader: 'PARTICIPANT' | 'COLLECTOR', greeting: string): string {
+  return [
+    greeting,
+    ``,
+    `A change has been raised to a pass for ${d.eventName}.`,
+    ``,
+    `  Participant: ${d.participantName}`,
+    `  From: ${d.fromPlate}`,
+    `  To:   ${d.toPlate}`,
+    `  Pass: ${d.reference}`,
+    d.reason ? `  Note: ${d.reason}` : ``,
+    ``,
+    moneyLine(d, reader),
+    ``,
+    askLine(d, reader),
+    ``,
+    `Until then the pass you already hold is unchanged and still valid.`,
+    ``,
+    `Bangiya Samiti, IIIT Hyderabad`,
+  ].filter((line, i, all) => !(line === '' && all[i - 1] === '')).join('\n')
+}
+
+/** To the participant, with the collector copied in, so one thread holds it all. */
+export async function sendPlateChangeRequestedEmail(d: PlateChangeMail) {
+  if (!mailIsConfigured()) {
+    console.warn('SMTP credentials missing. Skipping plate change notice to:', d.participantEmail)
+    return
+  }
+
+  const contentHtml = `
+    <tr>
+      <td align="center" style="padding-bottom: 12px; font-family: Georgia, 'Times New Roman', serif; font-size: 24px; font-weight: bold; color: #54251F; text-align: center;" class="text-primary">
+        A Change To Your Plate
+      </td>
+    </tr>
+    <tr>
+      <td align="center" style="padding-bottom: 24px; font-family: Georgia, 'Times New Roman', serif; font-size: 15px; line-height: 1.6; color: #745F4B; text-align: center;" class="text-secondary">
+        Dear <strong>${escapeHtml(d.participantName)}</strong>, an organiser has raised the change below on your
+        registration for <strong>${escapeHtml(d.eventName)}</strong>.
+      </td>
+    </tr>
+    ${plateChangePanel(d, 'PARTICIPANT')}
+    <tr>
+      <td align="center" style="font-family: Georgia, 'Times New Roman', serif; font-size: 14px; line-height: 1.6; color: #745F4B; text-align: center;" class="text-secondary">
+        Your existing pass stays valid until this is confirmed. If you did not expect this,
+        <a href="mailto:bangiya.samiti.iiith@gmail.com" style="color: #8C3026; text-decoration: underline; font-weight: bold;" class="text-otp">tell us</a> and nothing will be changed.
+      </td>
+    </tr>
+  `
+
+  const result = await sendMail({
+    fromName: 'bangiya.samiti.iiith',
+    to: d.participantEmail,
+    cc: d.collectorEmail || undefined,
+    subject: `Plate change for ${d.eventName}: ${d.fromPlate} to ${d.toPlate}`,
+    text: plateChangeText(d, 'PARTICIPANT', `Hello ${d.participantName},`),
+    html: createEmailLayout(contentHtml, 'A Change To Your Plate'),
+    attachments: [getLogoAttachment()],
+  })
+
+  if (!result.ok) {
+    console.error(`[email] Could not send the plate change notice to ${d.participantEmail}: ${result.errors.join('; ')}`)
+    throw new Error('The plate change notice could not be emailed to the participant.')
+  }
+}
+
+/**
+ * The collector's own copy.
+ *
+ * Separate from the carbon copy above on purpose: that one is written to the
+ * participant and only shows the collector what was said to them. This one is
+ * addressed to the collector, in their own terms, and is the message they can
+ * act on and reply to.
+ */
+export async function sendPlateChangeCollectorEmail(d: PlateChangeMail) {
+  if (!mailIsConfigured() || !d.collectorEmail) {
+    if (!d.collectorEmail) console.warn('No collector address for plate change', d.reference)
+    return
+  }
+
+  const contentHtml = `
+    <tr>
+      <td align="center" style="padding-bottom: 12px; font-family: Georgia, 'Times New Roman', serif; font-size: 24px; font-weight: bold; color: #54251F; text-align: center;" class="text-primary">
+        Plate Change On A Payment You Collected
+      </td>
+    </tr>
+    <tr>
+      <td align="center" style="padding-bottom: 24px; font-family: Georgia, 'Times New Roman', serif; font-size: 15px; line-height: 1.6; color: #745F4B; text-align: center;" class="text-secondary">
+        ${escapeHtml(d.collectorName)}, this registration was paid to your UPI id, so the difference runs through you.
+      </td>
+    </tr>
+    ${plateChangePanel(d, 'COLLECTOR')}
+    <tr>
+      <td align="center" style="font-family: Georgia, 'Times New Roman', serif; font-size: 14px; line-height: 1.6; color: #745F4B; text-align: center;" class="text-secondary">
+        The participant has been written to as well, with you copied in. Nothing on the pass
+        changes until an organiser confirms the money moved.
+      </td>
+    </tr>
+  `
+
+  const result = await sendMail({
+    fromName: 'bangiya.samiti.iiith',
+    to: d.collectorEmail,
+    subject: `Action needed: plate change for ${d.participantName} (${d.eventName})`,
+    text: plateChangeText(d, 'COLLECTOR', `Hello ${d.collectorName},`),
+    html: createEmailLayout(contentHtml, 'Plate Change'),
+    attachments: [getLogoAttachment()],
+  })
+
+  if (!result.ok) {
+    console.error(`[email] Could not send the plate change notice to ${d.collectorEmail}: ${result.errors.join('; ')}`)
+  }
+}
+
+/** Once a super admin has seen the receipt and applied the change. */
+export async function sendPlateChangeApprovedEmail(d: PlateChangeMail & { settlementNote?: string | null }) {
+  if (!mailIsConfigured()) return
+
+  const settled = d.payer === 'NOBODY'
+    ? 'No money needed to move for this one.'
+    : d.payer === 'PARTICIPANT'
+      ? `${inr(d.delta)} was received from you.`
+      : `${inr(d.delta)} was refunded to you.`
+
+  const contentHtml = `
+    <tr>
+      <td align="center" style="padding-bottom: 12px; font-family: Georgia, 'Times New Roman', serif; font-size: 24px; font-weight: bold; color: #54251F; text-align: center;" class="text-primary">
+        Your Plate Has Been Changed
+      </td>
+    </tr>
+    <tr>
+      <td align="center" style="padding-bottom: 24px; font-family: Georgia, 'Times New Roman', serif; font-size: 15px; line-height: 1.6; color: #745F4B; text-align: center;" class="text-secondary">
+        Dear <strong>${escapeHtml(d.participantName)}</strong>, your pass for
+        <strong>${escapeHtml(d.eventName)}</strong> now admits you to <strong>${escapeHtml(d.toPlate)}</strong>.
+        ${escapeHtml(settled)}
+      </td>
+    </tr>
+    <tr>
+      <td align="center" style="padding-bottom: 24px;">
+        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 420px; border: 1px solid #C5A66B; border-radius: 8px;" class="bg-panel border-gold">
+          <tr>
+            <td align="left" style="padding: 16px 24px; font-family: Georgia, 'Times New Roman', serif; font-size: 14px; line-height: 1.7; color: #54251F;" class="text-primary">
+              <strong>Was:</strong> ${escapeHtml(d.fromPlate)}<br/>
+              <strong>Now:</strong> ${escapeHtml(d.toPlate)}<br/>
+              <strong>Pass:</strong> ${escapeHtml(d.reference)}${d.settlementNote ? `<br/><strong>Note:</strong> ${escapeHtml(d.settlementNote)}` : ''}
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td align="center" style="font-family: Georgia, 'Times New Roman', serif; font-size: 14px; line-height: 1.6; color: #745F4B; text-align: center;" class="text-secondary">
+        Your pass code is unchanged. A fresh copy showing the new plate follows this email.
+      </td>
+    </tr>
+  `
+
+  const result = await sendMail({
+    fromName: 'bangiya.samiti.iiith',
+    to: d.participantEmail,
+    cc: d.collectorEmail || undefined,
+    subject: `Confirmed: your plate for ${d.eventName} is now ${d.toPlate}`,
+    text: [
+      `Hello ${d.participantName},`,
+      ``,
+      `Your pass for ${d.eventName} now admits you to ${d.toPlate} (it was ${d.fromPlate}).`,
+      settled,
+      d.settlementNote ? `Note: ${d.settlementNote}` : ``,
+      ``,
+      `Pass: ${d.reference}`,
+      `Your pass code is unchanged. A fresh copy showing the new plate follows this email.`,
+      ``,
+      `Bangiya Samiti, IIIT Hyderabad`,
+    ].filter((line, i, all) => !(line === '' && all[i - 1] === '')).join('\n'),
+    html: createEmailLayout(contentHtml, 'Plate Changed'),
+    attachments: [getLogoAttachment()],
+  })
+
+  if (!result.ok) {
+    console.error(`[email] Could not send the plate change confirmation to ${d.participantEmail}: ${result.errors.join('; ')}`)
+  }
+}

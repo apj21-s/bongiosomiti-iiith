@@ -136,6 +136,33 @@ export async function listCollectionUpiIds(): Promise<string[]> {
   return Array.from(new Set(ids))
 }
 
+/**
+ * The manager who collects at a UPI id.
+ *
+ * tickets.receiver_upi is where a payment actually landed, so this is how a
+ * ticket is traced back to the person who holds that money - which is who has
+ * to send or receive the difference when a plate changes. Matched case- and
+ * punctuation-insensitively, the same way the id is stored and compared
+ * everywhere else.
+ *
+ * An inactive profile still answers here. They collected the original payment
+ * whether or not they are still taking new ones, and the refund is theirs.
+ */
+export async function getManagerByUpi(upiId: unknown): Promise<ManagerProfile | null> {
+  const wanted = normaliseUpiId(String(upiId ?? ''))
+  if (!wanted) return null
+
+  const supabase = await createServiceRoleClient()
+  const { data, error } = await supabase
+    .from('manager_profiles')
+    .select('id, username, upi_id, email, name, is_active, created_at, created_by')
+
+  if (error || !data) return null
+
+  const row = (data as ManagerRow[]).find((r) => normaliseUpiId(r.upi_id || '') === wanted)
+  return row ? toProfile(row) : null
+}
+
 export async function getManagerById(id: string): Promise<ManagerProfile | null> {
   const supabase = await createServiceRoleClient()
   const { data, error } = await supabase
