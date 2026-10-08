@@ -148,7 +148,7 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
     if (draft.isIiit === 'yes' && !isIiitEmail(email)) {
       setOtpNote({
         type: 'error',
-        text: 'Use your institute address — name@students.iiit.ac.in, or research, staff, faculty, alumni, or plain iiit.ac.in. If you are not from IIIT Hyderabad, please go back and register as a guest.',
+        text: 'Use your institute address — name@students.iiit.ac.in, name@research.iiit.ac.in, or any @*.iiit.ac.in address. If you are not from IIIT Hyderabad, please go back and register as a guest.',
       })
       return
     }
@@ -234,7 +234,7 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
         return setError('Confirm your email address first.')
       }
       if (draft.isIiit === 'yes' && !isIiitEmail(draft.email)) {
-        return setError('The institute rate needs a confirmed @iiit.ac.in address — students, research, staff, faculty or alumni. Please go back and register as a guest, or use your institute email.')
+        return setError('The institute rate needs a confirmed @iiit.ac.in or @*.iiit.ac.in address. Please go back and register as a guest, or use your institute email.')
       }
     }
     if (draft.stage === 3) {
@@ -424,7 +424,7 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
 
   const stepProps = { event, draft, updateDraft, nextStage, prevStage, error, setError, total, subtotal, discount, applyCoupon, couponMsg, setCouponMsg, handleSubmit, loading, confirmation, setScreenshotPreview, screenshotPreview, transitionTo, allowedUpiIds, sendOtp, checkOtp, onEmailChange, otpBusy, otpNote, emailIsVerified, audience }
 
-  if (event?.status !== 'OPEN' || event?.slug === 'mahalaya') {
+  if (event?.status !== 'OPEN') {
     if (event?.slug !== 'mahalaya') {
       return (
         <div className="reg-shell is-locked" style={{ overflow: 'hidden', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '600px', backgroundColor: '#fff8f0' }}>
@@ -625,7 +625,7 @@ function DetailsStep({ draft, updateDraft, nextStage, prevStage, transitionTo, e
     touched: true,
     rule: (v) => {
       if (!v.includes('@') || !v.includes('.')) return 'That does not look like an email address.'
-      if (wantsIiit && !isIiitEmail(v)) return 'The institute rate needs an @iiit.ac.in address — students, research, staff, faculty or alumni.'
+      if (wantsIiit && !isIiitEmail(v)) return 'The institute rate needs a confirmed @iiit.ac.in or @*.iiit.ac.in address.'
       if (!emailIsVerified) return 'Send yourself a code and confirm this address.'
       return null
     },
@@ -999,7 +999,10 @@ function RegButton({ text, onClick, type = 'continue', disabled = false, loading
   )
 }
 
-function ReelColumn({ targetDigit, colIndex, cellHeight = 22 }: { targetDigit: number, colIndex: number, cellHeight?: number }) {
+/** How far to wind the strip, in whole cells, whatever a cell measures. */
+const reelOffset = (cells: number) => `translateY(calc(var(--reel-cell) * -${cells}))`
+
+function ReelColumn({ targetDigit, colIndex }: { targetDigit: number, colIndex: number }) {
   const stripRef = useRef<HTMLDivElement>(null);
   const blurRef = useRef<SVGFEGaussianBlurElement>(null);
   const [currentOffset, setCurrentOffset] = useState(targetDigit);
@@ -1015,7 +1018,7 @@ function ReelColumn({ targetDigit, colIndex, cellHeight = 22 }: { targetDigit: n
 
     strip.style.transition = 'none';
     const startOffset = currentOffset % 10;
-    strip.style.transform = `translateY(-${startOffset * cellHeight}px)`;
+    strip.style.transform = reelOffset(startOffset);
 
     void strip.offsetHeight;
 
@@ -1025,7 +1028,7 @@ function ReelColumn({ targetDigit, colIndex, cellHeight = 22 }: { targetDigit: n
     const duration = 1400;
 
     strip.style.transition = `transform ${duration}ms cubic-bezier(0.16, 1, 0.3, 1) ${stagger}ms`;
-    strip.style.transform = `translateY(-${finalOffset * cellHeight}px)`;
+    strip.style.transform = reelOffset(finalOffset);
 
     let startTime: number | null = null;
     const maxBlur = 3;
@@ -1051,7 +1054,7 @@ function ReelColumn({ targetDigit, colIndex, cellHeight = 22 }: { targetDigit: n
 
     setCurrentOffset(finalOffset);
 
-  }, [targetDigit, colIndex, cellHeight]);
+  }, [targetDigit, colIndex]);
 
   const stripNumbers = Array.from({ length: 30 }, (_, i) => i % 10);
 
@@ -1066,7 +1069,7 @@ function ReelColumn({ targetDigit, colIndex, cellHeight = 22 }: { targetDigit: n
         ref={stripRef}
         className="t-reel-strip"
         style={{
-          transform: `translateY(-${(currentOffset % 10) * cellHeight}px)`,
+          transform: reelOffset(currentOffset % 10),
           filter: `url(#reel-blur-${colIndex})`
         }}
       >
@@ -1082,7 +1085,7 @@ function SpinningCounter({ value }: { value: number }) {
   const strVal = value.toString();
   return (
     <div className="t-reel">
-      <span style={{ marginRight: '2px', height: '22px', display: 'flex', alignItems: 'center' }}>₹</span>
+      <span style={{ marginRight: '2px', height: 'var(--reel-cell)', display: 'flex', alignItems: 'center' }}>₹</span>
       {strVal.split('').map((char, i) => {
         if (isNaN(parseInt(char))) {
           return <span key={i} className="t-reel-digit" style={{ width: 'auto' }}>{char}</span>
@@ -1111,12 +1114,14 @@ function PaymentStep({ event, draft, updateDraft, prevStage, transitionTo, total
     setTimeout(() => setCopied(false), 2000)
   }
 
+  const hasCoupons = event?.config?.coupons && event.config.coupons.length > 0;
+
   return (
     <div className="reg-payment">
       <TypewriterHeading lines={['PAYMENT']} />
       <p className="reg-p" style={{ marginBottom: '4px', marginTop: '-4px' }}>Complete the payment and confirm below</p>
 
-      <div className="reg-pay-top">
+      <div className="reg-pay-top" style={hasCoupons ? {} : { gridTemplateColumns: '1fr' }}>
         <div className="reg-pay-box amount-box">
           <span className="amount-label">Total Amount Due</span>
           <div className="amount-val-wrapper">
@@ -1126,25 +1131,27 @@ function PaymentStep({ event, draft, updateDraft, prevStage, transitionTo, total
           </div>
         </div>
 
-        {/* <div className="reg-pay-box coupon-box">
-          <span className="coupon-label">Coupon code</span>
-          <div className="coupon-input-row">
-            <input
-              className={`reg-input ${couponMsg?.type === 'error' ? 'reg-coupon-input is-invalid' : ''}`}
-              value={draft.couponInput}
-              onChange={e => { updateDraft({ couponInput: e.target.value }); setCouponMsg(null) }}
-              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); applyCoupon() } }}
-              placeholder="Enter Coupon Code"
-              aria-invalid={couponMsg?.type === 'error'}
-            />
-            <button type="button" className="reg-btn-apply" onClick={applyCoupon}>APPLY</button>
+        {hasCoupons && (
+          <div className="reg-pay-box coupon-box">
+            <span className="coupon-label">Coupon code</span>
+            <div className="coupon-input-row">
+              <input
+                className={`reg-input ${couponMsg?.type === 'error' ? 'reg-coupon-input is-invalid' : ''}`}
+                value={draft.couponInput}
+                onChange={e => { updateDraft({ couponInput: e.target.value }); setCouponMsg(null) }}
+                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); applyCoupon() } }}
+                placeholder="Enter Coupon Code"
+                aria-invalid={couponMsg?.type === 'error'}
+              />
+              <button type="button" className="reg-btn-apply" onClick={applyCoupon}>APPLY</button>
+            </div>
+            <div className="coupon-breakdown">
+              <div className="breakdown-row"><span className="label">Original Amount</span><span className="val">₹{subtotal}</span></div>
+              <div className="breakdown-row"><span className="label">&bull; Discount</span><span className="val discount">- ₹{discount}</span></div>
+              <div className="breakdown-row final"><span className="label">Final Amount</span><span className="val">₹{total}</span></div>
+            </div>
           </div>
-          <div className="coupon-breakdown">
-            <div className="breakdown-row"><span className="label">Original Amount</span><span className="val">₹{subtotal}</span></div>
-            <div className="breakdown-row"><span className="label">&bull; Discount</span><span className="val discount">- ₹{discount}</span></div>
-            <div className="breakdown-row final"><span className="label">Final Amount</span><span className="val">₹{total}</span></div>
-          </div>
-        </div> */}
+        )}
       </div>
 
       <div className="reg-pay-bottom">
@@ -1201,6 +1208,11 @@ function PaymentStep({ event, draft, updateDraft, prevStage, transitionTo, total
             <li><span>Return here and tap &ldquo;I have made the payment&rdquo;</span></li>
             <li><span>Upload the receipt &mdash; the transaction ID is read from it</span></li>
           </ol>
+          <p className="steps-note">
+            We have faced some ongoing issues with direct payment through scanning
+            the QR code, so it is highly recommended to copy the UPI ID of your
+            choice and pay using your UPI app.
+          </p>
         </div>
       </div>
 
@@ -1531,9 +1543,9 @@ function ConfirmationStep({ confirmation }: any) {
 
       <TypewriterHeading lines={['REGISTRATION', 'SUCCESSFUL!']} />
       <div className="reg-verify-msg">
-        <p>Your payment is awaiting verification.</p>
-        <p>Once verified, your digital pass will be sent to your registered email address.</p>
-        <p style={{ marginTop: '8px', fontSize: '0.9em', color: '#8b4513', fontStyle: 'italic' }}>Please also check your spam or junk folder if you don't receive the email in your inbox.</p>
+        <p>An automated confirmation email has been sent.</p>
+        <p>Once your payment is verified, your digital pass will be sent to your registered email address.</p>
+        <p style={{ marginTop: '12px', fontSize: '0.95em', color: '#8C3026', fontWeight: 'bold' }}>If you don't see the email in the next few minutes, please check your Spam or Junk folder.</p>
       </div>
 
       <div className="reg-id-box">

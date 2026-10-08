@@ -27,7 +27,7 @@ export async function PUT(request: Request, { params }: Params) {
   }
 
   let saved: Coupon | null = null
-  const result = changeEventCoupons(slug, (current) => {
+  const result = await changeEventCoupons(slug, (current) => {
     const index = current.findIndex((c) => same(c.code, code))
     if (index === -1) return { error: `${code} is not a coupon for this event.`, status: 404 }
 
@@ -54,7 +54,7 @@ export async function DELETE(_request: Request, { params }: Params) {
   const guard = await requireAdmin(REQUIRED_TIER)
   if (!guard.ok) return guard.response
 
-  const result = changeEventCoupons(slug, (current) => {
+  const result = await changeEventCoupons(slug, (current) => {
     if (!current.some((c) => same(c.code, code))) {
       return { error: `${code} is not a coupon for this event.`, status: 404 }
     }

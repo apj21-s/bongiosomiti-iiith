@@ -41,7 +41,7 @@ export default function HeroBirdsAnimator() {
     if (!bird || !charA1 || !charY || !charS || !charT || !sky) return;
 
     let timeoutId = null;
-    let currentlyRestingTarget = null; // charA1 | charY | charS | charT | "shoulder" | null
+    let currentlyRestingTarget = null; // charA1 | charY | charS | charT | null
 
     // Which way the bird is pointing: 1 heading right, -1 heading left.
     //
@@ -71,44 +71,21 @@ export default function HeroBirdsAnimator() {
       return 300;
     }
 
-    // Precise calculation of object-fit: cover rendered image box.
-    //
-    // Measured from the image element itself and returned in the sky box's
-    // coordinates. The sky spans the whole hero while the painting occupies
-    // only the bottom band, so running this against the sky put the cyclist
-    // up in the flat sky; the image's own rect is the painting wherever it
-    // sits.
-    function getCoverImageRect(img, container) {
-      const skyRect = sky.getBoundingClientRect();
-      const cRect = (img || container).getBoundingClientRect();
-      const cW = cRect.width;
-      const cH = cRect.height || 1;
-      const imgW = (img && img.naturalWidth) ? img.naturalWidth : 1792;
-      const imgH = (img && img.naturalHeight) ? img.naturalHeight : 592;
-      const imgRatio = imgW / imgH;
-      const cRatio = cW / cH;
-
-      let renderedW, renderedH, leftOffset, topOffset;
-
-      if (cRatio >= imgRatio) {
-        renderedW = cW;
-        renderedH = cW / imgRatio;
-        leftOffset = 0;
-        topOffset = (cH - renderedH) * 0.45; // object-position: right 45%
-      } else {
-        renderedH = cH;
-        renderedW = cH * imgRatio;
-        leftOffset = cW - renderedW; // object-position: right
-        topOffset = 0;
-      }
-
-      return {
-        left: (cRect.left - skyRect.left) + leftOffset,
-        top: (cRect.top - skyRect.top) + topOffset,
-        width: renderedW,
-        height: renderedH
-      };
+    // The highest the bird may fly: just under the navbar, which is drawn
+    // above it. With the title sitting right under the navbar on a wide
+    // screen, the hops between the letters and the climb after the T rose
+    // behind it and the bird vanished mid-flight. Measured each time, because
+    // the navbar slides away on scroll. The margin is for the pitch: nose up
+    // at its steepest (30 degrees, at 1.25x) a wingtip rises about a third of
+    // the sprite's width above its own box.
+    function ceilingY() {
+      const strip = $("header.home-strip");
+      if (!strip) return 0;
+      const bottom = strip.getBoundingClientRect().bottom - sky.getBoundingClientRect().top;
+      const birdW = parseFloat(getComputedStyle(bird).width) || 22;
+      return Math.max(0, bottom) + Math.ceil(birdW * 0.4) + 2;
     }
+    const belowNav = (y) => Math.max(y, ceilingY());
 
     // Real-time dynamic target coordinate getter
     function getCoords(element) {
@@ -125,40 +102,10 @@ export default function HeroBirdsAnimator() {
       };
     }
 
-    // Dynamic shoulder perch mapping based on image cover geometry
-    function getShoulderCoords() {
-      const skyRect = sky.getBoundingClientRect();
-      const img = $(".home-hero__image--landscape");
-      const imgRect = getCoverImageRect(img, sky);
-
-      // Normalized relative shoulder coordinates in raw autumn-landscape.webp (1792 x 592)
-      const X_norm = 1508 / 1792; // ~0.8415
-      const Y_norm = 237 / 592;   // ~0.4003
-
-      const shoulderX = imgRect.left + (imgRect.width * X_norm);
-      const shoulderY = imgRect.top + (imgRect.height * Y_norm);
-
-      const birdW = parseFloat(getComputedStyle(bird).width) || 22;
-      const birdH = parseFloat(getComputedStyle(bird).height) || 13;
-
-      const perch = $(".hero-shoulder-perch");
-      if (perch && skyRect.width > 0 && skyRect.height > 0) {
-        perch.style.left = `${(shoulderX / skyRect.width) * 100}%`;
-        perch.style.top = `${(shoulderY / skyRect.height) * 100}%`;
-      }
-
-      return {
-        x: shoulderX - (birdW / 2),
-        y: shoulderY - birdH + 1
-      };
-    }
-
     // Lock position to target if window is resized mid-resting
     function onResize() {
       if (currentlyRestingTarget && bird.classList.contains("is-resting")) {
-        const coords = (currentlyRestingTarget === "shoulder")
-          ? getShoulderCoords()
-          : getCoords(currentlyRestingTarget);
+        const coords = getCoords(currentlyRestingTarget);
         bird.style.transition = "none";
         bird.style.left = `${coords.x}px`;
         bird.style.top = `${coords.y}px`;
@@ -193,7 +140,7 @@ export default function HeroBirdsAnimator() {
       currentX = -50;
       bird.style.transition = "none";
       bird.style.left = "-50px";
-      bird.style.top = "30px";
+      bird.style.top = `${belowNav(30)}px`;
       bird.style.transform = pose(25, 1.15);
       bird.style.display = "block";
       bird.classList.remove("is-resting", "is-thrilled", "is-thrilled-y");
@@ -291,7 +238,7 @@ export default function HeroBirdsAnimator() {
             bird.style.transition = "left 0.7s cubic-bezier(0.25, 1, 0.5, 1), top 0.35s cubic-bezier(0.22, 0.61, 0.36, 1), transform 0.35s ease";
             bird.style.transform = pose(-14, 1.05);
             bird.style.left = `${coordsY.x}px`;
-            bird.style.top = `${coordsY.y - arcY}px`;
+            bird.style.top = `${belowNav(coordsY.y - arcY)}px`;
 
             // Over the top of the arc and down. left is restated unchanged, so
             // the transition already running on it is left alone.
@@ -334,7 +281,7 @@ export default function HeroBirdsAnimator() {
                 bird.style.transition = "left 0.7s cubic-bezier(0.25, 1, 0.5, 1), top 0.35s cubic-bezier(0.22, 0.61, 0.36, 1), transform 0.35s ease";
                 bird.style.transform = pose(-14, 1.05);
                 bird.style.left = `${coordsS.x}px`;
-                bird.style.top = `${coordsS.y - arcS}px`;
+                bird.style.top = `${belowNav(coordsS.y - arcS)}px`;
 
                 // Over the top of the arc and down. left is restated unchanged, so
                 // the transition already running on it is left alone.
@@ -377,7 +324,7 @@ export default function HeroBirdsAnimator() {
                     bird.style.transition = "left 0.65s cubic-bezier(0.25, 1, 0.5, 1), top 0.325s cubic-bezier(0.22, 0.61, 0.36, 1), transform 0.325s ease";
                     bird.style.transform = pose(-14, 1.05);
                     bird.style.left = `${coordsT.x}px`;
-                    bird.style.top = `${coordsT.y - arcT}px`;
+                    bird.style.top = `${belowNav(coordsT.y - arcT)}px`;
 
                     // Over the top of the arc and down. left is restated unchanged, so
                     // the transition already running on it is left alone.
@@ -418,90 +365,43 @@ export default function HeroBirdsAnimator() {
                         bird.style.transition = "left 1.0s cubic-bezier(0.4, 0, 0.2, 1), top 1.0s cubic-bezier(0.4, 0, 0.2, 1), transform 1.0s ease";
                         bird.style.transform = pose(-26, 1.18);
                         bird.style.left = `${climbX}px`;
-                        bird.style.top = `${coordsTCurrent.y - Math.round(80 * scaleFactor)}px`;
+                        bird.style.top = `${belowNav(coordsTCurrent.y - Math.round(80 * scaleFactor))}px`;
 
-                        // STEP B: bank round at the top of the climb.
-                        //
-                        // This used to roll the bird through rotate(180deg) and slide it
-                        // back the way it came, upside down and tail first. Now it turns
-                        // on the wing towards wherever the cyclist is, and the sprite is
-                        // mirrored if that reverses the heading. On a wide screen the
-                        // cyclist is right of the T and there is no turn to make at all.
+                        // STEP B: on and away. It used to bank round here and come down
+                        // onto the cyclist's shoulder in the painting; the video has no
+                        // one to land on, so from the top of the climb it carries on out
+                        // of the sky to the right. If the climb left it facing left it
+                        // turns first - a bird leaves the way it is pointing.
                         after(() => {
-                          faceTowards(getShoulderCoords().x);
-                          const turnX = climbX + facing * Math.round(34 * scaleFactor);
-                          currentX = turnX;
-                          // The bank itself is quick; the glide out of it is not.
-                          bird.style.transition = "left 1.1s cubic-bezier(0.4, 0, 0.6, 1), top 1.1s cubic-bezier(0.4, 0, 0.6, 1), transform 0.45s ease";
-                          bird.style.transform = pose(-6, 1.08);
-                          bird.style.left = `${turnX}px`;
-                          bird.style.top = `${coordsTCurrent.y - Math.round(40 * scaleFactor)}px`;
-                        }, 950);
+                          const exitX = skyWidth + 80;
+                          const turnPause = faceTowards(exitX);
 
-                        // STEP C: Swoop down toward the shoulder
-                        after(() => {
-                          const shoulderCoords = getShoulderCoords();
-                          currentX = shoulderCoords.x;
-
-                          // One descending glide, in the heading the turn set. The old curve
-                          // overshot the shoulder and pulled back up to it, which put the
-                          // bird briefly below the man it was landing on.
-                          bird.style.transition = "left 1.4s cubic-bezier(0.25, 1, 0.5, 1), top 1.4s cubic-bezier(0.3, 0.7, 0.4, 1), transform 1.4s ease";
-                          bird.style.transform = pose(14, 0.95);
-                          bird.style.left = `${shoulderCoords.x}px`;
-                          bird.style.top = `${shoulderCoords.y}px`;
-
-                          // Settle on shoulder
                           after(() => {
-                            currentlyRestingTarget = "shoulder";
-                            bird.classList.remove("is-flying");
-                            bird.classList.add("is-resting");
-                            bird.style.transform = pose(0, 1);
+                            currentX = exitX;
+                            bird.style.transition = "left 2.4s cubic-bezier(0.25, 1, 0.5, 1), top 2.4s cubic-bezier(0.4, 0, 0.2, 1), transform 2.4s ease";
+                            bird.style.transform = pose(-14, 1.12);
+                            bird.style.left = `${exitX}px`;
+                            bird.style.top = `${belowNav(skyHeight * 0.15)}px`;
 
-                            // Rest a moment on the shoulder...
+                            // Pitch up to climbing glory halfway
                             after(() => {
-                              currentlyRestingTarget = null;
-                              bird.classList.remove("is-resting");
-                              bird.classList.add("is-flying");
+                              if (bird.classList.contains("is-flying")) {
+                                bird.style.transform = pose(-30, 1.25);
+                              }
+                            }, 800);
+                          }, turnPause);
 
-                              // STEP D: Final soar. It leaves to the right, so if it landed
-                              // facing left it turns on the perch first - a bird takes off the
-                              // way it is pointing rather than reversing off a shoulder.
-                              const exitX = skyWidth + 80;
-                              const turnPause = faceTowards(exitX);
-                              bird.style.transition = "transform 0.3s ease";
-                              bird.style.transform = pose(-4, 1.02);
-
-                              after(() => {
-                                currentX = exitX;
-                                // The dip before the climb is deliberate: the negative control
-                                // point drops it off the shoulder before the wings take hold.
-                                bird.style.transition = "left 2.4s cubic-bezier(0.25, 1, 0.5, 1), top 2.4s cubic-bezier(0.3, -0.5, 0.2, 1.1), transform 2.4s ease";
-                                bird.style.transform = pose(18, 0.9);
-                                bird.style.left = `${exitX}px`;
-                                bird.style.top = `${skyHeight * 0.15}px`;
-
-                                // Pitch up to climbing glory halfway
-                                after(() => {
-                                  if (bird.classList.contains("is-flying")) {
-                                    bird.style.transform = pose(-30, 1.25);
-                                  }
-                                }, 800);
-                              }, turnPause);
-
-                              // Hide after exiting screen
-                              after(() => {
-                                bird.style.display = "none";
-                                isChecking = false;
-                                const flock1 = $(".flock-1");
-                                const flock2 = $(".flock-2");
-                                if (flock1) flock1.classList.remove("is-scattered");
-                                if (flock2) flock2.classList.remove("is-scattered");
-                                timeoutId = after(runAnimationCycle, 4000);
-                              }, 2400 + turnPause);
-                            }, 1600);
-                          }, 1350);
-                        }, 1900);
+                          // Hide after exiting screen
+                          after(() => {
+                            bird.style.display = "none";
+                            isChecking = false;
+                            const flock1 = $(".flock-1");
+                            const flock2 = $(".flock-2");
+                            if (flock1) flock1.classList.remove("is-scattered");
+                            if (flock2) flock2.classList.remove("is-scattered");
+                            timeoutId = after(runAnimationCycle, 4000);
+                          }, 2400 + turnPause);
+                        }, 950);
                       }, 900);
                     }, 650);
                   }, 1750);

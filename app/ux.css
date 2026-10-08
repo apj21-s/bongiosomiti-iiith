@@ -317,7 +317,19 @@
 .amount-val-wrapper { display: flex; flex-direction: column; align-items: center; gap: 0px; }
 .tiny-floral { width: 24px; opacity: 0.7; }
 .tiny-floral.flip { transform: scaleY(-1); }
-.amount-val { font-size: 22px; font-weight: 700; color: #4A2921; font-family: 'Playfair Display', serif; line-height: 1; margin: 0; }
+/* Playfair Display is a Didone: its hairlines all but vanish at this size, and
+   a payable amount is the one number on the page that has to be unambiguous.
+   Times has lining figures of even weight, is on every machine, and is the
+   face the masthead already uses. Colour untouched. */
+.amount-val {
+  font-size: 22px;
+  font-weight: 700;
+  color: #4A2921;
+  font-family: "Times New Roman", Times, "Liberation Serif", serif;
+  font-variant-numeric: lining-nums tabular-nums;
+  line-height: 1;
+  margin: 0;
+}
 
 .coupon-label { display: block; font-size: 10px; color: #4A2921; font-weight: 700; margin-bottom: 2px; font-family: 'Playfair Display', serif; }
 .coupon-input-row { display: flex; gap: 4px; margin-bottom: 2px; }
@@ -354,6 +366,19 @@
 .upi-icons-prominent img + img { margin-left: -6px; }
 
 .steps-label { font-weight: 700; font-size: 10px; color: #4A2921; display: block; margin-bottom: 4px; font-family: 'Playfair Display', serif; }
+/* Said here because this is where somebody is deciding how to pay. Warm rather
+   than alarming - it is a recommendation, not a failure - and it borrows the
+   amount box's own ink so it reads as part of the card. */
+.steps-note {
+  margin: 6px 0 0;
+  padding: 5px 7px;
+  border-left: 2px solid #B36B46;
+  background: rgba(179, 107, 70, 0.08);
+  border-radius: 0 3px 3px 0;
+  font-size: 8.5px;
+  line-height: 1.35;
+  color: #4A2921;
+}
 .reg-steps-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px; counter-reset: step-counter; }
 .reg-steps-list li { display: flex; align-items: flex-start; gap: 4px; font-size: 8.5px; color: #4A2921; font-weight: 500; line-height: 1.15; }
 .reg-steps-list li::before { content: counter(step-counter); counter-increment: step-counter; background: #B36B46; color: white; width: 12px; height: 12px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 700; flex-shrink: 0; }
@@ -394,9 +419,18 @@
 .reg-btn-change { color: #8F321F; text-decoration: underline; }
 .reg-btn-remove { color: #666; }
 
-/* Spinning Counter */
+/* Spinning Counter
+
+   The cell is taller than the type on purpose. Each column is masked with a
+   gradient that fades its top and bottom 15%, and while the cell was 22px to
+   a 22px face the glyphs filled it edge to edge, so that fade was eating the
+   tops and feet of the digits - an 8 lost its waist, a 2 its base. At 30px
+   the fade covers 4.5px at each end and the figures sit clear of it.
+
+   JS no longer needs to know this number: the strip is translated in calc()
+   multiples of the variable, so the two cannot drift apart. */
 :root {
-  --reel-cell: 22px;
+  --reel-cell: 30px;
 }
 .t-reel { display: inline-flex; align-items: center; height: var(--reel-cell); font-variant-numeric: tabular-nums; }
 .t-reel-col {
@@ -435,6 +469,8 @@
   .reg-pay-top { gap: 6px; }
   .reg-pay-bottom { gap: 6px; }
   .amount-val { font-size: 18px; }
+  /* Kept in proportion with the type above, for the same reason. */
+  :root { --reel-cell: 26px; }
   .coupon-input-row .reg-input { height: 18px; font-size: 9px; }
   .coupon-input-row .reg-btn-apply { height: 18px; font-size: 8px; }
   .reg-btn-continue { width: auto; padding: 0 24px; font-size: 10px; }

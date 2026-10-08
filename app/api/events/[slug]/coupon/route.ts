@@ -39,7 +39,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
     return NextResponse.json({ ok: false, reason: 'Expected a JSON body.' }, { status: 400 })
   }
 
-  const event = getEventBySlug(slug)
+  const event = await getEventBySlug(slug)
   if (!event) {
     return NextResponse.json({ ok: false, reason: 'Unknown event.' }, { status: 404 })
   }

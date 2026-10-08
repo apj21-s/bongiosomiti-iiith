@@ -65,6 +65,8 @@ type YouTubePlayerInstance = {
   getPlaylist(): string[] | null
   getPlaylistIndex(): number
   playVideoAt(index: number): void
+  cuePlaylist(playlist: string[], index?: number, startSeconds?: number): void
+  loadPlaylist(playlist: string[], index?: number, startSeconds?: number): void
   seekTo(seconds: number, allowSeekAhead: boolean): void
   getCurrentTime(): number
   getDuration(): number
@@ -81,7 +83,7 @@ type YouTubeNamespace = {
       events?: {
         onReady?: () => void
         onStateChange?: (event: { data: number }) => void
-        onError?: () => void
+        onError?: (event: { data: number }) => void
       }
     }
   ) => YouTubePlayerInstance
@@ -887,6 +889,29 @@ function AudioPlayer({
   )
 }
 
+/**
+ * The errors YouTube reports about one song rather than the whole playlist:
+ * 100 is a video that has gone or been made private, 101 and 150 one whose
+ * owner does not let it play on other sites. The rest of the playlist can
+ * still play.
+ */
+const SONG_ERRORS = new Set([100, 101, 150])
+
+/**
+ * The nearest song to `from`, in the direction given, that is not refused. It
+ * wraps round only when the playlist is on repeat, as YouTube's own next and
+ * previous do, and is -1 when there is nothing left that way.
+ */
+function nextPlayable(list: string[], from: number, step: 1 | -1, wrap: boolean, refused: Set<string>) {
+  for (let offset = 1; offset < list.length; offset++) {
+    let index = from + step * offset
+    if (wrap) index = (index + list.length) % list.length
+    else if (index < 0 || index >= list.length) return -1
+    if (!refused.has(list[index])) return index
+  }
+  return -1
+}
+
 /** Plays a YouTube playlist through YouTube's own embedded player. */
 function YouTubePlayer({
   playlistId,
@@ -935,11 +960,19 @@ function YouTubePlayer({
   const [error, setError] = useState(false)
   // queueOpen is the parent's - see the pane state in HeroPlaylist.
   // The video ids of what YouTube actually loaded, which is the only list of
-  // the playlist's contents available without an API key.
+  // the playlist's contents available without an API key. Songs YouTube will
+  // not play here have already been taken out of what it loaded, so this is
+  // only ever the songs that will play.
   const [videoIds, setVideoIds] = useState<string[]>([])
   const [queueIndex, setQueueIndex] = useState(0)
+  // Titles from the check made when the playlist loads, so every song in the
+  // list is named without the list looking each one up.
+  const [titles, setTitles] = useState<Record<string, VideoDetails>>({})
 
-  const queue = useMemo<QueueItem[]>(() => videoIds.map((videoId) => ({ videoId })), [videoIds])
+  const queue = useMemo<QueueItem[]>(
+    () => videoIds.map((videoId) => ({ videoId, title: titles[videoId]?.title, artist: titles[videoId]?.author })),
+    [videoIds, titles]
+  )
 
   // Read inside the player's own callbacks, which are set up once per playlist
   // and would otherwise close over whatever repeat was when the player was
@@ -952,8 +985,96 @@ function YouTubePlayer({
     playerRef.current?.setLoop(repeat === 'all')
   }, [repeat])
 
+  // The same, for turning shuffle back on after the playlist is reloaded
+  // without a refused song - loading a playlist turns YouTube's shuffle off.
+  const shuffleRef = useRef(false)
+  useEffect(() => {
+    shuffleRef.current = shuffle
+  }, [shuffle])
+
+  // Whether the visitor wants music, which isPlaying cannot say: a song
+  // YouTube refuses never starts, so nothing ever reports it as playing.
+  const wantsPlayRef = useRef(false)
+  // Which way they were going, so a refused song is stepped past rather than
+  // bounced off - stepping back onto one lands on the song before it.
+  const stepRef = useRef<1 | -1>(1)
+
   useEffect(() => {
     let cancelled = false
+    // The playlist as YouTube first handed it over, in its owner's order.
+    let original: string[] = []
+    // The songs YouTube will not play here, found by asking ahead or by
+    // trying one.
+    const refused = new Set<string>()
+    const checking = new AbortController()
+
+    /**
+     * Hands the player the playlist without its refused songs, carrying on
+     * from `carryOn`: playing if `play`, and otherwise cued for when play is
+     * pressed, because music never starts on its own.
+     *
+     * Everything that moves through the playlist - YouTube's own move to the
+     * next song, shuffle, repeat, the buttons and the list - then only ever
+     * sees songs that will play. The playlist on YouTube is untouched; this is
+     * only what the player on this page was given.
+     */
+    const dropRefused = (carryOn: string | null, play: boolean, startSeconds = 0) => {
+      const player = playerRef.current
+      if (!player) return
+
+      const kept = original.filter((id) => !refused.has(id))
+      if (kept.length === 0) {
+        // Every song in it is refused.
+        setError(true)
+        return
+      }
+
+      const index = carryOn ? Math.max(0, kept.indexOf(carryOn)) : 0
+      if (play) {
+        player.loadPlaylist(kept, index, startSeconds)
+      } else {
+        player.cuePlaylist(kept, index, startSeconds)
+        wantsPlayRef.current = false
+        setIsPlaying(false)
+      }
+      // In the owner's order above, so turning shuffle off later still puts
+      // it back; turned on again here because the load turned it off.
+      if (shuffleRef.current) player.setShuffle(true)
+    }
+
+    // Asks once, as soon as YouTube has handed over the playlist, which of its
+    // songs will not play here, so they are gone before anybody presses play,
+    // and what the rest are called, so the list can name every song it shows.
+    const checkAhead = () => {
+      fetchPlaylistCheck(original, checking.signal).then((check) => {
+        const player = playerRef.current
+        if (cancelled || !player || !check) return
+        // Every song refused is far more likely the check going wrong than a
+        // playlist with nothing in it that plays. Left to the player, which
+        // finds out song by song and says so if it is true.
+        if (original.every((id) => check.refused.includes(id))) return
+        setTitles(check.titles)
+        check.refused.forEach((id) => refused.add(id))
+
+        const list = player.getPlaylist?.() || []
+        if (!list.some((id) => refused.has(id))) return
+
+        const index = player.getPlaylistIndex?.() ?? -1
+        const current = list[index]
+
+        if (current && !refused.has(current)) {
+          // Stays on the song it is on, at the point it has reached.
+          dropRefused(current, wantsPlayRef.current, player.getCurrentTime() || 0)
+          return
+        }
+
+        // On one of them, playing or not: moved off it now rather than when
+        // YouTube refuses it, because a song can be left out for having no
+        // title while YouTube would still play it.
+        const next = index >= 0 ? nextPlayable(list, index, 1, repeatRef.current === 'all', refused) : -1
+        dropRefused(next >= 0 ? list[next] : null, wantsPlayRef.current && next >= 0)
+      })
+    }
 
     const readMetadata = () => {
       const player = playerRef.current
@@ -970,6 +1091,11 @@ function YouTubePlayer({
         current.length === list.length && current.every((id, i) => id === list[i]) ? current : list
       )
       setQueueIndex(player.getPlaylistIndex?.() ?? 0)
+
+      if (original.length === 0 && list.length > 0) {
+        original = list.slice()
+        checkAhead()
+      }
     }
 
     loadYouTubeApi().then(
@@ -998,21 +1124,58 @@ function YouTubePlayer({
             },
             onStateChange: (event) => {
               if (cancelled) return
-              if (event.data === YT.PlayerState.PLAYING) setIsPlaying(true)
-              if (event.data === YT.PlayerState.PAUSED) setIsPlaying(false)
+              if (event.data === YT.PlayerState.PLAYING) {
+                setIsPlaying(true)
+                wantsPlayRef.current = true
+              }
+              if (event.data === YT.PlayerState.PAUSED) {
+                setIsPlaying(false)
+                wantsPlayRef.current = false
+              }
               if (event.data === YT.PlayerState.ENDED) {
                 // Left alone, YouTube moves on to the next video in the
                 // playlist, so repeating one song means putting it back.
                 if (repeatRef.current === 'one') playerRef.current?.seekTo(0, true)
                 else setIsPlaying(false)
+                // Moving on by itself is forward, whichever way the visitor
+                // last stepped. Not reset on PLAYING: pressing previous twice
+                // quickly can bring the first song's PLAYING after the second
+                // press, which would turn a step back into a step forward.
+                stepRef.current = 1
               }
 
               // A playlist advances on its own, so the title and length are
               // re-read on every transition rather than only when we ask.
               readMetadata()
             },
-            onError: () => {
-              if (!cancelled) setError(true)
+            onError: (event) => {
+              if (cancelled) return
+              const player = playerRef.current
+              readMetadata()
+              const list = player?.getPlaylist?.() || []
+              const index = player?.getPlaylistIndex?.() ?? -1
+
+              // Only a refused song can be left out. Anything else, or no
+              // playlist loaded to carry on with, means the playlist itself
+              // cannot be played here.
+              if (!player || !SONG_ERRORS.has(event.data) || index < 0 || index >= list.length) {
+                setError(true)
+                return
+              }
+
+              // YouTube stops on a song it will not play rather than moving
+              // on, which used to leave the whole playlist marked unavailable
+              // because one song in it was. The song is dropped instead, and
+              // the playlist carries on the way the visitor was going.
+              refused.add(list[index])
+              const loop = repeatRef.current === 'all'
+              let next = nextPlayable(list, index, stepRef.current, loop, refused)
+              // Nothing to step back to: carry on from where they were.
+              if (next < 0 && stepRef.current < 0) next = nextPlayable(list, index, 1, loop, refused)
+
+              // Nothing after it means the playlist has run out, as when its
+              // last song ends: it is cued again from the top.
+              dropRefused(next >= 0 ? list[next] : null, wantsPlayRef.current && next >= 0)
             },
           },
         })
@@ -1024,6 +1187,7 @@ function YouTubePlayer({
 
     return () => {
       cancelled = true
+      checking.abort()
       playerRef.current?.destroy()
       playerRef.current = null
     }
@@ -1057,13 +1221,26 @@ function YouTubePlayer({
   const currentVideoId = videoIds[queueIndex]
   const artwork = currentVideoId ? `https://img.youtube.com/vi/${currentVideoId}/mqdefault.jpg` : undefined
 
+  // Every control that moves to a song goes through here, so that if YouTube
+  // refuses it, the error handler knows music was asked for and which way the
+  // visitor was going.
+  const changeSong = (step: 1 | -1, change: (player: YouTubePlayerInstance) => void) => {
+    const player = playerRef.current
+    if (!player) return
+    wantsPlayRef.current = true
+    stepRef.current = step
+    change(player)
+  }
+
+  const playAt = (index: number) => changeSong(1, (player) => player.playVideoAt(index))
+
   return (
     <>
       {queueOpen && (
         <PlaylistContents
           queue={queue}
           queueIndex={queueIndex}
-          onPlayAt={(i) => playerRef.current?.playVideoAt(i)}
+          onPlayAt={playAt}
           onClose={onToggleQueue}
         />
       )}
@@ -1085,15 +1262,15 @@ function YouTubePlayer({
           const player = playerRef.current
           if (!player) return
           if (isPlaying) player.pauseVideo()
-          else player.playVideo()
+          else changeSong(1, (current) => current.playVideo())
         }}
-        onNext={() => playerRef.current?.nextVideo()}
+        onNext={() => changeSong(1, (player) => player.nextVideo())}
         onPrevious={() => {
           const player = playerRef.current
           if (!player) return
           // Match the audio engine: restart the song first, step back after.
           if (player.getCurrentTime() > 3) player.seekTo(0, true)
-          else player.previousVideo()
+          else changeSong(-1, (current) => current.previousVideo())
         }}
         onShuffle={() => {
         setShuffle((on) => {
@@ -1111,7 +1288,7 @@ function YouTubePlayer({
       queueIndex={queueIndex}
       queueOpen={queueOpen}
       onToggleQueue={onToggleQueue}
-      onPlayAt={(next) => playerRef.current?.playVideoAt(next)}
+      onPlayAt={playAt}
       playlistId={playlistId}
       onFullscreen={onFullscreen}
       isFullscreen={isFullscreen}
@@ -1237,6 +1414,7 @@ function PlaylistPicker({
 }
 
 import {
+  fetchPlaylistCheck,
   fetchVideoDetailsFor,
   isVideoId,
   type VideoDetails,
@@ -1261,8 +1439,11 @@ function PlaylistContents({
   const [details, setDetails] = useState<Record<string, VideoDetails>>({})
 
   useEffect(() => {
+    // Only what the player's own check has not already named - normally
+    // nothing, unless that check could not be made.
     const ids = queue
       .slice(0, MAX_ROWS)
+      .filter((item) => !item.title)
       .map((item) => item.videoId)
       .filter(isVideoId)
 

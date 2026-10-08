@@ -74,7 +74,7 @@ export async function POST(request: Request) {
     }
 
     // Pass found, dispatch email
-    const event = getEventById(primaryTicket.event_id)
+    const event = await getEventById(primaryTicket.event_id)
     
     // Grouped by plate and stable, so the plate numbers are the ones the first
     // mail and the approval printed. None of these queries order, and all

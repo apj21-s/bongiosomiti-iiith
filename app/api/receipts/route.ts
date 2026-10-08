@@ -77,10 +77,34 @@ export async function POST(request: Request) {
 
     if (error) {
       const missingBucket = /bucket/i.test(error.message) && /not found|does not exist/i.test(error.message)
-      return NextResponse.json(
-        { error: missingBucket ? 'The receipts bucket does not exist yet. Create it in Supabase Storage.' : 'Could not store the receipt.' },
-        { status: 500 }
-      )
+
+      if (missingBucket) {
+        // Bucket doesn't exist yet — create it as private and retry once.
+        const { error: createError } = await supabase.storage.createBucket('receipts', {
+          public: false,
+          fileSizeLimit: MAX_UPLOAD_BYTES,
+        })
+        if (createError && !/already exists/i.test(createError.message)) {
+          return NextResponse.json(
+            { error: `Could not create the receipts bucket: ${createError.message}` },
+            { status: 500 }
+          )
+        }
+
+        // Retry the upload now that the bucket exists.
+        const { error: retryError } = await supabase.storage
+          .from('receipts')
+          .upload(path.replace(/^receipts\//, ''), bytes, {
+            contentType: file.type || 'application/octet-stream',
+            upsert: false,
+          })
+
+        if (retryError) {
+          return NextResponse.json({ error: 'Could not store the receipt.' }, { status: 500 })
+        }
+      } else {
+        return NextResponse.json({ error: 'Could not store the receipt.' }, { status: 500 })
+      }
     }
   } catch {
     return NextResponse.json({ error: 'Could not store the receipt.' }, { status: 500 })

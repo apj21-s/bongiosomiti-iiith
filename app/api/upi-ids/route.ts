@@ -58,7 +58,7 @@ export async function GET(request: Request) {
 
   let fromEvent: string[] = []
   if (fromManagers.length === 0 && slug) {
-    const event = getEventBySlug(slug) as { config?: { upi_ids?: unknown; upi_id?: unknown } } | null
+    const event = (await getEventBySlug(slug)) as { config?: { upi_ids?: unknown; upi_id?: unknown } } | null
     const configured = event?.config?.upi_ids
     const list = Array.isArray(configured)
       ? configured

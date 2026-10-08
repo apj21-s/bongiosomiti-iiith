@@ -8,7 +8,7 @@ import HeroPlaylistMount from "@/components/hero-playlist-mount";
 
 export const metadata: Metadata = {
   title: "বঙ্গীয় সমিতি @ IIITH",
-  description: "আমরা বাঙ্গালী জাতি",
+  description: "আমরা বাঙালি জাতি",
 };
 
 export default async function RootLayout({
@@ -29,10 +29,10 @@ export default async function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Noto+Serif+Bengali:wght@500;700&family=Tiro+Bangla:ital@0;1&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Noto+Serif+Bengali:wght@500;700&family=Tiro+Bangla:ital@0;1&family=Playfair+Display:wght@700;900&display=swap"
           rel="stylesheet"
         />
-        <link rel="preload" as="image" href="/assets/autumn-landscape.webp" fetchPriority="high" />
+        <link rel="preload" as="image" href="/assets/apu-durga-poster.webp" fetchPriority="high" />
       </head>
       <body>
         <UtsavLoader />

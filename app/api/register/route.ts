@@ -43,13 +43,13 @@ export async function POST(request: Request) {
     const data = result.data
     const supabase = await createServiceRoleClient()
 
-    const event = getEventBySlug(data.eventSlug)
+    const event = await getEventBySlug(data.eventSlug)
     
     if (!event) {
       return NextResponse.json({ error: 'Event not found' }, { status: 404 })
     }
 
-    if (event.status !== 'OPEN' || data.eventSlug === 'mahalaya') {
+    if (event.status !== 'OPEN') {
       return NextResponse.json({ error: 'Event is closed for registration' }, { status: 400 })
     }
 
@@ -120,7 +120,7 @@ export async function POST(request: Request) {
     if (!iiitClaimAllowed(claimsIiit, verifiedEmail)) {
       return NextResponse.json(
         {
-          error: 'The institute rate needs a confirmed @iiit.ac.in address — students, research, staff, faculty or alumni. Register as a guest, or use your institute email.',
+          error: 'The institute rate needs a confirmed @iiit.ac.in or @*.iiit.ac.in address. Register as a guest, or use your institute email.',
           field: 'email',
         },
         { status: 400 }

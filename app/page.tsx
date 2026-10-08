@@ -6,12 +6,14 @@ import SiteFooter from '@/components/site-footer'
 import PhotoAlbum from '@/components/photo-album'
 import CrossfadeVideo from '@/components/crossfade-video'
 import HeroBirdsAnimator from '@/components/hero-birds-animator'
+import HeroVideo from '@/components/hero-video'
 import BlogPostModal from '@/components/blog-post-modal'
 
 export const revalidate = 0
 
 export default async function Home() {
-  const activeEvents = getEvents().sort((a: any, b: any) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime())
+  const events = await getEvents()
+  const activeEvents = events.sort((a: any, b: any) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime())
 
   return (
     <main id="top" className="home-page">
@@ -20,7 +22,7 @@ export default async function Home() {
       <section id="home" className="home-hero" aria-labelledby="home-hero-title">
         <div className="home-hero__scene" aria-hidden="true">
           <div className="home-hero__layer home-hero__layer--landscape">
-            <img className="home-hero__image home-hero__image--landscape" src="/assets/autumn-landscape.webp" alt="" width={1792} height={592} fetchPriority="high" loading="eager" decoding="async" />
+            <HeroVideo />
           </div>
 
           <div className="home-hero__sun-glow">
@@ -121,8 +123,6 @@ export default async function Home() {
             </svg>
           </div>
 
-          {/* Invisible anchor at the man's right shoulder in the autumn landscape */}
-          <div className="hero-shoulder-perch" aria-hidden="true"></div>
         </div>
 
         <div className="home-hero__content scroll-reveal">
@@ -193,7 +193,7 @@ export default async function Home() {
                       style={{ objectPosition: event.slug === 'mahalaya' ? 'center 36%' : 'center 20%' }}
                     />
                     <span className="events-scene__card-badge">
-                      {event.price === 0 ? 'Campus Celebration' : 'Registration Opens Soon!'}
+                      {event.price === 0 ? 'Campus Celebration' : (event.status === 'OPEN' ? 'Registrations are Live!' : 'Registration Opens Soon!')}
                     </span>
                   </div>
                   <div className="events-scene__card-body">
@@ -209,7 +209,7 @@ export default async function Home() {
                       <span className="events-scene__card-invitation">
                         {event.price === 0
                           ? '✨ Join the celebration • Free Entry'
-                          : `• ⚡ Registration opens soon • `}
+                          : (event.status === 'OPEN' ? '• ⚡ Registrations are live • ' : '• ⚡ Registration opens soon • ')}
                       </span>
                       <span className="events-scene__card-btn">
                         <span>{event.status === 'OPEN' ? 'REGISTER NOW' : 'COMING SOON'}</span>

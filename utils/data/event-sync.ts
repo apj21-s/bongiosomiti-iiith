@@ -45,6 +45,7 @@ export const MIRRORED_FIELDS = [
   'description',
   'image_url',
   'status',
+  'config',
 ] as const
 
 export type MirroredField = (typeof MIRRORED_FIELDS)[number]
@@ -64,6 +65,9 @@ function same(a: unknown, b: unknown): boolean {
   // but a timestamp would not match on its string alone.
   if (a instanceof Date) a = a.toISOString().slice(0, 10)
   if (b instanceof Date) b = b.toISOString().slice(0, 10)
+  if (typeof a === 'object' && a !== null && typeof b === 'object' && b !== null) {
+    return JSON.stringify(a) === JSON.stringify(b)
+  }
   if (typeof a === 'string' && typeof b === 'string') return a === b
   if (a === null || a === undefined) return b === null || b === undefined
   return a === b

@@ -136,7 +136,13 @@ export default function AdminSidebar() {
               <Link href="/admin/coupons" className={`admin-nav-link ${isActive('/admin/coupons') ? 'active' : ''}`} onClick={closeDrawer}>🎟️ Manage Coupons</Link>
             )}
             {canSee(3) && (
+              <Link href="/admin/statistics" className={`admin-nav-link ${isActive('/admin/statistics') ? 'active' : ''}`} onClick={closeDrawer}>📈 Statistics</Link>
+            )}
+            {canSee(3) && (
               <Link href="/admin/managers" className={`admin-nav-link ${isActive('/admin/managers') ? 'active' : ''}`} onClick={closeDrawer}>👥 Manager Profiles</Link>
+            )}
+            {canSee(3) && (
+              <Link href="/admin/digests" className={`admin-nav-link ${isActive('/admin/digests') ? 'active' : ''}`} onClick={closeDrawer}>📧 Send Digests</Link>
             )}
             {canSee(3) && (
               <Link href="/admin/playlist" className={`admin-nav-link ${isActive('/admin/playlist') ? 'active' : ''}`} onClick={closeDrawer}>🎵 Homepage Music</Link>
@@ -207,9 +213,21 @@ export default function AdminSidebar() {
               <span style={{ marginRight: '10px' }}>🎟️</span> Manage Coupons
             </Link>
           )}
+          {/* Money across every collector, so super admin only - the page
+              redirects a lower tier on its own. */}
+          {canSee(3) && (
+            <Link href="/admin/statistics" className={`admin-nav-link ${isActive('/admin/statistics') ? 'active' : ''}`} onClick={closeDrawer}>
+              <span style={{ marginRight: '10px' }}>📈</span> Statistics
+            </Link>
+          )}
           {canSee(3) && (
             <Link href="/admin/managers" className={`admin-nav-link ${isActive('/admin/managers') ? 'active' : ''}`} onClick={closeDrawer}>
               <span style={{ marginRight: '10px' }}>👥</span> Manager Profiles
+            </Link>
+          )}
+          {canSee(3) && (
+            <Link href="/admin/digests" className={`admin-nav-link ${isActive('/admin/digests') ? 'active' : ''}`} onClick={closeDrawer}>
+              <span style={{ marginRight: '10px' }}>📧</span> Send Digests
             </Link>
           )}
           {canSee(3) && (

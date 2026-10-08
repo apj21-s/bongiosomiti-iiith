@@ -4,7 +4,8 @@ import { revalidatePath } from 'next/cache'
 import fs from 'fs'
 import path from 'path'
 import { createServiceRoleClient } from '@/utils/supabase/server'
-import { ownsEventRows, toDatabaseRow } from '@/utils/data/event-sync'
+import { toDatabaseRow } from '@/utils/data/event-sync'
+import { getEvents } from '@/utils/data/events'
 
 export async function DELETE(
   request: Request,
@@ -45,10 +46,9 @@ export async function PUT(
 
   try {
     const updates = await request.json()
-    const filePath = path.join(process.cwd(), 'public', 'data', 'events.json')
-    const events = JSON.parse(fs.readFileSync(filePath, 'utf8'))
+    const events = (await getEvents()) as Record<string, unknown>[]
 
-    const eventIndex = events.findIndex((e: { slug?: string }) => e.slug === slug)
+    const eventIndex = events.findIndex((e) => e.slug === slug)
     if (eventIndex === -1) {
       return NextResponse.json({ error: 'Event not found' }, { status: 404 })
     }
@@ -63,7 +63,8 @@ export async function PUT(
     // config it loaded, coupons included, so an editor tab opened before a
     // coupon was added would otherwise put the old list back on save.
     if (safeUpdates.config && typeof safeUpdates.config === 'object') {
-      const onFile = events[eventIndex]?.config?.coupons
+      const config = events[eventIndex]?.config as Record<string, unknown> | undefined
+      const onFile = config?.coupons
       safeUpdates.config = { ...safeUpdates.config }
       if (onFile === undefined) delete safeUpdates.config.coupons
       else safeUpdates.config.coupons = onFile
@@ -73,6 +74,7 @@ export async function PUT(
     events[eventIndex] = updated
 
     try {
+      const filePath = path.join(process.cwd(), 'public', 'data', 'events.json')
       fs.writeFileSync(filePath, JSON.stringify(events, null, 2) + '\n')
       written.file = true
     } catch (e) {
@@ -84,29 +86,22 @@ export async function PUT(
     }
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Could not read the events file' },
+      { error: error instanceof Error ? error.message : 'Could not fetch events' },
       { status: 500 }
     )
   }
 
-  if (!ownsEventRows()) {
-    problems.push(
-      'This deployment does not own the shared events rows, so the change stayed in its own ' +
-      'events.json. Set EVENTS_DB_WRITES=true only where those rows belong.'
-    )
-  } else {
-    try {
-      const supabase = await createServiceRoleClient()
-      const { error } = await supabase
-        .from('events')
-        .update(toDatabaseRow(updated))
-        .eq('slug', slug)
+  try {
+    const supabase = await createServiceRoleClient()
+    const { error } = await supabase
+      .from('events')
+      .update(toDatabaseRow(updated))
+      .eq('slug', slug)
 
-      if (error) problems.push(`The events row was not updated: ${error.message}`)
-      else written.database = true
-    } catch (e) {
-      problems.push(`The events row was not updated: ${e instanceof Error ? e.message : 'unknown'}`)
-    }
+    if (error) problems.push(`The events row was not updated: ${error.message}`)
+    else written.database = true
+  } catch (e) {
+    problems.push(`The events row was not updated: ${e instanceof Error ? e.message : 'unknown'}`)
   }
 
   if (!written.file && !written.database) {

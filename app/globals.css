@@ -6898,6 +6898,7 @@ video::cue {
 .home-hero__scene {
   inset: 0;
   z-index: 1;
+  opacity: 0.85;
 }
 
 .home-hero__layer {
@@ -6917,7 +6918,10 @@ video::cue {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: right 45%;
+  /* Pinned to the video's bottom-left corner: Apu, Durga and the kash flowers
+     are at the foot and on the left, and the top is plain sky. A short screen
+     loses sky, a narrow one loses the right-hand end of the train. */
+  object-position: left bottom;
   filter: saturate(0.99) contrast(0.99);
 }
 
@@ -6926,10 +6930,21 @@ video::cue {
    ------------------------------------------------------------------------- */
 .home-hero__sun-glow {
   position: absolute;
-  left: clamp(28%, 34vw, 36%);
-  top: clamp(28%, 36%, 42%);
-  width: clamp(140px, 16vw, 220px);
-  height: clamp(140px, 16vw, 220px);
+  /* On the sun in the video, which sits 26% across and 38% down the frame.
+     The frame is drawn to cover the scene from its bottom-left corner, so its
+     drawn size is the larger of the scene's width and its height at 16:9, and
+     these place the glow on that frame wherever the scene crops it. The scene
+     is the size container (cqw, cqh) - see .home-hero__scene. */
+  --sun-x: calc(0.26 * max(100cqw, 100cqh * 16 / 9));
+  --sun-y: calc(100cqh - 0.62 * max(100cqw * 9 / 16, 100cqh));
+  /* Never so big that the rays (35% past the box, blurred 10px) reach above the
+     top of the video: the screen blend has only the video to lighten, so over
+     the flat sky the glow turned into an orange band with a hard lower edge. */
+  --sun-room: calc((var(--sun-y) - 10px) / 0.85);
+  left: var(--sun-x);
+  top: var(--sun-y);
+  width: min(clamp(140px, 16vw, 220px), var(--sun-room));
+  height: min(clamp(140px, 16vw, 220px), var(--sun-room));
   transform: translate(-50%, -50%);
   pointer-events: none;
   z-index: 2;
@@ -6938,10 +6953,8 @@ video::cue {
 
 @media (max-width: 768px) {
   .home-hero__sun-glow {
-    left: 82%;
-    top: 10%;
-    width: 180px;
-    height: 180px;
+    width: min(180px, var(--sun-room));
+    height: min(180px, var(--sun-room));
   }
 }
 
@@ -7407,17 +7420,6 @@ video::cue {
   transition: transform 0.15s ease-out;
 }
 
-/* Invisible shoulder perch anchor — calibrated dynamically to the
-   bicycle man's right shoulder in autumn-landscape.webp */
-.hero-shoulder-perch {
-  position: absolute;
-  left: 84.23%;
-  top: 39.90%;
-  width: 2px;
-  height: 2px;
-  pointer-events: none;
-}
-
 /* Wing flapping when flying */
 .hero-landing-bird.is-flying .bird-wing-left {
   animation: utsav-wing-flap-left 0.12s ease-in-out infinite alternate;
@@ -7619,6 +7621,7 @@ video::cue {
 }
 
 .home-hero__layer>img,
+.home-hero__layer>video,
 .events-scene__hero>img,
 .events-scene__hero>video,
 .events-scene__card-media>img,
@@ -8081,6 +8084,7 @@ video::cue {
     width: 100%;
     box-sizing: border-box;
     justify-items: center;
+    justify-content: center;
   }
 
   .home-hero__title {
@@ -8521,17 +8525,76 @@ video::cue {
   border-bottom: none;
 }
 
-/* The strip is 1024x136, and it is a motif with a top and a bottom - so it is
+/* The strip is 948x136, and it is a motif with a top and a bottom - so it is
    shown whole. It used to be capped at 110px and cropped to fill, which took
    the bottom third off on any screen wider than about 830px. Now it keeps its
    own proportions, and stops widening past 1440px so a large monitor gets a
-   centred band rather than a 255px-tall one. */
+   centred band rather than a 275px-tall one. */
 .utsav-footer__bannerImage {
   width: 100%;
   max-width: 1440px;
   height: auto;
   margin-inline: auto;
   display: block;
+}
+
+/*
+  Past 1440px the strip stops widening, and what used to fill the space either
+  side of it was the footer's flat colour - the alpona simply stopped, twice,
+  with a hard edge. The gaps are filled with the same artwork, reflected.
+
+  Repeating it end to end does not work, and cutting the strip to make the ends
+  meet only gets close. The scalloped border is not a regular pattern: the gap
+  between crowns runs from 36.5px to 52px, median 38.5px, so no width is a
+  whole number of arches. With the strip cut to 948px the gap across the join
+  came out 54.5px - 42% of an arch too wide - which reads as a stutter in the
+  rhythm at every seam, however well the corner mandalas line up.
+
+  A reflection has no such condition to satisfy. The column against the join is
+  the same column on both sides of it, so the scallops, the rule under them,
+  the band and the mandala all run straight through, whatever the artwork does.
+  It also makes the border symmetric about the middle of the page, which is
+  what an alpona border wants to be anyway.
+
+  How each side is anchored: both gaps are flipped with scaleX(-1), so a point
+  painted at local u lands u from the gap's inner edge. The left gap anchors
+  its background left, which puts column 0 against the image's left edge - the
+  same column the image starts with. The right gap anchors right, which puts
+  the last column against the image's right edge, which is the column the image
+  ends with. Either way the join is a doubled column rather than a cut.
+
+  The tile is 1440px wide, the cap the image has, and `100%` of this block's
+  height is exactly 1440 x 136/948 = 206.58px, so the reflection is at the same
+  scale as the image and never stretched.
+
+  A gap wider than 1440px - a screen past about 4300px - repeats beyond the
+  first reflection and picks the plain join up again out there. Nothing on a
+  desk reaches it.
+*/
+@media (min-width: 1440px) {
+  .utsav-footer__banner::before,
+  .utsav-footer__banner::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    /* Clamped at 0 by CSS when the screen is narrower than the cap. */
+    width: calc((100% - 1440px) / 2);
+    background-image: url('/assets/footer-banner.webp');
+    background-repeat: repeat-x;
+    background-size: 1440px 100%;
+    transform: scaleX(-1);
+  }
+
+  .utsav-footer__banner::before {
+    left: 0;
+    background-position: left top;
+  }
+
+  .utsav-footer__banner::after {
+    right: 0;
+    background-position: right top;
+  }
 }
 
 /*
@@ -10398,6 +10461,7 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
 
   .home-hero__content {
     padding: 12px 8px 14px;
+    justify-content: center;
   }
 
   .home-hero__title {
@@ -11118,13 +11182,30 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
 }
 
 /* Sidebar (Desktop) */
+/*
+  Held to the viewport, so the tab list scrolls inside itself.
+
+  It had no height of its own, and a flex item with no height is as tall as
+  its content: with thirteen links the sidebar came to 933px, which made the
+  wrapper 933px, which made the document scroll - 33px at 1440x900, 293px at
+  1440x640. The main area was already pinned at 100dvh with its own scrollbar,
+  so that document scroll moved the whole shell past the top of the screen and
+  the sign-out footer sat below the fold. The nav's overflow-y: auto never had
+  a chance to do anything, because nothing was ever asking it to be shorter
+  than its contents.
+
+  vh first for anything without dvh, matching .home-hero.
+*/
 .admin-sidebar {
   width: 260px;
+  height: 100vh;
+  height: 100dvh;
   background: #ffffff;
   border-right: 1px solid rgba(0,0,0,0.06);
   display: flex;
   flex-direction: column;
-  position: relative;
+  position: sticky;
+  top: 0;
   z-index: 10;
   box-shadow: 4px 0 24px rgba(0,0,0,0.02);
   flex-shrink: 0;
@@ -11145,11 +11226,39 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
 
 .admin-sidebar-nav {
   flex: 1;
+  /* The half of overflow-y: auto that is easy to leave out. A column flex
+     item's automatic minimum size is its content, so without this the nav
+     refuses to be shorter than its links and overflows the sidebar instead
+     of scrolling inside it. */
+  min-height: 0;
   padding: 24px 12px;
   display: flex;
   flex-direction: column;
   gap: 6px;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  /* Its own scrollbar, drawn slim so the list reads as a scroller rather than
+     as a column that happens to be cut off. */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(143, 50, 31, 0.35) transparent;
+}
+
+.admin-sidebar-nav::-webkit-scrollbar {
+  width: 8px;
+}
+
+.admin-sidebar-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-sidebar-nav::-webkit-scrollbar-thumb {
+  background: rgba(143, 50, 31, 0.28);
+  border-radius: 999px;
+  border: 2px solid #ffffff;
+}
+
+.admin-sidebar-nav:hover::-webkit-scrollbar-thumb {
+  background: rgba(143, 50, 31, 0.45);
 }
 
 .admin-nav-link {
@@ -11306,6 +11415,14 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
     flex-direction: column;
     padding: 8px 0;
     z-index: 100;
+    /* Thirteen links at ~44px is taller than a phone. Scroll the list rather
+       than run it off the bottom of the screen, and keep that scroll out of
+       the page behind it. */
+    max-height: calc(100dvh - 72px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(143, 50, 31, 0.35) transparent;
   }
   
   .dropdown-divider {
@@ -11513,24 +11630,29 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
 
 /* ============================================================
    Full-screen hero
-   The hero fills the viewport on load, with the landscape held
-   at the bottom and its sky continued upward as a flat fill in
-   the artwork's own sky colour (#f3e2c1, sampled from the top
-   rows of autumn-landscape.webp). The navbar uses the same
-   colour so the two read as one surface.
+   The hero fills the viewport on load, with the video held at
+   the bottom and its sky continued upward as a flat fill in the
+   video's own sky colour (#fae2ba, sampled from the top rows of
+   apu-durga-loop.mp4 across the whole loop - it does not drift
+   as the smoke and grass move). The navbar uses the same colour
+   so the two read as one surface.
    ============================================================ */
 
 :root {
-  --hero-sky: #f3e2c1;
-  /* autumn-landscape.webp is 1792x592 */
-  --hero-art-ratio: 3.0270;
-  /* How much of the screen the painting occupies. Its own ratio on a laptop;
-     on a narrow phone that alone would leave a 137px sliver under a screen of
-     flat sky, so it holds at least 42vh and the image crops instead. The crop
-     keeps the right of the frame (object-position: right 45%), which is where
-     the cyclist the bird lands on rides. One value, used by both the scene and
-     the text above it, so the two cannot drift apart. */
-  --hero-art-height: max(calc(100vw / var(--hero-art-ratio)), 42vh);
+  --hero-sky: #fae2ba;
+  /* How much of the screen the video occupies: its whole 16:9 frame, so all of
+     the smoke shows. It lies on top of the flat sky rather than below it - its
+     own top is plain sky in the same colour, so the two meet without a line.
+     On a narrow phone the frame alone would leave a sliver under a screen of
+     flat sky, so it holds at least 42vh and crops from the right instead. */
+  --hero-art-height: max(calc(100vw * 9 / 16), 42vh);
+  /* The drawn height of that frame: the larger of the box and the width at
+     16:9, the box being capped at the hero's height on a screen wider than
+     16:9. The smoke starts 13% down it. */
+  --hero-frame-height: max(min(var(--hero-art-height), 100%), calc(100vw * 9 / 16));
+  /* Where the title block may start: below the 45px navbar, with room for the
+     capitals, which rise above the heading's own box. */
+  --hero-nav-room: 68px;
 }
 
 .home-hero {
@@ -11542,45 +11664,102 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
   background: var(--hero-sky);
 }
 
-/* Bottom-anchored and held at the artwork's aspect ratio, so the sun glow and
-   the bird's landing perch - both positioned as a percentage of this box -
-   stay registered to the painting however tall the hero becomes. */
+/* Bottom-anchored. A size container, so the sun glow can be placed on the
+   video's own sun in units of this box (cqw, cqh), however it is cropped. */
 .home-hero__scene {
   position: absolute;
   inset: auto 0 0 0;
   height: min(var(--hero-art-height), 100%);
+  container-type: size;
 }
 
-/* The painting's top row is not perfectly flat - it runs from #f3e0be to
-   #f8e8ce across the width, which shows as a seam against a single flat
-   colour. A short fade hides the join. The transparent stop repeats the
-   colour so the gradient does not run through grey. */
+/* The video's top row is not perfectly flat - it runs from #f9e4be to
+   #f9e0b5 across the width - so a short fade blends it into the flat sky.
+   Short on purpose: it covers only the plain sky at the top of the frame,
+   never the smoke, which starts 13% down. There used to be a blur over the
+   join as well, for the painting's brushwork; on the video it only smeared
+   the smoke. The transparent stop repeats the colour so the gradient does not
+   run through grey. */
 .home-hero__scene::before {
   content: "";
   position: absolute;
   inset: 0 0 auto 0;
-  height: clamp(28px, 7%, 72px);
-  background: linear-gradient(180deg, var(--hero-sky) 0%, rgba(243, 226, 193, 0) 100%);
+  height: clamp(12px, 4%, 40px);
+  background: linear-gradient(180deg, var(--hero-sky) 0%, rgba(250, 226, 186, 0) 100%);
   z-index: 2;
   pointer-events: none;
 }
 
-/* The title, subtitle and tagline sit in the sky, low enough that the landing
-   bird's run across the highlighted letters and down onto the cyclist's
-   shoulder stays a short, readable arc rather than a dive across the screen. */
+/* The title, subtitle and tagline sit in the plain sky between the navbar and
+   the top of the smoke - centred in that space where it is tall enough. On a
+   16:9 screen it is not: the frame fills the hero and the smoke rises to just
+   below the navbar. The auto margins then collapse, which holds the title
+   under the navbar instead of letting centring push it up behind it, and the
+   lower lines sit over the top of the smoke.
+
+   Measured off the loop afterwards, which is where 0.87 comes from: twelve
+   frames at 1920x1080 put the top of the smoke at 11-13% of the frame, the
+   locomotive's funnel at 43%, and Apu and Durga at x 4-9% and 21-27% from 60%
+   down. Sitting above the smoke clears all of it. */
 .home-hero__content {
-  top: 0;
-  bottom: 0;
+  top: var(--hero-nav-room);
+  bottom: calc(var(--hero-frame-height) * 0.87);
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   padding: 0 8%;
   z-index: 4;
 }
 
-.home-hero__title {
-  margin-top: 0;
+.home-hero__content > :first-child {
+  margin-top: auto;
+}
+
+.home-hero__content > :last-child {
+  margin-bottom: auto;
+}
+
+/* Two window shapes where the rule above puts the words on the locomotive.
+
+   The band between the navbar and the smoke is 100vh - 0.87 x frame-height -
+   68px, and on a very wide, very short screen it is negative: the frame is
+   scaled up so far that its top is cropped away and the train has risen to
+   just under the navbar. The block then overflows downwards, and the text
+   reaches the funnel - frame 42-50% at 2560x900, 31-48% at 932x430, against a
+   train that starts at 43%.
+
+   It happens when the width passes about 3.12 x height - 558px. These two
+   conditions sit above that line with room to spare, so nothing in the
+   ordinary range of screens is touched: at 2064x860 and 2496x1040, the
+   closest either gets, the words still stop at frame 41% and 39%.
+
+   Below the train instead, in the kash: clear of the carriages, and right of
+   Durga at 21-27% and Apu at 4-9%, which a centred line manages on its own. */
+@media (min-aspect-ratio: 5/2),
+       (max-height: 520px) and (min-aspect-ratio: 9/5) {
+  .home-hero__content {
+    top: calc(100% - var(--hero-frame-height) * 0.40);
+    bottom: calc(var(--hero-frame-height) * 0.18);
+    justify-content: center;
+  }
+
+  .home-hero__content > :first-child,
+  .home-hero__content > :last-child {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+}
+
+/* A halo in the sky's own colour: invisible against the sky, it is only seen
+   where a letter crosses the smoke, and it keeps the letter readable there. */
+.home-hero__title,
+.home-hero__subtitle {
+  text-shadow:
+    0 1px 0 rgba(255, 249, 237, 0.28),
+    0 0 6px var(--hero-sky),
+    0 0 14px var(--hero-sky),
+    0 0 26px var(--hero-sky);
 }
 
 /* The bird's canvas covers the whole hero, not just the strip over the
@@ -11590,10 +11769,8 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
    Anchored to the scene's bottom edge and given the hero's height, it now
    reaches from the navbar down to the horizon.
 
-   Safe to enlarge because nothing here is a hand-placed percentage: the
-   animator derives the shoulder from the image's rendered rect within this box
-   (getCoverImageRect) and writes .hero-shoulder-perch itself, so the landing
-   point follows the painting at any size. */
+   Safe to enlarge because nothing here is a hand-placed percentage: every
+   point the bird flies to is a letter of the title, measured live. */
 .home-hero__birds-sky {
   inset: auto 0 0 0;
   height: 100vh;
@@ -11605,52 +11782,6 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
 .home-strip {
   background: var(--hero-sky);
   border-bottom-color: transparent;
-}
-
-/* The perch marker lives in the sky box, where 39.9% down fell on the cyclist
-   while that box was the painting. Measured up from the bottom instead, it
-   stays on him now that the sky reaches the navbar. The animator overwrites
-   both offsets before the bird lands - inline top wins over this bottom - so
-   this is what holds before the first flight. */
-.hero-shoulder-perch {
-  top: auto;
-  bottom: calc(min(var(--hero-art-height), 100%) * 0.601);
-}
-
-/* The join between the flat fill and the painted sky, blurred.
-
-   The gradient above fades the colours into each other; this softens the
-   pixels themselves, so the last row of brushwork dissolves into the fill
-   instead of ending on a line. It is a band straddling the seam: the half
-   above it sits over flat colour, where a blur changes nothing, so there is
-   no edge where the effect begins. The mask fades the blur out downwards for
-   the same reason at the bottom.
-
-   Sits at z-index 2 - over the painting, under the birds and the title, so
-   neither of those goes soft. Browsers without backdrop-filter simply get the
-   gradient, which is what they had before. */
-.home-hero::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: calc(min(var(--hero-art-height), 100%) - clamp(20px, 4.5vh, 46px));
-  height: clamp(40px, 9vh, 92px);
-  z-index: 2;
-  pointer-events: none;
-  /* A plain length on purpose: a clamp() inside blur() is dropped by the
-     CSS pipeline, which silently left the band doing nothing. */
-  backdrop-filter: blur(var(--hero-seam-blur, 10px));
-  -webkit-mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 1) 34%, rgba(0, 0, 0, 1) 52%, rgba(0, 0, 0, 0) 100%);
-  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 1) 34%, rgba(0, 0, 0, 1) 52%, rgba(0, 0, 0, 0) 100%);
-}
-
-/* A narrow screen shows a shorter slice of the painting, so the smear that
-   reads as soft on a laptop reads as a smudge on a phone. */
-@media (max-width: 560px) {
-  .home-hero {
-    --hero-seam-blur: 7px;
-  }
 }
 
 /* ============================================================
@@ -12113,4 +12244,81 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
   margin: -4px 0 0;
   font-size: 0.78rem;
   color: #718096;
+}
+
+/* --------------------------------------------------------------------
+   Statistics
+-------------------------------------------------------------------- */
+.admin-stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 20px;
+  margin-bottom: 28px;
+}
+
+/* Two readings per cell: how many plates, and what they came to. The count
+   leads because the grid is first of all a count.
+
+   One element around the pair, because the stacked table makes each cell a
+   two-column grid - label, value - and two loose children put the money in
+   the next row's label column rather than under its own count. */
+.stats-cell {
+  display: block;
+}
+
+.stats-cell__money {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.78rem;
+  color: #718096;
+  font-variant-numeric: tabular-nums;
+}
+
+.stats-cell__zero {
+  color: #cbd5e0;
+}
+
+.stats-grid th[scope="row"] {
+  text-align: left;
+  font-weight: 700;
+  color: #2d3748;
+  white-space: nowrap;
+}
+
+.stats-grid__totals td,
+.stats-grid__totals th {
+  background: rgba(143, 50, 31, 0.045);
+  border-top: 2px solid var(--border);
+}
+
+/* Wider than the card on a small screen, and that is what the scroll is for -
+   a bar chart squeezed to fit stops being readable before it stops fitting. */
+.stats-plot {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.stats-plot svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  font-family: inherit;
+}
+
+.stats-plot__key {
+  margin: 10px 0 0;
+  font-size: 0.8rem;
+  color: #a0aec0;
+}
+
+/* The stacked table turns each row into a card; a row header is that card's
+   title rather than another labelled line. */
+@media (max-width: 700px) {
+  .admin-stack-table tbody th[scope="row"] {
+    display: block;
+    width: 100%;
+    padding: 10px 14px 2px;
+    border-bottom: 0;
+    font-size: 0.95rem;
+  }
 }
