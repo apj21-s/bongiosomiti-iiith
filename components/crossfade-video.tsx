@@ -478,7 +478,7 @@ export default function CrossfadeVideo() {
         }
         .wave {
           position: absolute;
-          border: 3px solid #fff;
+          border: 3px solid #000;
           border-radius: 50%;
           border-left-color: transparent;
           border-top-color: transparent;
