@@ -7,12 +7,12 @@ import {
   AUDIENCES,
   AUDIENCE_LABEL,
   breakdown,
-  describePlates,
   paymentHistogram,
   registrationRows,
   type PaymentBar,
   type StatTicket,
 } from '@/utils/data/statistics'
+import BookingsTableClient from './BookingsTableClient'
 
 export const revalidate = 0
 
@@ -290,29 +290,7 @@ export default async function AdminStatisticsPage({
         {bookings.length === 0 ? (
           <p className="text-muted" style={{ margin: 0 }}>No approved bookings yet.</p>
         ) : (
-          <div className="table-responsive">
-            <table className="data-table admin-stack-table">
-              <thead>
-                <tr>
-                  <th>Participant</th><th>Rate</th><th>Plates</th><th>Passes</th><th>Paid</th>
-                </tr>
-              </thead>
-              <tbody>
-                {bookings.map((booking) => (
-                  <tr key={booking.id}>
-                    <td data-label="Participant">
-                      <strong>{booking.participantName}</strong>
-                      {booking.email ? <span className="stats-booking__sub">{booking.email}</span> : null}
-                    </td>
-                    <td data-label="Rate">{AUDIENCE_LABEL[booking.audience]}</td>
-                    <td data-label="Plates">{describePlates(booking)}</td>
-                    <td data-label="Passes">{booking.passes}</td>
-                    <td data-label="Paid">{rupees(booking.amount)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <BookingsTableClient bookings={bookings} />
         )}
       </section>
     </main>

@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { confirmAction, notifyError } from '@/components/site-notifications'
-
+import { confirmAction, notifyError, notifySuccess } from '@/components/site-notifications'
 export default function RegistrationsClient({ initialEvents }: { initialEvents: any[] }) {
   const [registrations, setRegistrations] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -51,6 +50,30 @@ export default function RegistrationsClient({ initialEvents }: { initialEvents: 
     } catch (e: any) {
       setLoading(false)
       notifyError(e)
+    }
+  }
+
+  async function handleResend(reg: any) {
+    if (!(await confirmAction({
+      title: 'Resend Pass?',
+      message: `Are you sure you want to resend the pass email to ${reg.email}?`,
+      confirmLabel: 'Resend',
+    }))) return
+    
+    setLoading(true)
+    try {
+      const res = await fetch('/api/pass/resend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: reg.token }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to resend pass')
+      notifySuccess(data.message || `Successfully resent pass to ${reg.email}`)
+    } catch (e: any) {
+      notifyError(e)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -165,7 +188,14 @@ export default function RegistrationsClient({ initialEvents }: { initialEvents: 
                   <br />
                   <span className="text-muted" style={{ fontSize: '0.85rem' }}>{new Date(reg.created_at).toLocaleTimeString()}</span>
                 </td>
-                <td><button type="button" className="btn btn-sm btn-danger" onClick={() => handleDelete(reg)}>Delete</button></td>
+                <td>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {reg.payment_status === 'APPROVED' && (
+                      <button type="button" className="btn btn-sm btn-secondary" onClick={() => handleResend(reg)}>Resend</button>
+                    )}
+                    <button type="button" className="btn btn-sm btn-danger" onClick={() => handleDelete(reg)}>Delete</button>
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>

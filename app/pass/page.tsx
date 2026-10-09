@@ -160,7 +160,18 @@ export default function PassVerifyPage() {
                           <div className="compact-status-item">
                             <span className="compact-status-item__label">Digital Pass</span>
                             {isVerified ? (
-                              <strong className="compact-status-item__value compact-status-item__value--success">✓ Sent to email</strong>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-start' }}>
+                                <strong className="compact-status-item__value compact-status-item__value--success">✓ Sent to email</strong>
+                                <button 
+                                  type="button" 
+                                  className="btn btn-sm" 
+                                  style={{ padding: '4px 12px', fontSize: '0.8rem', background: '#e2e8f0', color: '#1a202c', border: '1px solid #cbd5e1' }}
+                                  onClick={handleResend}
+                                  disabled={loading}
+                                >
+                                  Resend Email
+                                </button>
+                              </div>
                             ) : (
                               <strong className="compact-status-item__value compact-status-item__value--awaiting">— Awaiting confirmation</strong>
                             )}
