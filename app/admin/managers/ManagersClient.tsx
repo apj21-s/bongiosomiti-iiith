@@ -11,6 +11,7 @@ type Manager = {
   isActive: boolean
   createdAt?: string | null
   createdBy?: string | null
+  totalVerifiedAmount?: number
 }
 
 export default function ManagersClient() {
@@ -172,19 +173,20 @@ export default function ManagersClient() {
           <table className="data-table admin-stack-table">
             <thead>
               <tr>
-                <th>Username</th><th>Name</th><th>UPI ID</th><th>Status</th><th>Created</th><th>Actions</th>
+                <th>Username</th><th>Name</th><th>UPI ID</th><th>Verified Amount</th><th>Status</th><th>Created</th><th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {loading && <tr><td colSpan={6} className="text-muted">Loading…</td></tr>}
+              {loading && <tr><td colSpan={7} className="text-muted">Loading…</td></tr>}
               {!loading && managers.length === 0 && (
-                <tr><td colSpan={6} className="text-muted">No manager profiles yet.</td></tr>
+                <tr><td colSpan={7} className="text-muted">No manager profiles yet.</td></tr>
               )}
               {!loading && managers.map((manager) => (
                 <tr key={manager.id}>
                   <td data-label="Username"><strong>{manager.username}</strong></td>
                   <td data-label="Name">{manager.name || '—'}</td>
                   <td data-label="UPI ID"><code>{manager.upiId}</code></td>
+                  <td data-label="Verified Amount">₹{manager.totalVerifiedAmount || 0}</td>
                   <td data-label="Status">
                     <span className={`badge ${manager.isActive ? '' : 'badge--error'}`}>
                       {manager.isActive ? 'ACTIVE' : 'DISABLED'}

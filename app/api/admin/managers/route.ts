@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/utils/auth/require-admin'
-import { createManager, listManagers } from '@/utils/auth/managers'
+import { createManager, listManagers, normaliseUpiId } from '@/utils/auth/managers'
+import { createServiceRoleClient } from '@/utils/supabase/server'
 
 // Creating and listing manager profiles is a super-admin job.
 const REQUIRED_TIER = 3
@@ -9,8 +10,29 @@ export async function GET() {
   const guard = await requireAdmin(REQUIRED_TIER)
   if (!guard.ok) return guard.response
 
-  // Password hashes are never selected, so they cannot leak through this route.
-  return NextResponse.json(await listManagers())
+  const managers = await listManagers()
+
+  const supabase = await createServiceRoleClient()
+  const { data: tickets } = await supabase
+    .from('tickets')
+    .select('receiver_upi, amount')
+    .eq('payment_status', 'APPROVED')
+
+  const amountByUpi = new Map<string, number>()
+  if (tickets) {
+    for (const ticket of tickets) {
+      if (!ticket.receiver_upi) continue
+      const upi = normaliseUpiId(String(ticket.receiver_upi))
+      amountByUpi.set(upi, (amountByUpi.get(upi) || 0) + (Number(ticket.amount) || 0))
+    }
+  }
+
+  const enrichedManagers = managers.map(m => ({
+    ...m,
+    totalVerifiedAmount: amountByUpi.get(normaliseUpiId(m.upiId)) || 0
+  }))
+
+  return NextResponse.json(enrichedManagers)
 }
 
 export async function POST(request: Request) {
