@@ -2,6 +2,7 @@ import { requireAdmin } from '@/utils/auth/require-admin'
 import { NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/utils/supabase/server'
 import { listManagers } from '@/utils/auth/managers'
+import { getEventScope } from '@/utils/admin/event-scope'
 
 /**
  * The payments no manager will claim, and the managers they could go to.
@@ -20,7 +21,9 @@ export async function GET() {
 
   const supabase = await createServiceRoleClient()
 
-  const { data, error } = await supabase
+  const { event } = await getEventScope()
+
+  let query = supabase
     .from('tickets')
     .select(`
       *,
@@ -29,6 +32,10 @@ export async function GET() {
     .not('allocation_flagged_at', 'is', null)
     .is('assigned_manager_id', null)
     .order('allocation_flagged_at', { ascending: false })
+  // Only the event picked in the admin sidebar, unless that is all of them.
+  if (event) query = query.eq('event_id', event.id)
+
+  const { data, error } = await query
 
   if (error) {
     if (/allocation_flagged_at|assigned_manager_id/.test(error.message || '')) {

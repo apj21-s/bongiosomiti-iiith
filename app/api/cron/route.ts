@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/utils/supabase/server'
 import { countForDigest, worthSending, digestSubject } from '@/utils/digest'
 import { sendManagerDigestEmail } from '@/utils/email'
+import { getDigestSettings } from '@/utils/data/digest-settings'
 
 export const maxDuration = 300 // Allowed for Pro/Enterprise, doesn't hurt on Hobby
 
@@ -10,6 +11,13 @@ export async function GET(request: Request) {
   const authHeader = request.headers.get('authorization')
   if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return new NextResponse('Unauthorized', { status: 401 })
+  }
+
+  // Paused from /admin/digests, usually because no event is near enough for
+  // there to be anything to report.
+  const settings = await getDigestSettings()
+  if (settings.isPaused) {
+    return NextResponse.json({ message: 'The daily digest is paused. Nothing sent.' })
   }
 
   try {

@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { getEvents } from '@/utils/data/events'
+import { getEventScope } from '@/utils/admin/event-scope'
 import { getAdminTier } from '@/utils/auth/server'
 import RegistrationsClient from './RegistrationsClient'
 
@@ -10,8 +10,10 @@ export default async function AdminRegistrationsPage() {
   const tier = await getAdminTier()
   if (tier < 3) redirect('/admin')
 
-  const allEvents = await getEvents()
-  const events = allEvents.map((e: any) => ({ slug: e.slug, name: e.name }))
+  // Opens on the event picked in the sidebar; the filter on the page can
+  // still widen it.
+  const { events: allEvents, event } = await getEventScope()
+  const events = allEvents.map((e) => ({ slug: e.slug, name: e.name }))
 
   return (
     <main className="admin-page-content" data-admin-registrations>
@@ -22,7 +24,7 @@ export default async function AdminRegistrationsPage() {
         <Link className="btn btn-primary" href="/admin">Dashboard &rarr;</Link>
       </div>
 
-      <RegistrationsClient initialEvents={events || []} />
+      <RegistrationsClient initialEvents={events || []} initialEventSlug={event?.slug ?? 'all'} />
     </main>
   )
 }

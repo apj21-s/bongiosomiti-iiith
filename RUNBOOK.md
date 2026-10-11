@@ -17,6 +17,7 @@ Run these in the Supabase SQL editor, in order:
 | `supabase/manager-profiles.sql` | `manager_profiles`, `tickets.receiver_upi` |
 | `supabase/album_migration.sql` | `album_photos` for the homepage gallery |
 | `supabase/site-playlist.sql` | `site_playlist`, the homepage music setting |
+| `supabase/digest-settings.sql` | `digest_settings`, the daily digest pause switch |
 | `supabase/seed.sql` | Demo events, tickets and an admin. **Skip in production** |
 
 All are safe to re-run. The manager feature does nothing until

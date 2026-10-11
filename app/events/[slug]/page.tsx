@@ -143,7 +143,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
 
               <div className="events-extras-row">
 
-                <MenuCardModal slug={event.slug} status={event.status} />
+                <MenuCardModal slug={event.slug} locked={event.config?.menu_locked === true} />
               </div>
             </div>
 

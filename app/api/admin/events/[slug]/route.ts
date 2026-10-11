@@ -68,6 +68,10 @@ export async function PUT(
       safeUpdates.config = { ...safeUpdates.config }
       if (onFile === undefined) delete safeUpdates.config.coupons
       else safeUpdates.config.coupons = onFile
+
+      // The menu lock is the events table's button to set, for the same reason.
+      if (config?.menu_locked === undefined) delete safeUpdates.config.menu_locked
+      else safeUpdates.config.menu_locked = config.menu_locked
     }
 
     updated = { ...events[eventIndex], ...safeUpdates }

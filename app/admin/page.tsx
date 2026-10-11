@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { createServiceRoleClient } from '@/utils/supabase/server'
 import { getAdminIdentity } from '@/utils/auth/server'
 import { getManagerById } from '@/utils/auth/managers'
+import { getEventScope } from '@/utils/admin/event-scope'
 
 export const revalidate = 0
 
@@ -15,22 +16,34 @@ export default async function AdminDashboardPage() {
     managerName = manager?.name || manager?.username || ''
   }
 
-  const { count: ticketCount } = await supabase.from('tickets').select('*', { count: 'exact', head: true })
+  // Everything below is about the event picked in the sidebar, or every event
+  // when "All events" is picked.
+  const { event } = await getEventScope()
+  const forEvent = <Q extends { eq: (column: string, value: string) => Q }>(query: Q) =>
+    event ? query.eq('event_id', event.id) : query
 
-  const { data: paidTickets } = await supabase.from('tickets').select('amount').eq('payment_status', 'APPROVED')
+  const { count: ticketCount } = await forEvent(supabase.from('tickets').select('*', { count: 'exact', head: true }))
+
+  const { data: paidTickets } = await forEvent(supabase.from('tickets').select('amount').eq('payment_status', 'APPROVED'))
   const revenue = (paidTickets || []).reduce((sum: number, t: any) => sum + (Number(t.amount) || 0), 0)
 
-  const { count: checkinCount } = await supabase.from('tickets').select('*', { count: 'exact', head: true }).eq('status', 'USED')
+  const { count: checkinCount } = await forEvent(supabase.from('tickets').select('*', { count: 'exact', head: true }).eq('status', 'USED'))
 
-  const { data: recentRegistrations } = tier >= 3 ? await supabase
+  const { data: recentRegistrations } = tier >= 3 ? await forEvent(supabase
     .from('tickets')
-    .select(`*, event:events(name)`)
+    .select(`*, event:events(name)`))
     .order('created_at', { ascending: false })
     .limit(5) : { data: [] }
 
-  const { data: recentCheckins } = await supabase
+  // A check-in is filtered through its ticket, which has to be an inner join
+  // for the filter to drop the other events' rows rather than blank them.
+  let checkinQuery = supabase
     .from('checkins')
-    .select(`*, ticket:tickets(participant_name, event:events(name))`)
+    .select(event
+      ? `*, ticket:tickets!inner(participant_name, event_id, event:events(name))`
+      : `*, ticket:tickets(participant_name, event:events(name))`)
+  if (event) checkinQuery = checkinQuery.eq('ticket.event_id', event.id)
+  const { data: recentCheckins } = await checkinQuery
     .order('created_at', { ascending: false })
     .limit(5)
 
@@ -50,6 +63,14 @@ export default async function AdminDashboardPage() {
         <h1 style={{ fontSize: '2.5rem', margin: '0 0 8px', lineHeight: 1.2, letterSpacing: '-0.03em', color: '#1a202c' }}>
           {tier === 1 ? 'Gate Check-in Monitor' : tier === 2 && managerName ? `Welcome, ${managerName}` : 'Event Operations Dashboard'}
         </h1>
+        <p style={{ margin: '0 0 8px', color: '#4a5568', fontWeight: 600 }}>
+          {event ? event.name : 'All events'}
+          {event?.event_date && (
+            <span style={{ color: '#a0aec0', fontWeight: 400 }}>
+              {' · '}{new Date(event.event_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
+            </span>
+          )}
+        </p>
         <p style={{ margin: 0, color: '#718096', fontSize: '1.1rem', maxWidth: '800px' }}>
           {tier === 1 
             ? 'Monitor real-time gate check-in activity. Use the Gate Scanner to verify passes.'

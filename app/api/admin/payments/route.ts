@@ -2,6 +2,7 @@ import { requireAdmin } from '@/utils/auth/require-admin'
 import { getPaymentScope } from '@/utils/auth/payment-scope'
 import { NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/utils/supabase/server'
+import { getEventScope } from '@/utils/admin/event-scope'
 
 export async function GET() {
   const guard = await requireAdmin(2)
@@ -44,6 +45,10 @@ export async function GET() {
       ].join(',')
     )
   }
+
+  // Only the event picked in the admin sidebar, unless that is all of them.
+  const { event } = await getEventScope()
+  if (event) query = query.eq('event_id', event.id)
 
   const { data: payments, error } = await query
 

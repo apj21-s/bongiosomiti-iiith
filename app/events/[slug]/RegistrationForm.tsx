@@ -14,8 +14,21 @@ import {
 import { isIiitEmail } from '@/utils/email-verification'
 // ...and the same one it prices with, for the same reason.
 import { audienceFor, groupByMeal, keyOf, priceOf, quote, type PassType } from '@/utils/pricing'
+import { todayInIndia } from '@/utils/admin/event-scope-shared'
 
 type RegistrationFormProps = { event: any }
+
+/**
+ * Whether the event is behind us: closed outright, or its date has passed.
+ *
+ * The day is taken in India time on both server and client, so the two agree
+ * on which side of midnight it is and the locked card does not flicker.
+ */
+function isEventOver(event: any): boolean {
+  if (event?.status === 'CLOSED') return true
+  if (!event?.event_date) return false
+  return String(event.event_date).slice(0, 10) < todayInIndia()
+}
 
 const UPI_ID = 'utsav.iiit@okhdfcbank'
 const DRAFT_KEY = 'bangiya.samiti.iiith_registration_draft_v4'
@@ -425,6 +438,12 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
   const stepProps = { event, draft, updateDraft, nextStage, prevStage, error, setError, total, subtotal, discount, applyCoupon, couponMsg, setCouponMsg, handleSubmit, loading, confirmation, setScreenshotPreview, screenshotPreview, transitionTo, allowedUpiIds, sendOtp, checkOtp, onEmailChange, otpBusy, otpNote, emailIsVerified, audience }
 
   if (event?.status !== 'OPEN') {
+    // A portal locked after the day has nothing to open to, so it says it is
+    // closed rather than promising registrations that are not coming.
+    const over = isEventOver(event)
+    const lockTitle = over ? 'Registrations Closed' : 'Registrations Opening Soon'
+    const lockDesc = over ? 'This event is over. Thank you for celebrating with us!' : 'Stay tuned for updates!'
+
     if (event?.slug !== 'mahalaya') {
       return (
         <div className="reg-shell is-locked" style={{ overflow: 'hidden', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '600px', backgroundColor: '#fff8f0' }}>
@@ -436,8 +455,8 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
                 <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
               </svg>
             </div>
-            <h4 className="form-lock-title" style={{ fontSize: '1.5rem', color: '#5c4033', marginBottom: '0.5rem', textAlign: 'center' }}>Registrations Opening Soon</h4>
-            <p className="form-lock-desc" style={{ color: '#8b4513', textAlign: 'center' }}>Stay tuned for updates!</p>
+            <h4 className="form-lock-title" style={{ fontSize: '1.5rem', color: '#5c4033', marginBottom: '0.5rem', textAlign: 'center' }}>{lockTitle}</h4>
+            <p className="form-lock-desc" style={{ color: '#8b4513', textAlign: 'center' }}>{lockDesc}</p>
           </div>
         </div>
       )
@@ -464,8 +483,8 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
                   <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                 </svg>
               </div>
-              <h4 className="form-lock-title">Registrations Opening Soon</h4>
-              <p className="form-lock-desc">Stay tuned for updates!</p>
+              <h4 className="form-lock-title">{lockTitle}</h4>
+              <p className="form-lock-desc">{lockDesc}</p>
             </div>
           </div>
         </div>

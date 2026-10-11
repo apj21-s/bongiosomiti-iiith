@@ -1,10 +1,30 @@
 'use client'
 
 import { useState } from 'react'
+import type { DigestSettings } from '@/utils/data/digest-settings'
 
-
-export default function DigestsClient({ initialManagers }: { initialManagers: any[] }) {
+export default function DigestsClient({ initialManagers, initialSettings }: { initialManagers: any[]; initialSettings: DigestSettings }) {
   const [loadingId, setLoadingId] = useState<string | null>(null)
+  const [paused, setPaused] = useState(initialSettings.isPaused)
+  const [savingPause, setSavingPause] = useState(false)
+
+  async function handlePause(next: boolean) {
+    setSavingPause(true)
+    try {
+      const res = await fetch('/api/admin/digests/pause', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paused: next }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.error || 'Could not change the daily digest')
+      setPaused(next)
+    } catch (err: any) {
+      alert(err.message || 'An error occurred')
+    } finally {
+      setSavingPause(false)
+    }
+  }
 
   async function handleSend(managerId?: string) {
     setLoadingId(managerId || 'ALL')
@@ -28,6 +48,35 @@ export default function DigestsClient({ initialManagers }: { initialManagers: an
   }
 
   return (
+    <>
+    <div className="admin-section-card" style={{ marginBottom: '24px' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ maxWidth: '640px' }}>
+          <h3 style={{ margin: '0 0 6px' }}>
+            Daily digest:{' '}
+            <span style={{ color: paused ? '#e53e3e' : '#38a169' }}>{paused ? 'Paused' : 'Running'}</span>
+          </h3>
+          <p style={{ margin: 0, color: '#718096', fontSize: '0.9rem' }}>
+            {paused
+              ? 'The scheduled email is not going out. Resume it when registrations open for the next event. The Send buttons below still work.'
+              : 'Goes out every evening to managers with something to verify. Pause it between events, when there are no registrations to report.'}
+          </p>
+          {!initialSettings.available && (
+            <p style={{ margin: '8px 0 0', color: '#c05621', fontSize: '0.85rem' }}>
+              Run <code>supabase/digest-settings.sql</code> in Supabase before this switch can be used.
+            </p>
+          )}
+        </div>
+        <button
+          className={`btn ${paused ? 'btn-primary' : 'btn-danger'}`}
+          onClick={() => handlePause(!paused)}
+          disabled={savingPause || !initialSettings.available}
+        >
+          {savingPause ? 'Saving...' : paused ? 'Resume Daily Digest' : 'Pause Daily Digest'}
+        </button>
+      </div>
+    </div>
+
     <div className="admin-section-card">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <h3 style={{ margin: 0 }}>Manager List</h3>
@@ -85,5 +134,6 @@ export default function DigestsClient({ initialManagers }: { initialManagers: an
         </table>
       </div>
     </div>
+    </>
   )
 }

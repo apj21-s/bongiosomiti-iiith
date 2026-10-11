@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { getAdminTier } from '@/utils/auth/server'
 import { createServiceRoleClient } from '@/utils/supabase/server'
 import { getEvents } from '@/utils/data/events'
+import { getEventScope } from '@/utils/admin/event-scope'
 import {
   AUDIENCES,
   AUDIENCE_LABEL,
@@ -107,6 +108,7 @@ export default async function AdminStatisticsPage({
   const { event: wanted } = await searchParams
   const supabase = await createServiceRoleClient()
   const events = await getEvents()
+  const { event: scoped } = await getEventScope()
 
   const { data: allTickets } = await supabase
     .from('tickets')
@@ -114,8 +116,9 @@ export default async function AdminStatisticsPage({
 
   const tickets = (allTickets || []) as (StatTicket & { payment_status?: string; event_id?: string })[]
 
-  // Default to whichever event people have actually booked, so the page opens
-  // on something rather than on an empty grid.
+  // Default to the event picked in the sidebar. With "All events" picked, to
+  // whichever event people have actually booked, so the page opens on
+  // something rather than on an empty grid - the grid is one event's plates.
   const ticketsPerEvent = new Map<string, number>()
   for (const t of tickets) {
     if (t.event_id) ticketsPerEvent.set(t.event_id, (ticketsPerEvent.get(t.event_id) ?? 0) + 1)
@@ -123,6 +126,7 @@ export default async function AdminStatisticsPage({
   const busiest = [...ticketsPerEvent.entries()].sort((a, b) => b[1] - a[1])[0]?.[0]
   const event =
     events.find((e: any) => e.slug === wanted) ||
+    events.find((e: any) => e.id === scoped?.id) ||
     events.find((e: any) => e.id === busiest) ||
     events[0]
 

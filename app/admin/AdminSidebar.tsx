@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import LogoutButton from './LogoutButton'
+import AdminEventPicker from './AdminEventPicker'
 
 type AdminTier = 1 | 2 | 3
 
@@ -111,6 +112,7 @@ export default function AdminSidebar() {
           <nav className="admin-mobile-dropdown">
             <Link href="/" className="admin-nav-link" onClick={closeDrawer}>🌍 Public Website</Link>
             <div className="dropdown-divider"></div>
+            {canSee(1) && <AdminEventPicker />}
             {canSee(2) && (
               <Link href="/admin" className={`admin-nav-link ${isActive('/admin') ? 'active' : ''}`} onClick={closeDrawer}>📊 Overview</Link>
             )}
@@ -178,7 +180,10 @@ export default function AdminSidebar() {
           <div style={{ margin: '16px 0 8px 16px', fontSize: '0.75rem', fontWeight: 700, color: '#a0aec0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             Dashboard
           </div>
-          
+
+          {/* The pages below show one event at a time; this picks which. */}
+          {canSee(1) && <AdminEventPicker />}
+
           {canSee(1) && (
             <Link href="/admin" className={`admin-nav-link ${isActive('/admin') ? 'active' : ''}`} onClick={closeDrawer}>
               <span style={{ marginRight: '10px' }}>📊</span> {tier === 1 ? 'Check-in Activity' : 'Overview'}

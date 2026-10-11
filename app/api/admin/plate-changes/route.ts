@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/utils/auth/require-admin'
 import { listPlateChanges, raisePlateChange } from '@/utils/data/plate-change-store'
+import { getEventScope } from '@/utils/admin/event-scope'
 
 /**
  * Only a super admin, both to raise a change and to see the queue.
@@ -24,7 +25,10 @@ export async function GET(request: Request) {
 
   const result = await listPlateChanges(status)
   if ('error' in result) return NextResponse.json({ error: result.error }, { status: result.status })
-  return NextResponse.json(result)
+
+  // Only the event picked in the admin sidebar, unless that is all of them.
+  const { event } = await getEventScope()
+  return NextResponse.json(event ? result.filter((row) => row.event_id === event.id) : result)
 }
 
 export async function POST(request: Request) {

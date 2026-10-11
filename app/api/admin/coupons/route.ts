@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/utils/auth/require-admin'
 import { getEvents } from '@/utils/data/events'
+import { getEventScope } from '@/utils/admin/event-scope'
 import { registrationStats } from '@/utils/data/registrations'
 import { changeEventCoupons } from '@/utils/data/coupon-store'
 import { validateCoupon, type Coupon } from '@/utils/coupons'
@@ -23,7 +24,9 @@ export async function GET() {
   const guard = await requireAdmin(REQUIRED_TIER)
   if (!guard.ok) return guard.response
 
-  const events = ((await getEvents()) || []) as EventRow[]
+  // Only the event picked in the admin sidebar, unless that is all of them.
+  const { event: scoped } = await getEventScope()
+  const events = (((await getEvents()) || []) as EventRow[]).filter((e) => !scoped || e.id === scoped.id)
   const stats = await registrationStats(events.map((e) => e.id))
 
   return NextResponse.json(

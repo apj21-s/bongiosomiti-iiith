@@ -79,7 +79,11 @@ const SARASWATI_COURSES = [
   },
 ]
 
-export default function MenuCardModal({ slug, status = 'OPEN' }: { slug: string, status?: string }) {
+/**
+ * `locked` hides the dishes behind a "cooking" card. It is set from the admin
+ * events table and is independent of whether registrations are open.
+ */
+export default function MenuCardModal({ slug, locked = false }: { slug: string, locked?: boolean }) {
   const [open, setOpen] = useState(false)
   const [activeMeal, setActiveMeal] = useState<'breakfast' | 'lunch'>('lunch')
   const [expandedDiet, setExpandedDiet] = useState<'veg' | 'nonveg' | null>(null)
@@ -204,7 +208,7 @@ export default function MenuCardModal({ slug, status = 'OPEN' }: { slug: string,
                 transition={{ duration: 0.3, delay: 0.1 }}
                 className={isMahalaya ? 'mahalaya-menu-modal__body' : 'saraswati-menu-modal__body'}
               >
-                {status !== 'OPEN' ? (
+                {locked ? (
                   <div style={{ padding: '60px 20px', textAlign: 'center' }}>
                     <div style={{ fontSize: '48px', marginBottom: '16px' }}>🧑‍🍳</div>
                     <h3 className={isMahalaya ? 'mahalaya-menu-modal__title' : 'saraswati-menu-modal__title'}>Menu is Cooking...</h3>

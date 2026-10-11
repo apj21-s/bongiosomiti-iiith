@@ -61,11 +61,11 @@ function PaidTo({ collector }: { collector?: Collector | null }) {
   )
 }
 
-export default function RegistrationsClient({ initialEvents }: { initialEvents: any[] }) {
+export default function RegistrationsClient({ initialEvents, initialEventSlug = 'all' }: { initialEvents: any[]; initialEventSlug?: string }) {
   const [registrations, setRegistrations] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
-  const [eventSlug, setEventSlug] = useState('all')
+  const [eventSlug, setEventSlug] = useState(initialEventSlug)
   const [status, setStatus] = useState('all')
 
   async function fetchRegs() {

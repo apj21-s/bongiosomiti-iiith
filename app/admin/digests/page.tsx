@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { getAdminIdentity } from '@/utils/auth/server'
 import { createServiceRoleClient } from '@/utils/supabase/server'
+import { getDigestSettings } from '@/utils/data/digest-settings'
 import DigestsClient from './DigestsClient'
 
 export const dynamic = 'force-dynamic'
@@ -15,6 +16,8 @@ export default async function AdminDigestsPage() {
     .select('*')
     .order('name')
 
+  const settings = await getDigestSettings()
+
   return (
     <main className="admin-page-content">
       <div style={{ marginBottom: '24px' }}>
@@ -27,7 +30,7 @@ export default async function AdminDigestsPage() {
         </p>
       </div>
 
-      <DigestsClient initialManagers={managers || []} />
+      <DigestsClient initialManagers={managers || []} initialSettings={settings} />
     </main>
   )
 }

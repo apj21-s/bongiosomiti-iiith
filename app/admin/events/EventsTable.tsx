@@ -45,6 +45,22 @@ export default function EventsTable({ events }: { events: any[] }) {
     }
   }
 
+  async function handleToggleMenu(slug: string, locked: boolean) {
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/admin/events/${slug}/menu`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ locked }),
+      })
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'Failed to change the menu card')
+      window.location.reload()
+    } catch (e: any) {
+      setLoading(false)
+      notifyError(e)
+    }
+  }
+
   if (loading) return <p className="text-muted">Loading...</p>
 
   return (
@@ -57,12 +73,13 @@ export default function EventsTable({ events }: { events: any[] }) {
           <th>Pass Price</th>
           <th>Registration Capacity</th>
           <th>Status</th>
+          <th>Menu Card</th>
           <th>Actions</th>
         </tr>
       </thead>
       <tbody>
         {!events?.length && (
-          <tr><td colSpan={7} className="text-muted">No events found in catalog.</td></tr>
+          <tr><td colSpan={8} className="text-muted">No events found in catalog.</td></tr>
         )}
         {events?.map((evt) => (
           <tr key={evt.id}>
@@ -75,10 +92,26 @@ export default function EventsTable({ events }: { events: any[] }) {
             <td>{evt.price === 0 ? 'Free' : `₹${evt.price}`}</td>
             <td>{evt.capacity}</td>
             <td><span className={`badge ${evt.status === 'OPEN' ? '' : 'badge--error'}`}>{evt.status}</span></td>
+            {/* Its own switch: the menu stays up for the people coming after
+                registrations have shut. Unlocked unless somebody locks it. */}
+            <td>
+              <div className="action-btn-group">
+                <span className={`badge ${evt.config?.menu_locked === true ? 'badge--error' : ''}`}>
+                  {evt.config?.menu_locked === true ? 'LOCKED' : 'VISIBLE'}
+                </span>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-secondary"
+                  onClick={() => handleToggleMenu(evt.slug, evt.config?.menu_locked !== true)}
+                >
+                  {evt.config?.menu_locked === true ? 'Unlock Menu' : 'Lock Menu'}
+                </button>
+              </div>
+            </td>
             <td>
               <div className="action-btn-group">
                 <button type="button" className={`btn btn-sm ${evt.status === 'OPEN' ? 'btn-danger' : 'btn-secondary'}`} onClick={() => handleToggleStatus(evt.slug)}>
-                  {evt.status === 'OPEN' ? 'Lock' : 'Unlock'}
+                  {evt.status === 'OPEN' ? 'Lock Registrations' : 'Open Registrations'}
                 </button>
                 {/* Closing is a separate decision from pausing, so it is a
                     separate button and it asks first - reopening a closed
