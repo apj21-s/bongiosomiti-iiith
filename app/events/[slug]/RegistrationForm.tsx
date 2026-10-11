@@ -3,6 +3,7 @@
 import { useMemo, useState, useEffect, useRef, Fragment } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 import UtsavLoader from '@/components/utsav-loader'
+import ReceiptScanOverlay, { type ReceiptScan } from '@/components/receipt-scan-overlay'
 import {
   checkReceiptDetails,
   isValidUtr,
@@ -41,7 +42,6 @@ type DraftState = {
   email: string
   phone: string
   collegeId: string
-  city: string
   numPasses: number
   foodPref: string
   vegCount: number
@@ -75,7 +75,7 @@ type DraftState = {
 }
 
 const DEFAULT_DRAFT: DraftState = {
-  isIiit: null, fullName: '', email: '', phone: '', collegeId: '', city: '',
+  isIiit: null, fullName: '', email: '', phone: '', collegeId: '',
   numPasses: 1, foodPref: '', vegCount: 0, nonVegCount: 1, passSelections: {}, couponInput: '', appliedCoupon: null,
   selectedUpiId: '', utr: '', receiverUpi: '', receiptPath: '',
   utrFromOcr: false, receiverUpiFromOcr: false,
@@ -92,6 +92,36 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
   const [couponMsg, setCouponMsg] = useState<{ type: 'success' | 'error', text: string } | null>(null)
   const [confirmation, setConfirmation] = useState<any>(null)
   const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null)
+  // The receipt check in progress, shown over the card (ReceiptScanOverlay).
+  const [receiptScan, setReceiptScan] = useState<ReceiptScan | null>(null)
+
+  /**
+   * Whether registration is still open, as of the last time anyone asked.
+   *
+   * The page is rendered with the event's status once, and a form can stay
+   * open for a long time after that. An admin closing registration has to
+   * reach the people already filling it in - before they pay, not when they
+   * press submit - so the status is asked again on a timer, whenever the tab
+   * comes back into view, and at every step that commits the visitor to
+   * something. The register route checks it once more on the way in, which
+   * is the check that actually holds.
+   */
+  const [closedMidway, setClosedMidway] = useState<string | null>(null)
+
+  async function checkStillOpen(): Promise<boolean> {
+    try {
+      const res = await fetch(`/api/events/${encodeURIComponent(event.slug)}/status`, { cache: 'no-store' })
+      if (!res.ok) return true // cannot tell from here; the server decides at submit
+      const data = await res.json()
+      if (data.open === false) {
+        setClosedMidway(String(data.status || 'CLOSED'))
+        return false
+      }
+      return true
+    } catch {
+      return true
+    }
+  }
 
   // The UPI ids this festival collects at - one per manager. What the OCR reads
   // off a receipt is checked against these, so a receipt naming somebody else's
@@ -135,6 +165,26 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
   }, [event.slug])
 
   const updateDraft = (u: Partial<DraftState>) => setDraft(p => ({ ...p, ...u }))
+
+  // A finished registration is not taken back, and there is nothing to watch
+  // once the form is already closed.
+  const watchingStatus = event?.status === 'OPEN' && !closedMidway && draft.stage < 6
+  useEffect(() => {
+    if (!watchingStatus) return
+    const check = () => {
+      if (document.visibilityState === 'visible') void checkStillOpen()
+    }
+    const timer = window.setInterval(check, 15000)
+    document.addEventListener('visibilitychange', check)
+    window.addEventListener('focus', check)
+    return () => {
+      window.clearInterval(timer)
+      document.removeEventListener('visibilitychange', check)
+      window.removeEventListener('focus', check)
+    }
+    // checkStillOpen only reads the slug.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [watchingStatus, event?.slug])
 
   /**
    * The email OTP.
@@ -231,7 +281,7 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
   const passTypes = event.config?.pass_types || null
   const calculatedNumPasses = passTypes ? Object.values(draft.passSelections).reduce((a, b) => a + b, 0) : draft.numPasses
 
-  const nextStage = () => {
+  const nextStage = async () => {
     setError(null)
     if (draft.stage === 1 && !draft.isIiit) return setError('Select an association.')
     if (draft.stage === 2) {
@@ -240,7 +290,6 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
       if (draft.phone.length < 10) return setError('Invalid phone.')
       // The roll number is gone: affiliation is settled by the verified email
       // domain, and staff, faculty and alumni never had one to give.
-      if (draft.isIiit === 'no' && !draft.city.trim()) return setError('Enter City.')
       // The address has to be confirmed, and confirmed for *this* address - the
       // proof is bound to it, so editing the field after verifying clears it.
       if (!draft.emailProof || draft.verifiedEmail !== draft.email.trim().toLowerCase()) {
@@ -269,6 +318,9 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
       }
       if (total > 0 && !draft.receiverUpi.trim()) return setError('Enter the UPI ID you paid to.')
     }
+    // The next screen asks for money. Nobody is shown it for an event that has
+    // just been closed.
+    if (draft.stage === 3 && !(await checkStillOpen())) return
     transitionTo({ stage: draft.stage + 1 })
   }
   const prevStage = () => { setError(null); transitionTo({ stage: draft.stage - 1 }) }
@@ -393,6 +445,7 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
       allowedUpiIds,
     })
     if (!gate.ok) return setError(gate.error)
+    if (!(await checkStillOpen())) return
 
     setError(null)
     setLoading(true)
@@ -426,7 +479,12 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
         }),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Failed')
+      if (!res.ok) {
+        // Closed between the last check and the submit: the server's answer
+        // turns the card into the closed notice, not a red error line.
+        if (data.closed) { setClosedMidway(String(data.status || 'CLOSED')); return }
+        throw new Error(data.error || 'Failed')
+      }
       setConfirmation({ ...data, amount: total })
       transitionTo({ stage: 6 })
       localStorage.removeItem(DRAFT_KEY + '_' + event.slug)
@@ -435,14 +493,20 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
 
   if (!isLoaded) return <div>Loading...</div>
 
-  const stepProps = { event, draft, updateDraft, nextStage, prevStage, error, setError, total, subtotal, discount, applyCoupon, couponMsg, setCouponMsg, handleSubmit, loading, confirmation, setScreenshotPreview, screenshotPreview, transitionTo, allowedUpiIds, sendOtp, checkOtp, onEmailChange, otpBusy, otpNote, emailIsVerified, audience }
+  const stepProps = { event, draft, updateDraft, nextStage, prevStage, error, setError, total, subtotal, discount, applyCoupon, couponMsg, setCouponMsg, handleSubmit, loading, confirmation, setScreenshotPreview, screenshotPreview, transitionTo, allowedUpiIds, sendOtp, checkOtp, onEmailChange, otpBusy, otpNote, emailIsVerified, audience, checkStillOpen, setReceiptScan }
 
-  if (event?.status !== 'OPEN') {
+  if (event?.status !== 'OPEN' || (closedMidway && draft.stage < 6)) {
     // A portal locked after the day has nothing to open to, so it says it is
     // closed rather than promising registrations that are not coming.
-    const over = isEventOver(event)
-    const lockTitle = over ? 'Registrations Closed' : 'Registrations Opening Soon'
-    const lockDesc = over ? 'This event is over. Thank you for celebrating with us!' : 'Stay tuned for updates!'
+    const over = isEventOver(closedMidway ? { ...event, status: closedMidway } : event)
+    const lockTitle = closedMidway ? 'Registrations Closed' : over ? 'Registrations Closed' : 'Registrations Opening Soon'
+    const lockDesc = closedMidway
+      ? 'Registrations were just closed by the organisers, so this registration could not be completed.'
+      : over ? 'This event is over. Thank you for celebrating with us!' : 'Stay tuned for updates!'
+    // Someone who reached the payment screen may already have sent money.
+    const paidNote = closedMidway && draft.stage >= 4
+      ? `If you have already paid, please contact the organisers with your UTR${draft.utr ? ` (${draft.utr})` : ''} for a refund.`
+      : null
 
     if (event?.slug !== 'mahalaya') {
       return (
@@ -457,6 +521,7 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
             </div>
             <h4 className="form-lock-title" style={{ fontSize: '1.5rem', color: '#5c4033', marginBottom: '0.5rem', textAlign: 'center' }}>{lockTitle}</h4>
             <p className="form-lock-desc" style={{ color: '#8b4513', textAlign: 'center' }}>{lockDesc}</p>
+            {paidNote && <p className="form-lock-desc form-lock-paid" style={{ color: '#8b4513', textAlign: 'center' }}>{paidNote}</p>}
           </div>
         </div>
       )
@@ -485,6 +550,7 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
               </div>
               <h4 className="form-lock-title">{lockTitle}</h4>
               <p className="form-lock-desc">{lockDesc}</p>
+              {paidNote && <p className="form-lock-desc form-lock-paid">{paidNote}</p>}
             </div>
           </div>
         </div>
@@ -495,6 +561,7 @@ export default function RegistrationForm({ event }: RegistrationFormProps) {
   return (
     <div className="reg-shell">
       {loading && <UtsavLoader inline={true} message="PROCESSING YOUR REGISTRATION..." />}
+      <ReceiptScanOverlay scan={receiptScan} />
       {/* Decorative Assets - Genuine Artwork Only */}
       <img src="/mahalaya_registration_assets/03_corner_top_left.png" className="reg-corner-tl" alt="" />
       <img src="/mahalaya_registration_assets/04_corner_top_right.png" className="reg-corner-tr" alt="" />
@@ -653,10 +720,6 @@ function DetailsStep({ draft, updateDraft, nextStage, prevStage, transitionTo, e
     touched: true,
     rule: (v) => (v.replace(/\D/g, '').length < 10 ? 'A phone number needs 10 digits.' : null),
   })
-  const cityState = fieldState(draft.city, {
-    touched: true,
-    rule: (v) => (v.length < 2 ? 'Enter the city you are coming from.' : null),
-  })
 
   return (
     <div className="reg-details">
@@ -743,18 +806,6 @@ function DetailsStep({ draft, updateDraft, nextStage, prevStage, transitionTo, e
         {/* No roll number. A confirmed @iiit.ac.in address is what establishes
             the institute rate now, and it covers staff, faculty and alumni,
             who were never issued a roll number and could not fill this in. */}
-        {draft.isIiit === 'no' && (
-          <div className="reg-field">
-            <label>City *</label>
-            <input
-              {...fieldProps(cityState)}
-              className={`reg-input ${fieldProps(cityState).className}`}
-              value={draft.city}
-              onChange={e => updateDraft({ city: e.target.value })}
-              placeholder="Enter your City"
-            />
-          </div>
-        )}
       </div>
 
       <div className="reg-actions dual">
@@ -1115,7 +1166,7 @@ function SpinningCounter({ value }: { value: number }) {
   )
 }
 
-function PaymentStep({ event, draft, updateDraft, prevStage, transitionTo, total, subtotal, discount, applyCoupon, couponMsg, setCouponMsg, allowedUpiIds }: any) {
+function PaymentStep({ event, draft, updateDraft, prevStage, transitionTo, total, subtotal, discount, applyCoupon, couponMsg, setCouponMsg, allowedUpiIds, checkStillOpen }: any) {
   const [copied, setCopied] = useState(false)
   // One UPI id per manager, so adding a manager adds a way to pay: the id in
   // the list and the QR beside it, which is generated from whichever id is
@@ -1237,13 +1288,13 @@ function PaymentStep({ event, draft, updateDraft, prevStage, transitionTo, total
 
       <div className="reg-actions dual" style={{ marginTop: 'auto', paddingTop: '4px' }}>
         <RegButton text="BACK" onClick={prevStage} type="back" />
-        <RegButton text="I HAVE MADE THE PAYMENT" onClick={() => transitionTo({ paymentState: 'COMPLETED' })} type="continue" style={{ width: 'auto', padding: '0 16px' }} />
+        <RegButton text="I HAVE MADE THE PAYMENT" onClick={async () => { if (await checkStillOpen()) transitionTo({ paymentState: 'COMPLETED' }) }} type="continue" style={{ width: 'auto', padding: '0 16px' }} />
       </div>
     </div>
   )
 }
 
-function PaymentCompletedStep({ event, prevStage, handleSubmit, draft, updateDraft, transitionTo, error, setError, loading, setScreenshotPreview, screenshotPreview, allowedUpiIds, total }: any) {
+function PaymentCompletedStep({ event, prevStage, handleSubmit, draft, updateDraft, transitionTo, error, setError, loading, setScreenshotPreview, screenshotPreview, allowedUpiIds, total, checkStillOpen, setReceiptScan }: any) {
   // idle | uploading | reading | found | partial | wrong-payee | failed | upload-failed
   const [scan, setScan] = useState<{ state: string; progress: number; detail?: string }>({ state: 'idle', progress: 0 })
 
@@ -1308,6 +1359,9 @@ function PaymentCompletedStep({ event, prevStage, handleSubmit, draft, updateDra
   }
 
   async function handleReceipt(file: File) {
+    // A receipt for an event that has just closed is not filed against it.
+    if (!(await checkStillOpen())) return
+
     // A payee the previous receipt chose is not this receipt's to keep: it goes
     // back to what it was before any scan, and this scan starts from there.
     // One the visitor chose (or never changed) is remembered as that baseline.
@@ -1326,21 +1380,32 @@ function PaymentCompletedStep({ event, prevStage, handleSubmit, draft, updateDra
     // Stored first. A receipt that cannot be kept is no use to whoever has to
     // verify the payment later, so the step does not go on without it.
     setScan({ state: 'uploading', progress: 0 })
+    setReceiptScan({ step: 'saving', progress: 0.3 })
     try {
       const body = new FormData()
       body.append('receipt', file)
+      body.append('eventSlug', event.slug)
       const res = await fetch('/api/receipts', { method: 'POST', body })
       const payload = await res.json()
-      if (!res.ok) throw new Error(payload.error || 'Could not store the receipt.')
+      if (!res.ok) {
+        if (payload.closed) { setReceiptScan(null); await checkStillOpen(); return }
+        throw new Error(payload.error || 'Could not store the receipt.')
+      }
       updateDraft({ receiptPath: payload.path })
     } catch (e: any) {
+      setReceiptScan(null)
       setScan({ state: 'upload-failed', progress: 1, detail: e?.message })
       return
     }
 
     setScan({ state: 'reading', progress: 0 })
+    setReceiptScan({ step: 'preparing', progress: 0 })
     const { readReceipt } = await import('@/utils/ocr/read-receipt')
-    const result = await readReceipt(file, (progress) => setScan({ state: 'reading', progress }))
+    const result = await readReceipt(file, ({ phase, progress }) => {
+      setScan({ state: 'reading', progress })
+      setReceiptScan({ step: phase, progress })
+    })
+    setReceiptScan({ step: 'finding', progress: 0.5 })
 
     const allowed = receivers.map((id: string) => normaliseUpi(id))
     const candidates = result.upiCandidates.map(normaliseUpi)
@@ -1379,6 +1444,10 @@ function PaymentCompletedStep({ event, prevStage, handleSubmit, draft, updateDra
     if (!receiver) unread.push('UPI ID')
 
     setScan({ state: 'idle', progress: 1 })
+    // What was found stays on the card for a moment, so the steps end on an
+    // answer rather than vanishing mid-thought.
+    setReceiptScan({ step: 'done', progress: 1, found: { utr: Boolean(utr), upi: Boolean(receiver) } })
+    window.setTimeout(() => setReceiptScan(null), 1100)
     if (unread.length > 0) {
       setError(`Unable to read ${unread.join(' and ')} field${unread.length > 1 ? 's' : ''}. Please fill manually.`)
     } else {
@@ -1469,17 +1538,8 @@ function PaymentCompletedStep({ event, prevStage, handleSubmit, draft, updateDra
             )}
           </div>
 
-          {/* Progress only. Whether a field was read is said by the field being
-            filled or not; a running commentary on the reader is noise, and the
-            one useful message - which field is still blank - goes to the same
-            notice every other part of the form uses. */}
-          {(scan.state === 'uploading' || scan.state === 'reading') && (
-            <div className="reg-scan" aria-live="polite">
-              {scan.state === 'uploading'
-                ? <span>Saving your receipt…</span>
-                : <span>Reading your receipt… {Math.round(scan.progress * 100)}%</span>}
-            </div>
-          )}
+          {/* The progress of a read is shown over the card (ReceiptScanOverlay);
+            what is left here is the one failure that needs the visitor to act. */}
           {scan.state === 'upload-failed' && (
             <div className="reg-scan reg-scan--partial" aria-live="polite">
               {scan.detail || 'Could not save the receipt.'} Please try uploading it again -
@@ -1496,18 +1556,22 @@ function PaymentCompletedStep({ event, prevStage, handleSubmit, draft, updateDra
           stored alongside, and a verifier checks both against it. Removing the
           image clears these, so a fresh receipt starts from nothing. */}
           <div className="reg-field full" style={{ marginTop: '2cqw' }}>
-            <label>UPI Transaction ID / UTR *</label>
+            <label>UTR / UPI Ref No. *</label>
             <input
               {...fieldProps(utrState)}
               className={`reg-input ${fieldProps(utrState).className}`}
               value={draft.utr}
               onChange={e => updateDraft({ utr: e.target.value, utrFromOcr: false })}
-              placeholder="Enter your UPI Transaction ID"
+              placeholder="12-digit UTR, e.g. 428512345678"
               inputMode="text"
               autoComplete="off"
             />
-            {draft.utrFromOcr && draft.utr && (
+            {draft.utrFromOcr && draft.utr ? (
               <span className="reg-read__note">read from your receipt — correct it if it is wrong</span>
+            ) : (
+              // The apps print their own ids too, often first and larger; this
+              // is the one a bank statement shows.
+              <span className="reg-read__note">The 12-digit UTR / UPI Ref No. - not the PhonePe or Google Pay transaction ID</span>
             )}
           </div>
 

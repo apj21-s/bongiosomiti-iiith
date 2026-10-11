@@ -23,6 +23,7 @@ export function createMockClient() {
         filters: [] as any[],
         orderOpts: [] as any[],
         limitVal: null as number | null,
+        offsetVal: 0,
         isSingle: false,
         isMaybeSingle: false,
         insertData: null as any,
@@ -113,7 +114,7 @@ export function createMockClient() {
         }
 
         if (state.limitVal !== null) {
-          collection = collection.slice(0, state.limitVal)
+          collection = collection.slice(state.offsetVal, state.offsetVal + state.limitVal)
         }
 
         let count = collection.length
@@ -220,6 +221,12 @@ export function createMockClient() {
         },
         limit(val: number) {
           state.limitVal = val
+          return builder
+        },
+        // Inclusive at both ends, as PostgREST's is.
+        range(from: number, to: number) {
+          state.offsetVal = from
+          state.limitVal = to - from + 1
           return builder
         },
         single() {

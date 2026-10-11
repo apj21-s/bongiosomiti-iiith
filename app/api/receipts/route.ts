@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto'
 import { createServiceRoleClient } from '@/utils/supabase/server'
 import { safeUploadFilename, MAX_UPLOAD_BYTES } from '@/utils/uploads'
 import { rateLimit, tooManyRequests } from '@/utils/rate-limit'
+import { eventOpenNow } from '@/utils/data/events'
 
 /**
  * Stores a payment receipt, so a verifier can look at the image beside the UTR
@@ -33,15 +34,28 @@ export async function POST(request: Request) {
   }
 
   let file: File | null = null
+  let eventSlug = ''
   try {
     const form = await request.formData()
     const candidate = form.get('receipt')
     if (candidate instanceof File) file = candidate
+    const slug = form.get('eventSlug')
+    if (typeof slug === 'string') eventSlug = slug.trim()
   } catch {
     return NextResponse.json({ error: 'Could not read the upload.' }, { status: 400 })
   }
 
   if (!file) return NextResponse.json({ error: 'No receipt was attached.' }, { status: 400 })
+
+  // Nothing is filed for an event that has stopped taking registrations. The
+  // register route is the check that holds; this one saves storing a receipt
+  // that could never be used.
+  if (eventSlug) {
+    const open = await eventOpenNow(eventSlug)
+    if (open.known && !open.open) {
+      return NextResponse.json({ error: 'Event is closed for registration', closed: true, status: open.status }, { status: 409 })
+    }
+  }
 
   const checked = safeUploadFilename(file)
   if (!checked.ok) return NextResponse.json({ error: checked.error }, { status: 400 })

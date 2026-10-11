@@ -101,7 +101,7 @@ export default async function PassPage({ params }: { params: Promise<{ token: st
 
                 <div className="qr-pass__qrWrap">
                   <div className="qr-pass__qrFrame pass-world__qr">
-                    <QRWrapper text={ticket.token} />
+                    <QRWrapper text={ticket.token} foodPref={ticket.food_pref} />
                   </div>
                   <div className="qr-pass__status" style={{marginTop: '0.75rem', }}>
                     <span className={`badge pass-world__status ${statusText !== 'UNUSED' ? 'badge--error' : ''}`}>{statusText}</span>

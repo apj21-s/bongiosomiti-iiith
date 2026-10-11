@@ -8,8 +8,10 @@
 /* Floating Launcher */
 .vintage-launcher {
   position: fixed;
-  /* Always the bottom right, on every page and at every scroll position. It is
-     the player at rest, so it has one home and stays in it. */
+  /* The bottom right by default, on every page and at every scroll position.
+     A visitor can drag it elsewhere (use-draggable-launcher.ts), which sets
+     right/bottom inline - so position is moved with these, never transform,
+     and the float animation below keeps working wherever it is put. */
   bottom: 24px;
   right: 24px;
   left: auto;
@@ -17,7 +19,12 @@
   background: transparent;
   border: none;
   outline: none;
-  cursor: pointer;
+  cursor: grab;
+  /* A finger on it moves it rather than scrolling the page. */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -57,7 +64,35 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .vintage-launcher,
   .vintage-launcher img { animation: none; }
+}
+
+/* Held still while it is being carried. */
+.vintage-launcher.is-dragging {
+  cursor: grabbing;
+  animation: none;
+  transition: none;
+  z-index: 1000;
+}
+
+.vintage-launcher.is-dragging img {
+  animation: none;
+  filter: drop-shadow(0 16px 22px rgba(0,0,0,0.55));
+}
+
+/* The image is never the drag target itself, or the browser's own image drag
+   would take over from ours. */
+.vintage-launcher img {
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+
+/* Smaller on phones, where 90px is a fair share of the screen's width. */
+@media (max-width: 600px) {
+  .vintage-launcher { bottom: 16px; right: 16px; }
+  .vintage-launcher img { width: 72px; }
+  .vintage-launcher-label { font-size: 0.72rem; padding: 3px 10px; }
 }
 
 .vintage-launcher-label {

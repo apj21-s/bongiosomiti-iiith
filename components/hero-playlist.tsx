@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import './hero-playlist.css'
+import { useDraggableLauncher } from './use-draggable-launcher'
 import type { Playlist } from '@/utils/data/playlists'
 import {
   noCustomPlaylist,
@@ -1711,7 +1712,8 @@ export default function HeroPlaylist({ playlists }: { playlists: Playlist[] }) {
     />
   ) : null
   /**
-   * The minimised player: always there, always the bottom left, and only
+   * The minimised player: always there - bottom right unless the visitor has
+   * dragged it somewhere else (useDraggableLauncher) - and only
    * hidden while the full player is up - the two are the same thing in two
    * sizes, so showing both at once says there are two players.
    *
@@ -1720,6 +1722,8 @@ export default function HeroPlaylist({ playlists }: { playlists: Playlist[] }) {
    * player first, and there was nothing to click if you had not scrolled.
    */
   const showLauncher = shown === false
+  const launcher = useDraggableLauncher()
+  const launcherClass = `vintage-launcher${launcher.dragging ? ' is-dragging' : ''}`
 
   // Nothing configured and nothing chosen. The button is then the whole
   // player, rather than there being no way in at all - which is what used to
@@ -1731,7 +1735,8 @@ export default function HeroPlaylist({ playlists }: { playlists: Playlist[] }) {
         {showLauncher && (
           <button
             type="button"
-            className="vintage-launcher"
+            className={launcherClass}
+            {...launcher.props}
             onClick={() => {
               setChoice(!shown);
               if (!shown) setPicking(true);
@@ -1759,10 +1764,11 @@ export default function HeroPlaylist({ playlists }: { playlists: Playlist[] }) {
       {showLauncher && (
         <button
           type="button"
-          className="vintage-launcher"
+          className={launcherClass}
+          {...launcher.props}
           onClick={() => setChoice(!shown)}
           aria-label={shown ? "Close Music Player" : "Open Music Player"}
-          data-tip={shown ? 'Hide the music player' : 'Show the music player'}
+          data-tip={shown ? 'Hide the music player' : 'Tap to play - drag to move'}
           data-tip-pos="top"
         >
           <img src="/assets/music%20thumbnail.png" alt="Pujor Gaan" />

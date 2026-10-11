@@ -11,17 +11,21 @@ import { normaliseUpi, isValidUpi } from '@/utils/payments/receipt-gate'
  * festival. A counting query that fails is not worth failing the request over -
  * the list is still correct, merely unordered - so the original order stands.
  */
-async function orderByLeastUsed(ids: string[]): Promise<string[]> {
+async function orderByLeastUsed(ids: string[], eventId: string | null): Promise<string[]> {
   if (ids.length < 2) return ids
 
   try {
     const supabase = await createServiceRoleClient()
     if (!('from' in supabase)) return ids
 
-    const { data, error } = await supabase
+    // Counted within the event when there is one: each event is its own
+    // setup, and a collector busy at the last one is not busy at this one.
+    let query = supabase
       .from('tickets')
       .select('receiver_upi')
       .in('payment_status', ['PENDING', 'APPROVED'])
+    if (eventId) query = query.eq('event_id', eventId)
+    const { data, error } = await query
 
     if (error || !Array.isArray(data)) return ids
 
@@ -54,11 +58,17 @@ async function orderByLeastUsed(ids: string[]): Promise<string[]> {
 export async function GET(request: Request) {
   const slug = new URL(request.url).searchParams.get('event') || ''
 
-  const fromManagers = await listCollectionUpiIds()
+  const event = slug
+    ? (await getEventBySlug(slug)) as { id?: string; config?: { upi_ids?: unknown; upi_id?: unknown } } | null
+    : null
+  const eventId = event?.id ? String(event.id) : null
+
+  // The managers set up for this event, or every active one if it has not
+  // been set up (utils/auth/managers.ts).
+  const fromManagers = await listCollectionUpiIds(eventId)
 
   let fromEvent: string[] = []
-  if (fromManagers.length === 0 && slug) {
-    const event = (await getEventBySlug(slug)) as { config?: { upi_ids?: unknown; upi_id?: unknown } } | null
+  if (fromManagers.length === 0 && event) {
     const configured = event?.config?.upi_ids
     const list = Array.isArray(configured)
       ? configured
@@ -83,7 +93,7 @@ export async function GET(request: Request) {
    * Counted from tickets actually filed, so it self-corrects: an id that runs
    * ahead sinks, and one nobody has paid stays first.
    */
-  const upiIds = await orderByLeastUsed(base)
+  const upiIds = await orderByLeastUsed(base, eventId)
 
   return NextResponse.json(
     { upiIds, source: fromManagers.length > 0 ? 'managers' : 'event', orderedBy: 'least-used' },

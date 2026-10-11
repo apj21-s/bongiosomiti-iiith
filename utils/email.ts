@@ -1,6 +1,7 @@
-import QRCode from 'qrcode'
 import path from 'path'
 import { mailIsConfigured, sendMail } from './mail-transport'
+import { passQrPng } from './pass-qr'
+import { FOOD_COLORS, foodKind } from './food-kind'
 
 /**
  * Text made safe to put inside the HTML of a mail.
@@ -174,12 +175,9 @@ export async function sendQRPassEmail(email: string, participantName: string, ev
   for (let i = 0; i < tokenArray.length; i++) {
     const t = tokenArray[i]
     const passCode = t.includes('_') ? t.split('_')[1] : t
-    const qrDataUrl = await QRCode.toDataURL(t, {
-      width: 350,
-      margin: 2,
-      color: { dark: '#281208', light: '#ffffff' }
-    })
-    const base64Data = qrDataUrl.split(',')[1]
+    // The plate is drawn into the QR itself (see utils/pass-qr.ts), so a Veg
+    // pass and a Non-Veg pass look different before anyone scans them.
+    const base64Data = passQrPng(t, labelArray[i]).toString('base64')
     const cid = `qr-code-${i}`
 
     // A downloaded attachment keeps its name, so the name should say which
@@ -201,15 +199,21 @@ export async function sendQRPassEmail(email: string, participantName: string, ev
     const mealLabel = labelArray[i]
     const plateOrdinal = ordinals[i]
     const altText = escapeHtml([`QR Pass ${passNumber}`, mealLabel, plateOrdinal].filter(Boolean).join(' - '))
+    // The card wears the plate's colour too; a pass with no plate keeps gold.
+    const plate = foodKind(mealLabel)
+    const cardBorder = plate ? `2px solid ${FOOD_COLORS[plate].mark}` : '1px solid #C5A66B'
+    const labelColor = plate ? FOOD_COLORS[plate].mark : '#281208'
+    const plateTag = plate ? (plate === 'veg' ? '&#9679; VEG' : '&#9650; NON-VEG') : ''
 
     qrImagesHtml += `
       <tr>
         <td align="center" style="padding-bottom: 16px;">
-          <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 320px; border: 1px solid #C5A66B; border-radius: 8px;" class="bg-panel border-gold">
+          <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 320px; border: ${cardBorder}; border-radius: 8px;" class="bg-panel${plate ? '' : ' border-gold'}">
             <tr>
               <td align="center" style="padding: 16px;">
                 <div style="font-family: Arial, sans-serif; font-size: 13px; font-weight: bold; color: #8C3026; letter-spacing: 2px; margin-bottom: 4px;" class="text-otp">PASS ${passNumber}</div>
-                ${mealLabel ? `<div style="font-family: Arial, sans-serif; font-size: 15px; font-weight: bold; color: #281208; margin-bottom: ${plateOrdinal ? '2px' : '12px'};" class="text-body">${escapeHtml(mealLabel)}</div>` : '<div style="margin-bottom: 8px;"></div>'}
+                ${plateTag ? `<div style="font-family: Arial, sans-serif; font-size: 13px; font-weight: bold; color: #ffffff; background-color: ${labelColor}; display: inline-block; padding: 3px 10px; border-radius: 4px; letter-spacing: 1px; margin-bottom: 6px;">${plateTag}</div>` : ''}
+                ${mealLabel ? `<div style="font-family: Arial, sans-serif; font-size: 15px; font-weight: bold; color: ${labelColor}; margin-bottom: ${plateOrdinal ? '2px' : '12px'};"${plate ? '' : ' class="text-body"'}>${escapeHtml(mealLabel)}</div>` : '<div style="margin-bottom: 8px;"></div>'}
                 ${plateOrdinal ? `<div style="font-family: Arial, sans-serif; font-size: 12px; color: #745F4B; margin-bottom: 12px;" class="text-secondary">${escapeHtml(plateOrdinal)}</div>` : ''}
                 <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="border-radius: 4px; padding: 8px; margin-bottom: 12px;">
                   <tr>

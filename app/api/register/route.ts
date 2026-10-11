@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/utils/supabase/server'
 import { registerSchema } from '@/utils/schemas'
 import { sendQRPassEmail, sendRegistrationPendingEmail } from '@/utils/email'
-import { getEventBySlug } from '@/utils/data/events'
+import { eventOpenNow, getEventBySlug } from '@/utils/data/events'
 import { rateLimit, tooManyRequests } from '@/utils/rate-limit'
 import { checkReceiptDetails, normaliseUpi, normaliseUtr } from '@/utils/payments/receipt-gate'
 import { listCollectionUpiIds } from '@/utils/auth/managers'
@@ -20,6 +20,11 @@ import { countRegistrations } from '@/utils/data/registrations'
 // address. Deliberately not per IP: an entire campus shares a handful of them.
 const REGISTER_LIMIT = 5
 const REGISTER_WINDOW_MS = 10 * 60 * 1000
+
+/** `closed` lets the form show its closed notice instead of an error line. */
+function closedResponse(status: string) {
+  return NextResponse.json({ error: 'Event is closed for registration', closed: true, status }, { status: 409 })
+}
 
 function generateRegistrationId() {
   return Math.floor(10000 + Math.random() * 90000).toString() // 5 digits
@@ -49,8 +54,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Event not found' }, { status: 404 })
     }
 
-    if (event.status !== 'OPEN') {
-      return NextResponse.json({ error: 'Event is closed for registration' }, { status: 400 })
+    // Read fresh, not from the event loaded above, and refused when it cannot
+    // be read: an admin closing registration has to stop this at once.
+    const openCheck = await eventOpenNow(data.eventSlug)
+    if (!openCheck.known) {
+      return NextResponse.json({ error: 'Could not confirm registration is open. Please try again in a moment.' }, { status: 503 })
+    }
+    if (!openCheck.open) {
+      return closedResponse(openCheck.status)
     }
 
     if (data.email) {
@@ -177,7 +188,8 @@ export async function POST(request: Request) {
     // this festival does not collect at, does not become a ticket. Gated on
     // the amount rather than the ticket price, because a coupon can take a
     // paid event to zero and then there is no receipt to ask for.
-    const managerUpiIds = await listCollectionUpiIds()
+    // Only the managers collecting for this event, when it has been set up.
+    const managerUpiIds = await listCollectionUpiIds(event.id)
     const eventConfig = (event as { config?: { upi_ids?: unknown; upi_id?: unknown } }).config
     const configuredUpiIds: string[] = Array.isArray(eventConfig?.upi_ids)
       ? (eventConfig.upi_ids as string[])
@@ -263,6 +275,16 @@ export async function POST(request: Request) {
       // Shared out the same way the amount above is, so the two agree per pass.
       discount_amount: discounts[i],
     }))
+
+    // Once more, as late as possible. The checks above - the email proof, the
+    // coupon, capacity - take long enough for an admin to close registration
+    // in between, and closing has to mean nothing else goes in.
+    const stillOpen = await eventOpenNow(data.eventSlug)
+    if (!stillOpen.known || !stillOpen.open) {
+      return stillOpen.known
+        ? closedResponse(stillOpen.status)
+        : NextResponse.json({ error: 'Could not confirm registration is open. Please try again in a moment.' }, { status: 503 })
+    }
 
     const { data: tickets, error: ticketError } = await supabase
       .from('tickets')

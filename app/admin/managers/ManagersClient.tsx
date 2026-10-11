@@ -12,7 +12,10 @@ type Manager = {
   createdAt?: string | null
   createdBy?: string | null
   totalVerifiedAmount?: number
+  eventIds?: string[]
 }
+
+type EventOption = { id: string; name: string }
 
 export default function ManagersClient() {
   const [managers, setManagers] = useState<Manager[]>([])
@@ -20,19 +23,31 @@ export default function ManagersClient() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
+  // The event picked in the admin sidebar, which the amounts are for (null
+  // for all events), and the events a manager can be set up to collect for.
+  const [scopeEvent, setScopeEvent] = useState<EventOption | null>(null)
+  const [events, setEvents] = useState<EventOption[]>([])
+  const [assignmentsAvailable, setAssignmentsAvailable] = useState(false)
 
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [upiId, setUpiId] = useState('')
   const [email, setEmail] = useState('')
   const [name, setName] = useState('')
+  const [newEventIds, setNewEventIds] = useState<string[]>([])
 
   const load = useCallback(async () => {
     try {
       const res = await fetch('/api/admin/managers')
       const data = await res.json()
-      if (res.ok && Array.isArray(data)) setManagers(data)
-      else setError(data?.error || 'Could not load manager profiles')
+      if (res.ok && Array.isArray(data?.managers)) {
+        setManagers(data.managers)
+        setScopeEvent(data.event)
+        setEvents(data.events || [])
+        setAssignmentsAvailable(Boolean(data.assignmentsAvailable))
+        // A new profile is offered the event being looked at by default.
+        setNewEventIds(data.event ? [data.event.id] : [])
+      } else setError(data?.error || 'Could not load manager profiles')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not load manager profiles')
     } finally {
@@ -61,12 +76,15 @@ export default function ManagersClient() {
       const res = await fetch('/api/admin/managers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password, upiId, email, name }),
+        body: JSON.stringify({ username, password, upiId, email, name, eventIds: newEventIds }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Could not create the profile')
 
-      setNotice(`Created ${data.username}. They sign in at /admin/login with this username and password.`)
+      setNotice(
+        `Created ${data.username}. They sign in at /admin/login with this username and password.` +
+        (data.warning ? ` Their events could not be saved (${data.warning}) - set them in the table below.` : '')
+      )
       setUsername(''); setPassword(''); setUpiId(''); setEmail(''); setName('')
       load()
     } catch (err) {
@@ -92,6 +110,26 @@ export default function ManagersClient() {
     } catch (e: any) {
       setLoading(false)
       setError(e.message)
+    }
+  }
+
+  async function toggleEvent(manager: Manager, eventId: string) {
+    const current = manager.eventIds || []
+    const eventIds = current.includes(eventId)
+      ? current.filter((id) => id !== eventId)
+      : [...current, eventId]
+    setError(null)
+    try {
+      const res = await fetch(`/api/admin/managers/${manager.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventIds }),
+      })
+      const d = await res.json()
+      if (!res.ok) throw new Error(d.error || 'Could not update the events')
+      setManagers((all) => all.map((m) => (m.id === manager.id ? { ...m, eventIds } : m)))
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not update the events')
     }
   }
 
@@ -156,6 +194,28 @@ export default function ManagersClient() {
             <input id="mgr-name" className="form-control" value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter Name" />
           </div>
 
+          {assignmentsAvailable && events.length > 0 && (
+            <div className="field" style={{ gridColumn: '1 / -1' }}>
+              <label>Collects for</label>
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                {events.map((ev) => {
+                  const on = newEventIds.includes(ev.id)
+                  return (
+                    <button
+                      key={ev.id}
+                      type="button"
+                      className={`btn btn-sm ${on ? 'btn-primary' : 'btn-secondary'}`}
+                      aria-pressed={on}
+                      onClick={() => setNewEventIds((ids) => (on ? ids.filter((id) => id !== ev.id) : [...ids, ev.id]))}
+                    >
+                      {on ? '✓ ' : ''}{ev.name}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
           <div className="admin-form-actions">
             <button className="btn btn-primary" type="submit" disabled={saving}>
               {saving ? 'Creating…' : 'Create profile'}
@@ -169,24 +229,60 @@ export default function ManagersClient() {
 
       <section className="admin-section-card" style={{ marginTop: 0 }}>
         <h3 style={{ marginTop: 0 }}>Manager profiles</h3>
+        <p className="text-muted" style={{ marginTop: 0 }}>
+          Verified amount is the money each manager holds {scopeEvent ? <>for <strong>{scopeEvent.name}</strong></> : 'across all events'}:
+          approved payments they are answerable for (after any reassignment from Wrong Allocations), plus or minus
+          what settled plate changes actually moved. Switch event in the sidebar.
+        </p>
+        {!assignmentsAvailable && !loading && (
+          <p className="admin-form-note">Run <code>supabase/manager-events.sql</code> to set which managers collect for which event.</p>
+        )}
+        {assignmentsAvailable && scopeEvent && !loading && managers.length > 0 &&
+          !managers.some((m) => (m.eventIds || []).includes(scopeEvent.id)) && (
+          <p className="admin-form-note">
+            Nobody is set up for {scopeEvent.name} yet, so its registration form offers every active manager&apos;s UPI ID.
+            Tick managers under Events to give it its own collectors.
+          </p>
+        )}
         <div className="table-responsive">
           <table className="data-table admin-stack-table">
             <thead>
               <tr>
-                <th>Username</th><th>Name</th><th>UPI ID</th><th>Verified Amount</th><th>Status</th><th>Created</th><th>Actions</th>
+                <th>Username</th><th>Name</th><th>UPI ID</th><th>Verified Amount</th>{assignmentsAvailable && <th>Events</th>}<th>Status</th><th>Created</th><th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {loading && <tr><td colSpan={7} className="text-muted">Loading…</td></tr>}
+              {loading && <tr><td colSpan={assignmentsAvailable ? 8 : 7} className="text-muted">Loading…</td></tr>}
               {!loading && managers.length === 0 && (
-                <tr><td colSpan={7} className="text-muted">No manager profiles yet.</td></tr>
+                <tr><td colSpan={assignmentsAvailable ? 8 : 7} className="text-muted">No manager profiles yet.</td></tr>
               )}
               {!loading && managers.map((manager) => (
                 <tr key={manager.id}>
                   <td data-label="Username"><strong>{manager.username}</strong></td>
                   <td data-label="Name">{manager.name || '—'}</td>
                   <td data-label="UPI ID"><code>{manager.upiId}</code></td>
-                  <td data-label="Verified Amount">₹{manager.totalVerifiedAmount || 0}</td>
+                  <td data-label="Verified Amount">₹{(manager.totalVerifiedAmount || 0).toLocaleString('en-IN')}</td>
+                  {assignmentsAvailable && (
+                    <td data-label="Events">
+                      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                        {events.map((ev) => {
+                          const on = (manager.eventIds || []).includes(ev.id)
+                          return (
+                            <button
+                              key={ev.id}
+                              type="button"
+                              className={`btn btn-sm ${on ? 'btn-primary' : 'btn-secondary'}`}
+                              aria-pressed={on}
+                              title={on ? `Collects for ${ev.name} - click to remove` : `Click to collect for ${ev.name}`}
+                              onClick={() => toggleEvent(manager, ev.id)}
+                            >
+                              {on ? '✓ ' : ''}{ev.name}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </td>
+                  )}
                   <td data-label="Status">
                     <span className={`badge ${manager.isActive ? '' : 'badge--error'}`}>
                       {manager.isActive ? 'ACTIVE' : 'DISABLED'}

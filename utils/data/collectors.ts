@@ -33,6 +33,8 @@ export type Collector = {
   /** The UPI id the payment was actually made to, where one was recorded. */
   upi: string | null
   username: string | null
+  /** The manager answerable for the money, when there is one. */
+  managerId: string | null
   source: CollectorSource
   /** A line of explanation where the label alone would mislead. */
   note: string | null
@@ -79,6 +81,7 @@ export function resolveCollector(
         label: nameOf(manager),
         upi: manager.upiId,
         username: manager.username,
+        managerId: manager.id,
         source: 'assigned',
         // Where it was paid, against where it was moved to - the discrepancy is
         // the whole reason anyone opens this column.
@@ -94,6 +97,7 @@ export function resolveCollector(
       label: 'Unassigned',
       upi: receiverUpi,
       username: null,
+      managerId: null,
       source: 'orphan',
       note: 'was assigned to a manager profile that no longer exists',
     }
@@ -104,6 +108,7 @@ export function resolveCollector(
       label: 'Awaiting allocation',
       upi: receiverUpi,
       username: null,
+      managerId: null,
       source: 'flagged',
       note: 'a collector reported this as not theirs',
     }
@@ -115,6 +120,7 @@ export function resolveCollector(
       label: free ? 'Free pass' : '—',
       upi: null,
       username: null,
+      managerId: null,
       source: free ? 'free' : 'unknown',
       note: free ? null : 'no receiver recorded',
     }
@@ -127,6 +133,7 @@ export function resolveCollector(
       label: nameOf(manager),
       upi: manager.upiId,
       username: manager.username,
+      managerId: manager.id,
       source: 'receipt',
       // An inactive manager still collected this payment, and whoever is
       // reconciling needs to know the account is closed to new ones.
@@ -138,6 +145,7 @@ export function resolveCollector(
     label: receiverUpi,
     upi: receiverUpi,
     username: null,
+    managerId: null,
     source: 'orphan',
     note: 'no manager profile holds this UPI id',
   }

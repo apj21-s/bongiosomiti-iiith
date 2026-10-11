@@ -2,19 +2,72 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import { foodKind, mealSection, playFeedback, unlockAudio, type FeedbackKind } from '@/utils/scanner-feedback'
+
+// How long a successful check-in stays on screen before the camera resumes.
+const AUTO_RESUME_MS = 2500
+
+type Band = 'ok' | 'warn' | 'deny'
+
+type ScanTicket = {
+  token?: string
+  participant_name?: string | null
+  food_pref?: string | null
+  college_id?: string | null
+  redeemed_gate?: string | null
+  eventName?: string
+  event?: { name?: string } | null
+}
+
+type ScanResult = {
+  outcome: string
+  message?: string
+  ticket?: ScanTicket | null
+}
+
+function bandFor(outcome?: string): Band {
+  if (outcome === 'SUCCESS') return 'ok'
+  if (outcome === 'ALREADY_USED' || outcome === 'PAYMENT_PENDING') return 'warn'
+  return 'deny'
+}
+
+const BAND_TITLE: Record<string, string> = {
+  SUCCESS: '✓ CHECKED IN',
+  ALREADY_USED: '⚠ ALREADY USED',
+  PAYMENT_PENDING: '⚠ PAYMENT PENDING',
+}
+
+function feedbackFor(result: ScanResult): FeedbackKind {
+  const band = bandFor(result?.outcome)
+  if (band !== 'ok') return band
+  return foodKind(result?.ticket?.food_pref) || 'ok'
+}
 
 export default function ScannerPage() {
   const [token, setToken] = useState('')
   const [manualToken, setManualToken] = useState('')
   const [gate, setGate] = useState('Gate 1')
-  const [result, setResult] = useState<any>(null)
+  const [result, setResult] = useState<ScanResult | null>(null)
   const [loading, setLoading] = useState(false)
   const [isScanning, setIsScanning] = useState(false)
   const [scannerError, setScannerError] = useState('')
-  
+  const [soundOn, setSoundOn] = useState(false)
+
   const scannerRef = useRef<any>(null)
   const isProcessingRef = useRef(false)
   const autoResumeTimer = useRef<any>(null)
+  // The camera callback is bound once when the scanner starts, so it reads
+  // the gate through a ref rather than the value from that first render.
+  const gateRef = useRef(gate)
+
+  useEffect(() => {
+    gateRef.current = gate
+  }, [gate])
+
+  function enableSound() {
+    if (soundOn) return
+    unlockAudio().then(setSoundOn)
+  }
 
   useEffect(() => {
     // Attempt to auto-start on mount
@@ -89,42 +142,48 @@ export default function ScannerPage() {
     setToken(cleanToken)
     setLoading(true)
     setResult(null)
-    
+    if (autoResumeTimer.current) clearTimeout(autoResumeTimer.current)
+
+    let next: ScanResult
     try {
       const res = await fetch('/api/scanner/lookup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: cleanToken, eventSlug: 'all' })
       })
-      const data = await res.json()
-      setResult({ ...data, isCheckinComplete: false })
-    } catch (e: any) {
-      setResult({ outcome: 'ERROR', message: e.message, isCheckinComplete: false })
-    } finally {
-      setLoading(false)
+      const lookup = await res.json()
+      next = lookup.outcome ? lookup : { outcome: 'ERROR', message: lookup.error || 'Lookup failed' }
+
+      // A valid pass is checked in on the same scan - the gate shouldn't
+      // need a second tap per person.
+      if (next.outcome === 'VALID') {
+        const res2 = await fetch('/api/scanner/checkin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: cleanToken, gate: gateRef.current })
+        })
+        const checkin = await res2.json()
+        next = {
+          outcome: checkin.outcome || 'ERROR',
+          message: checkin.message || checkin.error || 'Check-in failed',
+          // Failed check-ins come back without the ticket; the lookup's copy
+          // still says who it is and which plate.
+          ticket: checkin.ticket || lookup.ticket,
+        }
+      }
+    } catch (e) {
+      next = { outcome: 'ERROR', message: e instanceof Error ? e.message : String(e) }
+    }
+
+    setResult(next)
+    setLoading(false)
+    playFeedback(feedbackFor(next))
+    // Problems stay up until dismissed; a clean check-in moves the line on.
+    if (next.outcome === 'SUCCESS') {
+      autoResumeTimer.current = setTimeout(handleClear, AUTO_RESUME_MS)
     }
   }
 
-  async function handleCheckin() {
-    const cleanToken = token.trim()
-    if (!cleanToken) return
-    
-    setLoading(true)
-    try {
-      const res = await fetch('/api/scanner/checkin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: cleanToken, gate })
-      })
-      const data = await res.json()
-      setResult({ ...data, isCheckinComplete: true })
-    } catch (e: any) {
-      setResult({ outcome: 'ERROR', message: e.message, isCheckinComplete: true })
-    } finally {
-      setLoading(false)
-    }
-  }
-  
   function handleClear() {
     setToken('')
     setResult(null)
@@ -138,20 +197,13 @@ export default function ScannerPage() {
     }
   }
 
-  let resultColor = 'var(--muted)'
-  let resultBg = '#ffffff'
-  if (result) {
-    if (result.outcome === 'VALID' || result.outcome === 'SUCCESS') {
-      resultColor = '#065f46' // dark green
-      resultBg = '#d1fae5' // light green bg
-    } else {
-      resultColor = '#991b1b' // dark red
-      resultBg = '#fee2e2' // light red bg
-    }
-  }
+  const band = bandFor(result?.outcome)
+  const ticket = result?.ticket
+  const food = foodKind(ticket?.food_pref)
+  const meal = mealSection(ticket?.food_pref)
 
   return (
-    <main className="scanner-app-layout">
+    <main className="scanner-app-layout" onPointerDown={enableSound}>
       <div className="scanner-app-header">
         <a className="btn-back" href="/admin">
           &larr; Exit
@@ -164,6 +216,11 @@ export default function ScannerPage() {
       </div>
 
       <div className="scanner-app-body">
+        {!soundOn && (
+          <button type="button" className="sound-chip" onClick={enableSound}>
+            🔊 Tap to enable sound
+          </button>
+        )}
         <div className="scan-area-full">
           <div id="reader" style={{ width: '100%', height: '100%', display: isScanning ? 'block' : 'none' }}></div>
           {!isScanning && (
@@ -208,41 +265,49 @@ export default function ScannerPage() {
 
       {result && !loading && (
         <div className="scanner-result-overlay" onClick={handleClear}>
-          <div className="scanner-result-popup" style={{ backgroundColor: resultBg, border: `2px solid ${resultColor}` }} onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ color: resultColor, fontSize: '1.8rem', margin: '0 0 8px' }}>
-              {result.outcome === 'VALID' || result.outcome === 'SUCCESS' ? '✓ VALID PASS' : '✕ DENIED'}
-            </h2>
-            <h3 style={{ margin: '0 0 12px', fontSize: '1.4rem', color: '#111' }}>
-              {result.participantName || result.outcome}
-            </h3>
-            <p style={{ margin: '0 0 16px', fontSize: '1.1rem', color: '#333' }}>
-              {result.isCheckinComplete ? '✓ Attendee successfully checked in!' : result.message}
-            </p>
-            
-            {result.ticket && (
-              <div className="scanner-meta-pills">
-                {/* The plate this QR admits to - a breakfast pass shown at
-                    lunch is only caught if the gate can see which it is. */}
-                {result.ticket.food_pref && (
-                  <span className="pill" style={{ fontWeight: 700 }}>🍽 {result.ticket.food_pref}</span>
-                )}
-                <span className="pill">{result.ticket.event?.name || result.ticket.eventName}</span>
-                <span className="pill">{result.ticket.college_id ? `ID: ${result.ticket.college_id}` : 'Guest'}</span>
-                <span className="pill">{String(result.ticket.token).slice(0, 16)}</span>
-                <span className="pill">{result.ticket.status}</span>
-              </div>
-            )}
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '24px' }}>
-              {(result.outcome === 'VALID' || result.outcome === 'SUCCESS') && !result.isCheckinComplete && (
-                <button className="btn btn-primary" style={{ width: '100%', padding: '14px', fontSize: '1.1rem' }} onClick={handleCheckin}>
-                  Confirm Check-in &rarr;
-                </button>
+          <div className={`scanner-result-popup is-${band}`} onClick={(e) => e.stopPropagation()}>
+            <div className={`outcome-band ${band}`}>
+              {BAND_TITLE[result.outcome] || '✕ DENIED'}
+            </div>
+
+            <div className="result-body">
+              <h3 className="result-name">
+                {ticket?.participant_name || (band === 'deny' ? 'Pass not accepted' : 'Unnamed pass')}
+              </h3>
+
+              {/* The plate this QR admits to, as the biggest thing on screen -
+                  a wrong plate is the mistake a busy gate actually makes. */}
+              {food && (
+                <div className={`food-badge ${food}${band === 'ok' ? '' : ' is-dimmed'}`}>
+                  <span className={`food-symbol ${food}`} aria-hidden="true"><span /></span>
+                  <span className="food-label">{food === 'veg' ? 'VEG' : 'NON-VEG'}</span>
+                  {meal && <span className="food-meal">{meal}</span>}
+                </div>
               )}
-              <button className="btn btn-secondary" style={{ width: '100%', padding: '14px' }} onClick={handleClear}>
-                Continue Scanning
+              {!food && ticket?.food_pref && (
+                <p className="food-unknown">🍽 {ticket.food_pref}</p>
+              )}
+
+              <p className="result-message">
+                {band === 'ok' ? `Checked in at ${ticket?.redeemed_gate || gate}` : result.message}
+              </p>
+
+              {ticket && (
+                <div className="scanner-meta-pills">
+                  <span className="pill">{ticket.event?.name || ticket.eventName}</span>
+                  <span className="pill">{ticket.college_id ? `ID: ${ticket.college_id}` : 'Guest'}</span>
+                  <span className="pill">{String(ticket.token).slice(0, 16)}</span>
+                </div>
+              )}
+
+              <button className="btn btn-secondary" style={{ width: '100%', padding: '14px', marginTop: '20px' }} onClick={handleClear}>
+                {band === 'ok' ? 'Next scan' : 'Continue Scanning'}
               </button>
             </div>
+
+            {band === 'ok' && (
+              <div className="resume-bar" style={{ animationDuration: `${AUTO_RESUME_MS}ms` }} />
+            )}
           </div>
         </div>
       )}
@@ -341,27 +406,155 @@ export default function ScannerPage() {
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 24px;
+          padding: 12px;
           animation: fadeIn 0.2s ease-out forwards;
         }
-        
+
         .scanner-result-popup {
+          position: relative;
           background: white;
           border-radius: 24px;
-          padding: 32px 24px;
+          border: 4px solid transparent;
+          overflow: hidden;
           width: 100%;
-          max-width: 400px;
+          max-width: 440px;
+          max-height: 100%;
+          overflow-y: auto;
           text-align: center;
           box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-          animation: scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          animation: scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
-        
+        .scanner-result-popup.is-ok { border-color: #16a34a; }
+        .scanner-result-popup.is-warn { border-color: #d97706; background: #fffbeb; }
+        .scanner-result-popup.is-deny { border-color: #dc2626; background: #fef2f2; }
+
+        .outcome-band {
+          padding: 14px 16px;
+          font-size: 1.5rem;
+          font-weight: 900;
+          letter-spacing: 0.04em;
+          color: white;
+        }
+        .outcome-band.ok { background: #16a34a; }
+        .outcome-band.warn { background: #d97706; }
+        .outcome-band.deny { background: #dc2626; }
+
+        .result-body {
+          padding: 18px 18px 22px;
+        }
+
+        .result-name {
+          margin: 0 0 14px;
+          font-size: 1.5rem;
+          font-weight: 800;
+          color: #111;
+          overflow-wrap: anywhere;
+        }
+
+        .food-badge {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          min-height: min(34dvh, 280px);
+          padding: 20px 12px;
+          border-radius: 18px;
+          color: white;
+        }
+        .food-badge.veg { background: #15803d; }
+        .food-badge.nonveg { background: #7c2d12; }
+        .food-badge.is-dimmed { opacity: 0.45; }
+
+        .food-label {
+          font-size: clamp(2.6rem, 15vw, 4rem);
+          font-weight: 900;
+          line-height: 1;
+          letter-spacing: 0.03em;
+        }
+        .food-meal {
+          font-size: 1.1rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.12em;
+          opacity: 0.9;
+        }
+
+        /* The FSSAI mark printed on Indian food packs: a dot for veg, a
+           triangle for non-veg, so the badge reads even without colour. */
+        .food-symbol {
+          width: 60px;
+          height: 60px;
+          display: grid;
+          place-items: center;
+          background: white;
+          border: 5px solid;
+          border-radius: 8px;
+        }
+        .food-symbol.veg { border-color: #15803d; }
+        .food-symbol.veg span {
+          width: 26px;
+          height: 26px;
+          border-radius: 50%;
+          background: #15803d;
+        }
+        .food-symbol.nonveg { border-color: #7c2d12; }
+        .food-symbol.nonveg span {
+          width: 0;
+          height: 0;
+          border-left: 15px solid transparent;
+          border-right: 15px solid transparent;
+          border-bottom: 26px solid #7c2d12;
+        }
+
+        .food-unknown {
+          margin: 0;
+          font-size: 1.2rem;
+          font-weight: 700;
+          color: #111;
+        }
+
+        .result-message {
+          margin: 14px 0 0;
+          font-size: 1.05rem;
+          color: #333;
+        }
+
+        .resume-bar {
+          position: absolute;
+          left: 0;
+          bottom: 0;
+          height: 5px;
+          width: 100%;
+          background: #16a34a;
+          transform-origin: left;
+          animation-name: drain;
+          animation-timing-function: linear;
+          animation-fill-mode: forwards;
+        }
+
+        .sound-chip {
+          position: absolute;
+          top: 12px;
+          left: 50%;
+          transform: translateX(-50%);
+          z-index: 20;
+          background: rgba(0,0,0,0.75);
+          color: white;
+          border: 1px solid rgba(255,255,255,0.35);
+          border-radius: 999px;
+          padding: 8px 16px;
+          font-size: 0.9rem;
+          font-weight: 600;
+          white-space: nowrap;
+        }
+
         .scanner-meta-pills {
           display: flex;
           flex-wrap: wrap;
           gap: 6px;
           justify-content: center;
-          margin-top: 16px;
+          margin-top: 14px;
         }
         
         .scanner-loading-overlay {
@@ -397,6 +590,21 @@ export default function ScannerPage() {
         @keyframes scaleUp {
           from { transform: scale(0.9); opacity: 0; }
           to { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes drain {
+          from { transform: scaleX(1); }
+          to { transform: scaleX(0); }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .scanner-result-overlay,
+          .scanner-result-popup {
+            animation: none;
+          }
+          .resume-bar {
+            display: none;
+          }
         }
       `}</style>
     </main>

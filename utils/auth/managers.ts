@@ -120,20 +120,95 @@ export async function listManagers(): Promise<ManagerProfile[]> {
  * An empty list when the table is missing, which the callers treat as 'fall
  * back to whatever the event config lists'.
  */
-export async function listCollectionUpiIds(): Promise<string[]> {
+export async function listCollectionUpiIds(eventId?: string | null): Promise<string[]> {
   const supabase = await createServiceRoleClient()
   const { data, error } = await supabase
     .from('manager_profiles')
-    .select('upi_id, is_active')
+    .select('id, upi_id, is_active')
 
   if (error || !data) return []
 
-  const ids = (data as { upi_id: string; is_active: boolean }[])
+  // An event that has been set up collects only at its own managers' ids;
+  // one nobody has set up yet collects at everyone's, as before.
+  let collectors: Set<string> | null = null
+  if (eventId) {
+    const assigned = await managersForEvent(eventId)
+    if (assigned.length > 0) collectors = new Set(assigned)
+  }
+
+  const ids = (data as { id: string; upi_id: string; is_active: boolean }[])
     .filter((row) => row.is_active !== false)
+    .filter((row) => !collectors || collectors.has(row.id))
     .map((row) => normaliseUpiId(row.upi_id))
     .filter((id) => isValidUpiId(id))
 
   return Array.from(new Set(ids))
+}
+
+/**
+ * Which events each manager collects for (supabase/manager-events.sql), or
+ * null while that table does not exist yet - the caller then knows not to
+ * offer the setting at all rather than show everyone as unassigned.
+ */
+export async function listManagerEvents(): Promise<Map<string, string[]> | null> {
+  const supabase = await createServiceRoleClient()
+  const { data, error } = await supabase.from('manager_events').select('manager_id, event_id')
+  if (error || !data) return null
+
+  const byManager = new Map<string, string[]>()
+  for (const row of data as { manager_id: string; event_id: string }[]) {
+    byManager.set(row.manager_id, [...(byManager.get(row.manager_id) || []), row.event_id])
+  }
+  return byManager
+}
+
+/** The managers set up to collect for one event; empty if none are, or the table is missing. */
+export async function managersForEvent(eventId: string): Promise<string[]> {
+  const supabase = await createServiceRoleClient()
+  const { data, error } = await supabase.from('manager_events').select('manager_id').eq('event_id', eventId)
+  if (error || !data) return []
+  return (data as { manager_id: string }[]).map((row) => row.manager_id)
+}
+
+/** Replace the events a manager collects for. */
+export async function setManagerEvents(
+  managerId: string,
+  eventIds: string[],
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const supabase = await createServiceRoleClient()
+  const wanted = Array.from(new Set(eventIds))
+
+  const { data: existing, error: readError } = await supabase
+    .from('manager_events')
+    .select('event_id')
+    .eq('manager_id', managerId)
+  if (readError) {
+    return /manager_events/.test(readError.message || '') || readError.code === 'PGRST205'
+      ? { ok: false, error: 'Run supabase/manager-events.sql first' }
+      : { ok: false, error: 'Could not read the events for this manager' }
+  }
+
+  // Only the difference is written, so a manager's other events are never
+  // briefly unassigned while this runs.
+  const had = new Set((existing as { event_id: string }[]).map((row) => row.event_id))
+  const add = wanted.filter((id) => !had.has(id))
+  const drop = [...had].filter((id) => !wanted.includes(id))
+
+  if (add.length > 0) {
+    const { error } = await supabase
+      .from('manager_events')
+      .insert(add.map((event_id) => ({ manager_id: managerId, event_id })))
+    if (error) return { ok: false, error: 'Could not assign the manager to that event' }
+  }
+  if (drop.length > 0) {
+    const { error } = await supabase
+      .from('manager_events')
+      .delete()
+      .eq('manager_id', managerId)
+      .in('event_id', drop)
+    if (error) return { ok: false, error: 'Could not remove the manager from that event' }
+  }
+  return { ok: true }
 }
 
 /**

@@ -21,12 +21,113 @@ const UPI_PATTERN = /\b([a-zA-Z0-9._-]{2,64})@([a-zA-Z][a-zA-Z0-9.]{1,32})\b/g
 // Domains that mean this is an email address rather than a UPI handle.
 const EMAIL_TLDS = /\.(com|in|org|net|co|edu|gov|io|info|me)$/i
 
-// The labels receipts put in front of the reference number, across apps.
-const LABELLED_ID =
-  /(?:\bUTR\b|\bRRN\b|UPI\s*(?:transaction|txn|ref(?:erence)?)\s*(?:id|no\.?|number)?|transaction\s*(?:id|no\.?|number)|txn\s*(?:id|no\.?|number)|order\s*id|ref(?:erence)?\s*(?:id|no\.?|number))\s*[:#\-–]?\s*([A-Za-z0-9]{6,32})/i
+/*
+  The transaction id this festival wants is the UTR - the 12-digit reference
+  NPCI assigns every UPI payment, which the payer's bank and the collector's
+  bank both show and which a verifier can search a statement for. Apps print
+  it under many names: "UTR", "UPI Ref No", "UPI transaction ID", "RRN",
+  "Bank reference no".
 
-// A bare 12-digit UPI reference, the usual shape when nothing is labelled.
-const BARE_UTR = /\b(\d{12})\b/
+  Apps also print their own ids, and print them first: PhonePe's
+  "Transaction ID T2410...", Google Pay's "Google transaction ID CICAgO...",
+  Paytm's "Order ID". Taking the first labelled id - what this used to do -
+  filed those, which no bank statement contains. So the only candidates are
+  12-digit numbers, each scored by the label in front of it, and a number
+  under one of the apps' own labels is never taken.
+*/
+
+/** Labels that mean the number after them is the UTR. */
+const UTR_LABEL = /(?:\b(?:utr|rrn)\b|\bupi\s*(?:transaction|trans|txn|ref(?:erence)?)\b|\bbank\s*ref(?:erence)?\b)(?:\.?\s*(?:id|no|number)\b)?/gi
+
+/** Labels that usually mean the UTR, but are also used more loosely. */
+const REF_LABEL = /\bref(?:erence)?\.?\s*(?:id|no|number|#)\b|\btransaction\s*(?:id|no|number)\b|\btxn\s*(?:id|no)\b/gi
+
+/** Labels for ids that are not the UTR: the apps' own, orders, accounts, phones. */
+const OTHER_LABEL = /\bgoogle\s*(?:pay\s*)?(?:transaction|txn)(?:\s*(?:id|no|number)\b)?|\b(?:phonepe|paytm|amazon|cred|wallet|merchant)\b|\border\s*(?:id|no|number)\b|\b(?:customer|consumer|invoice|bill)\s*(?:id|no|number)?\b|\ba\/?c\b|\baccount\s*(?:no|number)\b|\b(?:phone|mobile|mob|ph|contact)\b/gi
+
+/** The shapes OCR reads in place of a digit. */
+const DIGIT_LOOKALIKE: Record<string, string> = { O: '0', o: '0', I: '1', l: '1', S: '5', B: '8' }
+
+/**
+ * The label nearest the end of `text` - the one directly in front of the
+ * number - scored: 3 a UTR label, 2 a reference label, -1 somebody else's id,
+ * 0 none. Labels are compared by where they end, and on a tie the more
+ * specific one wins: "Google transaction ID" also contains "transaction ID",
+ * and it is Google's.
+ */
+function labelScore(text: string): number {
+  let best = { end: -1, score: 0 }
+  const scan = (pattern: RegExp, score: number) => {
+    for (const match of text.matchAll(pattern)) {
+      const end = (match.index ?? 0) + match[0].length
+      if (end >= best.end) best = { end, score }
+    }
+  }
+  scan(REF_LABEL, 2)
+  scan(UTR_LABEL, 3)
+  scan(OTHER_LABEL, -1)
+  return best.score
+}
+
+type UtrCandidate = { value: string; score: number }
+
+/** Every 12-digit number on a line, with how it was written. */
+function twelveDigitRuns(line: string): { value: string; at: number }[] {
+  const runs: { value: string; at: number }[] = []
+
+  // One unbroken run - the usual case - with OCR's letter-for-digit slips
+  // undone when the run is plainly a number (at least ten real digits).
+  for (const match of line.matchAll(/[A-Za-z0-9]+/g)) {
+    let token = match[0]
+    let at = match.index ?? 0
+    // A label glued onto its number: "UTR123456789012".
+    const glued = token.match(/^(?:utr|rrn|no|id)([A-Za-z0-9]{12})$/i)
+    if (glued) {
+      at += token.length - 12
+      token = glued[1]
+    }
+    if (token.length !== 12 || !/^[0-9OoIlSB]+$/.test(token)) continue
+    if ((token.match(/[0-9]/g) || []).length < 10) continue
+    // +91 followed by a mobile number is twelve digits too.
+    if (line[at - 1] === '+') continue
+    runs.push({ value: token.replace(/[OoIlSB]/g, (c) => DIGIT_LOOKALIKE[c]), at })
+  }
+
+  // Printed in groups: "1234 5678 9012", "123456 789012".
+  for (const match of line.matchAll(/\b(\d{4}) (\d{4}) (\d{4})\b|\b(\d{6}) (\d{6})\b/g)) {
+    const at = match.index ?? 0
+    if (line[at - 1] === '+') continue
+    runs.push({ value: match[0].replace(/ /g, ''), at })
+  }
+
+  return runs
+}
+
+export function extractTransactionId(text: string): string | null {
+  const lines = normalise(text).split(/\r?\n/)
+  const candidates: UtrCandidate[] = []
+
+  lines.forEach((line, i) => {
+    for (const run of twelveDigitRuns(line)) {
+      const before = line.slice(0, run.at)
+      // A label on the same line, else - when the number sits alone on its
+      // line, as most apps lay it out - the line above.
+      let score = labelScore(before)
+      if (score === 0 && !/[A-Za-z]/.test(before) && i > 0) score = labelScore(lines[i - 1])
+      if (score < 0) continue
+      candidates.push({ value: run.value, score: Math.max(score, 1) })
+    }
+  })
+
+  if (candidates.length === 0) return null
+  const top = Math.max(...candidates.map((c) => c.score))
+  const best = Array.from(new Set(candidates.filter((c) => c.score === top).map((c) => c.value)))
+
+  // Two different unlabelled numbers is a guess either way; the visitor types
+  // it. A labelled UTR is taken even if printed twice, which receipts do.
+  if (best.length > 1 && top === 1) return null
+  return best[0]
+}
 
 const RECEIVER_HINT = /\b(?:to|paid\s*to|payee|receiver|recipient|beneficiary|credited\s*to)\b/i
 
@@ -71,21 +172,6 @@ export function extractUpiIds(text: string): string[] {
   }
 
   return found
-}
-
-export function extractTransactionId(text: string): string | null {
-  const cleaned = normalise(text)
-
-  const labelled = cleaned.match(LABELLED_ID)
-  if (labelled) {
-    const value = labelled[1].trim()
-    // A label followed by a single word that is plainly not an id (e.g. a
-    // status word) is worse than returning nothing.
-    if (!/^(?:success|failed|pending|completed|paid)$/i.test(value)) return value
-  }
-
-  const bare = cleaned.match(BARE_UTR)
-  return bare ? bare[1] : null
 }
 
 /**
