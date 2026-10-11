@@ -3,6 +3,64 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { confirmAction, notifyError, notifySuccess } from '@/components/site-notifications'
+import type { Collector } from '@/utils/data/collectors'
+
+/**
+ * The manager account a payment landed in, as the registrations route resolved
+ * it from the ticket's receiver UPI id and any super-admin reassignment.
+ *
+ * Three shapes of answer, and the cell has to tell them apart at a glance: a
+ * manager who holds the money, a UPI id no manager holds, and a payment nobody
+ * is answerable for yet. The last two are the ones worth chasing, so they are
+ * the ones that get the colour.
+ */
+/**
+ * A UPI id with a break offered before the provider.
+ *
+ * The cell is capped, so a long id has to wrap somewhere; left to itself the
+ * browser breaks it mid-handle. A <wbr> at the @ means it wraps where the id
+ * already reads as two parts, and overflow-wrap still catches a handle too
+ * long to fit on a line of its own.
+ */
+function Upi({ id }: { id: string }) {
+  const at = id.lastIndexOf('@')
+  if (at <= 0) return <>{id}</>
+  return <>{id.slice(0, at)}<wbr />{id.slice(at)}</>
+}
+
+function PaidTo({ collector }: { collector?: Collector | null }) {
+  if (!collector) return <span className="text-muted">—</span>
+
+  const unsettled =
+    collector.source === 'flagged' || collector.source === 'orphan' || collector.source === 'unknown'
+  // An orphaned id has nothing to label it with but itself; showing it twice,
+  // once in bold and once underneath, would just read as a repeat.
+  const bare = collector.username === null && collector.label === collector.upi
+
+  return (
+    <span className="paid-to">
+      {bare ? (
+        <code style={{ fontSize: '0.8rem', color: '#8F321F' }}><Upi id={collector.label} /></code>
+      ) : (
+        <strong style={{ fontSize: '0.88rem', color: unsettled ? '#8F321F' : undefined }}>
+          {collector.label}
+        </strong>
+      )}
+      {collector.upi && !bare && (
+        <>
+          <br />
+          <code className="text-muted" style={{ fontSize: '0.78rem' }}><Upi id={collector.upi} /></code>
+        </>
+      )}
+      {collector.note && (
+        <div className="text-muted" style={{ fontSize: '0.72rem', marginTop: '3px' }}>
+          {collector.note}
+        </div>
+      )}
+    </span>
+  )
+}
+
 export default function RegistrationsClient({ initialEvents }: { initialEvents: any[] }) {
   const [registrations, setRegistrations] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -77,12 +135,20 @@ export default function RegistrationsClient({ initialEvents }: { initialEvents: 
     }
   }
 
+  // The em dash stands in for "nothing here" on screen; a spreadsheet wants
+  // that cell empty, not full of punctuation it would then have to filter out.
+  const csvCollector = (collector?: Collector | null) =>
+    !collector || collector.label === '—' ? '' : collector.label
+
   function handleExportCSV() {
     if (registrations.length === 0) {
       notifyError('No registrations to export.')
       return
     }
-    const headers = ['Token', 'Name', 'College ID', 'Email', 'Phone', 'Event', 'Amount', 'Status', 'Payment Status', 'Date']
+    // Collector and UPI id are kept in separate columns rather than one: the
+    // reason to export this is to total the takings per manager, and a
+    // spreadsheet can only group on a column of its own.
+    const headers = ['Token', 'Name', 'College ID', 'Email', 'Phone', 'Event', 'Amount', 'Paid To', 'Paid To UPI', 'Status', 'Payment Status', 'Date']
     const rows = registrations.map((reg) => [
       reg.token,
       `"${reg.participant_name || ''}"`,
@@ -91,6 +157,8 @@ export default function RegistrationsClient({ initialEvents }: { initialEvents: 
       `"${reg.phone || ''}"`,
       `"${reg.event?.name || ''}"`,
       reg.amount,
+      `"${csvCollector(reg.collector)}"`,
+      `"${reg.collector?.upi || ''}"`,
       reg.status,
       reg.payment_status,
       new Date(reg.created_at).toLocaleString(),
@@ -155,14 +223,15 @@ export default function RegistrationsClient({ initialEvents }: { initialEvents: 
               <th>Event</th>
               <th>Pass Token</th>
               <th>Amount &amp; UTR</th>
+              <th>Paid To</th>
               <th>Status</th>
               <th>Registration Date</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {loading && <tr><td colSpan={8} className="text-muted">Loading registrations...</td></tr>}
-            {!loading && groupedRegistrations.length === 0 && <tr><td colSpan={8} className="text-muted">No registrations found.</td></tr>}
+            {loading && <tr><td colSpan={9} className="text-muted">Loading registrations...</td></tr>}
+            {!loading && groupedRegistrations.length === 0 && <tr><td colSpan={9} className="text-muted">No registrations found.</td></tr>}
             {!loading && groupedRegistrations.map((reg: any) => (
               <tr key={reg.id}>
                 <td>
@@ -179,6 +248,7 @@ export default function RegistrationsClient({ initialEvents }: { initialEvents: 
                   {reg.num_passes > 1 && <div className="text-muted" style={{ fontSize: '0.75rem', marginTop: '4px' }}>and {reg.num_passes - 1} more...</div>}
                 </td>
                 <td>₹{reg.amount}<br /><span className="text-muted" style={{ fontSize: '0.85rem' }}>{reg.utr || 'Free'}</span></td>
+                <td><PaidTo collector={reg.collector} /></td>
                 <td>
                   <span className={`badge ${reg.status === 'UNUSED' ? '' : 'badge--error'}`}>{reg.status}</span>
                   {reg.payment_status && <span className="text-muted" style={{ fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>Pmt: {reg.payment_status}</span>}

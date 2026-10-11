@@ -12465,3 +12465,20 @@ button.mahalaya-menu-diet-section__header--collapsible:focus-visible {
   line-height: 1.35;
   color: var(--brand);
 }
+
+/* Which manager account a payment landed in, in the registrations table.
+ *
+ * The table is already wider than the viewport at most desktop sizes, so this
+ * column has to earn its width rather than take it: a UPI id is one long
+ * unbreakable token, and without a cap the column sizes itself to the longest
+ * one and pushes Status and Actions off the end. Capping it and letting the id
+ * break mid-token costs a wrapped line on the few long ones and keeps the rest
+ * of the row on screen. */
+.paid-to {
+  display: block;
+  max-width: 19ch;
+}
+
+.paid-to code {
+  overflow-wrap: anywhere;
+}
